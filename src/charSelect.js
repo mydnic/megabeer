@@ -2,6 +2,7 @@ import { CHARACTERS, CHARACTER_ORDER, DEFAULT_CHARACTER_ID } from './config/char
 import { MAPS, DEFAULT_MAP_ID } from './config/maps.js';
 import { WEAPON_TYPES } from './config/weapons.js';
 import { showMenu } from './menu.js';
+import { setGamepadNavRows } from './gamepadNav.js';
 
 const selectEl = document.getElementById('select');
 const charRow = document.getElementById('charRow');
@@ -11,6 +12,15 @@ const btnSelectBack = document.getElementById('btnSelectBack');
 
 let selectedCharacterId = DEFAULT_CHARACTER_ID;
 let selectedMapId = DEFAULT_MAP_ID;
+
+function updateNavRows() {
+  const pickableMaps = [...mapRow.children].filter((_, i) => !MAPS[i]?.locked);
+  setGamepadNavRows([
+    [...charRow.children],
+    pickableMaps,
+    [btnStart, btnSelectBack],
+  ]);
+}
 
 function renderChars() {
   charRow.innerHTML = '';
@@ -28,6 +38,7 @@ function renderChars() {
     div.onclick = () => { selectedCharacterId = id; renderChars(); };
     charRow.appendChild(div);
   }
+  updateNavRows();
 }
 
 function renderMaps() {
@@ -41,6 +52,7 @@ function renderMaps() {
     if (!m.locked) div.onclick = () => { selectedMapId = m.id; renderMaps(); };
     mapRow.appendChild(div);
   }
+  updateNavRows();
 }
 
 export function initCharSelect(onStart) {

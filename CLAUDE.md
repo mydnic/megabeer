@@ -30,13 +30,27 @@ files. Rough layers:
 - **Core**: `scene.js` (renderer/camera/lights/ground), `state.js` (shared mutable
   run state), `input.js` (keyboard + mouse/pointer-lock), `dom.js` (cached DOM refs),
   `util.js`.
-- **Systems** (logic + three.js mesh handling, one concern each): `player.js`,
-  `enemies.js`, `weapons.js`, `projectiles.js`, `puddles.js`, `xp.js`, `tunas.js`,
-  `mapgen.js` (procedural abbey chunks + collision), `hud.js`, `upgrades.js` (level-up
-  cards), `menu.js` (main menu + TUNAS shop), `meta.js` (localStorage meta-progression),
-  `textures.js` (procedural canvas textures + toon material factory), `devpanel.js`.
+- **Systems** (logic + three.js mesh handling, one concern each): `player.js`
+  (exports `initPlayer(characterId)` — resets every run-scoped stat from
+  `config/characters.js`, called once per run right before `state.started = true`,
+  safe to call again on replay without a page reload), `enemies.js`, `enemyModels.js`
+  (multi-source model loader, see below), `weapons.js`, `projectiles.js`,
+  `puddles.js`, `xp.js`, `tunas.js`, `mapgen.js` (procedural abbey chunks +
+  collision), `hud.js`, `upgrades.js` (level-up cards), `menu.js` (main menu +
+  TUNAS shop), `charSelect.js` (character + map pick screen, shown after "Jouer"
+  and before a run starts), `meta.js` (localStorage meta-progression), `textures.js`
+  (procedural canvas textures + toon material factory), `devpanel.js`.
 - **`src/config/`** — pure data, **zero three.js/DOM imports allowed here**. This is
   the mandatory rule below.
+
+### Flow: menu → character/map select → run
+
+`main.js` wires `initCharSelect((characterId, mapId) => { initPlayer(characterId);
+state.started = true; })` and `initMenu(() => showSelect())` — clicking "Jouer"
+opens the select screen (`charSelect.js`) instead of starting a run directly.
+Map choice is UI-only today (`config/maps.js` — one real map, two locked
+placeholders) since `mapgen.js` only knows how to generate the abbey; wire the
+`mapId` through when a second real map exists.
 
 ### Rule: all game data lives in `src/config/`
 
@@ -45,15 +59,22 @@ number a designer would want to tweak goes in `src/config/*.js` as plain exporte
 objects/arrays. Systems import config and read from it; they never hardcode balance
 numbers inline. Current files:
 
-- `config/characters.js` — playable character base stats (only one today; schema
-  supports adding more + a selection screen later).
-- `config/enemies.js` — `ENEMY_TYPES` (zombie stats). Has an `effects: []` extension
-  point for future special behaviors (on-death explosion, etc.) — currently unused,
-  no engine support yet. Add engine handling in `enemies.js` before populating it.
+- `config/characters.js` — `CHARACTERS` (base stats + `startWeapon` id, each
+  character locked to one weapon it starts the run with) and `CHARACTER_ORDER`
+  (display order on the select screen — add a character here too or it won't show).
+- `config/maps.js` — `MAPS`, `locked: true` entries render as greyed-out "???"
+  placeholders on the select screen. Only `locked: false` ones are pickable.
+- `config/enemies.js` — `ENEMY_TYPES` (zombie stats). `unlockAt` (seconds) gates
+  when each type can start spawning — edit that field directly per entry, there's
+  no separate pacing constant. Has an `effects: []` extension point for future
+  special behaviors (on-death explosion, etc.) — currently unused, no engine
+  support yet. Add engine handling in `enemies.js` before populating it.
 - `config/weapons.js` — `WEAPON_TYPES` (cooldown/range/damage/projectile params),
-  `BEER_TYPES` (beer variants rolled by the starter weapon). Each weapon's
-  `unlockCard` (level-up pick text) and `shop` (TUNAS cost + description) live on
-  the same object — single source of truth, don't duplicate elsewhere.
+  `BEER_TYPES` (beer variants rolled by the default 'beer' weapon only — 'stout'
+  and 'vomit' are character-exclusive starters and don't roll variants). Each
+  weapon's `unlockCard` (level-up pick text) and `shop` (TUNAS cost + description)
+  live on the same object — single source of truth, don't duplicate elsewhere.
+  Character-exclusive starters omit both (not obtainable any other way).
 - `config/items.js` — `PASSIVE_ITEMS`, the level-up stat-upgrade pool. Generic
   `{stat, op: 'mult'|'add', value}` shape, applied by `upgrades.js` — adding an item
   here needs no new code unless it does something non-generic.
@@ -126,14 +147,20 @@ ambient flattens it back to a wash.
 `src/assets/` holds downloaded model/texture packs, all CC0:
 
 - `kenney-animated-characters-survivors/` — FBX rig + zombie/survivor skins +
-  idle/run/jump clips. **Currently wired in** via `zombieAsset.js` (see its
-  comment about the `run.fbx` two-clip trap — index 0 is a frozen T-pose, the
-  real cycle is picked by name).
+  idle/run/jump clips.
 - `quaternius-zombies/` — 4 self-contained glTF zombie models (Basic/Chubby/
   Arm/Ribcage), each with 16 named animation clips (Run/Walk/Death/Crawl/Attack/
-  etc). Staged, not yet wired in — a strictly better replacement candidate for
-  the Kenney zombie (glTF's explicit per-clip keyframes avoid the whole FBX
-  clip-selection footgun class). See issue #2.
+  etc).
+
+**Both wired in** via `enemyModels.js`, which unifies the two asset families (FBX
+rigs with separate skin textures vs. glTF models each with their own baked
+material) behind one `cloneEnemyModel(modelId, tint, r)` call — see its comment
+about the Kenney `run.fbx` two-clip trap (index 0 is a frozen T-pose, the real
+cycle is picked by name). `config/enemies.js` now has 8 zombie types split across
+both sources (`model: 'kenney_zombieA'` vs `model: 'quat_ribcage'` etc.) — add a
+new visual variant by adding a rig+variant entry in `enemyModels.js` if it's a new
+source, or just a new `ENEMY_TYPES` entry reusing an existing `model` id with
+different stats/tint if not.
 - `quaternius-vehicles/` — 6 glTF vehicles (Pickup/Truck/Sports, each with an
   Armored variant). Staged for issue #8 (véhicule écrase-zombies), not wired in.
 

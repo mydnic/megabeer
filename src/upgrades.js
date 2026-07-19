@@ -4,6 +4,7 @@ import { overlay, centerEl, choicesEl } from './dom.js';
 import { isPurchased } from './meta.js';
 import { PASSIVE_ITEMS } from './config/items.js';
 import { WEAPON_TYPES } from './config/weapons.js';
+import { setGamepadNavRows } from './gamepadNav.js';
 
 function applyPassiveItem(item) {
   const current = player[item.stat];
@@ -43,4 +44,5 @@ export function pickUpgrades() {
     div.onclick = () => { u.apply(); overlay.style.display = 'none'; state.paused = false; };
     choicesEl.appendChild(div);
   }
+  setGamepadNavRows([[...choicesEl.children]]);
 }

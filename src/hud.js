@@ -2,6 +2,7 @@ import { state } from './state.js';
 import { player } from './player.js';
 import { meta } from './meta.js';
 import { overlay, centerEl, choicesEl, hpTxt, hpFillIn, barFill, lvEl, timeEl, killsEl, tunasHudEl } from './dom.js';
+import { setGamepadNavRows } from './gamepadNav.js';
 
 export function updateHud() {
   timeEl.textContent = Math.floor(state.gameTime);
@@ -34,4 +35,5 @@ export function endGame(win) {
   btn.style.marginTop = '20px';
   btn.onclick = () => location.reload();
   centerEl.appendChild(btn);
+  setGamepadNavRows([[btn]]);
 }

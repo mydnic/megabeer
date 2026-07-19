@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { scene, camera, renderer, grid, resize, updateSceneLighting } from './scene.js';
-import { keys, mouse } from './input.js';
+import { keys, mouse, updateGamepad } from './input.js';
 import { state } from './state.js';
 import { player, updatePlayer, playerMesh, initPlayer } from './player.js';
 import { spawnEnemy, nearestEnemy, updateEnemies, removeDeadEnemies } from './enemies.js';
@@ -13,11 +13,13 @@ import { updateHud, endGame } from './hud.js';
 import { updateMap, resolveCollisions } from './mapgen.js';
 import { initMenu } from './menu.js';
 import { initCharSelect, showSelect } from './charSelect.js';
+import { clearGamepadNav } from './gamepadNav.js';
 
 resize();
 updateMap(0, 0);
 initCharSelect((characterId) => {
   initPlayer(characterId);
+  clearGamepadNav();
   state.started = true;
 });
 initMenu(() => showSelect());
@@ -31,6 +33,7 @@ let last = performance.now();
 function loop(now) {
   const dt = Math.min(0.05, (now - last) / 1000);
   last = now;
+  updateGamepad(dt); // unconditional: menu navigation needs it before a run starts too
   if (state.started && !state.paused) update(dt);
   renderer.render(scene, camera);
   requestAnimationFrame(loop);
