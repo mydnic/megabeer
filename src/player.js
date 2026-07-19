@@ -2,24 +2,29 @@ import * as THREE from 'three';
 import { scene } from './scene.js';
 import { toonMaterial } from './textures.js';
 import { mouse } from './input.js';
+import { CHARACTERS, DEFAULT_CHARACTER_ID } from './config/characters.js';
 
 const GRAVITY = 28;
 const JUMP_FORCE = 9;
 
+const character = CHARACTERS[DEFAULT_CHARACTER_ID];
+const base = character.baseStats;
+
 export const player = {
   x: 0, y: 0, z: 0, vy: 0, grounded: true,
-  r: 0.8, facing: 0, speed: 9, hp: 100, maxHp: 100,
+  r: 0.8, facing: 0, hp: base.hp, maxHp: base.hp,
   level: 1, xp: 0, xpNext: 10,
-  dmg: 10, atkSpeed: 1.0, projSpeed: 26, projCount: 1, pickupRange: 5,
+  speed: base.speed, dmg: base.dmg, atkSpeed: base.atkSpeed,
+  projSpeed: base.projSpeed, projCount: base.projCount, pickupRange: base.pickupRange,
   invuln: 0,
-  unlockedWeapons: new Set(['beer']),
+  unlockedWeapons: new Set([character.startWeapon]),
   weaponTimers: {},
 };
 
 export const playerMesh = new THREE.Group();
 export const body = new THREE.Mesh(
   new THREE.CapsuleGeometry(0.6, 1.0, 4, 8),
-  toonMaterial({ color: 0x44ccff })
+  toonMaterial({ color: character.color })
 );
 body.position.y = 1.1;
 const nose = new THREE.Mesh(
@@ -65,5 +70,5 @@ export function updatePlayer(dt, keys) {
   playerMesh.rotation.y = player.facing;
 
   if (player.invuln > 0) player.invuln -= dt;
-  body.material.color.setHex(player.invuln > 0 ? 0xffffff : 0x44ccff);
+  body.material.color.setHex(player.invuln > 0 ? 0xffffff : character.color);
 }

@@ -4,6 +4,7 @@ import { player } from './player.js';
 import { state } from './state.js';
 import { toonMaterial } from './textures.js';
 import { addTunas } from './meta.js';
+import { ECONOMY } from './config/economy.js';
 
 const coinGeo = new THREE.CylinderGeometry(0.26, 0.26, 0.07, 14);
 const coinMat = toonMaterial({ color: 0xffcc33, emissive: 0x664400 });
@@ -13,6 +14,14 @@ export function spawnTunasDrop(x, z, amount) {
   mesh.position.set(x, 0.5, z);
   scene.add(mesh);
   state.tunasDrops.push({ x, z, amount, r: 0.35, mesh });
+}
+
+// Single entry point for enemy-kill TUNAS income — see src/config/economy.js
+// for the pacing formula. Call this instead of spawnTunasDrop() directly on kill.
+export function maybeDropTunas(x, z) {
+  if (Math.random() < ECONOMY.tunasDropChance) {
+    spawnTunasDrop(x, z, ECONOMY.tunasDropAmount);
+  }
 }
 
 export function updateTunasDrops(dt) {
@@ -30,6 +39,7 @@ export function updateTunasDrops(dt) {
       t.collected = true;
       scene.remove(t.mesh);
       addTunas(t.amount);
+      state.tunasEarnedThisRun += t.amount;
     }
   }
   state.tunasDrops = state.tunasDrops.filter(t => !t.collected);

@@ -1,11 +1,7 @@
 import { meta, isPurchased, buyWeapon } from './meta.js';
-import { WEAPON_DEFS } from './weapons.js';
+import { WEAPON_TYPES } from './config/weapons.js';
 
-const SHOP_ITEMS = [
-  { id: 'keg', cost: 50, desc: 'Un fût qui roule et écrase tout' },
-  { id: 'puddle', cost: 80, desc: 'Flaque AOE, dégâts sur la durée' },
-  { id: 'coaster', cost: 120, desc: 'Shuriken tranchant, transperce' },
-];
+const SHOP_ITEMS = Object.values(WEAPON_TYPES).filter(cfg => cfg.shop);
 
 const menuEl = document.getElementById('menu');
 const shopEl = document.getElementById('shop');
@@ -23,18 +19,17 @@ function refreshTunas() {
 
 function renderShop() {
   shopList.innerHTML = '';
-  for (const item of SHOP_ITEMS) {
-    const def = WEAPON_DEFS[item.id];
-    const owned = isPurchased(item.id);
+  for (const cfg of SHOP_ITEMS) {
+    const owned = isPurchased(cfg.id);
     const div = document.createElement('div');
     div.className = 'shopCard';
-    div.innerHTML = `<h3>${def.label}</h3><p>${item.desc}</p><div class="cost">${owned ? 'Débloqué' : item.cost + ' TUNAS'}</div>`;
+    div.innerHTML = `<h3>${cfg.label}</h3><p>${cfg.shop.desc}</p><div class="cost">${owned ? 'Débloqué' : cfg.shop.cost + ' TUNAS'}</div>`;
     const btn = document.createElement('button');
     btn.className = 'btn';
     btn.textContent = owned ? 'Possédé' : 'Débloquer';
-    btn.disabled = owned || meta.tunas < item.cost;
+    btn.disabled = owned || meta.tunas < cfg.shop.cost;
     btn.onclick = () => {
-      if (buyWeapon(item.id, item.cost)) { refreshTunas(); renderShop(); }
+      if (buyWeapon(cfg.id, cfg.shop.cost)) { refreshTunas(); renderShop(); }
     };
     div.appendChild(btn);
     shopList.appendChild(div);

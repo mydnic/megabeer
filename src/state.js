@@ -4,6 +4,7 @@ export const state = {
   xpOrbs: [],
   puddles: [],
   tunasDrops: [],
+  tunasEarnedThisRun: 0,
   killCount: 0,
   gameTime: 0,
   paused: false,

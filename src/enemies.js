@@ -4,13 +4,7 @@ import { player } from './player.js';
 import { state } from './state.js';
 import { dist2 } from './util.js';
 import { toonMaterial } from './textures.js';
-
-const ZOMBIE_KINDS = [
-  { name: 'Zombie', r: 0.7, hp: 9, speed: 2.8, dmg: 8, color: 0x6b8f4e, xp: 2 },
-  { name: 'Zombie corpulent', r: 0.95, hp: 55, speed: 1.8, dmg: 15, color: 0x4f6b3a, xp: 5 },
-  { name: 'Zombie rapide', r: 0.6, hp: 14, speed: 4.6, dmg: 6, color: 0x8a9e3f, xp: 3 },
-  { name: 'Zombie tank', r: 1.2, hp: 150, speed: 1.5, dmg: 24, color: 0x39492a, xp: 12 },
-];
+import { ENEMY_TYPES, ENEMY_TIER_SECONDS } from './config/enemies.js';
 
 const torsoGeo = new THREE.BoxGeometry(1.0, 1.2, 0.6);
 const headGeo = new THREE.BoxGeometry(0.55, 0.55, 0.55);
@@ -63,8 +57,8 @@ export function spawnEnemy() {
   const dist = 40 + Math.random() * 8;
   const x = player.x + Math.cos(angle) * dist;
   const z = player.z + Math.sin(angle) * dist;
-  const tier = Math.min(3, Math.floor(state.gameTime / 45));
-  const k = ZOMBIE_KINDS[Math.min(ZOMBIE_KINDS.length - 1, Math.floor(Math.random() * (tier + 1)))];
+  const tier = Math.min(ENEMY_TYPES.length - 1, Math.floor(state.gameTime / ENEMY_TIER_SECONDS));
+  const k = ENEMY_TYPES[Math.min(ENEMY_TYPES.length - 1, Math.floor(Math.random() * (tier + 1)))];
   const scale = 1 + state.gameTime / 90;
 
   const mesh = makeZombieMesh(k);

@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { player } from './player.js';
-import { addTunas, meta } from './meta.js';
+import { meta } from './meta.js';
 import { overlay, centerEl, choicesEl, hpTxt, hpFillIn, barFill, lvEl, timeEl, killsEl, tunasHudEl } from './dom.js';
 
 export function updateHud() {
@@ -19,8 +19,7 @@ export function endGame(win) {
   state.gameOver = true;
   if (document.pointerLockElement) document.exitPointerLock();
 
-  const earned = Math.floor(state.killCount * 2 + state.gameTime * 0.5);
-  addTunas(earned);
+  const earned = state.tunasEarnedThisRun;
 
   overlay.style.display = 'flex';
   choicesEl.innerHTML = '';

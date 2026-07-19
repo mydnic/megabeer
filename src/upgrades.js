@@ -2,28 +2,28 @@ import { player } from './player.js';
 import { state } from './state.js';
 import { overlay, centerEl, choicesEl } from './dom.js';
 import { isPurchased } from './meta.js';
+import { PASSIVE_ITEMS } from './config/items.js';
+import { WEAPON_TYPES } from './config/weapons.js';
 
-const STAT_UPGRADES = [
-  { name: 'Bière plus forte', desc: '+30% dégâts', apply: () => player.dmg *= 1.3 },
-  { name: 'Tournée rapide', desc: '+20% cadence de lancer', apply: () => player.atkSpeed *= 1.2 },
-  { name: 'Godasses de bar', desc: '+15% vitesse de déplacement', apply: () => player.speed *= 1.15 },
-  { name: 'Deux mains', desc: '+1 bouteille par lancer', apply: () => player.projCount += 1 },
-  { name: 'Bonne descente', desc: '+25 PV max, soigne', apply: () => { player.maxHp += 25; player.hp = player.maxHp; } },
-  { name: 'Aimant à capsules', desc: '+50% portée de ramassage', apply: () => player.pickupRange *= 1.5 },
-  { name: 'Bras de catapulte', desc: '+25% vitesse des projectiles', apply: () => player.projSpeed *= 1.25 },
-];
-
-const UNLOCKABLE_WEAPONS = [
-  { id: 'keg', name: 'Fût qui roule', desc: 'Débloque le fût: roule et écrase tout sur son passage' },
-  { id: 'puddle', name: 'Flaque de bière', desc: 'Débloque la flaque: dégâts de zone sur la durée' },
-  { id: 'coaster', name: 'Dessous de verre', desc: 'Débloque le shuriken: transperce plusieurs zombies' },
-];
+function applyPassiveItem(item) {
+  const current = player[item.stat];
+  player[item.stat] = item.op === 'mult' ? current * item.value : current + item.value;
+  if (item.healFull) player.hp = player.maxHp;
+}
 
 function buildPool() {
-  const pool = [...STAT_UPGRADES];
-  for (const w of UNLOCKABLE_WEAPONS) {
-    if (isPurchased(w.id) && !player.unlockedWeapons.has(w.id)) {
-      pool.push({ name: w.name, desc: w.desc, apply: () => player.unlockedWeapons.add(w.id) });
+  const pool = PASSIVE_ITEMS.map(item => ({
+    name: item.name,
+    desc: item.desc,
+    apply: () => applyPassiveItem(item),
+  }));
+  for (const cfg of Object.values(WEAPON_TYPES)) {
+    if (cfg.unlockCard && isPurchased(cfg.id) && !player.unlockedWeapons.has(cfg.id)) {
+      pool.push({
+        name: cfg.unlockCard.name,
+        desc: cfg.unlockCard.desc,
+        apply: () => player.unlockedWeapons.add(cfg.id),
+      });
     }
   }
   return pool;

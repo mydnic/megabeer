@@ -8,7 +8,7 @@ import { updateBullets, handleBulletEnemyCollisions } from './projectiles.js';
 import { updateWeapons } from './weapons.js';
 import { updatePuddles } from './puddles.js';
 import { spawnOrb, updateOrbs } from './xp.js';
-import { spawnTunasDrop, updateTunasDrops } from './tunas.js';
+import { maybeDropTunas, updateTunasDrops } from './tunas.js';
 import { updateHud, endGame } from './hud.js';
 import { updateMap, resolveCollisions } from './mapgen.js';
 import { initMenu } from './menu.js';
@@ -57,7 +57,7 @@ function update(dt) {
   removeDeadEnemies(e => {
     state.killCount++;
     spawnOrb(e.x, e.z, e.xp);
-    if (Math.random() < 0.18) spawnTunasDrop(e.x, e.z, 1 + Math.floor(Math.random() * 3));
+    maybeDropTunas(e.x, e.z);
   });
 
   updateOrbs(dt);
