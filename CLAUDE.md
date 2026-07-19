@@ -95,12 +95,31 @@ actual drops for the end-screen display; it does not grant TUNAS itself.
 
 `devpanel.js` renders a 🛠 icon (bottom-right) that toggles a debug sidebar.
 Currently: **Godmode** (`state.godmode`, checked in `enemies.js` before applying
-contact damage). It's loaded via a dynamic `import()` gated on `import.meta.env.DEV`
-in `main.js` — Vite/Rollup dead-code-eliminates the whole module from `yarn build`
+contact damage), **Freeze time** (toggles `state.paused` directly), and **Spawn
+enemy** (dropdown of `ENEMY_TYPES` + button, calls `spawnEnemyById` from
+`enemies.js` to drop one ~6 units from the player for quick inspection). Prefer
+extending this panel over ad-hoc `window.__debug` hooks when the need is
+recurring (inspecting enemies/animations, forcing state) — it's real UI, not a
+throwaway. It's loaded via a dynamic `import()` gated on `import.meta.env.DEV` in
+`main.js` — Vite/Rollup dead-code-eliminates the whole module from `yarn build`
 output (verified by grepping `dist/assets/*.js` for panel strings — should find
 nothing). Keep this pattern for any new dev-only tooling: gate behind
 `import.meta.env.DEV`, dynamic-import the module, never add dev-only markup to
 `index.html` directly (build it in JS so it's excluded the same way).
+
+## Lighting / art direction
+
+`scene.js` sets a night palette (desaturated blue-grey, not neutral grey) with low
+ambient + a directional "moon" key light that **follows the player** every frame
+(`updateSceneLighting(px, pz)`, called from `main.js`'s update loop) so its shadow
+camera frustum (35 units, tuned for close-range readability) stays centered on the
+action across the infinite procedural map. Shadows are on
+(`renderer.shadowMap.enabled`); player/zombies/map props all cast+receive. If you
+add a new light, either make it follow the player the same way or keep it a cheap
+non-shadow-casting fill — a fixed-position shadow-casting light won't cover the
+map as the player roams. Ambient is intentionally low: `MeshToonMaterial`'s
+gradient-map banding only reads when there's real light/shadow contrast, high
+ambient flattens it back to a wash.
 
 ## 3D assets
 

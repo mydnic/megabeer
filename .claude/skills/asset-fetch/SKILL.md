@@ -101,3 +101,13 @@ needs no permission; fetching the bytes does.
   `AnimationMixer` bound to the character's skeleton — they share bone
   names/hierarchy by construction within one Kenney character series, so this
   retargeting works without extra setup.
+- **Never pick `loadedObject.animations[0]` blindly.** A single FBX/glTF can bundle
+  multiple clips — e.g. Kenney's `run.fbx` actually contains two: a 2-keyframe
+  "Targeting Pose" reference (index 0, effectively a frozen T-pose) and the real
+  17-keyframe "Run" cycle (index 1). Taking index 0 silently froze every zombie in
+  a T-pose with no error anywhere. Log `.animations.map(a => a.name)` after loading
+  and pick by name (`animations.find(c => /run/i.test(c.name))`), or at minimum
+  eyeball the result in-browser before assuming it's right — a wrong pick fails
+  silent, not loud. glTF packs with cleanly named clips (Quaternius: `Run`, `Walk`,
+  `Death`, `Crawl`, ...) are far less error-prone here than FBX packs that split
+  "reference pose" and "real animation" across clips with similar names.
