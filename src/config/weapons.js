@@ -47,9 +47,26 @@ export const WEAPON_TYPES = {
     shop: { cost: 80, desc: 'Flaque AOE, dégâts sur la durée' },
     effects: [],
   },
+  // Character-exclusive starters — no unlockCard/shop (not obtainable any other way).
+  stout: {
+    id: 'stout',
+    label: 'Bière Stout',
+    cooldown: 1.3,
+    range: 16,
+    dmgMult: 1.8,
+    projectile: { pierce: 1, speedMult: 0.85, spin: 0 },
+    effects: [],
+  },
+  vomit: {
+    id: 'vomit',
+    label: 'Flaque de vomi',
+    cooldown: 4.0,
+    range: Infinity,
+    dmgMult: 0.5,
+    aoe: { radius: 3.0, duration: 3.5, tickInterval: 0.4 },
+    effects: [],
+  },
 };
-
-export const STARTER_WEAPON_ID = 'beer';
 
 // Beer variants rolled per shot by the 'beer' weapon. Higher-abv types unlock
 // gradually over the run (see pickBeerType in src/weapons.js).

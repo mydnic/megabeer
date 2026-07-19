@@ -18,8 +18,8 @@
   .card p{margin:0;font-size:13px;color:#ccc}
   #center{text-align:center;font-size:28px;display:none}
   #choices{display:flex;flex-wrap:wrap;justify-content:center}
-  #menu,#shop{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(circle at 50% 30%,#3a2c1a,#0d0a06);z-index:5}
-  #shop{display:none}
+  #menu,#shop,#select{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(circle at 50% 30%,#3a2c1a,#0d0a06);z-index:5}
+  #shop,#select{display:none}
   .logo{font-size:56px;font-weight:900;letter-spacing:2px;color:#ffcc33;text-shadow:0 4px 0 #7a3a10,0 6px 12px #000}
   .logo span{color:#f2c14e}
   .subtitle{color:#c9b48a;margin:4px 0 28px;font-size:14px}
@@ -32,6 +32,16 @@
   .shopCard h3{margin:0 0 6px 0;color:#f2c14e;font-size:16px}
   .shopCard p{margin:0 0 10px 0;font-size:12px;color:#c9b48a;min-height:32px}
   .shopCard .cost{color:#ffcc33;font-size:13px;margin-bottom:8px}
+  #select{overflow-y:auto;padding:24px 0}
+  .pickRow{display:flex;flex-wrap:wrap;justify-content:center;max-width:900px;margin-bottom:20px}
+  .pickCard{background:#221a12;border:2px solid #5a4a30;padding:14px 16px;margin:8px;width:190px;border-radius:6px;text-align:center;cursor:pointer}
+  .pickCard:hover{border-color:#f2c14e}
+  .pickCard.selected{border-color:#ffcc33;background:#2e2415;box-shadow:0 0 12px rgba(255,204,51,.35)}
+  .pickCard.locked{opacity:.35;cursor:not-allowed}
+  .pickCard h3{margin:0 0 6px 0;color:#f2c14e;font-size:15px}
+  .pickCard p{margin:0;font-size:11px;color:#c9b48a;min-height:44px}
+  .pickCard .weapon{margin-top:8px;font-size:11px;color:#8fd0ff}
+  .swatch{width:36px;height:36px;border-radius:50%;margin:0 auto 8px;border:2px solid rgba(255,255,255,.3)}
 </style>
 </head>
 <body>
@@ -49,6 +59,18 @@
   <div class="tunas">🪙 <span id="shopTunas">0</span> TUNAS</div>
   <div id="shopList"></div>
   <button class="btn" id="btnShopBack">Retour</button>
+</div>
+
+<div id="select">
+  <div class="logo" style="font-size:32px">Choisis ton profil</div>
+  <div class="subtitle" style="margin-bottom:12px">Personnage</div>
+  <div class="pickRow" id="charRow"></div>
+  <div class="subtitle" style="margin-bottom:12px">Carte</div>
+  <div class="pickRow" id="mapRow"></div>
+  <div>
+    <button class="btn" id="btnStart">Commencer</button>
+    <button class="btn" id="btnSelectBack">Retour</button>
+  </div>
 </div>
 
 <div id="bar"><div id="barFill"></div></div>

@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { scene, camera, renderer, grid, resize, updateSceneLighting } from './scene.js';
 import { keys, mouse } from './input.js';
 import { state } from './state.js';
-import { player, updatePlayer, playerMesh } from './player.js';
+import { player, updatePlayer, playerMesh, initPlayer } from './player.js';
 import { spawnEnemy, nearestEnemy, updateEnemies, removeDeadEnemies } from './enemies.js';
 import { updateBullets, handleBulletEnemyCollisions } from './projectiles.js';
 import { updateWeapons } from './weapons.js';
@@ -12,10 +12,15 @@ import { maybeDropTunas, updateTunasDrops } from './tunas.js';
 import { updateHud, endGame } from './hud.js';
 import { updateMap, resolveCollisions } from './mapgen.js';
 import { initMenu } from './menu.js';
+import { initCharSelect, showSelect } from './charSelect.js';
 
 resize();
 updateMap(0, 0);
-initMenu(() => { state.started = true; });
+initCharSelect((characterId) => {
+  initPlayer(characterId);
+  state.started = true;
+});
+initMenu(() => showSelect());
 
 if (import.meta.env.DEV) {
   const { initDevPanel } = await import('./devpanel.js');

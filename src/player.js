@@ -7,24 +7,20 @@ import { CHARACTERS, DEFAULT_CHARACTER_ID } from './config/characters.js';
 const GRAVITY = 28;
 const JUMP_FORCE = 9;
 
-const character = CHARACTERS[DEFAULT_CHARACTER_ID];
-const base = character.baseStats;
-
 export const player = {
   x: 0, y: 0, z: 0, vy: 0, grounded: true,
-  r: 0.8, facing: 0, hp: base.hp, maxHp: base.hp,
+  r: 0.8, facing: 0, hp: 100, maxHp: 100,
   level: 1, xp: 0, xpNext: 10,
-  speed: base.speed, dmg: base.dmg, atkSpeed: base.atkSpeed,
-  projSpeed: base.projSpeed, projCount: base.projCount, pickupRange: base.pickupRange,
+  speed: 9, dmg: 10, atkSpeed: 1.0, projSpeed: 26, projCount: 1, pickupRange: 5,
   invuln: 0,
-  unlockedWeapons: new Set([character.startWeapon]),
+  unlockedWeapons: new Set(),
   weaponTimers: {},
 };
 
 export const playerMesh = new THREE.Group();
 export const body = new THREE.Mesh(
   new THREE.CapsuleGeometry(0.6, 1.0, 4, 8),
-  toonMaterial({ color: character.color })
+  toonMaterial({ color: 0x44ccff })
 );
 body.position.y = 1.1;
 body.castShadow = true;
@@ -38,6 +34,30 @@ nose.position.set(0, 1.1, 0.7);
 nose.castShadow = true;
 playerMesh.add(body, nose);
 scene.add(playerMesh);
+
+let activeColor = 0x44ccff;
+
+// Called once the character/map select screen confirms a pick, before a run starts.
+// Resets every run-scoped stat — safe to call again on replay without a page reload.
+export function initPlayer(characterId) {
+  const character = CHARACTERS[characterId] || CHARACTERS[DEFAULT_CHARACTER_ID];
+  const base = character.baseStats;
+
+  Object.assign(player, {
+    x: 0, y: 0, z: 0, vy: 0, grounded: true, facing: 0,
+    hp: base.hp, maxHp: base.hp,
+    level: 1, xp: 0, xpNext: 10,
+    speed: base.speed, dmg: base.dmg, atkSpeed: base.atkSpeed,
+    projSpeed: base.projSpeed, projCount: base.projCount, pickupRange: base.pickupRange,
+    invuln: 0,
+    unlockedWeapons: new Set([character.startWeapon]),
+    weaponTimers: {},
+  });
+
+  activeColor = character.color;
+  body.material.color.setHex(activeColor);
+  playerMesh.position.set(0, 0, 0);
+}
 
 export function updatePlayer(dt, keys) {
   let mx = 0, mz = 0;
@@ -73,5 +93,5 @@ export function updatePlayer(dt, keys) {
   playerMesh.rotation.y = player.facing;
 
   if (player.invuln > 0) player.invuln -= dt;
-  body.material.color.setHex(player.invuln > 0 ? 0xffffff : character.color);
+  body.material.color.setHex(player.invuln > 0 ? 0xffffff : activeColor);
 }

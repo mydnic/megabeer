@@ -4,10 +4,10 @@ import { state } from './state.js';
 import { dist2 } from './util.js';
 import { toonMaterial } from './textures.js';
 
-export function spawnPuddle(x, z, dmgPerTick, radius, duration) {
+export function spawnPuddle(x, z, dmgPerTick, radius, duration, color = 0xcc8811) {
   const mesh = new THREE.Mesh(
     new THREE.CylinderGeometry(radius, radius, 0.05, 20),
-    toonMaterial({ color: 0xcc8811, transparent: true, opacity: 0.55 })
+    toonMaterial({ color, transparent: true, opacity: 0.55 })
   );
   mesh.position.set(x, 0.03, z);
   scene.add(mesh);
