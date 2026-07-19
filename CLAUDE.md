@@ -102,6 +102,14 @@ nothing). Keep this pattern for any new dev-only tooling: gate behind
 `import.meta.env.DEV`, dynamic-import the module, never add dev-only markup to
 `index.html` directly (build it in JS so it's excluded the same way).
 
+## 3D assets
+
+`src/assets/` holds downloaded model/texture packs (currently
+`kenney-animated-characters-survivors/` — CC0, FBX rig + zombie/survivor skins +
+idle/run/jump animation clips, not yet wired into the game). To find/install more,
+use the `asset-fetch` skill (`.claude/skills/asset-fetch/SKILL.md`) — it covers
+Kenney, Quaternius, and itch.io, and the file-download permission rule it follows.
+
 ## Bug / feature tracking
 
 **GitHub Issues** on this repo (`origin` → `github.com/mydnic/megabeer`). File bugs

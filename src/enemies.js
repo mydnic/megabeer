@@ -3,44 +3,8 @@ import { scene, camera } from './scene.js';
 import { player } from './player.js';
 import { state } from './state.js';
 import { dist2 } from './util.js';
-import { toonMaterial } from './textures.js';
 import { ENEMY_TYPES, ENEMY_TIER_SECONDS } from './config/enemies.js';
-
-const torsoGeo = new THREE.BoxGeometry(1.0, 1.2, 0.6);
-const headGeo = new THREE.BoxGeometry(0.55, 0.55, 0.55);
-const limbGeo = new THREE.CylinderGeometry(0.14, 0.11, 1.0, 6);
-limbGeo.translate(0, -0.5, 0);
-const legGeo = new THREE.CylinderGeometry(0.17, 0.13, 1.05, 6);
-legGeo.translate(0, -0.5, 0);
-
-function makeZombieMesh(k) {
-  const mat = toonMaterial({ color: k.color });
-  const g = new THREE.Group();
-
-  const torso = new THREE.Mesh(torsoGeo, mat);
-  torso.position.y = 1.3;
-
-  const head = new THREE.Mesh(headGeo, mat);
-  head.position.y = 2.15;
-
-  const armL = new THREE.Mesh(limbGeo, mat);
-  armL.position.set(-0.62, 1.8, 0);
-  armL.rotation.x = -1.1;
-  const armR = new THREE.Mesh(limbGeo, mat);
-  armR.position.set(0.62, 1.8, 0);
-  armR.rotation.x = -1.1;
-
-  const legL = new THREE.Mesh(legGeo, mat);
-  legL.position.set(-0.26, 0.85, 0);
-  const legR = new THREE.Mesh(legGeo, mat);
-  legR.position.set(0.26, 0.85, 0);
-
-  g.add(torso, head, armL, armR, legL, legR);
-  g.scale.setScalar(k.r);
-  g.userData.mat = mat;
-  g.userData.limbs = { armL, armR, legL, legR };
-  return g;
-}
+import { zombieAsset, cloneZombie } from './zombieAsset.js';
 
 function makeHpBar() {
   const g = new THREE.Group();
@@ -52,16 +16,16 @@ function makeHpBar() {
   return g;
 }
 
-export function spawnEnemy() {
+function spawnKind(k, distance) {
+  if (!zombieAsset.ready) return;
+
   const angle = Math.random() * Math.PI * 2;
-  const dist = 40 + Math.random() * 8;
+  const dist = distance + Math.random() * (distance * 0.2);
   const x = player.x + Math.cos(angle) * dist;
   const z = player.z + Math.sin(angle) * dist;
-  const tier = Math.min(ENEMY_TYPES.length - 1, Math.floor(state.gameTime / ENEMY_TIER_SECONDS));
-  const k = ENEMY_TYPES[Math.min(ENEMY_TYPES.length - 1, Math.floor(Math.random() * (tier + 1)))];
   const scale = 1 + state.gameTime / 90;
 
-  const mesh = makeZombieMesh(k);
+  const mesh = cloneZombie(k.skin, k.color, k.r);
   mesh.position.set(x, 0, z);
   const barHeight = k.r * 2.6 + 0.4;
   const hpBar = makeHpBar();
@@ -71,8 +35,20 @@ export function spawnEnemy() {
   state.enemies.push({
     x, z, r: k.r, hp: k.hp * scale, maxHp: k.hp * scale,
     speed: k.speed, dmg: k.dmg, xp: k.xp, mesh, hpBar, barHeight, hitFlash: 0,
-    walkPhase: Math.random() * 10,
+    mixer: mesh.userData.mixer,
   });
+}
+
+export function spawnEnemy() {
+  const tier = Math.min(ENEMY_TYPES.length - 1, Math.floor(state.gameTime / ENEMY_TIER_SECONDS));
+  const k = ENEMY_TYPES[Math.min(ENEMY_TYPES.length - 1, Math.floor(Math.random() * (tier + 1)))];
+  spawnKind(k, 40);
+}
+
+// Dev-panel only: spawn a specific enemy type close to the player for inspection.
+export function spawnEnemyById(id, distance = 6) {
+  const k = ENEMY_TYPES.find(t => t.id === id);
+  if (k) spawnKind(k, distance);
 }
 
 export function nearestEnemy() {
@@ -97,20 +73,16 @@ export function updateEnemies(dt) {
     e.hpBar.quaternion.copy(camera.quaternion);
     e.hpBar.userData.fill.scale.x = Math.max(0, e.hp / e.maxHp);
 
-    e.walkPhase += dt * e.speed * 2.2;
-    const swing = Math.sin(e.walkPhase) * 0.5;
-    const { armL, armR, legL, legR } = e.mesh.userData.limbs;
-    armL.rotation.x = -1.1 + swing;
-    armR.rotation.x = -1.1 - swing;
-    legL.rotation.x = -swing * 0.8;
-    legR.rotation.x = swing * 0.8;
+    e.mixer.update(dt * (e.speed / 2.8));
 
     if (e.hitFlash > 0) {
       e.hitFlash -= dt;
-      e.mesh.userData.mat.emissive.setHex(0xff3333);
-      e.mesh.userData.mat.emissiveIntensity = e.hitFlash * 4;
+      for (const mat of e.mesh.userData.mats) {
+        mat.emissive.setHex(0xff3333);
+        mat.emissiveIntensity = e.hitFlash * 4;
+      }
     } else {
-      e.mesh.userData.mat.emissiveIntensity = 0;
+      for (const mat of e.mesh.userData.mats) mat.emissiveIntensity = 0;
     }
 
     if (d < e.r + player.r && player.invuln <= 0) {
