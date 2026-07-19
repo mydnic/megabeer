@@ -3,8 +3,8 @@ import { scene, camera } from './scene.js';
 import { player } from './player.js';
 import { state } from './state.js';
 import { dist2 } from './util.js';
-import { ENEMY_TYPES, ENEMY_TIER_SECONDS } from './config/enemies.js';
-import { zombieAsset, cloneZombie } from './zombieAsset.js';
+import { ENEMY_TYPES } from './config/enemies.js';
+import { enemyModels, cloneEnemyModel } from './enemyModels.js';
 
 function makeHpBar() {
   const g = new THREE.Group();
@@ -17,7 +17,7 @@ function makeHpBar() {
 }
 
 function spawnKind(k, distance) {
-  if (!zombieAsset.ready) return;
+  if (!enemyModels.ready) return;
 
   const angle = Math.random() * Math.PI * 2;
   const dist = distance + Math.random() * (distance * 0.2);
@@ -25,7 +25,7 @@ function spawnKind(k, distance) {
   const z = player.z + Math.sin(angle) * dist;
   const scale = 1 + state.gameTime / 90;
 
-  const mesh = cloneZombie(k.skin, k.color, k.r);
+  const mesh = cloneEnemyModel(k.model, k.color, k.r);
   mesh.position.set(x, 0, z);
   const barHeight = k.r * 2.6 + 0.4;
   const hpBar = makeHpBar();
@@ -40,8 +40,8 @@ function spawnKind(k, distance) {
 }
 
 export function spawnEnemy() {
-  const tier = Math.min(ENEMY_TYPES.length - 1, Math.floor(state.gameTime / ENEMY_TIER_SECONDS));
-  const k = ENEMY_TYPES[Math.min(ENEMY_TYPES.length - 1, Math.floor(Math.random() * (tier + 1)))];
+  const unlocked = ENEMY_TYPES.filter(t => t.unlockAt <= state.gameTime);
+  const k = unlocked[Math.floor(Math.random() * unlocked.length)];
   spawnKind(k, 40);
 }
 

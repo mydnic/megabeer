@@ -123,11 +123,24 @@ ambient flattens it back to a wash.
 
 ## 3D assets
 
-`src/assets/` holds downloaded model/texture packs (currently
-`kenney-animated-characters-survivors/` — CC0, FBX rig + zombie/survivor skins +
-idle/run/jump animation clips, not yet wired into the game). To find/install more,
-use the `asset-fetch` skill (`.claude/skills/asset-fetch/SKILL.md`) — it covers
-Kenney, Quaternius, and itch.io, and the file-download permission rule it follows.
+`src/assets/` holds downloaded model/texture packs, all CC0:
+
+- `kenney-animated-characters-survivors/` — FBX rig + zombie/survivor skins +
+  idle/run/jump clips. **Currently wired in** via `zombieAsset.js` (see its
+  comment about the `run.fbx` two-clip trap — index 0 is a frozen T-pose, the
+  real cycle is picked by name).
+- `quaternius-zombies/` — 4 self-contained glTF zombie models (Basic/Chubby/
+  Arm/Ribcage), each with 16 named animation clips (Run/Walk/Death/Crawl/Attack/
+  etc). Staged, not yet wired in — a strictly better replacement candidate for
+  the Kenney zombie (glTF's explicit per-clip keyframes avoid the whole FBX
+  clip-selection footgun class). See issue #2.
+- `quaternius-vehicles/` — 6 glTF vehicles (Pickup/Truck/Sports, each with an
+  Armored variant). Staged for issue #8 (véhicule écrase-zombies), not wired in.
+
+To find/install more, use the `asset-fetch` skill
+(`.claude/skills/asset-fetch/SKILL.md`) — covers Kenney, Quaternius (including its
+Google Drive-hosted kits), and itch.io, plus the file-download permission rule and
+the animation-clip-selection lesson above in more detail.
 
 ## Bug / feature tracking
 
