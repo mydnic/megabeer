@@ -5,11 +5,23 @@ import { state } from './state.js';
 import { dist2 } from './util.js';
 import { ENEMY_TYPES } from './config/enemies.js';
 import { enemyModels, cloneEnemyModel } from './enemyModels.js';
+import { resolveCollisions } from './mapgen.js';
+
+// Contact collision only checks x/z, so without this a jump would never actually
+// dodge anything — the whole point of "le saut ne sert à rien" (issue #1). Above
+// this height, zombie contact damage is skipped: a jump buys a brief dodge window.
+const DODGE_HEIGHT = 0.6;
+
+// Shared across every hp bar — geometry/material never vary per-instance (only
+// the fill mesh's scale.x does, which is an Object3D property, not the material).
+const hpBarGeo = new THREE.PlaneGeometry(1.2, 0.14);
+const hpBarBackMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+const hpBarFillMat = new THREE.MeshBasicMaterial({ color: 0xee3333 });
 
 function makeHpBar() {
   const g = new THREE.Group();
-  const back = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.14), new THREE.MeshBasicMaterial({ color: 0x000000 }));
-  const fill = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.14), new THREE.MeshBasicMaterial({ color: 0xee3333 }));
+  const back = new THREE.Mesh(hpBarGeo, hpBarBackMat);
+  const fill = new THREE.Mesh(hpBarGeo, hpBarFillMat);
   fill.position.z = 0.001;
   g.add(back, fill);
   g.userData.fill = fill;
@@ -60,12 +72,43 @@ export function nearestEnemy() {
   return best;
 }
 
+// Mutual push-apart so a crowd doesn't collapse into one overlapping blob.
+// O(n²) — fine at survivors-like enemy counts; revisit with spatial hashing if
+// the roster ever grows into the many-hundreds.
+function separateEnemies() {
+  const enemies = state.enemies;
+  for (let i = 0; i < enemies.length; i++) {
+    const a = enemies[i];
+    for (let j = i + 1; j < enemies.length; j++) {
+      const b = enemies[j];
+      const dx = a.x - b.x, dz = a.z - b.z;
+      const dist = Math.hypot(dx, dz);
+      const min = a.r + b.r;
+      if (dist > 0.0001 && dist < min) {
+        const push = (min - dist) / 2;
+        const nx = dx / dist, nz = dz / dist;
+        a.x += nx * push; a.z += nz * push;
+        b.x -= nx * push; b.z -= nz * push;
+      }
+    }
+  }
+}
+
 export function updateEnemies(dt) {
   for (const e of state.enemies) {
     const dx = player.x - e.x, dz = player.z - e.z;
     const d = Math.hypot(dx, dz) || 1;
     e.x += dx / d * e.speed * dt;
     e.z += dz / d * e.speed * dt;
+  }
+
+  separateEnemies();
+  for (const e of state.enemies) resolveCollisions(e);
+
+  for (const e of state.enemies) {
+    const dx = player.x - e.x, dz = player.z - e.z;
+    const d = Math.hypot(dx, dz) || 1;
+
     e.mesh.position.x = e.x;
     e.mesh.position.z = e.z;
     e.mesh.rotation.y = Math.atan2(dx, dz);
@@ -86,7 +129,7 @@ export function updateEnemies(dt) {
     }
 
     if (d < e.r + player.r && player.invuln <= 0) {
-      if (!state.godmode) player.hp -= e.dmg;
+      if (!state.godmode && player.y < DODGE_HEIGHT) player.hp -= e.dmg;
       player.invuln = 0.5;
     }
   }
@@ -99,4 +142,10 @@ export function removeDeadEnemies(onDeath) {
     onDeath(e);
   }
   state.enemies = state.enemies.filter(e => e.hp > 0);
+}
+
+// Used by resetRun.js to end a run without a full page reload.
+export function clearEnemies() {
+  for (const e of state.enemies) scene.remove(e.mesh, e.hpBar);
+  state.enemies = [];
 }

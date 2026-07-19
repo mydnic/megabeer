@@ -34,6 +34,12 @@ function removeExpiredBullets() {
   state.bullets = state.bullets.filter(b => b.life > 0);
 }
 
+// Used by resetRun.js to end a run without a full page reload.
+export function clearBullets() {
+  for (const b of state.bullets) scene.remove(b.mesh);
+  state.bullets = [];
+}
+
 export function handleBulletEnemyCollisions() {
   for (const b of state.bullets) {
     for (const e of state.enemies) {

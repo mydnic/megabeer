@@ -5,6 +5,7 @@ import { isPurchased } from './meta.js';
 import { PASSIVE_ITEMS } from './config/items.js';
 import { WEAPON_TYPES } from './config/weapons.js';
 import { setGamepadNavRows } from './gamepadNav.js';
+import { shuffle } from './util.js';
 
 function applyPassiveItem(item) {
   const current = player[item.stat];
@@ -30,18 +31,39 @@ function buildPool() {
   return pool;
 }
 
-export function pickUpgrades() {
+// Call this on every level gained (not pickUpgrades directly) — queues the pick
+// screen instead of showing it immediately, so a multi-level XP gain doesn't have
+// a later pickUpgrades() call wipe out an earlier one before the player could
+// choose (choicesEl.innerHTML = '' used to silently drop a pending upgrade).
+export function requestUpgrade() {
+  state.pendingLevelUps++;
+  if (!state.paused) showNextUpgrade();
+}
+
+function showNextUpgrade() {
+  if (state.pendingLevelUps <= 0) return;
+
   state.paused = true;
   if (document.pointerLockElement) document.exitPointerLock();
   overlay.style.display = 'flex';
   centerEl.style.display = 'none';
   choicesEl.innerHTML = '';
-  const pool = buildPool().sort(() => Math.random() - 0.5).slice(0, 3);
+
+  const pool = shuffle(buildPool()).slice(0, 3);
   for (const u of pool) {
     const div = document.createElement('div');
     div.className = 'card';
     div.innerHTML = `<h3>${u.name}</h3><p>${u.desc}</p>`;
-    div.onclick = () => { u.apply(); overlay.style.display = 'none'; state.paused = false; };
+    div.onclick = () => {
+      u.apply();
+      state.pendingLevelUps--;
+      if (state.pendingLevelUps > 0) {
+        showNextUpgrade();
+      } else {
+        overlay.style.display = 'none';
+        state.paused = false;
+      }
+    };
     choicesEl.appendChild(div);
   }
   setGamepadNavRows([[...choicesEl.children]]);

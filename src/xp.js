@@ -2,14 +2,16 @@ import * as THREE from 'three';
 import { scene } from './scene.js';
 import { player } from './player.js';
 import { state } from './state.js';
-import { pickUpgrades } from './upgrades.js';
+import { requestUpgrade } from './upgrades.js';
 import { toonMaterial } from './textures.js';
 
+// Shared across every orb — one geometry/material for the whole run instead of a
+// fresh pair per spawn (they never differ per-instance, no reason not to reuse).
+const orbGeo = new THREE.IcosahedronGeometry(0.35, 0);
+const orbMat = toonMaterial({ color: 0x55ccff, emissive: 0x113344 });
+
 export function spawnOrb(x, z, val) {
-  const mesh = new THREE.Mesh(
-    new THREE.IcosahedronGeometry(0.35, 0),
-    toonMaterial({ color: 0x55ccff, emissive: 0x113344 })
-  );
+  const mesh = new THREE.Mesh(orbGeo, orbMat);
   mesh.position.set(x, 0.9, z);
   scene.add(mesh);
   state.xpOrbs.push({ x, z, val, r: 0.4, mesh });
@@ -21,7 +23,7 @@ export function gainXp(n) {
     player.xp -= player.xpNext;
     player.level++;
     player.xpNext = Math.floor(player.xpNext * 1.25 + 5);
-    pickUpgrades();
+    requestUpgrade();
   }
 }
 
@@ -43,4 +45,10 @@ export function updateOrbs(dt) {
     }
   }
   state.xpOrbs = state.xpOrbs.filter(o => !o.collected);
+}
+
+// Used by resetRun.js to end a run without a full page reload.
+export function clearOrbs() {
+  for (const o of state.xpOrbs) scene.remove(o.mesh);
+  state.xpOrbs = [];
 }

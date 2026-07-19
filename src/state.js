@@ -12,4 +12,5 @@ export const state = {
   started: false,
   spawnTimer: 0,
   godmode: false,
+  pendingLevelUps: 0,
 };

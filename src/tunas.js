@@ -44,3 +44,9 @@ export function updateTunasDrops(dt) {
   }
   state.tunasDrops = state.tunasDrops.filter(t => !t.collected);
 }
+
+// Used by resetRun.js to end a run without a full page reload.
+export function clearTunasDrops() {
+  for (const t of state.tunasDrops) scene.remove(t.mesh);
+  state.tunasDrops = [];
+}

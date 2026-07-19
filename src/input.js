@@ -3,6 +3,10 @@ import { canvas } from './scene.js';
 export const keys = {};
 addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
 addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+// If the window loses focus while a key is physically held, no keyup ever fires —
+// the key stays stuck "pressed" (e.g. alt-tabbing away mid-strafe locks movement
+// on until the key is pressed again). Clear everything on blur.
+addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
 
 export const mouse = { yaw: 0, pitch: 0.95 };
 const SENSITIVITY = 0.0028;

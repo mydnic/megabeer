@@ -17,6 +17,9 @@ const kegMat = woodMaterial(1, 1);
 const coasterGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.06, 16);
 const coasterMat = toonMaterial({ color: 0xd2a679 });
 const stoutMat = toonMaterial({ color: 0x2b1810 });
+// One material per beer type, built once and reused — a fresh toonMaterial() per
+// shot (previously created on every single beer throw) never got disposed.
+const beerMats = new Map(BEER_TYPES.map(bt => [bt, toonMaterial({ color: bt.color })]));
 
 function angleTo(target) {
   return Math.atan2(target.x - player.x, target.z - player.z);
@@ -32,7 +35,7 @@ const WEAPON_FIRE = {
       const bt = pickBeerType(gameTime);
       fireProjectile(base + spread, {
         geometry: bottleGeo,
-        material: toonMaterial({ color: bt.color }),
+        material: beerMats.get(bt),
         dmg: player.dmg * cfg.dmgMult * bt.dmgMult,
         speed: player.projSpeed * cfg.projectile.speedMult,
         r: 0.3, pierce: cfg.projectile.pierce,

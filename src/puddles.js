@@ -29,6 +29,23 @@ export function updatePuddles(dt) {
     }
   }
   const expired = state.puddles.filter(p => p.life <= 0);
-  for (const p of expired) scene.remove(p.mesh);
+  for (const p of expired) {
+    scene.remove(p.mesh);
+    // Radius/color vary per puddle (beer vs vomit, different weapons), so unlike
+    // orbs/bottles/hp-bars these can't just share one geometry/material — dispose
+    // them for real instead.
+    p.mesh.geometry.dispose();
+    p.mesh.material.dispose();
+  }
   state.puddles = state.puddles.filter(p => p.life > 0);
+}
+
+// Used by resetRun.js to end a run without a full page reload.
+export function clearPuddles() {
+  for (const p of state.puddles) {
+    scene.remove(p.mesh);
+    p.mesh.geometry.dispose();
+    p.mesh.material.dispose();
+  }
+  state.puddles = [];
 }
