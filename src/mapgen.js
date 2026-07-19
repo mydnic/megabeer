@@ -137,6 +137,10 @@ function generateChunk(cx, cz) {
     group.add(tree(originX + rand(cx, cz, 2) * CHUNK_SIZE, originZ + rand(cx, cz, 4) * CHUNK_SIZE, chunkColliders));
   }
 
+  group.traverse(child => {
+    if (child.isMesh) { child.castShadow = true; child.receiveShadow = true; }
+  });
+
   scene.add(group);
   const k = key(cx, cz);
   chunks.set(k, group);

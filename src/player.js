@@ -27,12 +27,15 @@ export const body = new THREE.Mesh(
   toonMaterial({ color: character.color })
 );
 body.position.y = 1.1;
+body.castShadow = true;
+body.receiveShadow = true;
 const nose = new THREE.Mesh(
   new THREE.ConeGeometry(0.25, 0.6, 8),
   toonMaterial({ color: 0x2288aa })
 );
 nose.rotation.x = Math.PI / 2;
 nose.position.set(0, 1.1, 0.7);
+nose.castShadow = true;
 playerMesh.add(body, nose);
 scene.add(playerMesh);
 

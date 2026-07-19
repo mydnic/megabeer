@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { scene, camera, renderer, grid, resize } from './scene.js';
+import { scene, camera, renderer, grid, resize, updateSceneLighting } from './scene.js';
 import { keys, mouse } from './input.js';
 import { state } from './state.js';
 import { player, updatePlayer, playerMesh } from './player.js';
@@ -69,6 +69,7 @@ function update(dt) {
   grid.position.x = Math.round(player.x / 10) * 10;
   grid.position.z = Math.round(player.z / 10) * 10;
   updateMap(player.x, player.z);
+  updateSceneLighting(player.x, player.z);
 
   const camDist = 16;
   const cx = player.x + Math.sin(mouse.yaw) * camDist * Math.cos(mouse.pitch);

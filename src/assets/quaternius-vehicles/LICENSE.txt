@@ -1,0 +1,7 @@
+Quaternius — Zombie Apocalypse Kit (March 2024), Vehicles subset
+Source: https://quaternius.com/packs/zombieapocalypsekit.html
+License: Creative Commons Zero (CC0) — free for personal and commercial use.
+
+6 vehicle glTF models (self-contained): Vehicle_Pickup, Vehicle_Pickup_Armored,
+Vehicle_Truck, Vehicle_Truck_Armored, Vehicle_Sports, Vehicle_Sports_Armored.
+Not wired into the game yet — staged for issue #8 (véhicule écrase-zombies).

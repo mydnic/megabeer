@@ -37,11 +37,28 @@ needs no permission; fetching the bytes does.
   Kenney.url`, `Visit Patreon.url`). Keep `License.txt`.
 
 ### Quaternius (quaternius.com)
-- Same shape: pack pages list a direct download (zip, sometimes routed through
-  itch.io — check the specific page). License is CC0 site-wide but confirm and
-  quote it from the actual page.
-- No known donation-modal gate, but verify per pack — try `WebFetch` on the page
-  first before reaching for the browser click-through flow Kenney needs.
+- Same shape: pack pages list a direct download. License is CC0 site-wide but
+  confirm and quote it from the actual page.
+- The "Download" button is a JS-driven `<button>`, not a link with an `href` —
+  `WebFetch`/raw HTML won't reveal a URL. Some packs route through itch.io, but
+  larger multi-format kits (e.g. Zombie Apocalypse Kit) route through a **Google
+  Drive shared folder** instead: clicking "Download" → "Just give me the Download"
+  opens a new tab straight to `drive.google.com/drive/folders/...`.
+- When it's a Drive folder: browse into the format you want (glTF is usually best —
+  self-contained single-file per model, embedded textures + named animation clips,
+  avoids the multi-clip-selection footguns FBX has, see below). Files are
+  individually browsable/downloadable, no need to grab the whole kit — select just
+  the models needed (shift-click in the file list), right-click → "Télécharger"
+  (or the Drive UI's language-equivalent "Download"). Multi-file selections get
+  zipped server-side by Drive before download starts — wait for "Download ready"
+  before checking `~/Downloads/`.
+- This is a real browser-triggered download landing in the user's actual
+  `~/Downloads/` folder (claude-in-chrome shares their real Chrome profile) — still
+  needs the same permission-before-downloading confirmation as a curl fetch, even
+  though the mechanism is a UI click instead of a shell command. State what's about
+  to be selected/downloaded and get confirmation first. After download, `unzip`
+  from `~/Downloads/` into `src/assets/...`, then delete the zip from Downloads to
+  avoid leaving stray files in the user's real folder.
 
 ### itch.io
 - Search: `https://itch.io/game-assets/tag-<tag>` (e.g. `tag-zombies`,

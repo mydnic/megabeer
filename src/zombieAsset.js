@@ -68,6 +68,8 @@ export function cloneZombie(skinId, tint, r) {
     if (child.isMesh) {
       const mat = new THREE.MeshStandardMaterial({ map, color: tint ?? 0xffffff });
       child.material = mat;
+      child.castShadow = true;
+      child.receiveShadow = true;
       mats.push(mat);
     }
   });

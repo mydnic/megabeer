@@ -1,0 +1,8 @@
+Quaternius — Zombie Apocalypse Kit (March 2024)
+Source: https://quaternius.com/packs/zombieapocalypsekit.html
+License: Creative Commons Zero (CC0) — free for personal and commercial use.
+
+4 zombie glTF models (self-contained, embedded textures + animations):
+Zombie_Basic, Zombie_Chubby, Zombie_Arm, Zombie_Ribcage.
+Animations per file: Crawl, Death, HitReact, Idle, Idle_Attack, Jump, Jump_Idle,
+Jump_Land, No, Punch, Run, Run_Arms, Run_Attack, Walk, Wave, Yes.
