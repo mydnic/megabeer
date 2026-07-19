@@ -1,0 +1,10 @@
+export const overlay = document.getElementById('overlay');
+export const centerEl = document.getElementById('center');
+export const choicesEl = document.getElementById('choices');
+export const hpTxt = document.getElementById('hpTxt');
+export const hpFillIn = document.getElementById('hpFillIn');
+export const barFill = document.getElementById('barFill');
+export const lvEl = document.getElementById('lv');
+export const timeEl = document.getElementById('time');
+export const killsEl = document.getElementById('kills');
+export const tunasHudEl = document.getElementById('tunasHud');

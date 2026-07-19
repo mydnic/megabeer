@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Megabeer</title>
+<style>
+  html,body{margin:0;padding:0;background:#111;overflow:hidden;height:100%;font-family:sans-serif;color:#eee}
+  canvas{display:block}
+  #hud{position:fixed;top:32px;left:8px;font-size:14px;text-shadow:1px 1px 2px #000;z-index:2}
+  #bar{position:fixed;top:0;left:0;width:100%;height:6px;background:#333;z-index:2}
+  #barFill{height:100%;background:#4cf;width:0%}
+  #hpFill{position:fixed;top:8px;left:8px;width:160px;height:14px;background:#400;border:1px solid #900;z-index:2}
+  #hpFillIn{height:100%;background:#e33;width:100%}
+  #overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.75);flex-direction:column;z-index:3}
+  .card{background:#222;border:2px solid #666;padding:16px 20px;margin:8px;width:260px;cursor:pointer;border-radius:6px}
+  .card:hover{border-color:#4cf;background:#2a2a2a}
+  .card h3{margin:0 0 6px 0;color:#4cf}
+  .card p{margin:0;font-size:13px;color:#ccc}
+  #center{text-align:center;font-size:28px;display:none}
+  #choices{display:flex;flex-wrap:wrap;justify-content:center}
+  #menu,#shop{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(circle at 50% 30%,#3a2c1a,#0d0a06);z-index:5}
+  #shop{display:none}
+  .logo{font-size:56px;font-weight:900;letter-spacing:2px;color:#ffcc33;text-shadow:0 4px 0 #7a3a10,0 6px 12px #000}
+  .logo span{color:#f2c14e}
+  .subtitle{color:#c9b48a;margin:4px 0 28px;font-size:14px}
+  .tunas{color:#ffcc33;font-size:15px;margin-bottom:18px}
+  .btn{background:#5a3a1a;border:2px solid #ffcc33;color:#ffe9b0;padding:12px 30px;margin:6px;font-size:16px;cursor:pointer;border-radius:6px;font-family:inherit}
+  .btn:hover{background:#78502a}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  #shopList{display:flex;flex-wrap:wrap;justify-content:center;max-width:820px}
+  .shopCard{background:#221a12;border:2px solid #5a4a30;padding:14px 18px;margin:8px;width:220px;border-radius:6px;text-align:center}
+  .shopCard h3{margin:0 0 6px 0;color:#f2c14e;font-size:16px}
+  .shopCard p{margin:0 0 10px 0;font-size:12px;color:#c9b48a;min-height:32px}
+  .shopCard .cost{color:#ffcc33;font-size:13px;margin-bottom:8px}
+</style>
+</head>
+<body>
+<div id="menu">
+  <div class="logo">MEGA<span>BEER</span></div>
+  <div class="subtitle">survis à la nuit dans l'abbaye. bière contre zombies.</div>
+  <div class="tunas">🪙 <span id="menuTunas">0</span> TUNAS</div>
+  <button class="btn" id="btnPlay">Jouer</button>
+  <button class="btn" id="btnShop">Armes</button>
+  <div class="subtitle" style="margin-top:24px">ZQSD déplacer · souris caméra · espace sauter</div>
+</div>
+
+<div id="shop">
+  <div class="logo" style="font-size:32px">Armurerie</div>
+  <div class="tunas">🪙 <span id="shopTunas">0</span> TUNAS</div>
+  <div id="shopList"></div>
+  <button class="btn" id="btnShopBack">Retour</button>
+</div>
+
+<div id="bar"><div id="barFill"></div></div>
+<div id="hud">PV: <span id="hpTxt"></span> | Niv <span id="lv">1</span> | Temps <span id="time">0</span>s | Zombies <span id="kills">0</span> | 🪙 <span id="tunasHud">0</span></div>
+<div id="hpFill"><div id="hpFillIn"></div></div>
+<canvas id="c"></canvas>
+<div id="overlay"><div id="center"></div><div id="choices"></div></div>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
