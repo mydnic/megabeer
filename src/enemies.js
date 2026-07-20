@@ -6,6 +6,7 @@ import { dist2 } from './util.js';
 import { ENEMY_TYPES } from './config/enemies.js';
 import { enemyModels, cloneEnemyModel } from './enemyModels.js';
 import { resolveCollisions } from './mapgen.js';
+import { playDeath } from './audio.js';
 
 // Contact collision only checks x/z, so without this a jump would never actually
 // dodge anything — the whole point of "le saut ne sert à rien" (issue #1). Above
@@ -139,6 +140,7 @@ export function removeDeadEnemies(onDeath) {
   const dead = state.enemies.filter(e => e.hp <= 0);
   for (const e of dead) {
     scene.remove(e.mesh, e.hpBar);
+    playDeath();
     onDeath(e);
   }
   state.enemies = state.enemies.filter(e => e.hp > 0);

@@ -1,0 +1,7 @@
+quaternius-props/ — individual Quaternius models fetched one at a time from Poly
+Pizza (poly.pizza), not part of a bundle. License: Creative Commons Zero (CC0) /
+Public Domain, per each model's Poly Pizza page — verify per-file if adding more,
+Poly Pizza aggregates multiple authors and not everything there is CC0.
+
+- barrel.glb — https://poly.pizza/m/ONdghDBByN (Quaternius, CC0). Tagged #Barrel
+  #Keg — grabbed as a real model for the "fût qui roule" (keg) weapon projectile.

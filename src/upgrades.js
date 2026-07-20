@@ -6,6 +6,7 @@ import { PASSIVE_ITEMS } from './config/items.js';
 import { WEAPON_TYPES } from './config/weapons.js';
 import { setGamepadNavRows } from './gamepadNav.js';
 import { shuffle } from './util.js';
+import { playLevelUp } from './audio.js';
 
 function applyPassiveItem(item) {
   const current = player[item.stat];
@@ -43,6 +44,7 @@ export function requestUpgrade() {
 function showNextUpgrade() {
   if (state.pendingLevelUps <= 0) return;
 
+  playLevelUp();
   state.paused = true;
   if (document.pointerLockElement) document.exitPointerLock();
   overlay.style.display = 'flex';

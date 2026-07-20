@@ -11,6 +11,21 @@ filename, source, and size, and get explicit user confirmation **before** runnin
 the actual download command. Searching/browsing/checking file size (HEAD request)
 needs no permission; fetching the bytes does.
 
+## Check what's already installed first
+
+**Before fetching anything, `ls src/assets/`** and skim what's already there — this
+project has pulled several Kenney/Quaternius packs already (character rigs, castle
+kit, graveyard kit, audio). Don't download a second copy of a pack, or a
+near-duplicate from a different source, without checking first. If something
+already staged plausibly covers the need (even a pack fetched for a different
+purpose — e.g. a prop kit that happens to include the model now wanted), prefer
+using what's there over fetching new. Only fetch fresh when nothing installed
+covers it, and say so explicitly ("nothing installed has a beer bottle, fetching
+from Poly Pizza") rather than silently deciding. If there's a real choice between
+reusing an imperfect existing asset and fetching a better-fitting new one, ask the
+user rather than guessing — default to what's already installed unless they say
+otherwise.
+
 ## Supported sources
 
 ### Kenney.nl
@@ -69,6 +84,29 @@ needs no permission; fetching the bytes does.
   use the same find-the-link → `read_page` for `href` → confirm → curl approach as
   Kenney.
 
+### Poly Pizza (poly.pizza)
+- Aggregates single models from **many authors**, not one publisher — license
+  varies per model (CC0, CC-BY needing attribution, occasionally paid). Check the
+  license line on each model's own page before fetching; don't assume CC0 from
+  the search thumbnail. Prefer results explicitly authored by **Quaternius**
+  (CC0 site-wide, matches assets already used elsewhere in this project) when
+  there's a choice between equivalent models.
+- Search results mix paid "sponsored"/"Paid picks" cards in with free ones —
+  scroll past those, the real free results are further down the page.
+- Single model page: "Download" button opens a small dropdown (FBX/GLB) — click
+  the format, triggers a real browser download straight to `~/Downloads/`, no
+  intermediate confirmation page (unlike Kenney's donation-modal flow). Still
+  needs permission-before-downloading, same as everywhere else.
+- **Bundles** (`poly.pizza/bundle/...`, e.g. "Ultimate Food Pack") are a single
+  zip covering many related models at once — "Download GLTF"/"Download FBX"
+  button, real click-triggered download same as a single model. Good for
+  "grab broadly, might be useful later" asks: one bundle can cover many future
+  needs (e.g. a 50-model food/drink pack covers a beer bottle now and apéro/
+  healing-item pickups later) cheaper than fetching one-off models repeatedly.
+- After download: `unzip` from `~/Downloads/` into `src/assets/<source>-<name>/`,
+  delete the zip from Downloads, write a `LICENSE.txt` noting the source URL and
+  each model's confirmed license (per-model, since a bundle can mix authors).
+
 ### Sketchfab
 - Downloads require an authenticated Sketchfab account (OAuth) — not reachable via
   anonymous curl/browser in this environment. Tell the user to download manually
@@ -111,3 +149,14 @@ needs no permission; fetching the bytes does.
   silent, not loud. glTF packs with cleanly named clips (Quaternius: `Run`, `Walk`,
   `Death`, `Crawl`, ...) are far less error-prone here than FBX packs that split
   "reference pose" and "real animation" across clips with similar names.
+- **PBR materials read very dark under a toon-shaded scene.** Kenney's GLB kits
+  ship `MeshStandardMaterial` (PBR — physically-based lighting response). If the
+  project uses `MeshToonMaterial` with low ambient light (a common look for a flat
+  cel-shaded style — banding only reads with real light/shadow contrast, so ambient
+  gets turned down), those PBR props render near-black instead of matching the
+  rest of the scene, since PBR's continuous lighting falloff and toon's stepped
+  gradient respond very differently to the same light levels. Fix: after loading,
+  traverse the meshes and replace each material with the project's toon material
+  factory, reusing the original `.map` texture (`toonMaterial({ map: child.material.map,
+  color: child.material.color })` or equivalent) — don't leave loaded PBR materials
+  as-is in a toon-shaded scene.

@@ -34,12 +34,13 @@ files. Rough layers:
   (exports `initPlayer(characterId)` — resets every run-scoped stat from
   `config/characters.js`, called once per run right before `state.started = true`,
   safe to call again on replay without a page reload), `enemies.js`, `enemyModels.js`
-  (multi-source model loader, see below), `weapons.js`, `projectiles.js`,
-  `puddles.js`, `xp.js`, `tunas.js`, `mapgen.js` (procedural abbey chunks +
-  collision), `hud.js`, `upgrades.js` (level-up cards), `menu.js` (main menu +
-  TUNAS shop), `charSelect.js` (character + map pick screen, shown after "Jouer"
-  and before a run starts), `meta.js` (localStorage meta-progression), `textures.js`
-  (procedural canvas textures + toon material factory), `devpanel.js`.
+  (multi-source zombie model loader, see below), `decorModels.js` (map prop model
+  loader, see below), `weapons.js`, `projectiles.js`, `puddles.js`, `xp.js`,
+  `tunas.js`, `mapgen.js` (procedural abbey chunks + collision), `hud.js`,
+  `upgrades.js` (level-up cards), `menu.js` (main menu + TUNAS shop), `charSelect.js`
+  (character + map pick screen, shown after "Jouer" and before a run starts),
+  `meta.js` (localStorage meta-progression), `textures.js` (procedural canvas
+  textures + toon material factory), `audio.js` (SFX — see below), `devpanel.js`.
 - **`src/config/`** — pure data, **zero three.js/DOM imports allowed here**. This is
   the mandatory rule below.
 
@@ -163,11 +164,64 @@ source, or just a new `ENEMY_TYPES` entry reusing an existing `model` id with
 different stats/tint if not.
 - `quaternius-vehicles/` — 6 glTF vehicles (Pickup/Truck/Sports, each with an
   Armored variant). Staged for issue #8 (véhicule écrase-zombies), not wired in.
+- `kenney-castle-kit/` and `kenney-graveyard-kit/` — structural (walls/pillars/
+  arches) and atmospheric (gravestones/crypts/pines/rocks) props for the map.
+  **Wired in** via `decorModels.js` (13-model curated subset of the ~170 available
+  across both kits — add a key + `?url` import there to pull in more), consumed by
+  `mapgen.js`'s chunk generator in place of the old procedural box/cylinder props.
+  Walls still get multi-point colliders along their length (open doorways on
+  arches stay walkable); compact props (pillars/graves/crypts/trees/barrels) get
+  one circle collider sized from the model's bounding box. The decorative barrel
+  prop uses the real `kegBarrel` model (see `quaternius-props/` below) — neither
+  Castle nor Graveyard kit has one, so it's borrowed from the weapon-projectile set.
+  **Gotcha**: Kenney's GLB props ship `MeshStandardMaterial` (PBR) — under this
+  scene's low-ambient lighting (tuned for `MeshToonMaterial`'s stepped gradient,
+  see Lighting below) they render near-black instead of matching the game's flat
+  cel-shaded look. `decorModels.js` converts every loaded material to
+  `toonMaterial()` on load, reusing the original texture map. Do this for any new
+  GLB/glTF prop pack — don't leave PBR materials as-is.
+- `quaternius-food-pack/` — 50 CC0 food/drink glTF models from Quaternius (via
+  Poly Pizza), fetched primarily for a real beer bottle but broad enough to cover
+  future food/drink pickups (apéro snacks, healing items — see the issue #3/#6
+  brainstorm). `Bottle.glb` is **wired in** (see below); the other 48 are staged,
+  not used yet.
+- `quaternius-props/` — standalone single-model fetches from Poly Pizza (not
+  bundles). Currently just `barrel.glb` (CC0, Quaternius), **wired in** as the keg
+  weapon's projectile and the map's decorative barrel.
+
+Beer bottle and keg weapon projectiles (`weapons.js`) use `decorModels.js`'s
+`beerBottle`/`kegBarrel` entries instead of procedural capsule/cylinder geometry —
+`cloneDecorModel(key, height, tint)`'s third arg recolors per beer type (Blonde/
+Kriek/Brune/Triple), which needs its own material clone since decor normally
+shares one material across every instance of a template (see the function's
+comment). A procedural fallback geometry stays in `weapons.js` for the brief
+window before `decorModels.js` finishes loading, so the starter weapon never goes
+silent at the very start of a run.
+
+**Poly Pizza note**: unlike Kenney/Quaternius's own sites, Poly Pizza aggregates
+models from many authors — licenses vary per model (CC0, CC-BY, sometimes paid).
+Check each model's license line before fetching; don't assume CC0 just because
+the search result looks free. Prefer results explicitly authored by Quaternius
+(consistently CC0 site-wide) when there's a choice.
 
 To find/install more, use the `asset-fetch` skill
 (`.claude/skills/asset-fetch/SKILL.md`) — covers Kenney, Quaternius (including its
 Google Drive-hosted kits), and itch.io, plus the file-download permission rule and
 the animation-clip-selection lesson above in more detail.
+
+## Audio
+
+`audio.js` — Kenney Impact Sounds + UI Audio packs (`src/assets/kenney-impact-sounds/`,
+`src/assets/kenney-ui-audio/`), played via plain `new Audio(url).play()` per
+trigger (no Web Audio graph — no spatialization/mixing need here, and a fresh
+element per play lets overlapping hits all sound instead of fighting over one
+shared instance). Exports `playHit`/`playDeath`/`playPickup`/`playLevelUp`/
+`playClick`, wired into `projectiles.js` (bullet-enemy hit), `enemies.js`
+(death), `xp.js`/`tunas.js` (pickup), `upgrades.js` (level-up screen opening).
+`playClick` is **not** wired individually into every button — `audio.js`
+registers one `document`-level click listener matching `.btn, .pickCard, .card,
+.shopCard`, covering menu/select/shop/upgrade buttons in one place. Add a new
+button style class to that selector if a future UI element should click-sound too.
 
 ## Bug / feature tracking
 
@@ -191,6 +245,10 @@ debug hook before finishing** — don't ship it.
 
 ## Working on this project — instructions for future sessions/agents
 
+- **Start every session with `git pull`.** This repo has more than one person
+  (with their own Claude Code sessions) pushing to it — pull first or you'll work
+  from a stale tree and hit avoidable merge conflicts. Do this before reading
+  code, planning, or editing anything.
 - Use `yarn` / `yarn dev` to run it, `yarn build` to sanity-check before calling
   anything done.
 - Follow the config-driven data rule above for any new weapon/enemy/item/character.
@@ -201,3 +259,6 @@ debug hook before finishing** — don't ship it.
   see the memory system's own rules for what goes where vs. here.
 - Bugs/features → GitHub Issues on this repo, not ad-hoc TODOs.
 - Only commit/push when the user explicitly asks.
+- **Never add Claude/AI co-author attribution to commits** — no "Co-Authored-By:
+  Claude", no "🤖 Generated with Claude Code" trailer, nothing. Commit as the human
+  developer who's actually driving the session, full stop.

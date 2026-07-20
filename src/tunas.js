@@ -5,6 +5,7 @@ import { state } from './state.js';
 import { toonMaterial } from './textures.js';
 import { addTunas } from './meta.js';
 import { ECONOMY } from './config/economy.js';
+import { playPickup } from './audio.js';
 
 const coinGeo = new THREE.CylinderGeometry(0.26, 0.26, 0.07, 14);
 const coinMat = toonMaterial({ color: 0xffcc33, emissive: 0x664400 });
@@ -38,6 +39,7 @@ export function updateTunasDrops(dt) {
     if (d < player.r + t.r || d < 0.5) {
       t.collected = true;
       scene.remove(t.mesh);
+      playPickup();
       addTunas(t.amount);
       state.tunasEarnedThisRun += t.amount;
     }

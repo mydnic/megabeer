@@ -3,10 +3,13 @@ import { scene } from './scene.js';
 import { player } from './player.js';
 import { state } from './state.js';
 import { dist2 } from './util.js';
+import { playHit } from './audio.js';
 
+// Pass either {geometry, material} (built here) or a pre-built {mesh} — e.g. a
+// decorModels.js clone for a real model — dropped in as-is instead.
 export function fireProjectile(angle, opts) {
-  const { geometry, material, dmg, speed, r, pierce = 1, spin = 0, spinAxis = 'y', originY = 1.1, life = 1.4 } = opts;
-  const mesh = new THREE.Mesh(geometry, material);
+  const { geometry, material, mesh: providedMesh, dmg, speed, r, pierce = 1, spin = 0, spinAxis = 'y', originY = 1.1, life = 1.4 } = opts;
+  const mesh = providedMesh || new THREE.Mesh(geometry, material);
   mesh.position.set(player.x, originY, player.z);
   scene.add(mesh);
   state.bullets.push({
@@ -47,6 +50,7 @@ export function handleBulletEnemyCollisions() {
       if (dist2(b.x, b.z, e.x, e.z) < (b.r + e.r) * (b.r + e.r)) {
         e.hp -= b.dmg;
         e.hitFlash = 0.15;
+        playHit();
         b.hit.add(e);
         b.pierce -= 1;
         if (b.pierce <= 0) b.life = 0;

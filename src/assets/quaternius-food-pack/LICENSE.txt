@@ -1,0 +1,10 @@
+Quaternius — Ultimate Food Pack (50 models)
+Source: https://poly.pizza/bundle/Ultimate-Food-Pack-h3WC1gyRb4 (mirrors quaternius.com)
+License: Creative Commons Zero (CC0) / Public Domain — free for personal and
+commercial use, no attribution required.
+
+50 low-poly food/drink glTF models (fruits, veggies, burgers, drinks, desserts,
+utensils...). "Bottle.glb" and "Bottle-Pc8dM9Ja4V.glb" are two distinct bottle
+shapes (different file sizes, not duplicates). Grabbed primarily for a real beer
+bottle model (see src/weapons.js), but broad enough to cover future food/drink
+pickups too (apéro snacks, healing items — see GitHub issues #3/#6 brainstorm).

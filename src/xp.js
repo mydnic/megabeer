@@ -4,6 +4,7 @@ import { player } from './player.js';
 import { state } from './state.js';
 import { requestUpgrade } from './upgrades.js';
 import { toonMaterial } from './textures.js';
+import { playPickup } from './audio.js';
 
 // Shared across every orb — one geometry/material for the whole run instead of a
 // fresh pair per spawn (they never differ per-instance, no reason not to reuse).
@@ -41,6 +42,7 @@ export function updateOrbs(dt) {
     if (d < player.r + o.r || d < 0.5) {
       o.collected = true;
       scene.remove(o.mesh);
+      playPickup();
       gainXp(o.val);
     }
   }

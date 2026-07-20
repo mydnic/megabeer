@@ -1,16 +1,9 @@
 import * as THREE from 'three';
 import { scene } from './scene.js';
-import { stoneMaterial, woodMaterial, toonMaterial } from './textures.js';
+import { decorModels, cloneDecorModel } from './decorModels.js';
 
 const CHUNK_SIZE = 20;
 const VIEW_RADIUS = 3;
-
-const stoneMat = stoneMaterial(1, 3);
-const darkStoneMat = stoneMaterial(2, 1);
-const wallWoodMat = woodMaterial(2, 1);
-const trunkMat = woodMaterial(1, 2);
-const leafMat = toonMaterial({ color: 0x3f5a2e });
-const leafMat2 = toonMaterial({ color: 0x4d6b38 });
 
 const SPAWN_CLEAR_RADIUS = 16;
 
@@ -22,88 +15,95 @@ function hash(cx, cz) {
 }
 function rand(cx, cz, salt) { return hash(cx * 3 + salt, cz * 7 + salt * 13); }
 
-function pillar(x, z, colliders) {
-  const g = new THREE.Group();
-  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.55, 4.5, 8), stoneMat);
-  shaft.position.y = 2.25;
-  const cap = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.4, 1.3), stoneMat);
-  cap.position.y = 4.7;
-  g.add(shaft, cap);
-  g.position.set(x, 0, z);
-  colliders.push({ x, z, r: 0.65 });
-  return g;
-}
-
-function wallSegment(x, z, rotY, colliders) {
-  const wall = new THREE.Mesh(new THREE.BoxGeometry(6, 3.2, 0.7), darkStoneMat);
-  wall.position.set(x, 1.6, z);
-  wall.rotation.y = rotY;
-  for (const off of [-2.4, -1.2, 0, 1.2, 2.4]) {
+// Long thin props (walls) need coverage along their length, not one big circle —
+// sample a handful of points spaced along the local X axis instead.
+function wallColliders(x, z, rotY, sizeX, colliders, count = 5) {
+  const half = sizeX / 2;
+  const spacing = sizeX / (count - 1);
+  const r = Math.max(0.35, spacing * 0.46);
+  for (let i = 0; i < count; i++) {
+    const off = -half + spacing * i;
     colliders.push({
       x: x + off * Math.cos(rotY),
       z: z - off * Math.sin(rotY),
-      r: 0.55,
+      r,
     });
   }
-  return wall;
 }
 
-function arch(x, z, rotY, colliders) {
-  const g = new THREE.Group();
-  const l = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 4, 8), stoneMat);
-  l.position.set(-1.6, 2, 0);
-  const r = l.clone(); r.position.x = 1.6;
-  const top = new THREE.Mesh(new THREE.BoxGeometry(4, 0.6, 0.9), stoneMat);
-  top.position.set(0, 4, 0);
-  g.add(l, r, top);
-  g.position.set(x, 0, z);
-  g.rotation.y = rotY;
-  for (const off of [-1.6, 1.6]) {
+function spawnWall(x, z, rotY, colliders, ruined) {
+  const { mesh, sizeX } = cloneDecorModel(ruined ? 'wallRuined' : 'wall', ruined ? 2.6 : 3.2);
+  mesh.position.set(x, 0, z);
+  mesh.rotation.y = rotY;
+  wallColliders(x, z, rotY, sizeX, colliders);
+  return mesh;
+}
+
+function spawnPillar(x, z, colliders, large) {
+  const { mesh, radius } = cloneDecorModel(large ? 'pillarLarge' : 'pillar', large ? 4.4 : 5.0);
+  mesh.position.set(x, 0, z);
+  mesh.rotation.y = rand(x, z, 6) * Math.PI * 2;
+  colliders.push({ x, z, r: radius * 0.7 });
+  return mesh;
+}
+
+function spawnArch(x, z, rotY, colliders) {
+  const { mesh, sizeX } = cloneDecorModel('arch', 4.6);
+  mesh.position.set(x, 0, z);
+  mesh.rotation.y = rotY;
+  // Only block at the two posts — the gap in between stays walkable (a doorway).
+  const half = sizeX / 2;
+  for (const off of [-half * 0.75, half * 0.75]) {
     colliders.push({
       x: x + off * Math.cos(rotY),
       z: z - off * Math.sin(rotY),
       r: 0.45,
     });
   }
-  return g;
+  return mesh;
 }
 
-function rubble(x, z) {
-  const g = new THREE.Group();
-  for (let i = 0; i < 3; i++) {
-    const s = 0.5 + rand(x + i, z + i, 5) * 0.6;
-    const m = new THREE.Mesh(new THREE.BoxGeometry(s, s, s), darkStoneMat);
-    m.position.set((rand(x, z, i) - 0.5) * 2, s / 2, (rand(z, x, i) - 0.5) * 2);
-    m.rotation.y = rand(x, i, z) * Math.PI;
-    g.add(m);
-  }
-  g.position.set(x, 0, z);
-  return g;
+function spawnRocks(x, z) {
+  const key = rand(x, z, 7) < 0.5 ? 'rocks' : 'rocksCastle';
+  const { mesh } = cloneDecorModel(key, 0.9 + rand(z, x, 12) * 0.6);
+  mesh.position.set(x, 0, z);
+  mesh.rotation.y = rand(x, z, 13) * Math.PI * 2;
+  return mesh; // decorative, no collider (walkable through, matches old rubble)
 }
 
-function tree(x, z, colliders) {
-  const g = new THREE.Group();
-  const h = 2.6 + rand(x, z, 8) * 1.8;
-  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.3, h, 7), trunkMat);
-  trunk.position.y = h / 2;
-  const leafMats = [leafMat, leafMat2];
-  const leaves = new THREE.Mesh(
-    new THREE.IcosahedronGeometry(1.1 + rand(z, x, 9) * 0.4, 0),
-    leafMats[Math.floor(rand(x, z, 10) * 2)]
-  );
-  leaves.position.y = h + 0.6;
-  leaves.rotation.y = rand(x, z, 11) * Math.PI;
-  g.add(trunk, leaves);
-  g.position.set(x, 0, z);
-  colliders.push({ x, z, r: 0.4 });
-  return g;
+function spawnGrave(x, z, colliders) {
+  const keys = ['graveBevel', 'graveBroken', 'graveCross'];
+  const key = keys[Math.floor(rand(x, z, 14) * keys.length)];
+  const { mesh, radius } = cloneDecorModel(key, 1.0 + rand(z, x, 15) * 0.4);
+  mesh.position.set(x, 0, z);
+  mesh.rotation.y = rand(x, z, 16) * Math.PI * 2;
+  colliders.push({ x, z, r: radius * 0.6 });
+  return mesh;
 }
 
-function barrel(x, z, colliders) {
-  const b = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 1.1, 10), wallWoodMat);
-  b.position.set(x, 0.55, z);
-  colliders.push({ x, z, r: 0.65 });
-  return b;
+function spawnCrypt(x, z, colliders) {
+  const { mesh, radius } = cloneDecorModel('crypt', 3.6);
+  mesh.position.set(x, 0, z);
+  mesh.rotation.y = rand(x, z, 17) * Math.PI * 2;
+  colliders.push({ x, z, r: radius * 0.75 });
+  return mesh;
+}
+
+function spawnTree(x, z, colliders) {
+  const key = rand(x, z, 8) < 0.5 ? 'treeCastle' : 'pineCrooked';
+  const { mesh, radius } = cloneDecorModel(key, 3.0 + rand(z, x, 9) * 2.2);
+  mesh.position.set(x, 0, z);
+  mesh.rotation.y = rand(x, z, 10) * Math.PI * 2;
+  colliders.push({ x, z, r: Math.min(0.5, radius * 0.4) });
+  return mesh;
+}
+
+function spawnBarrel(x, z, colliders) {
+  const { mesh, radius } = cloneDecorModel('kegBarrel', 1.1);
+  mesh.position.set(x, 0, z);
+  mesh.rotation.y = rand(x, z, 22) * Math.PI * 2;
+  colliders.push({ x, z, r: radius * 0.8 });
+  return mesh;
 }
 
 const chunks = new Map();
@@ -111,6 +111,8 @@ let colliders = [];
 function key(cx, cz) { return cx + ',' + cz; }
 
 function generateChunk(cx, cz) {
+  if (!decorModels.ready) return; // retried automatically next frame by updateMap()
+
   const group = new THREE.Group();
   const originX = cx * CHUNK_SIZE, originZ = cz * CHUNK_SIZE;
   const centerX = originX + CHUNK_SIZE / 2, centerZ = originZ + CHUNK_SIZE / 2;
@@ -123,23 +125,28 @@ function generateChunk(cx, cz) {
     return;
   }
 
-  if (r0 < 0.18) {
-    group.add(wallSegment(originX + CHUNK_SIZE / 2, originZ + rand(cx, cz, 2) * CHUNK_SIZE, rand(cx, cz, 3) * Math.PI, chunkColliders));
-  } else if (r0 < 0.32) {
-    group.add(pillar(originX + rand(cx, cz, 2) * CHUNK_SIZE, originZ + rand(cx, cz, 4) * CHUNK_SIZE, chunkColliders));
-  } else if (r0 < 0.4) {
-    group.add(arch(originX + CHUNK_SIZE / 2, originZ + CHUNK_SIZE / 2, rand(cx, cz, 3) * Math.PI, chunkColliders));
-  } else if (r0 < 0.55) {
-    group.add(rubble(originX + rand(cx, cz, 2) * CHUNK_SIZE, originZ + rand(cx, cz, 4) * CHUNK_SIZE));
-  } else if (r0 < 0.62) {
-    group.add(barrel(originX + rand(cx, cz, 2) * CHUNK_SIZE, originZ + rand(cx, cz, 4) * CHUNK_SIZE, chunkColliders));
-  } else if (r0 < 0.85) {
-    group.add(tree(originX + rand(cx, cz, 2) * CHUNK_SIZE, originZ + rand(cx, cz, 4) * CHUNK_SIZE, chunkColliders));
-  }
+  const px = originX + rand(cx, cz, 2) * CHUNK_SIZE;
+  const pz = originZ + rand(cx, cz, 4) * CHUNK_SIZE;
+  const rotY = rand(cx, cz, 3) * Math.PI;
+  const ruined = rand(cx, cz, 20) < 0.4;
 
-  group.traverse(child => {
-    if (child.isMesh) { child.castShadow = true; child.receiveShadow = true; }
-  });
+  if (r0 < 0.16) {
+    group.add(spawnWall(originX + CHUNK_SIZE / 2, pz, rotY, chunkColliders, ruined));
+  } else if (r0 < 0.30) {
+    group.add(spawnPillar(px, pz, chunkColliders, rand(cx, cz, 21) < 0.5));
+  } else if (r0 < 0.38) {
+    group.add(spawnArch(originX + CHUNK_SIZE / 2, originZ + CHUNK_SIZE / 2, rotY, chunkColliders));
+  } else if (r0 < 0.51) {
+    group.add(spawnRocks(px, pz));
+  } else if (r0 < 0.58) {
+    group.add(spawnBarrel(px, pz, chunkColliders));
+  } else if (r0 < 0.78) {
+    group.add(spawnTree(px, pz, chunkColliders));
+  } else if (r0 < 0.90) {
+    group.add(spawnGrave(px, pz, chunkColliders));
+  } else if (r0 < 0.95) {
+    group.add(spawnCrypt(px, pz, chunkColliders));
+  }
 
   scene.add(group);
   const k = key(cx, cz);
