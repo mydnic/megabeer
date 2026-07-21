@@ -10,7 +10,7 @@ import { playHit } from './audio.js';
 export function fireProjectile(angle, opts) {
   const { geometry, material, mesh: providedMesh, dmg, speed, r, pierce = 1, spin = 0, spinAxis = 'y', originY = 1.1, life = 1.4 } = opts;
   const mesh = providedMesh || new THREE.Mesh(geometry, material);
-  mesh.position.set(player.x, originY, player.z);
+  mesh.position.set(player.x, player.y + originY, player.z);
   scene.add(mesh);
   state.bullets.push({
     x: player.x, z: player.z,

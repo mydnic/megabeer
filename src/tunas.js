@@ -3,6 +3,7 @@ import { scene } from './scene.js';
 import { player } from './player.js';
 import { state } from './state.js';
 import { toonMaterial } from './textures.js';
+import { getTerrainHeight } from './terrain.js';
 import { addTunas } from './meta.js';
 import { ECONOMY } from './config/economy.js';
 import { playPickup } from './audio.js';
@@ -10,9 +11,11 @@ import { playPickup } from './audio.js';
 const coinGeo = new THREE.CylinderGeometry(0.26, 0.26, 0.07, 14);
 const coinMat = toonMaterial({ color: 0xffcc33, emissive: 0x664400 });
 
+const COIN_HOVER = 0.5;
+
 export function spawnTunasDrop(x, z, amount) {
   const mesh = new THREE.Mesh(coinGeo, coinMat);
-  mesh.position.set(x, 0.5, z);
+  mesh.position.set(x, getTerrainHeight(x, z) + COIN_HOVER, z);
   scene.add(mesh);
   state.tunasDrops.push({ x, z, amount, r: 0.35, mesh });
 }
@@ -34,8 +37,7 @@ export function updateTunasDrops(dt) {
       t.x += (player.x - t.x) / d * speed * dt;
       t.z += (player.z - t.z) / d * speed * dt;
     }
-    t.mesh.position.x = t.x;
-    t.mesh.position.z = t.z;
+    t.mesh.position.set(t.x, getTerrainHeight(t.x, t.z) + COIN_HOVER, t.z);
     if (d < player.r + t.r || d < 0.5) {
       t.collected = true;
       scene.remove(t.mesh);

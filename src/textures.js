@@ -17,16 +17,19 @@ function withRepeat(tex, x, y) {
   return t;
 }
 
+// Ground fallback (used beyond the generated-chunk radius, see mapgen.js's
+// VIEW_RADIUS) — kept close to terrain.js's TERRAIN_COLOR so its edge blends
+// into fog instead of popping against the real terrain mesh.
 const stoneTex = makeCanvasTexture((ctx, s) => {
-  ctx.fillStyle = '#7d766a';
+  ctx.fillStyle = '#514f40';
   ctx.fillRect(0, 0, s, s);
   for (let i = 0; i < 200; i++) {
     const x = Math.random() * s, y = Math.random() * s, r = Math.random() * 3 + 0.5;
-    const shade = 80 + Math.random() * 60;
-    ctx.fillStyle = `rgba(${shade},${shade - 8},${shade - 16},0.5)`;
+    const shade = 55 + Math.random() * 45;
+    ctx.fillStyle = `rgba(${shade},${shade - 4},${shade - 14},0.5)`;
     ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
   }
-  ctx.strokeStyle = 'rgba(35,32,26,0.45)';
+  ctx.strokeStyle = 'rgba(28,28,20,0.35)';
   ctx.lineWidth = 2;
   for (let i = 0; i <= s; i += 32) {
     ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, s); ctx.stroke();

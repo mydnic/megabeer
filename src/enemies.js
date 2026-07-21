@@ -6,6 +6,7 @@ import { dist2 } from './util.js';
 import { ENEMY_TYPES } from './config/enemies.js';
 import { enemyModels, cloneEnemyModel } from './enemyModels.js';
 import { resolveCollisions } from './mapgen.js';
+import { getTerrainHeight } from './terrain.js';
 import { playDeath } from './audio.js';
 
 // Contact collision only checks x/z, so without this a jump would never actually
@@ -38,11 +39,12 @@ function spawnKind(k, distance) {
   const z = player.z + Math.sin(angle) * dist;
   const scale = 1 + state.gameTime / 90;
 
+  const groundY = getTerrainHeight(x, z);
   const mesh = cloneEnemyModel(k.model, k.color, k.r);
-  mesh.position.set(x, 0, z);
+  mesh.position.set(x, groundY, z);
   const barHeight = k.r * 2.6 + 0.4;
   const hpBar = makeHpBar();
-  hpBar.position.set(x, barHeight, z);
+  hpBar.position.set(x, groundY + barHeight, z);
   scene.add(mesh, hpBar);
 
   state.enemies.push({
@@ -110,10 +112,10 @@ export function updateEnemies(dt) {
     const dx = player.x - e.x, dz = player.z - e.z;
     const d = Math.hypot(dx, dz) || 1;
 
-    e.mesh.position.x = e.x;
-    e.mesh.position.z = e.z;
+    const groundY = getTerrainHeight(e.x, e.z);
+    e.mesh.position.set(e.x, groundY, e.z);
     e.mesh.rotation.y = Math.atan2(dx, dz);
-    e.hpBar.position.set(e.x, e.barHeight, e.z);
+    e.hpBar.position.set(e.x, groundY + e.barHeight, e.z);
     e.hpBar.quaternion.copy(camera.quaternion);
     e.hpBar.userData.fill.scale.x = Math.max(0, e.hp / e.maxHp);
 
@@ -130,7 +132,8 @@ export function updateEnemies(dt) {
     }
 
     if (d < e.r + player.r && player.invuln <= 0) {
-      if (!state.godmode && player.y < DODGE_HEIGHT) player.hp -= e.dmg;
+      const jumpHeight = player.y - getTerrainHeight(player.x, player.z);
+      if (!state.godmode && jumpHeight < DODGE_HEIGHT) player.hp -= e.dmg;
       player.invuln = 0.5;
     }
   }

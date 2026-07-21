@@ -3,13 +3,14 @@ import { scene } from './scene.js';
 import { state } from './state.js';
 import { dist2 } from './util.js';
 import { toonMaterial } from './textures.js';
+import { getTerrainHeight } from './terrain.js';
 
 export function spawnPuddle(x, z, dmgPerTick, radius, duration, color = 0xcc8811) {
   const mesh = new THREE.Mesh(
     new THREE.CylinderGeometry(radius, radius, 0.05, 20),
     toonMaterial({ color, transparent: true, opacity: 0.55 })
   );
-  mesh.position.set(x, 0.03, z);
+  mesh.position.set(x, getTerrainHeight(x, z) + 0.03, z);
   scene.add(mesh);
   state.puddles.push({ x, z, radius, dmgPerTick, life: duration, tickTimer: 0, mesh });
 }

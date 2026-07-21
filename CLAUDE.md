@@ -36,7 +36,9 @@ files. Rough layers:
   safe to call again on replay without a page reload), `enemies.js`, `enemyModels.js`
   (multi-source zombie model loader, see below), `decorModels.js` (map prop model
   loader, see below), `weapons.js`, `projectiles.js`, `puddles.js`, `xp.js`,
-  `tunas.js`, `mapgen.js` (procedural abbey chunks + collision), `hud.js`,
+  `tunas.js`, `mapgen.js` (procedural abbey chunks + collision), `terrain.js`
+  (real 3D mountain terrain, see below), `zones.js` (biome/decor-cluster noise,
+  see below), `noise.js` (vendored 2D simplex noise, used by both), `hud.js`,
   `upgrades.js` (level-up cards), `menu.js` (main menu + TUNAS shop), `charSelect.js`
   (character + map pick screen, shown after "Jouer" and before a run starts),
   `meta.js` (localStorage meta-progression), `textures.js` (procedural canvas
@@ -112,6 +114,122 @@ There is exactly one income source (kill drops) — don't add a second parallel
 currency formula (e.g. an end-of-run bonus computed independently); it'll double
 count and blow the pacing target. `state.tunasEarnedThisRun` tallies the run's
 actual drops for the end-screen display; it does not grant TUNAS itself.
+
+## Terrain
+
+`terrain.js` is real walkable 3D terrain (actual mountains), not decoration —
+`getTerrainHeight(x, z)` is a pure deterministic function of world x/z, and
+`buildTerrainChunk(chunkSize, originX, originZ)` builds one mesh per chunk
+sampling that exact same function at each vertex. Because both the height query
+and the mesh vertices come from the same formula, whatever `getTerrainHeight()`
+returns for a given (x, z) is *exactly* the surface height rendered there — no
+separate collision heightmap to keep in sync, no floating/clipping. `mapgen.js`'s
+`generateChunk` adds a terrain mesh to every chunk unconditionally
+(`buildTerrainChunk` doesn't depend on `decorModels` loading — it's pure
+geometry, no GLB), before the spawn-clear-radius branch that skips decor.
+
+**Height is two layered noise octaves**, both sampled only at `DETAIL_SPACING`
+(5 units) grid corners so the height query and the mesh's flat-shaded triangles
+always agree exactly (see the triangle-split comment in `getTerrainHeight`):
+- Coarse mountain massif: `noise.js`'s `simplex2()` (a vendored public-domain
+  2D simplex noise, not the hand-rolled bilinear lattice hash the first attempt
+  used — that looked grid-aligned/boxy, real gradient noise reads organic) at
+  `MOUNTAIN_SPACING` (55 units), raised to a power (`Math.pow(raw, 2.4)`) before
+  scaling by `MOUNTAIN_AMPLITUDE` (26). **The power curve is load-bearing, not
+  decorative** — simplex noise averages ~0.5 almost everywhere, so without it
+  the whole map sits at roughly half amplitude (a uniformly elevated plateau,
+  no distinct peaks/valleys, and every screen looks the same monotone grey — a
+  real bug hit and fixed here). The curve pushes the bulk of the range down
+  toward 0 so mountains read as actual rising features over open low ground.
+- Fine rocky detail: the original per-vertex hash lattice, `DETAIL_AMPLITUDE`
+  (1.8) on top, for low-poly ruggedness at mesh-vertex resolution.
+
+**Rendering gotchas actually hit, in case they recur**: (1) `MeshToonMaterial`
+has no `flatShading` property (unlike `MeshStandardMaterial`) — passing it in
+the constructor is a silent no-op (`Material.setValues` only assigns keys that
+already exist on the instance). Real flat facets need `geometry.toNonIndexed()`
+before `computeVertexNormals()` so triangles don't share vertices/normals with
+their neighbors. (2) Triangle winding matters for a horizontal mesh: get it
+backwards and every face normal points down, so the default `FrontSide`
+material culls the *entire* terrain from a camera looking down at it — geometry
+data was correct the whole time, nothing rendered, and the giant fallback plane
+underneath made it look like "the terrain never has any elevation" when it was
+actually "invisible, not flat." Caught only by directly inspecting live scene
+state (a temporary `window.__debug = {...}` at the bottom of `main.js`, removed
+after) — screenshots alone repeatedly showed stale/frozen frames in this
+environment and were not trustworthy for this kind of check.
+
+**Height/slope → color** (`terrainColor()`): per-vertex color, not a texture
+map — `BAND_LOW`/`BAND_MID`/`BAND_HIGH` blend by height (valley moss → bare
+rock → pale summit), then blend further toward `CLIFF_COLOR` on steep faces
+(low `normal.y`) so a cliff reads distinctly from a gentle slope at the same
+elevation. Material has `vertexColors: true` with a white base color so these
+show through unmixed; geometry gets a `color` `BufferAttribute` alongside
+`position`/`normal` in `buildTerrainChunk`.
+
+**Zones** (`zones.js`): `zoneAt(x, z)` is a second, decorrelated simplex field
+(different seed, `ZONE_SCALE` 140 units — wide, so a zone spans several chunks)
+returning `'forest'`/`'ruins'`/`'graveyard'`/`'open'`. `mapgen.js`'s
+`ZONE_DECOR` table gives each zone a weighted decor pool (forest ≈70% tree,
+ruins ≈splits across wall/pillar/arch/crypt, etc. — `'open'` keeps roughly the
+old flat global mix as the transition zone) so decor actually clusters into
+recognizable forests/ruin fields/graveyards instead of one independently-random
+prop per chunk with no larger structure. Forest zone chunks spawn a real
+2-4-tree cluster (`spawnForestCluster`) rather than a single tree — one trunk
+per chunk never reads as "forest" even when every neighboring chunk also rolls
+a tree.
+
+Every entity/prop that touches the ground reads `getTerrainHeight()` for its Y:
+`player.js`'s gravity/jump physics snaps to it instead of a hardcoded `y=0`
+(`updatePlayer`'s grounded check), `enemies.js` re-samples it every frame per
+enemy (`updateEnemies`) and at spawn, `mapgen.js`'s prop spawners
+(`spawnWall`/`spawnTree`/etc.) place decor on it, and `puddles.js`/`xp.js`/
+`tunas.js` float their meshes above it. `weapons.js`/`projectiles.js`'s
+`fireProjectile` spawns bottles/kegs at `player.y + originY`, not absolute
+`originY` — otherwise a weapon fired while standing on a mountain launches from
+underground. `enemies.js`'s `DODGE_HEIGHT` jump-dodge check is relative to the
+*current* ground height under the player
+(`player.y - getTerrainHeight(player.x, player.z)`), not absolute `player.y` —
+it has to be, since standing on a hill already puts `player.y` well above 0.
+XZ collision (`resolveCollisions` in `mapgen.js`, walls/pillars/graves/etc.)
+stays 2D/height-agnostic on purpose — a full 3D collision system (can't walk up
+a cliff face) was judged out of scope for this game; slopes are always walkable
+by simply snapping the Y position, which is also what makes climbing/descending
+work with zero extra physics code.
+
+`getTerrainHeight()` is cheap (a handful of arithmetic ops, no allocation) so
+calling it every frame per entity is fine — don't cache/memoize it without a
+measured perf reason.
+
+The chunk-generation radius (`VIEW_RADIUS` in `mapgen.js`, currently 5, ~110
+units) exists so terrain mesh coverage keeps pace with camera draw distance —
+past that radius there's no terrain mesh (though `getTerrainHeight()` still
+returns a valid height for any x/z, chunk-independent) and the old flat
+procedural `stoneMaterial` ground plane in `scene.js` shows through as a
+fallback, tinted close to the terrain's low-band color so the edge — deep in
+fog at that distance — blends instead of popping.
+
+Terrain casts shadows now too (`mesh.castShadow = true` in `buildTerrainChunk`)
+— mountains shadowing their own lower slopes/neighboring valleys is the single
+biggest depth-readability cue for real elevation, a flat plane never needed it.
+Shadow map type moved from `THREE.PCFSoftShadowMap` (deprecated in this
+three.js version — confirmed via an actual browser console warning; it was
+silently falling back to hard `PCFShadowMap`) to `THREE.VSMShadowMap` in
+`scene.js`, plus `moon.shadow.normalBias` (fixes self-shadow acne on the
+terrain's steep faces — depth bias alone wasn't enough) and
+`radius`/`blurSamples` for VSM softness.
+
+**Libraries considered and not adopted** (asked about repeatedly during this
+work, documenting so it isn't re-litigated): literal-voxel Minecraft clones
+(`zailleh/minecraft-terrain-threejs`, `0kzh/minicraft`) don't apply — this is a
+smooth heightmap, not cubes. A full alternate engine (`SterlyDolce/
+Infinite-Engine`) would mean rewriting this project's whole architecture for no
+stated benefit. `IceCreamYou/THREE.Terrain` was checked directly against its
+source (`core.js`, `analysis.js`) — it's a one-shot mesh generator with no
+runtime `getHeightAt(x,z)` API, so it wouldn't remove the hand-written
+height-query code this project actually depends on for collision, and its
+height/slope texture-blend shader is the same technique already implemented
+above via vertex colors.
 
 ## Dev panel (dev-only, never ships to production)
 

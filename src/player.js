@@ -3,6 +3,7 @@ import { scene } from './scene.js';
 import { toonMaterial } from './textures.js';
 import { mouse, gamepadMove, gamepadJump } from './input.js';
 import { CHARACTERS, DEFAULT_CHARACTER_ID } from './config/characters.js';
+import { getTerrainHeight } from './terrain.js';
 
 const GRAVITY = 28;
 const JUMP_FORCE = 9;
@@ -54,9 +55,10 @@ let activeColor = 0x44ccff;
 export function initPlayer(characterId) {
   const character = CHARACTERS[characterId] || CHARACTERS[DEFAULT_CHARACTER_ID];
   const base = character.baseStats;
+  const groundY = getTerrainHeight(0, 0);
 
   Object.assign(player, {
-    x: 0, y: 0, z: 0, vy: 0, grounded: true, facing: 0,
+    x: 0, y: groundY, z: 0, vy: 0, grounded: true, facing: 0,
     hp: base.hp, maxHp: base.hp,
     level: 1, xp: 0, xpNext: 10,
     speed: base.speed, dmg: base.dmg, atkSpeed: base.atkSpeed,
@@ -68,7 +70,7 @@ export function initPlayer(characterId) {
 
   activeColor = character.color;
   body.material.color.setHex(activeColor);
-  playerMesh.position.set(0, 0, 0);
+  playerMesh.position.set(0, groundY, 0);
 }
 
 export function updatePlayer(dt, keys) {
@@ -98,8 +100,9 @@ export function updatePlayer(dt, keys) {
   }
   player.vy -= GRAVITY * dt;
   player.y += player.vy * dt;
-  if (player.y <= 0) {
-    player.y = 0;
+  const groundY = getTerrainHeight(player.x, player.z);
+  if (player.y <= groundY) {
+    player.y = groundY;
     player.vy = 0;
     player.grounded = true;
   }

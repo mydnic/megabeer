@@ -5,7 +5,11 @@ export const canvas = document.getElementById('c');
 export const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(2, devicePixelRatio));
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+// PCFSoftShadowMap is deprecated in this three.js version — silently falls back
+// to hard PCFShadowMap (confirmed via console warning). VSMShadowMap is the
+// still-supported soft-shadow type, and matters more now that real mountains
+// cast shadows onto their own slopes (see terrain.js).
+renderer.shadowMap.type = THREE.VSMShadowMap;
 
 // Night palette: desaturated blue-grey rather than neutral grey, so it actually
 // reads as "night" instead of "flat daylight with the brightness turned down".
@@ -40,6 +44,13 @@ moon.shadow.camera.bottom = -35;
 moon.shadow.camera.near = 1;
 moon.shadow.camera.far = 120;
 moon.shadow.bias = -0.0015;
+// normalBias (not depth bias) is what actually fixes self-shadowing acne on
+// large sloped surfaces like the terrain mesh — depth bias alone still speckled
+// badly on steep mountain faces.
+moon.shadow.normalBias = 0.05;
+// VSM-specific softness knobs (see renderer.shadowMap.type above).
+moon.shadow.radius = 4;
+moon.shadow.blurSamples = 8;
 scene.add(moon);
 scene.add(moon.target);
 

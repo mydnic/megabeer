@@ -1,9 +1,16 @@
 import * as THREE from 'three';
 import { scene } from './scene.js';
 import { decorModels, cloneDecorModel } from './decorModels.js';
+import { getTerrainHeight, buildTerrainChunk } from './terrain.js';
+import { zoneAt } from './zones.js';
+
+export { getTerrainHeight };
 
 const CHUNK_SIZE = 20;
-const VIEW_RADIUS = 3;
+// 5 → chunk bubble reaches ~110 units, past the fog near-cutoff (50) and close to
+// far (200) so the edge where real ground tiles end is deep in fog instead of a
+// visible pop against the fallback plane (see ground() in scene.js).
+const VIEW_RADIUS = 5;
 
 const SPAWN_CLEAR_RADIUS = 16;
 
@@ -33,7 +40,7 @@ function wallColliders(x, z, rotY, sizeX, colliders, count = 5) {
 
 function spawnWall(x, z, rotY, colliders, ruined) {
   const { mesh, sizeX } = cloneDecorModel(ruined ? 'wallRuined' : 'wall', ruined ? 2.6 : 3.2);
-  mesh.position.set(x, 0, z);
+  mesh.position.set(x, getTerrainHeight(x, z), z);
   mesh.rotation.y = rotY;
   wallColliders(x, z, rotY, sizeX, colliders);
   return mesh;
@@ -41,7 +48,7 @@ function spawnWall(x, z, rotY, colliders, ruined) {
 
 function spawnPillar(x, z, colliders, large) {
   const { mesh, radius } = cloneDecorModel(large ? 'pillarLarge' : 'pillar', large ? 4.4 : 5.0);
-  mesh.position.set(x, 0, z);
+  mesh.position.set(x, getTerrainHeight(x, z), z);
   mesh.rotation.y = rand(x, z, 6) * Math.PI * 2;
   colliders.push({ x, z, r: radius * 0.7 });
   return mesh;
@@ -49,7 +56,7 @@ function spawnPillar(x, z, colliders, large) {
 
 function spawnArch(x, z, rotY, colliders) {
   const { mesh, sizeX } = cloneDecorModel('arch', 4.6);
-  mesh.position.set(x, 0, z);
+  mesh.position.set(x, getTerrainHeight(x, z), z);
   mesh.rotation.y = rotY;
   // Only block at the two posts — the gap in between stays walkable (a doorway).
   const half = sizeX / 2;
@@ -66,7 +73,7 @@ function spawnArch(x, z, rotY, colliders) {
 function spawnRocks(x, z) {
   const key = rand(x, z, 7) < 0.5 ? 'rocks' : 'rocksCastle';
   const { mesh } = cloneDecorModel(key, 0.9 + rand(z, x, 12) * 0.6);
-  mesh.position.set(x, 0, z);
+  mesh.position.set(x, getTerrainHeight(x, z), z);
   mesh.rotation.y = rand(x, z, 13) * Math.PI * 2;
   return mesh; // decorative, no collider (walkable through, matches old rubble)
 }
@@ -75,7 +82,7 @@ function spawnGrave(x, z, colliders) {
   const keys = ['graveBevel', 'graveBroken', 'graveCross'];
   const key = keys[Math.floor(rand(x, z, 14) * keys.length)];
   const { mesh, radius } = cloneDecorModel(key, 1.0 + rand(z, x, 15) * 0.4);
-  mesh.position.set(x, 0, z);
+  mesh.position.set(x, getTerrainHeight(x, z), z);
   mesh.rotation.y = rand(x, z, 16) * Math.PI * 2;
   colliders.push({ x, z, r: radius * 0.6 });
   return mesh;
@@ -83,7 +90,7 @@ function spawnGrave(x, z, colliders) {
 
 function spawnCrypt(x, z, colliders) {
   const { mesh, radius } = cloneDecorModel('crypt', 3.6);
-  mesh.position.set(x, 0, z);
+  mesh.position.set(x, getTerrainHeight(x, z), z);
   mesh.rotation.y = rand(x, z, 17) * Math.PI * 2;
   colliders.push({ x, z, r: radius * 0.75 });
   return mesh;
@@ -92,18 +99,57 @@ function spawnCrypt(x, z, colliders) {
 function spawnTree(x, z, colliders) {
   const key = rand(x, z, 8) < 0.5 ? 'treeCastle' : 'pineCrooked';
   const { mesh, radius } = cloneDecorModel(key, 3.0 + rand(z, x, 9) * 2.2);
-  mesh.position.set(x, 0, z);
+  mesh.position.set(x, getTerrainHeight(x, z), z);
   mesh.rotation.y = rand(x, z, 10) * Math.PI * 2;
   colliders.push({ x, z, r: Math.min(0.5, radius * 0.4) });
   return mesh;
 }
 
+// Forest zone chunks get 2-4 trees scattered across the chunk instead of one —
+// a single tree per chunk never reads as "forest" even with every neighboring
+// chunk also rolling a tree, since one prop in a 20-unit chunk still looks
+// sparse. A real cluster needs several trunks close together.
+function spawnForestCluster(originX, originZ, cx, cz, colliders) {
+  const group = new THREE.Group();
+  const count = 2 + Math.floor(rand(cx, cz, 30) * 3);
+  for (let i = 0; i < count; i++) {
+    const tx = originX + rand(cx * 7 + i, cz * 11 + i, 31) * CHUNK_SIZE;
+    const tz = originZ + rand(cx * 13 + i, cz * 17 + i, 32) * CHUNK_SIZE;
+    group.add(spawnTree(tx, tz, colliders));
+  }
+  return group;
+}
+
 function spawnBarrel(x, z, colliders) {
   const { mesh, radius } = cloneDecorModel('kegBarrel', 1.1);
-  mesh.position.set(x, 0, z);
+  mesh.position.set(x, getTerrainHeight(x, z), z);
   mesh.rotation.y = rand(x, z, 22) * Math.PI * 2;
   colliders.push({ x, z, r: radius * 0.8 });
   return mesh;
+}
+
+// Per-zone weighted decor pools (weights sum to 1 per zone) — replaces the old
+// single global r0 cascade so each zone actually looks distinct (a forest
+// chunk almost always rolls a tree cluster, a ruins chunk almost always rolls
+// a structural piece) instead of every chunk drawing from the same flat mix.
+// 'open' keeps roughly the old global balance as the in-between/transition zone.
+const ZONE_DECOR = {
+  forest: [['tree', 0.70], ['rocks', 0.12], ['none', 0.18]],
+  ruins: [['wall', 0.28], ['pillar', 0.22], ['arch', 0.18], ['crypt', 0.10], ['none', 0.22]],
+  graveyard: [['grave', 0.50], ['crypt', 0.14], ['pillar', 0.10], ['none', 0.26]],
+  open: [
+    ['wall', 0.10], ['pillar', 0.09], ['arch', 0.06], ['rocks', 0.16],
+    ['barrel', 0.07], ['tree', 0.20], ['grave', 0.12], ['crypt', 0.04], ['none', 0.16],
+  ],
+};
+
+function pickDecorType(zone, r) {
+  let acc = 0;
+  for (const [type, weight] of ZONE_DECOR[zone]) {
+    acc += weight;
+    if (r < acc) return type;
+  }
+  return 'none';
 }
 
 const chunks = new Map();
@@ -119,6 +165,8 @@ function generateChunk(cx, cz) {
   const r0 = rand(cx, cz, 1);
   const chunkColliders = [];
 
+  group.add(buildTerrainChunk(CHUNK_SIZE, originX, originZ));
+
   if (Math.hypot(centerX, centerZ) < SPAWN_CLEAR_RADIUS) {
     scene.add(group);
     chunks.set(key(cx, cz), group);
@@ -130,22 +178,37 @@ function generateChunk(cx, cz) {
   const rotY = rand(cx, cz, 3) * Math.PI;
   const ruined = rand(cx, cz, 20) < 0.4;
 
-  if (r0 < 0.16) {
-    group.add(spawnWall(originX + CHUNK_SIZE / 2, pz, rotY, chunkColliders, ruined));
-  } else if (r0 < 0.30) {
-    group.add(spawnPillar(px, pz, chunkColliders, rand(cx, cz, 21) < 0.5));
-  } else if (r0 < 0.38) {
-    group.add(spawnArch(originX + CHUNK_SIZE / 2, originZ + CHUNK_SIZE / 2, rotY, chunkColliders));
-  } else if (r0 < 0.51) {
-    group.add(spawnRocks(px, pz));
-  } else if (r0 < 0.58) {
-    group.add(spawnBarrel(px, pz, chunkColliders));
-  } else if (r0 < 0.78) {
-    group.add(spawnTree(px, pz, chunkColliders));
-  } else if (r0 < 0.90) {
-    group.add(spawnGrave(px, pz, chunkColliders));
-  } else if (r0 < 0.95) {
-    group.add(spawnCrypt(px, pz, chunkColliders));
+  const zone = zoneAt(centerX, centerZ);
+  const decorType = pickDecorType(zone, r0);
+
+  switch (decorType) {
+    case 'wall':
+      group.add(spawnWall(originX + CHUNK_SIZE / 2, pz, rotY, chunkColliders, ruined));
+      break;
+    case 'pillar':
+      group.add(spawnPillar(px, pz, chunkColliders, rand(cx, cz, 21) < 0.5));
+      break;
+    case 'arch':
+      group.add(spawnArch(originX + CHUNK_SIZE / 2, originZ + CHUNK_SIZE / 2, rotY, chunkColliders));
+      break;
+    case 'rocks':
+      group.add(spawnRocks(px, pz));
+      break;
+    case 'barrel':
+      group.add(spawnBarrel(px, pz, chunkColliders));
+      break;
+    case 'tree':
+      // Forest zone: a real multi-tree cluster, not one trunk per chunk — see
+      // spawnForestCluster's comment for why that's what actually reads as
+      // "forest" instead of scattered-random.
+      group.add(zone === 'forest' ? spawnForestCluster(originX, originZ, cx, cz, chunkColliders) : spawnTree(px, pz, chunkColliders));
+      break;
+    case 'grave':
+      group.add(spawnGrave(px, pz, chunkColliders));
+      break;
+    case 'crypt':
+      group.add(spawnCrypt(px, pz, chunkColliders));
+      break;
   }
 
   scene.add(group);
