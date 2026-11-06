@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Megabeer - test planète</title>
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #0d1426; font-family: system-ui, sans-serif; }
+    canvas { display: block; }
+    #hud { position: fixed; top: 8px; left: 8px; color: #e8f0ff; font: 12px/1.45 monospace; background: rgba(0,0,0,.45); padding: 8px 10px; border-radius: 6px; white-space: pre; pointer-events: none; }
+    #help { position: fixed; bottom: 8px; left: 8px; color: #c8d4ee; font: 12px/1.45 monospace; background: rgba(0,0,0,.45); padding: 8px 10px; border-radius: 6px; white-space: pre; pointer-events: none; }
+  </style>
+</head>
+<body>
+  <div id="hud"></div>
+  <div id="help">Clic : capturer la souris (Echap pour libérer)
+ZQSD / WASD / flèches : bouger   Espace : sauter   Molette : zoom
+Souris : orienter la caméra      T : test du tour (course auto tout droit)
+G : vitesse x4 (debug)           Manette : stick gauche, stick droit, A
+K / L : zone morte manette -/+   1 à 5 : taille de la horde</div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
