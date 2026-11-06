@@ -1,11 +1,12 @@
 {
-  "name": "megabonk-clone",
+  "name": "megabeer",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0-dev",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
     "preview": "yarn run build && wrangler dev",
     "deploy": "yarn run build && wrangler deploy"
   },
@@ -14,6 +15,8 @@
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.45.1",
+    "@types/three": "^0.187.0",
+    "typescript": "^7.0.2",
     "vite": "^8.1.5",
     "wrangler": "^4.112.0"
   },
