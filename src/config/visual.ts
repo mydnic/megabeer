@@ -11,7 +11,11 @@ export const RENDER = {
   /** Halo autour des zones très lumineuses (soleil, reflets, futurs effets). */
   bloom: { strength: 0.32, radius: 0.55, threshold: 0.85 },
   /** Profondeur de champ calée sur le perso : le lointain et le tout proche se floutent. */
-  dof: { aperture: 0.00012, maxBlur: 0.0055 },
+  dof: {
+    aperture: 0.00008, maxBlur: 0.0035,
+    /** Flou plein jusqu'à cette distance caméra -> perso (m), puis il diminue (vue dézoomée). */
+    fullUntil: 8, minScale: 0.2,
+  },
   /** Étalonnage (appliqué avant le tone mapping). */
   grade: { saturation: 1.12, contrast: 1.06, lift: [0.004, 0.006, 0.014] as const, gain: [1.05, 1.0, 0.93] as const, vignette: 0.32 },
   /** Ombres : taille de la carte, zone couverte autour du joueur, flou des bords. */

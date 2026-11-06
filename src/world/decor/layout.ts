@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { ImprovedNoise } from 'three/examples/jsm/math/ImprovedNoise.js';
 import { PLANET_RADIUS as R } from '../../config/world';
 import { DECOR_LAYOUT as D, type DecorModelId } from '../../config/decor';
-import { abbeyDir, heightAt, slopeGradient } from '../terrain';
+import { abbeySites, heightAt, slopeGradient } from '../terrain';
 
 /** Un élément posé : modèle et transformation locale -> monde (le y local suit la verticale). */
 export type Placement = { id: DecorModelId; matrix: THREE.Matrix4 };
@@ -59,31 +59,35 @@ export function layoutAbbeyPlanet(): { placements: Placement[]; spawn: { dir: TH
   const out: Placement[] = [];
   const add = (id: DecorModelId, m: THREE.Matrix4) => out.push({ id, matrix: m });
 
-  // ---------------------------------------------------------------- l'abbaye
-  const abbey = clusterFrame(abbeyDir, 0.6);
-  add('abbey', placeAt(abbeyDir, 0, abbey.q, 0));
-  // Repère de l'abbaye (glTF) : façade vers +z, parvis jusqu'à z = 32, clocher côté -x, cloître côté +x
-  const A = (x: number, z: number) => abbey.at(x, z);
-  // Allée de réverbères le long du parvis
-  for (const z of [16, 23, 30]) {
-    add('lightpost', placeAt(A(-3.4, z), Math.PI / 2, abbey.q));
-    add('lightpost', placeAt(A(3.4, z), -Math.PI / 2, abbey.q));
-  }
-  // Cimetière de l'abbaye, à gauche du clocher, avec grille et lanternes
-  graveyard(r, A, abbey.q, -27, 4, 5, 6, add, true);
-  // Quelques sapins autour de l'enclos
-  for (let i = 0; i < 26; i++) {
-    const a = r() * Math.PI * 2, d = 30 + r() * 10;
-    const tx = Math.cos(a) * d, tz = Math.sin(a) * d;
-    if (Math.abs(tx) < 7 && tz > 8) continue; // l'allée du parvis reste dégagée
-    const dir = A(tx, tz);
-    if (suitable(dir)) add('pine', placeAt(dir, r() * 6.28, null, 0.1));
-  }
+  // ---------------------------------------------------------------- les abbayes
+  // Repère d'une abbaye (glTF) : façade vers +z, parvis jusqu'à z = 32, clocher côté -x, cloître côté +x
+  const fronts: ((x: number, z: number) => THREE.Vector3)[] = [];
+  abbeySites.forEach((site, n) => {
+    const abbey = clusterFrame(site.dir, n === 0 ? 0.6 : r() * Math.PI * 2);
+    add('abbey', placeAt(site.dir, 0, abbey.q, 0));
+    const A = (x: number, z: number) => abbey.at(x, z);
+    fronts.push(A);
+    // Allée de réverbères le long du parvis
+    for (const z of [16, 23, 30]) {
+      add('lightpost', placeAt(A(-3.4, z), Math.PI / 2, abbey.q));
+      add('lightpost', placeAt(A(3.4, z), -Math.PI / 2, abbey.q));
+    }
+    // Cimetière de l'abbaye, à gauche du clocher, avec grille et lanternes
+    graveyard(r, A, abbey.q, -27, 4, 4 + Math.floor(r() * 2), 5 + Math.floor(r() * 2), add, true);
+    // Quelques sapins autour de l'enclos
+    for (let i = 0; i < 26; i++) {
+      const a = r() * Math.PI * 2, d = 30 + r() * 10;
+      const tx = Math.cos(a) * d, tz = Math.sin(a) * d;
+      if (Math.abs(tx) < 7 && tz > 8) continue; // l'allée du parvis reste dégagée
+      const dir = A(tx, tz);
+      if (suitable(dir)) add('pine', placeAt(dir, r() * 6.28, null, 0.1));
+    }
+  });
 
   // ---------------------------------------------------------------- amas : ruines et cimetières
   const noise = new ImprovedNoise();
   const centers: THREE.Vector3[] = [];
-  const awayFromAbbey = (d: THREE.Vector3, m: number) => d.angleTo(abbeyDir) * R > D.abbeyRadius + D.abbeyBlend + m;
+  const awayFromAbbey = (d: THREE.Vector3, m: number) => abbeySites.every((s) => d.angleTo(s.dir) * R > D.abbeyRadius + D.abbeyBlend + m);
   const freeFrom = (d: THREE.Vector3, m: number) => centers.every((c) => c.angleTo(d) * R > m);
   const randomDir = () => {
     const u = r() * 2 - 1, a = r() * Math.PI * 2, s = Math.sqrt(1 - u * u);
@@ -138,7 +142,8 @@ export function layoutAbbeyPlanet(): { placements: Placement[]; spawn: { dir: TH
     add(id, placeAt(d, r() * Math.PI * 2, null, id === 'pine' ? 0.1 : 0.15));
   }
 
-  // Départ : sur le parvis, face à la porte de l'abbaye
+  // Départ : sur le parvis de l'abbaye principale, face à la porte
+  const A = fronts[0];
   const spawnDir = A(0, 27);
   const facing = A(0, 10).multiplyScalar(R).sub(spawnDir.clone().multiplyScalar(R));
   facing.addScaledVector(spawnDir, -facing.dot(spawnDir)).normalize();

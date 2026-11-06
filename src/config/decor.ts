@@ -69,7 +69,7 @@ export const LIGHT_SOURCES: Partial<Record<DecorModelId, number>> = {
   lantern: 0.6, lanternGlass: 0.6, lightpost: 2.7, lightpostDouble: 2.7, fireBasket: 0.6, candles: 0.3,
 };
 
-/** Direction (depuis le centre de la planète) de l'abbaye, point de départ du joueur. */
+/** Direction (depuis le centre de la planète) de l'abbaye principale, point de départ du joueur. */
 export const ABBEY_DIR = [0.545, 0.743, 0.354] as const;
 
 export const DECOR_LAYOUT = {
@@ -77,6 +77,12 @@ export const DECOR_LAYOUT = {
   /** Rayon de l'enclos de l'abbaye (terrain aplani, pas de décor aléatoire). */
   abbeyRadius: 34,
   abbeyBlend: 18,
+  /** Nombre d'abbayes sur la planète (la première est celle du départ). */
+  abbeyCount: 5,
+  /** Écart minimal entre deux abbayes (m, le long du sol). */
+  abbeyMinGap: 180,
+  /** Un site d'abbaye doit être assez bas et plat : écart de relief max sur l'enclos (m). */
+  abbeyMaxRelief: 5.5,
   /** Pas de décor au-dessus de cette altitude ni sur les pentes plus raides (tangente). */
   maxAltitude: 13,
   maxSlope: 0.45,

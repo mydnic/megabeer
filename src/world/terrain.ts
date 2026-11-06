@@ -20,19 +20,64 @@ export function meadowAt(d: THREE.Vector3): number {
   return THREE.MathUtils.smoothstep(n, -0.5, -0.25);
 }
 
-/** Direction du centre de l'abbaye, et hauteur du terrain qu'on y aplanit. */
-export const abbeyDir = new THREE.Vector3(...ABBEY_DIR).normalize();
-const abbeyHeight = rawHeight(abbeyDir);
 const FLAT_IN = DECOR_LAYOUT.abbeyRadius / R, FLAT_OUT = (DECOR_LAYOUT.abbeyRadius + DECOR_LAYOUT.abbeyBlend) / R;
+
+/**
+ * Sites des abbayes : la principale (départ), puis les autres choisies sur des terrains bas et plats,
+ * le plus loin possible les unes des autres. Calcul déterministe (même planète à chaque partie).
+ */
+export const abbeySites: { dir: THREE.Vector3; height: number }[] = (() => {
+  const L = DECOR_LAYOUT;
+  const main = new THREE.Vector3(...ABBEY_DIR).normalize();
+  const sites = [main];
+  // Candidats régulièrement répartis (spirale de Fibonacci), notés sur la platitude de l'enclos
+  const cands: THREE.Vector3[] = [];
+  const N = 1500, ga = Math.PI * (3 - Math.sqrt(5));
+  const t1 = new THREE.Vector3(), t2 = new THREE.Vector3(), p = new THREE.Vector3();
+  for (let i = 0; i < N; i++) {
+    const y = 1 - (2 * (i + 0.5)) / N, rr = Math.sqrt(1 - y * y);
+    const d = new THREE.Vector3(Math.cos(ga * i) * rr, y, Math.sin(ga * i) * rr);
+    const h0 = rawHeight(d);
+    if (h0 > 10) continue;
+    t1.set(0, 1, 0).cross(d);
+    if (t1.lengthSq() < 1e-6) t1.set(1, 0, 0);
+    t1.normalize();
+    t2.crossVectors(d, t1);
+    let flat = true;
+    for (let k = 0; k < 12 && flat; k++) {
+      const a = (k / 12) * Math.PI * 2;
+      for (const dist of [L.abbeyRadius * 0.5, L.abbeyRadius]) {
+        p.copy(d).multiplyScalar(R).addScaledVector(t1, Math.cos(a) * dist).addScaledVector(t2, Math.sin(a) * dist).normalize();
+        if (Math.abs(rawHeight(p) - h0) > L.abbeyMaxRelief) { flat = false; break; }
+      }
+    }
+    if (flat) cands.push(d);
+  }
+  // Le plus loin possible des sites déjà retenus
+  while (sites.length < L.abbeyCount) {
+    let best: THREE.Vector3 | null = null, bestGap = (L.abbeyMinGap / R);
+    for (const c of cands) {
+      const gap = Math.min(...sites.map((s) => s.angleTo(c)));
+      if (gap > bestGap) { bestGap = gap; best = c; }
+    }
+    if (!best) break;
+    sites.push(best);
+  }
+  return sites.map((dir) => ({ dir, height: rawHeight(dir) }));
+})();
+const COS_OUT = Math.cos(FLAT_OUT);
 
 /** Hauteur du relief (au-dessus du rayon de base) pour une direction unitaire. */
 export function heightAt(d: THREE.Vector3): number {
   const h = rawHeight(d);
-  // Enclos de l'abbaye : terrain aplani, raccordé en douceur au relief
-  const c = d.dot(abbeyDir);
-  if (c < Math.cos(FLAT_OUT)) return h;
-  const w = 1 - THREE.MathUtils.smoothstep(Math.acos(Math.min(1, c)), FLAT_IN, FLAT_OUT);
-  return h + (abbeyHeight - h) * w;
+  // Enclos des abbayes : terrain aplani, raccordé en douceur au relief
+  for (const s of abbeySites) {
+    const c = d.dot(s.dir);
+    if (c < COS_OUT) continue;
+    const w = 1 - THREE.MathUtils.smoothstep(Math.acos(Math.min(1, c)), FLAT_IN, FLAT_OUT);
+    return h + (s.height - h) * w;
+  }
+  return h;
 }
 
 function rawHeight(d: THREE.Vector3): number {

@@ -116,7 +116,11 @@ export class Pipeline {
     c.fov = cam.fov; c.aspect = cam.aspect; c.near = cam.near; c.far = cam.far;
     c.updateProjectionMatrix();
     c.updateMatrixWorld();
-    (this.dof.uniforms as Record<string, THREE.IUniform>).focus.value = this.focusDistance;
+    const dofU = this.dof.uniforms as Record<string, THREE.IUniform>;
+    dofU.focus.value = this.focusDistance;
+    // Moins de flou quand on dézoome : le lointain reste lisible
+    const D = RENDER.dof;
+    dofU.aperture.value = D.aperture * THREE.MathUtils.clamp(D.fullUntil / Math.max(this.focusDistance, 0.01), D.minScale, 1);
     this.outline.setViewDistance(this.focusDistance);
 
     this.renderer.shadowMap.needsUpdate = true;
