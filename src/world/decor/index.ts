@@ -20,9 +20,38 @@ function bendFrame(m: THREE.Matrix4): Bend {
   };
 }
 
+/**
+ * Découpe les grands triangles (arête max `maxEdge`) : sans ça, une grande face plane (dallage,
+ * toit, long mur) resterait tendue entre ses coins une fois courbée, et passerait sous le sol.
+ * Géométrie non indexée ; couleurs et normales interpolées au milieu des arêtes coupées.
+ */
+function tessellate(geo: THREE.BufferGeometry, maxEdge: number): THREE.BufferGeometry {
+  const names = Object.keys(geo.attributes);
+  const src = names.map((n) => geo.attributes[n] as THREE.BufferAttribute);
+  type V = number[][]; // une liste d'attributs par sommet
+  const out: number[][] = names.map(() => []);
+  const vert = (i: number): V => src.map((a) => Array.from({ length: a.itemSize }, (_, k) => a.array[i * a.itemSize + k]));
+  const mid = (a: V, b: V): V => a.map((arr, n) => arr.map((x, k) => (x + b[n][k]) / 2));
+  const dist = (a: V, b: V) => Math.hypot(a[0][0] - b[0][0], a[0][1] - b[0][1], a[0][2] - b[0][2]);
+  const emit = (t: V[]) => t.forEach((v) => v.forEach((arr, n) => out[n].push(...arr)));
+  const split = (t: V[], depth: number) => {
+    const e = [dist(t[0], t[1]), dist(t[1], t[2]), dist(t[2], t[0])];
+    const k = e.indexOf(Math.max(...e));
+    if (e[k] <= maxEdge || depth > 12) return emit(t);
+    const a = t[k], b2 = t[(k + 1) % 3], c = t[(k + 2) % 3], m = mid(a, b2);
+    split([a, m, c], depth + 1);
+    split([m, b2, c], depth + 1);
+  };
+  for (let i = 0; i < src[0].count; i += 3) split([vert(i), vert(i + 1), vert(i + 2)], 0);
+  const g = new THREE.BufferGeometry();
+  names.forEach((n, i) => g.setAttribute(n, new THREE.Float32BufferAttribute(out[i], src[i].itemSize)));
+  return g;
+}
+
 /** Géométrie posée directement dans le monde, chaque sommet reprojeté sur la sphère. */
 function bendToSphere(geo: THREE.BufferGeometry, b: Bend): THREE.BufferGeometry {
-  const g = geo.clone();
+  // L'écart entre une face plane et la sphère sur 1 m est de l'ordre du millimètre
+  const g = tessellate(geo.index ? geo.toNonIndexed() : geo, 1.0);
   const pos = g.attributes.position as THREE.BufferAttribute;
   const v = new THREE.Vector3(), d = new THREE.Vector3();
   for (let i = 0; i < pos.count; i++) {

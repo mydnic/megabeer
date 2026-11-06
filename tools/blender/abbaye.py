@@ -133,7 +133,8 @@ def side_wall(side, broken):
     """Mur latéral avec 4 fenêtres en ogive (arc en gradins) ; `broken` : hauteurs arrachées par pilier."""
     x0 = side * W - (T if side > 0 else 0)
     x1 = x0 + T
-    edges = [-L] + sum([[y - WIN_W / 2, y + WIN_W / 2] for y in WIN_Y], []) + [L]
+    # Entre la façade et le chevet seulement : pas de faces superposées aux angles (scintillement)
+    edges = [-L + T] + sum([[y - WIN_W / 2, y + WIN_W / 2] for y in WIN_Y], []) + [L - T]
     for i in range(0, len(edges) - 1, 2):
         top = H * broken.get(i // 2, 1.0)
         block(f'pile{side}_{i}', (x0, edges[i], 0), (x1, edges[i + 1], top))
@@ -145,7 +146,7 @@ def side_wall(side, broken):
             # Ogive en gradins puis mur au-dessus
             block(f'arcG{side}{k}', (x0, y0, WIN_TOP), (x1, y0 + 0.5, WIN_TOP + 0.7))
             block(f'arcD{side}{k}', (x0, y1 - 0.5, WIN_TOP), (x1, y1, WIN_TOP + 0.7))
-            block(f'arcC{side}{k}', (x0, y0 + 0.25, WIN_TOP + 0.45), (x1, y1 - 0.25, WIN_TOP + 0.75))
+            block(f'arcC{side}{k}', (x0 + 0.03, y0 + 0.25, WIN_TOP + 0.45), (x1 - 0.03, y1 - 0.25, WIN_TOP + 0.75))
             block(f'linteau{side}{k}', (x0, y0, WIN_TOP + 0.7), (x1, y1, H))
         # Contreforts entre les fenêtres
     for k, y in enumerate([-10.0, -5.0, 0.0, 5.0, 10.0]):
@@ -165,7 +166,7 @@ block('facadeG', (-W, FY0, 0), (-DOOR, FY1, H))
 block('facadeD', (DOOR, FY0, 0), (W, FY1, H))
 block('porteArcG', (-DOOR, FY0, 4.2), (-DOOR + 0.6, FY1, 5.0))
 block('porteArcD', (DOOR - 0.6, FY0, 4.2), (DOOR, FY1, 5.0))
-block('porteArcC', (-DOOR + 0.3, FY0, 4.8), (DOOR - 0.3, FY1, 5.3))
+block('porteArcC', (-DOOR + 0.3, FY0 + 0.03, 4.8), (DOOR - 0.3, FY1 - 0.03, 5.3))
 block('facadeHaut', (-DOOR, FY0, 5.3), (DOOR, FY1, H))
 prism_y('pignonAvant', [(-W, H), (W, H), (0, H + 4.2)], FY0, FY1, 'pierre')
 # Rosace : disque sombre en retrait + anneau et rayons
@@ -252,8 +253,9 @@ for i, z in enumerate((4.0, 7.5)):  # meurtrières
 # Beffroi : 4 piliers d'angle, arcs, bandeau
 for i, (x, y) in enumerate([(TX0, TY0), (TX1 - 1.0, TY0), (TX0, TY1 - 1.0), (TX1 - 1.0, TY1 - 1.0)]):
     block(f'beffroiPilier{i}', (x, y, 12.2), (x + 1.0, y + 1.0, 16.2))
-for i, (a, b) in enumerate([((TX0, TY0), (TX1, TY0 + 0.9)), ((TX0, TY1 - 0.9), (TX1, TY1)),
-                            ((TX0, TY0), (TX0 + 0.9, TY1)), ((TX1 - 0.9, TY0), (TX1, TY1))]):
+I = 0.06  # arcs en léger retrait des piliers : pas de faces dans le même plan
+for i, (a, b) in enumerate([((TX0 + I, TY0 + I), (TX1 - I, TY0 + 0.9)), ((TX0 + I, TY1 - 0.9), (TX1 - I, TY1 - I)),
+                            ((TX0 + I, TY0 + I), (TX0 + 0.9, TY1 - I)), ((TX1 - 0.9, TY0 + I), (TX1 - I, TY1 - I))]):
     block(f'beffroiArc{i}', (a[0], a[1], 15.4), (b[0], b[1], 16.4))
 block('beffroiCorniche', (TX0 - 0.3, TY0 - 0.3, 16.4), (TX1 + 0.3, TY1 + 0.3, 16.9), 'pierre_fonce')
 # La cloche, suspendue à une poutre
