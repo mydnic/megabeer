@@ -34,3 +34,26 @@ export const FOOT_IK = {
   /** Réactivité du bassin et de l'activation (plus haut = plus sec). */
   sharpness: 18,
 } as const;
+
+/** Petit gimmick autour de la mousse : flocons qui sautent de la pinte (course, saut, réception). */
+export const BEER_SPLASH = {
+  beerColor: 0xf0a020,
+  foamColor: 0xfff6e2,
+  /** Surtout de la mousse, de rares gouttes de bière. */
+  foamRatio: 0.85,
+  dropSize: 0.014,
+  foamSize: 0.02,
+  /** Durée de vie courte : les flocons disparaissent près du verre, avant le sol. */
+  dropLife: 0.4,
+  gravity: 9,
+  drag: 2.5,
+  maxDrops: 60,
+  /** Course : à chaque appui (2 par cycle), avec cette probabilité. */
+  run: { chance: 0.4, count: [1, 2] as const, upSpeed: [0.4, 0.9] as const, spread: 0.3, inherit: 0.85 },
+  /** Saut. */
+  jump: { count: 4, upSpeed: [0.8, 1.4] as const, spread: 0.4, inherit: 0.9 },
+  /** Réception : proportionnelle à la vitesse de chute. */
+  land: { countPerSpeed: 0.3, max: 5, upSpeed: [0.5, 1.0] as const, spread: 0.5, inherit: 0.6 },
+  /** Haut de la pinte, dans le repère du modèle (glTF, mètres). */
+  pintTop: [-0.31, 1.2, 0.39] as const,
+} as const;

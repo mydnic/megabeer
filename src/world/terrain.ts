@@ -2,11 +2,22 @@ import * as THREE from 'three';
 import { ImprovedNoise } from 'three/examples/jsm/math/ImprovedNoise.js';
 import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { PLANET, PLANET_RADIUS } from '../config/world';
-import { toonMaterial } from '../render/toon';
+import { litMaterial } from '../render/materials';
+import { TERRAIN_PALETTE } from '../config/visual';
 
 const R = PLANET_RADIUS;
 const noise = new ImprovedNoise();
 const { relief } = PLANET;
+
+/**
+ * Couverture d'herbe (0 = terre battue, 1 = pré) pour une direction unitaire. Partagée par la couleur
+ * du sol et par l'herbe dense : les clairières de terre coïncident avec l'absence de brins.
+ */
+export function meadowAt(d: THREE.Vector3): number {
+  const k = R * 0.03, k2 = R * 0.11;
+  const n = noise.noise(d.x * k + 100, d.y * k, d.z * k) + 0.35 * noise.noise(d.x * k2, d.y * k2 + 40, d.z * k2);
+  return THREE.MathUtils.smoothstep(n, -0.5, -0.25);
+}
 
 /** Hauteur du relief (au-dessus du rayon de base) pour une direction unitaire. */
 export function heightAt(d: THREE.Vector3): number {
@@ -33,7 +44,6 @@ export function slopeGradient(up: THREE.Vector3, ax: THREE.Vector3, ay: THREE.Ve
 }
 
 // Palette du sol (DA : couleurs franches et chaudes, lisibles sous le cel-shading)
-const PAL_HEX = { grassLow: 0x3f7d3a, grassHigh: 0x7cb246, dirt: 0x8a6a44, rock: 0x857a70, snow: 0xf2f5f8 };
 
 export function buildTerrain(): THREE.Mesh {
   let geo: THREE.BufferGeometry = new THREE.IcosahedronGeometry(1, PLANET.detail);
@@ -55,15 +65,15 @@ export function buildTerrain(): THREE.Mesh {
   geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(pos.count * 3), 3));
   geo.userData.heights = heights;
 
-  const mesh = new THREE.Mesh(geo, toonMaterial({ vertexColors: true }));
+  const mesh = new THREE.Mesh(geo, litMaterial({ vertexColors: true, roughness: 0.95 }));
   mesh.receiveShadow = true;
   mesh.castShadow = true;
   mesh.name = 'terrain';
-  colorTerrain(mesh, { ...PAL_HEX, variation: 0.1 });
+  colorTerrain(mesh, TERRAIN_PALETTE);
   return mesh;
 }
 
-type TerrainPalette = { grassLow: number; grassHigh: number; dirt: number; rock: number; snow: number; variation: number };
+type TerrainPalette = { grassLow: number; grassHigh: number; dirt: number; path: number; rock: number; snow: number; variation: number };
 
 /**
  * Couleur selon l'altitude et la pente (roche sur les flancs raides), plus des taches de variation
@@ -78,6 +88,7 @@ export function colorTerrain(mesh: THREE.Mesh, p: TerrainPalette) {
   const pal = {
     grassLow: new THREE.Color(p.grassLow), grassHigh: new THREE.Color(p.grassHigh), dirt: new THREE.Color(p.dirt),
     rock: new THREE.Color(p.rock), snow: new THREE.Color(p.snow), dry: new THREE.Color(p.grassHigh).lerp(new THREE.Color(0xd8c060), 0.5),
+    path: new THREE.Color(p.path),
   };
   const c = new THREE.Color(), n = new THREE.Vector3(), v = new THREE.Vector3();
   for (let i = 0; i < pos.count; i++) {
@@ -93,6 +104,8 @@ export function colorTerrain(mesh: THREE.Mesh, p: TerrainPalette) {
       c.lerp(pal.dry, THREE.MathUtils.clamp(big * 2.2, 0, 1) * p.variation * 3);
       c.multiplyScalar(1 + small * p.variation * 1.6);
     }
+    // Clairières de terre battue
+    c.lerp(pal.path, (1 - meadowAt(vn)) * 0.9);
     c.lerp(pal.dirt, THREE.MathUtils.smoothstep(steep, 0.12, 0.2) * 0.8);
     c.lerp(pal.rock, THREE.MathUtils.smoothstep(steep, 0.2, 0.3));
     c.lerp(pal.rock, THREE.MathUtils.smoothstep(h, 14, 18));

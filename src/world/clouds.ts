@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { PLANET_RADIUS as R } from '../config/world';
-import { LAYER_NO_OUTLINE, toonMaterial } from '../render/toon';
+import { LAYER_SKY, litMaterial } from '../render/materials';
 
 const CLOUDS = {
   count: 150,
@@ -45,12 +45,11 @@ export function createClouds(scene: THREE.Scene) {
       mats.push(new THREE.Matrix4().compose(p, q, s.set(size, size * 0.62, size)));
     }
   }
-  const mesh = new THREE.InstancedMesh(geo, toonMaterial({ color: 0xffffff }), mats.length);
+  const mesh = new THREE.InstancedMesh(geo, litMaterial({ color: 0xffffff, roughness: 1, emissive: 0x8a96b0, emissiveIntensity: 0.35 }), mats.length);
   mats.forEach((m, i) => mesh.setMatrixAt(i, m));
-  mesh.layers.set(LAYER_NO_OUTLINE);
+  mesh.layers.set(LAYER_SKY);
   mesh.frustumCulled = false;
   group.add(mesh);
-  group.visible = false;
   scene.add(group);
 
   const axis = new THREE.Vector3(0.2, 1, 0.1).normalize();

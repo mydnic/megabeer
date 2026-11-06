@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { LIGHTING } from '../config/lighting';
-import { LAYER_CHARACTER, LAYER_NO_OUTLINE } from '../render/toon';
-import type { ArtStyle } from '../config/artStyles';
+import { RENDER } from '../config/visual';
+import { LAYER_CHARACTER, LAYER_SKY } from '../render/materials';
 
 const L = LIGHTING;
 const col = (hex: number) => new THREE.Color(hex);
@@ -25,15 +25,15 @@ export function createSky(scene: THREE.Scene) {
   const makeDir = (color: number) => {
     const l = new THREE.DirectionalLight(color, 0);
     l.castShadow = true;
-    l.shadow.mapSize.set(L.shadowMapSize, L.shadowMapSize);
+    const S = RENDER.shadow;
+    l.shadow.mapSize.set(S.mapSize, S.mapSize);
     const c = l.shadow.camera;
-    // Les persos sont sur leur propre couche : ils doivent quand même projeter leur ombre
-    c.layers.enable(LAYER_CHARACTER);
-    c.left = -L.shadowExtent; c.right = L.shadowExtent; c.top = L.shadowExtent; c.bottom = -L.shadowExtent;
+    c.layers.enable(LAYER_CHARACTER); // les persos (couche à part) projettent leur ombre
+    c.left = -S.extent; c.right = S.extent; c.top = S.extent; c.bottom = -S.extent;
     c.near = 1; c.far = 300;
-    l.shadow.bias = -0.0004;
-    l.shadow.normalBias = 0.06;
-    l.shadow.radius = 1.2;
+    l.shadow.bias = S.bias;
+    l.shadow.normalBias = S.normalBias;
+    l.shadow.radius = S.softness; // bords d'ombre doux
     scene.add(l, l.target);
     return l;
   };
@@ -83,20 +83,23 @@ export function createSky(scene: THREE.Scene) {
   );
   dome.renderOrder = -10;
   dome.frustumCulled = false;
-  dome.layers.set(LAYER_NO_OUTLINE);
+  dome.layers.set(LAYER_SKY);
   scene.add(dome);
 
   // --- Astres et étoiles (groupe centré sur la caméra, directions fixes)
   const skyGroup = new THREE.Group();
-  skyGroup.layers.set(LAYER_NO_OUTLINE);
-  const body = (dir: THREE.Vector3, color: number, size: number) => {
-    const m = new THREE.Mesh(new THREE.SphereGeometry(size, 24, 16), new THREE.MeshBasicMaterial({ color, fog: false }));
+  skyGroup.layers.set(LAYER_SKY);
+  // Couleurs au-delà de 1 : le soleil et la lune brillent assez pour déclencher le halo
+  const body = (dir: THREE.Vector3, rgb: [number, number, number], size: number) => {
+    const mat = new THREE.MeshBasicMaterial({ fog: false });
+    mat.color.setRGB(...rgb);
+    const m = new THREE.Mesh(new THREE.SphereGeometry(size, 24, 16), mat);
     m.position.copy(dir).multiplyScalar(440);
-    m.layers.set(LAYER_NO_OUTLINE);
+    m.layers.set(LAYER_SKY);
     skyGroup.add(m);
   };
-  body(sunDir0, 0xfff0b0, 26);
-  body(sunDir0.clone().negate(), 0xe6edff, 15);
+  body(sunDir0, [6, 5, 3.4], 22);
+  body(sunDir0.clone().negate(), [1.6, 1.75, 2.1], 14);
 
   const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 2, sizeAttenuation: false, fog: false, transparent: true, depthWrite: false });
   {
@@ -111,7 +114,7 @@ export function createSky(scene: THREE.Scene) {
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
     const stars = new THREE.Points(g, starMat);
-    stars.layers.set(LAYER_NO_OUTLINE);
+    stars.layers.set(LAYER_SKY);
     stars.frustumCulled = false;
     skyGroup.add(stars);
   }
@@ -124,7 +127,7 @@ export function createSky(scene: THREE.Scene) {
   const up = new THREE.Vector3();
   // Repère fixe de chaque lumière (mêmes axes que lookAt de la caméra d'ombre) pour caler son centre
   // sur la grille des texels : sans ça, les bords d'ombre grouillent dès que le joueur bouge.
-  const texel = (2 * L.shadowExtent) / L.shadowMapSize;
+  const texel = (2 * RENDER.shadow.extent) / RENDER.shadow.mapSize;
   const bases = [0, 1].map(() => ({ x: new THREE.Vector3(), y: new THREE.Vector3(), z: new THREE.Vector3() }));
   const setBasis = (b: (typeof bases)[number], dir: THREE.Vector3) => {
     b.z.copy(dir);
@@ -132,7 +135,6 @@ export function createSky(scene: THREE.Scene) {
     b.y.copy(b.z).cross(b.x);
   };
   const snapped = new THREE.Vector3();
-  let dayStyle = { sunIntensity: L.sunIntensity as number, hemiIntensity: L.day.hemiIntensity as number };
   const dayHemiSky = col(L.day.hemiSky), nightHemiSky = col(L.night.hemiSky);
   const dayHemiGround = col(L.day.hemiGround), nightHemiGround = col(L.night.hemiGround);
   const horizonDay = col(L.day.horizon), horizonNight = col(L.night.horizon), glow = col(L.dusk.glow);
@@ -152,7 +154,7 @@ export function createSky(scene: THREE.Scene) {
     const day = THREE.MathUtils.smoothstep(s, -0.15, 0.25);
     const dusk = Math.max(0, 1 - Math.abs(s - 0.02) / 0.3);
 
-    sun.intensity = dayStyle.sunIntensity * day;
+    sun.intensity = L.sunIntensity * day;
     moon.intensity = L.moonIntensity * (1 - day);
     [sun, moon].forEach((l, i) => {
       const b = bases[i];
@@ -169,27 +171,16 @@ export function createSky(scene: THREE.Scene) {
     hemi.position.copy(up);
     hemi.color.copy(nightHemiSky).lerp(dayHemiSky, day);
     hemi.groundColor.copy(nightHemiGround).lerp(dayHemiGround, day);
-    hemi.intensity = THREE.MathUtils.lerp(L.night.hemiIntensity, dayStyle.hemiIntensity, day);
+    hemi.intensity = THREE.MathUtils.lerp(L.night.hemiIntensity, L.day.hemiIntensity, day);
 
     uniforms.uUp.value.copy(up);
     uniforms.uDay.value = day;
     uniforms.uDusk.value = dusk;
     dome.position.copy(camera.position);
     skyGroup.position.copy(camera.position);
-    fog.color.copy(horizonNight).lerp(horizonDay, day).lerp(glow, dusk * 0.25);
+    fog.color.copy(horizonNight).lerp(horizonDay, day).lerp(glow, dusk * 0.3);
     starMat.opacity = 1 - day;
   }
 
-  /** Palette de jour d'un style (la nuit garde la sienne). */
-  function applyStyle(s: ArtStyle) {
-    dayStyle = { sunIntensity: s.day.sunIntensity, hemiIntensity: s.day.hemiIntensity };
-    sun.color.set(s.day.sunColor);
-    dayHemiSky.set(s.day.hemiSky);
-    dayHemiGround.set(s.day.hemiGround);
-    horizonDay.set(s.day.horizon);
-    uniforms.uZenithDay.value.set(s.day.zenith);
-    uniforms.uHorizonDay.value.set(s.day.horizon);
-  }
-
-  return { update, applyStyle, sunDir };
+  return { update, sunDir };
 }

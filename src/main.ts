@@ -5,8 +5,6 @@ import { BuveurVisual } from './player/buveurVisual';
 import { CameraRig } from './player/cameraRig';
 import { PlayerController } from './player/controller';
 import { Pipeline } from './render/pipeline';
-import { applyArtStyle } from './render/artStyle';
-import { ART_STYLES, DEFAULT_ART_STYLE, type ArtStyleId } from './config/artStyles';
 import { createSky } from './world/sky';
 import { createClouds } from './world/clouds';
 import { buildTerrain, heightAt } from './world/terrain';
@@ -39,18 +37,6 @@ const sky = createSky(scene);
 
 const clouds = createClouds(scene);
 
-// --- Direction artistique (en test : touches 1 et 2 pour comparer)
-let styleId: ArtStyleId = DEFAULT_ART_STYLE;
-const setStyle = (id: ArtStyleId) => { styleId = id; applyArtStyle(id, { pipeline, sky, terrain, clouds: clouds.group }); };
-setStyle(styleId);
-if (import.meta.env.DEV) {
-  const ids = Object.keys(ART_STYLES) as ArtStyleId[];
-  addEventListener('keydown', (e) => {
-    const i = ['Digit1', 'Digit2', 'Digit3'].indexOf(e.code);
-    if (i >= 0 && ids[i]) setStyle(ids[i]);
-  });
-}
-
 // --- Joueur
 const startDir = new THREE.Vector3(0.55, 0.75, 0.35).normalize();
 while (heightAt(startDir) > 6) startDir.applyAxisAngle(new THREE.Vector3(1, 0, 0), 0.02);
@@ -70,6 +56,7 @@ let fpsAcc = 0, fpsN = 0, fps = 0;
 // --- Boucle : physique à pas fixe, rendu à chaque frame
 const STEP = 1 / 120;
 let acc = 0, last = performance.now();
+const focusPoint = new THREE.Vector3();
 
 function frame(now: number) {
   const dt = Math.min(0.1, (now - last) / 1000);
@@ -87,6 +74,8 @@ function frame(now: number) {
   rig.update(dt, input, player);
   sky.update(dt, player.renderPos, camera);
   clouds.update(dt);
+  // Mise au point de la profondeur de champ sur le perso
+  pipeline.focusDistance = camera.position.distanceTo(focusPoint.copy(player.renderPos).addScaledVector(player.upDir, 1.1));
   pipeline.render();
 
   fpsAcc += dt; fpsN++;
@@ -94,7 +83,7 @@ function frame(now: number) {
   debugEl.style.display = debugOn ? 'block' : 'none';
   if (debugOn) {
     debugEl.textContent = [
-      `FPS ${fps.toFixed(0)}   triangles ${renderer.info.render.triangles.toLocaleString('fr')}   style ${ART_STYLES[styleId].label} (1, 2)`,
+      `FPS ${fps.toFixed(0)}   triangles ${renderer.info.render.triangles.toLocaleString('fr')}`,
       `Altitude ${heightAt(up).toFixed(1)}   au sol ${player.onGround ? 'oui' : 'non'}`,
       'ZQSD bouger, Espace sauter, souris caméra (clic), molette zoom, F3 masquer',
     ].join('\n');
@@ -103,4 +92,4 @@ function frame(now: number) {
 }
 requestAnimationFrame(frame);
 
-if (import.meta.env.DEV) Object.assign(window, { __game: { player, rig, camera, buveur, sky, heightAt, THREE, setStyle, pipeline, renderer } });
+if (import.meta.env.DEV) Object.assign(window, { __game: { player, rig, camera, buveur, sky, heightAt, THREE, pipeline, renderer } });

@@ -1,19 +1,26 @@
 // Décor PROVISOIRE (point d'étape cel-shading) : remplacé par le vrai décor de l'Abbaye.
 import * as THREE from 'three';
 import { PLANET_RADIUS as R } from '../config/world';
-import { toonMaterial } from '../render/toon';
+import { litMaterial } from '../render/materials';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { heightAt } from './terrain';
 import type { Obstacle } from '../player/controller';
 
 export function scatterPlaceholderDecor(scene: THREE.Scene, near: THREE.Vector3): Obstacle[] {
   const obstacles: Obstacle[] = [];
   const COUNT = 2200;
-  const trunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.25, 0.35, 2, 7).translate(0, 1, 0), toonMaterial({ color: 0x6b4428 }), COUNT);
-  const crown = new THREE.InstancedMesh(new THREE.ConeGeometry(1.5, 3.8, 8).translate(0, 3.7, 0), toonMaterial({ color: 0x2f6b3a }), COUNT);
+  const trunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.22, 0.32, 2, 8).translate(0, 1, 0), litMaterial({ color: 0x6b4428 }), COUNT);
+  // Sapin en étages (3 cônes empilés), plus « maquette » qu'un cône unique
+  const crownGeo = mergeGeometries([
+    new THREE.ConeGeometry(1.7, 2.2, 9).translate(0, 2.6, 0),
+    new THREE.ConeGeometry(1.35, 1.9, 9).translate(0, 3.7, 0),
+    new THREE.ConeGeometry(0.95, 1.7, 9).translate(0, 4.7, 0),
+  ])!;
+  const crown = new THREE.InstancedMesh(crownGeo, litMaterial({ color: 0x4f8a35 }), COUNT);
   const rockGeo = new THREE.DodecahedronGeometry(1, 0);
   rockGeo.computeBoundingBox();
   const rockTop = rockGeo.boundingBox!.max.y;
-  const rock = new THREE.InstancedMesh(rockGeo, toonMaterial({ color: 0x9a918a }), COUNT);
+  const rock = new THREE.InstancedMesh(rockGeo, litMaterial({ color: 0x9a918a }), COUNT);
   let nt = 0, nr = 0, seed = 42;
   const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
   const d = new THREE.Vector3(), p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3(), m = new THREE.Matrix4();

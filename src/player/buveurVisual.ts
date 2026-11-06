@@ -2,9 +2,10 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import buveurUrl from '../assets/models/buveur.glb?url';
 import { BASE_SPEED } from '../config/world';
-import { BUVEUR_VISUAL as V } from '../config/buveur';
-import { LAYER_CHARACTER, toonMaterial } from '../render/toon';
+import { BEER_SPLASH, BUVEUR_VISUAL as V } from '../config/buveur';
+import { characterMaterial, LAYER_CHARACTER } from '../render/materials';
 import { FootIK } from './footIK';
+import { BeerSplash } from './beerSplash';
 import type { PlayerController } from './controller';
 
 type Clip = 'idle' | 'run' | 'jump' | 'fall' | 'land';
@@ -34,11 +35,19 @@ export class BuveurVisual {
   private right = new THREE.Vector3();
   private tmp = new THREE.Vector3();
   private up = new THREE.Vector3();
+  private splash: BeerSplash;
+  /** Os de la main droite et position du haut de la pinte dans son repère. */
+  private hand?: THREE.Object3D;
+  private pintOffset = new THREE.Vector3();
+  private pintPos = new THREE.Vector3();
+  private runPhase = 0;
+  private baseVel = new THREE.Vector3();
 
   constructor(scene: THREE.Scene) {
     this.root.add(this.lean);
     this.lean.add(this.squashGroup);
     scene.add(this.root);
+    this.splash = new BeerSplash(scene);
   }
 
   async load() {
@@ -49,16 +58,23 @@ export class BuveurVisual {
       if (!mesh.isMesh) return;
       const src = mesh.material as THREE.MeshStandardMaterial;
       let m = mats.get(src.name);
-      if (!m) { m = toonMaterial({ color: src.color }, { character: true }); m.name = src.name; mats.set(src.name, m); }
+      if (!m) { m = characterMaterial({ color: src.color }); m.name = src.name; mats.set(src.name, m); }
       mesh.material = m;
       mesh.castShadow = true;
-      // Pas d'ombre reçue : la carte d'ombre est trop grossière pour un perso de 1,9 m (taches)
+      // Pas d'ombre reçue : la carte d'ombre est trop grossière pour un perso de 1,9 m (taches au dos)
       mesh.receiveShadow = false;
-      mesh.frustumCulled = false; // la sphère englobante ne suit pas les os
       mesh.layers.set(LAYER_CHARACTER);
+      mesh.frustumCulled = false; // la sphère englobante ne suit pas les os
     });
     this.squashGroup.add(gltf.scene);
     this.ik = new FootIK(gltf.scene, this.root);
+    // Haut de la pinte exprimé dans le repère de l'os de la main (pose de repos)
+    this.hand = gltf.scene.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('hand.R'));
+    if (this.hand) {
+      gltf.scene.updateMatrixWorld(true);
+      this.pintOffset.set(...BEER_SPLASH.pintTop).applyMatrix4(gltf.scene.matrixWorld)
+        .applyMatrix4(this.hand.matrixWorld.clone().invert());
+    }
     this.mixer = new THREE.AnimationMixer(gltf.scene);
     for (const name of ['idle', 'run', 'jump', 'fall', 'land'] as Clip[]) {
       const clip = gltf.animations.find((a) => a.name === name);
@@ -134,6 +150,39 @@ export class BuveurVisual {
 
     // --- Jambes calées sur le relief (après l'animation)
     this.ik?.update(dt, up, facing, this.right, player);
+
+    // --- Éclaboussures de bière
+    this.updateSplash(dt, player, up, ev);
+  }
+
+  private updateSplash(dt: number, player: PlayerController, up: THREE.Vector3, ev: PlayerController['events']) {
+    const B = BEER_SPLASH;
+    if (this.hand) {
+      this.hand.updateWorldMatrix(true, false);
+      this.pintPos.copy(this.pintOffset).applyMatrix4(this.hand.matrixWorld);
+      const rand = (r: readonly [number, number]) => Math.round(r[0] + Math.random() * (r[1] - r[0]));
+      // Course : la bière déborde quand le corps redescend sur un appui (2 fois par cycle)
+      if (this.current === 'run' && player.onGround) {
+        const a = this.actions.run;
+        const phase = (a.time / a.getClip().duration) % 1;
+        const crossed = (p: number) => (this.runPhase < p && phase >= p) || (this.runPhase > phase && (phase >= p || this.runPhase < p));
+        if ((crossed(0.25) || crossed(0.75)) && Math.random() < B.run.chance) {
+          this.splash.emit(this.pintPos, this.baseVel.copy(player.velocity).multiplyScalar(B.run.inherit), up,
+            rand(B.run.count), [...B.run.upSpeed], B.run.spread);
+        }
+        this.runPhase = phase;
+      }
+      if (ev.jumped) {
+        this.splash.emit(this.pintPos, this.baseVel.copy(player.velocity).multiplyScalar(B.jump.inherit), up,
+          B.jump.count, [...B.jump.upSpeed], B.jump.spread);
+      }
+      if (ev.landed) {
+        const n = Math.min(B.land.max, Math.round(ev.landSpeed * B.land.countPerSpeed));
+        if (n > 0) this.splash.emit(this.pintPos, this.baseVel.copy(player.velocity).multiplyScalar(B.land.inherit), up,
+          n, [...B.land.upSpeed], B.land.spread);
+      }
+    }
+    this.splash.update(dt);
   }
 
   private kick(amount: number) {
