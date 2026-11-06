@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass.js';
 import { CHARACTER_LOOK } from '../config/visual';
+import { LIGHTING } from '../config/lighting';
 import { LAYER_CHARACTER } from './materials';
 
 const O = CHARACTER_LOOK.outline;
@@ -43,12 +44,14 @@ export class CharacterOutlinePass extends Pass {
         uFar: { value: camera.far },
         uDepthTh: { value: O.depthThreshold },
         uNormalTh: { value: O.creaseThreshold },
+        uScale: { value: new THREE.Vector2(O.fullUntil, O.minScale) },
+        uFog: { value: new THREE.Vector2(LIGHTING.fog.near, LIGHTING.fog.far) },
       },
       vertexShader: /* glsl */ `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`,
       fragmentShader: /* glsl */ `
         #include <packing>
         uniform sampler2D tNormal, tDepth;
-        uniform vec2 uTexel;
+        uniform vec2 uTexel, uScale, uFog;
         uniform float uNear, uFar, uDepthTh, uNormalTh;
         varying vec2 vUv;
         float viewDepth(vec2 uv) { return -perspectiveDepthToViewZ(texture2D(tDepth, uv).x, uNear, uFar); }
@@ -67,7 +70,10 @@ export class CharacterOutlinePass extends Pass {
             if (n4.a > 0.5 || (dn - dc) / max(dc, 0.001) > uDepthTh) sil = 1.0;
             else crease = max(crease, step(uNormalTh, 1.0 - dot(nc, n4.xyz * 2.0 - 1.0)));
           }
-          gl_FragColor = vec4(sil, crease, 1.0, 1.0);
+          // b : opacité du trait (s'efface dans la brume) ; a : épaisseur relative selon la distance
+          float k = clamp(uScale.x / max(dc, 0.01), uScale.y, 1.0);
+          float fade = 1.0 - smoothstep(uFog.x, uFog.y, dc);
+          gl_FragColor = vec4(sil, crease * k, fade, k);
         }`,
       depthTest: false, depthWrite: false,
     });
@@ -92,16 +98,18 @@ export class CharacterOutlinePass extends Pass {
         void main() {
           vec4 base = texture2D(tDiffuse, vUv);
           vec4 e = texture2D(tEdge, vUv);
-          // Silhouette épaissie : disque (2 anneaux de 12 points) autour des bords de silhouette
-          float sil = e.r;
+          // Silhouette épaissie : disque (2 anneaux de 12 points) autour des bords de silhouette.
+          // Chaque bord a sa propre épaisseur (selon la distance de son objet) et sa propre opacité.
+          float sil = e.r * e.b;
           for (int ring = 1; ring <= 2; ring++) {
             float r = uRadius * float(ring) * 0.5;
             for (int k = 0; k < 12; k++) {
               float a = (float(k) + 0.5 * float(ring)) * 0.5235988;
-              sil = max(sil, texture2D(tEdge, vUv + vec2(cos(a), sin(a)) * r * uTexel).r);
+              vec4 s = texture2D(tEdge, vUv + vec2(cos(a), sin(a)) * r * uTexel);
+              sil = max(sil, s.r * s.b * step(r, s.a * uRadius + 0.5));
             }
           }
-          float edge = max(sil, e.g * uCrease);
+          float edge = max(sil, e.g * e.b * uCrease);
           gl_FragColor = vec4(mix(base.rgb, uLine, edge), base.a);
         }`,
       depthTest: false, depthWrite: false,
@@ -109,24 +117,13 @@ export class CharacterOutlinePass extends Pass {
     this.compQuad = new FullScreenQuad(this.compMat);
   }
 
-  private resScale = 1;
-
   setSize(w: number, h: number) {
     this.normalRT.setSize(w, h);
     this.edgeRT.setSize(w, h);
     this.edgeMat.uniforms.uTexel.value.set(1 / w, 1 / h);
     this.compMat.uniforms.uTexel.value.set(1 / w, 1 / h);
-    this.resScale = Math.max(1, h / 1080);
-  }
-
-  /**
-   * Distance caméra -> perso : le trait s'affine quand le perso rapetisse à l'écran (sinon il
-   * paraît gras en vue dézoomée). Pleine épaisseur jusqu'à fullUntil, jamais sous minScale.
-   */
-  setViewDistance(d: number) {
-    const k = THREE.MathUtils.clamp(O.fullUntil / Math.max(d, 0.01), O.minScale, 1);
-    this.compMat.uniforms.uRadius.value = O.radius * this.resScale * k;
-    this.compMat.uniforms.uCrease.value = O.creaseOpacity * Math.min(1, k * 1.3);
+    // Épaisseur max (objets proches) ; chaque bord la réduit selon sa distance (passe de bords)
+    this.compMat.uniforms.uRadius.value = O.radius * Math.max(1, h / 1080);
   }
 
   render(renderer: THREE.WebGLRenderer, writeBuffer: THREE.WebGLRenderTarget, readBuffer: THREE.WebGLRenderTarget) {

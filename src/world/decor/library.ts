@@ -4,6 +4,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import colormapUrl from '../../assets/kenney-graveyard-kit/Models/GLB format/Textures/colormap.png?url';
 import abbeyUrl from '../../assets/models/abbaye.glb?url';
 import { DECOR_MODELS, type DecorModelId } from '../../config/decor';
+import { decorMaterial } from '../../render/materials';
 import { computeGridShape, type GridShape } from './gridShape';
 
 const kenneyUrls = import.meta.glob('../../assets/kenney-graveyard-kit/Models/GLB format/*.glb', {
@@ -26,8 +27,9 @@ export async function loadDecorLibrary(): Promise<Map<DecorModelId, DecorModel>>
   const atlas = await new THREE.TextureLoader().loadAsync(colormapUrl);
   atlas.colorSpace = THREE.SRGBColorSpace;
   atlas.flipY = false;
-  const kenneyMat = new THREE.MeshStandardMaterial({ map: atlas, roughness: 0.85, metalness: 0 });
-  const vertexMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, metalness: 0 });
+  // Cel-shading sur tous les objets (paliers nets), comme le perso
+  const kenneyMat = decorMaterial({ map: atlas });
+  const vertexMat = decorMaterial({ vertexColors: true });
 
   const lib = new Map<DecorModelId, DecorModel>();
   const entries = Object.entries(DECOR_MODELS) as [DecorModelId, (typeof DECOR_MODELS)[DecorModelId]][];

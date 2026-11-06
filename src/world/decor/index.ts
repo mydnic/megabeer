@@ -3,6 +3,7 @@ import { DECOR_LIGHTS as LI, LIGHT_SOURCES, type DecorModelId } from '../../conf
 import { PLANET_RADIUS, PLAYER_PHYSICS } from '../../config/world';
 import { DecorCollider, type Bend, type DecorBody } from './collider';
 import { layoutAbbeyPlanet } from './layout';
+import { LAYER_CHARACTER } from '../../render/materials';
 import { loadDecorLibrary } from './library';
 
 /** Modèles assez grands pour devoir épouser la courbure de la planète. */
@@ -89,6 +90,7 @@ export async function createDecor(scene: THREE.Scene) {
         bends.set(m, bend);
         const mesh = new THREE.Mesh(bendToSphere(model.geometry, bend), model.material);
         mesh.castShadow = mesh.receiveShadow = true;
+        mesh.layers.set(LAYER_CHARACTER); // contouré comme le perso
         mesh.name = `decor:${id}`;
         scene.add(mesh);
       }
@@ -99,6 +101,7 @@ export async function createDecor(scene: THREE.Scene) {
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     mesh.frustumCulled = false; // l'ensemble couvre toute la planète
+    mesh.layers.set(LAYER_CHARACTER); // contouré comme le perso
     mesh.name = `decor:${id}`;
     scene.add(mesh);
   }

@@ -121,7 +121,6 @@ export class Pipeline {
     // Moins de flou quand on dézoome : le lointain reste lisible
     const D = RENDER.dof;
     dofU.aperture.value = D.aperture * THREE.MathUtils.clamp(D.fullUntil / Math.max(this.focusDistance, 0.01), D.minScale, 1);
-    this.outline.setViewDistance(this.focusDistance);
 
     this.renderer.shadowMap.needsUpdate = true;
     this.composer.render();
