@@ -123,6 +123,7 @@ export class BuveurVisual {
       this.play(hSpeed > V.idleBelow ? 'run' : 'idle', this.current === 'land' ? V.fade.fromLand : V.fade.idleRun);
     }
     this.actions.run.timeScale = V.runRateAtBaseSpeed * Math.max(0.5, hSpeed / BASE_SPEED);
+    this.ik?.restoreAnimatedPose();
     this.mixer.update(dt);
 
     // --- Écrasement / étirement (ressort amorti, volume conservé)
