@@ -8,7 +8,7 @@ import { Pipeline } from './render/pipeline';
 import { createSky } from './world/sky';
 import { createClouds } from './world/clouds';
 import { buildTerrain, heightAt } from './world/terrain';
-import { scatterPlaceholderDecor } from './world/placeholderDecor';
+import { createDecor } from './world/decor';
 
 // --- Rendu
 const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
@@ -38,10 +38,13 @@ const sky = createSky(scene);
 const clouds = createClouds(scene);
 
 // --- Joueur
-const startDir = new THREE.Vector3(0.55, 0.75, 0.35).normalize();
-while (heightAt(startDir) > 6) startDir.applyAxisAngle(new THREE.Vector3(1, 0, 0), 0.02);
-const player = new PlayerController(startDir);
-player.obstacles = scatterPlaceholderDecor(scene, startDir);
+// Décor de l'Abbaye (modèles, collisions, lanternes) ; le joueur part du parvis, face à la porte
+const decor = await createDecor(scene);
+const player = new PlayerController(decor.spawn.dir);
+player.decor = decor.collider;
+player.facing.copy(decor.spawn.facing);
+player.camFwd.copy(decor.spawn.facing);
+player.interpolate(1);
 const buveur = new BuveurVisual(scene);
 buveur.load().catch((e) => console.error(e));
 const rig = new CameraRig(camera);
@@ -74,6 +77,7 @@ function frame(now: number) {
   rig.update(dt, input, player);
   sky.update(dt, player.renderPos, camera);
   clouds.update(dt);
+  decor.update(dt, player.renderPos, 1 - sky.day);
   // Mise au point de la profondeur de champ sur le perso
   pipeline.focusDistance = camera.position.distanceTo(focusPoint.copy(player.renderPos).addScaledVector(player.upDir, 1.1));
   pipeline.render();
@@ -92,4 +96,4 @@ function frame(now: number) {
 }
 requestAnimationFrame(frame);
 
-if (import.meta.env.DEV) Object.assign(window, { __game: { player, rig, camera, buveur, sky, heightAt, THREE, pipeline, renderer } });
+if (import.meta.env.DEV) Object.assign(window, { __game: { player, rig, camera, buveur, sky, heightAt, THREE, pipeline, renderer, decor, scene } });

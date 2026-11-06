@@ -11,7 +11,8 @@
     "deploy": "yarn run build && wrangler deploy"
   },
   "dependencies": {
-    "three": "^0.185.1"
+    "three": "^0.185.1",
+    "three-mesh-bvh": "^0.9.18"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.45.1",

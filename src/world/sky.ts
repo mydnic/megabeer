@@ -125,6 +125,7 @@ export function createSky(scene: THREE.Scene) {
   scene.background = null;
 
   const up = new THREE.Vector3();
+  let dayFactor = 1;
   // Repère fixe de chaque lumière (mêmes axes que lookAt de la caméra d'ombre) pour caler son centre
   // sur la grille des texels : sans ça, les bords d'ombre grouillent dès que le joueur bouge.
   const texel = (2 * RENDER.shadow.extent) / RENDER.shadow.mapSize;
@@ -152,6 +153,7 @@ export function createSky(scene: THREE.Scene) {
     up.copy(playerPos).normalize();
     const s = up.dot(sunDir); // 1 midi, 0 crépuscule, -1 minuit
     const day = THREE.MathUtils.smoothstep(s, -0.15, 0.25);
+    dayFactor = day;
     const dusk = Math.max(0, 1 - Math.abs(s - 0.02) / 0.3);
 
     sun.intensity = L.sunIntensity * day;
@@ -182,5 +184,10 @@ export function createSky(scene: THREE.Scene) {
     starMat.opacity = 1 - day;
   }
 
-  return { update, sunDir };
+  return {
+    update,
+    sunDir,
+    /** 1 en plein jour, 0 en pleine nuit (sous le joueur). */
+    get day() { return dayFactor; },
+  };
 }

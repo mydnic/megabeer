@@ -29,7 +29,9 @@ export const PLAYER_PHYSICS = {
   accelTime: 0.12,
   decelTime: 0.1,
   /** Vitesse de rotation du modèle vers la direction de déplacement. */
-  turnRate: 14, stepHeight: 0.25,
+  turnRate: 14, stepHeight: 0.3,
+  /** Hauteur libre exigée pour passer sous un élément de décor (arche, branches). */
+  headClearance: 2.0,
 } as const;
 
 export const CAMERA = {

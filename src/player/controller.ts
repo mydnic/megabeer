@@ -6,17 +6,7 @@ import type { InputState } from '../core/input';
 const MAX_SLOPE = Math.tan(THREE.MathUtils.degToRad(PLANET.maxSlopeDeg));
 const JUMP_BUFFER = 0.12; // un appui un peu trop tôt avant l'atterrissage compte quand même
 const COYOTE = 0.1;       // on peut encore sauter juste après avoir quitté un rebord
-const STEP = P.stepHeight; // rebord franchi en marchant
-
-/**
- * Obstacle : base au sol (pos), rayon de blocage, hauteur. Son dessus est praticable.
- * surface : maillage réel (matrixWorld placée) sur lequel on mesure la hauteur du dessus par un rayon
- * vertical. Sans surface, le dessus est un disque plat de rayon `radius`.
- */
-export type Obstacle = { pos: THREE.Vector3; radius: number; top: number; surface?: THREE.Object3D };
-
-const ray = new THREE.Raycaster();
-const hits: THREE.Intersection[] = [];
+import type { DecorCollider } from '../world/decor/collider';
 
 /**
  * Déplacement sur la planète : gravité vers le centre, mouvement dans le plan tangent
@@ -32,7 +22,8 @@ export class PlayerController {
   vr = 0;
   onGround = true;
   speed = BASE_SPEED;
-  obstacles: Obstacle[] = [];
+  /** Collisions avec le décor (posé après le chargement). */
+  decor?: DecorCollider;
   /**
    * Position et direction lissées pour l'affichage : interpolées entre les deux derniers pas de
    * physique, sinon le perso avance par à-coups dès que l'écran va plus vite que la physique.
@@ -52,7 +43,6 @@ export class PlayerController {
   private grad = new THREE.Vector3();
   private tmp = new THREE.Vector3();
   private sTmp = new THREE.Vector3();
-  private sUp = new THREE.Vector3();
 
   constructor(startDir: THREE.Vector3) {
     const d = startDir.clone().normalize();
@@ -77,35 +67,12 @@ export class PlayerController {
   get upDir() { return this.up.copy(this.pos).normalize(); }
 
   /**
-   * Rayon du sol qui porte le point p : le relief, ou le dessus d'un obstacle situé sous p si ce dessus
-   * n'est pas plus haut que feetR + STEP (on ne se téléporte pas sur un rocher qu'on longe).
+   * Rayon du sol qui porte le point p : le relief, ou le dessus d'un élément de décor situé sous p
+   * s'il n'est pas plus haut que feetR + une marche (on ne se téléporte pas sur un mur qu'on longe).
    */
   supportAt(p: THREE.Vector3, feetR: number): number {
-    const r = p.length();
-    let ground = PLANET_RADIUS + heightAt(this.sTmp.copy(p).divideScalar(r));
-    for (const o of this.obstacles) {
-      const reach = o.radius + o.top + 1;
-      if (this.sTmp.subVectors(p, o.pos).lengthSq() > reach * reach) continue;
-      const oUp = this.sUp.copy(o.pos).normalize();
-      const vertical = this.sTmp.dot(oUp);
-      this.sTmp.addScaledVector(oUp, -vertical);
-      let top: number;
-      if (o.surface) {
-        // Rayon vertical depuis au-dessus de l'obstacle : hauteur réelle de sa surface sous p
-        const origin = this.sTmp.add(o.pos).addScaledVector(oUp, o.top + 1);
-        ray.set(origin, this.sUp.negate());
-        ray.far = o.top + 3;
-        hits.length = 0;
-        o.surface.raycast(ray, hits);
-        if (!hits.length) continue;
-        top = hits[0].point.length(); // touches triées par distance : la première est la plus haute
-      } else {
-        if (this.sTmp.lengthSq() > o.radius * o.radius) continue;
-        top = o.pos.length() + o.top;
-      }
-      if (top > ground && top <= feetR + STEP) ground = top;
-    }
-    return ground;
+    const ground = PLANET_RADIUS + heightAt(this.sTmp.copy(p).normalize());
+    return this.decor ? Math.max(ground, this.decor.supportAt(p, feetR)) : ground;
   }
 
   /** Appelé une fois par frame avec l'entrée de la frame (le saut est mis en mémoire). */
@@ -157,17 +124,8 @@ export class PlayerController {
     const r = this.pos.length();
     this.pos.addScaledVector(this.velocity, dt).setLength(r);
 
-    // Collisions avec le décor
-    for (const o of this.obstacles) {
-      this.tmp.subVectors(this.pos, o.pos);
-      const minD = o.radius + P.radius;
-      if (this.tmp.lengthSq() > (minD + o.top) ** 2) continue;
-      const vertical = this.tmp.dot(up);
-      if (vertical > o.top - STEP) continue; // au-dessus (ou presque) : on monte dessus, pas de poussée
-      this.tmp.addScaledVector(up, -vertical);
-      const d = this.tmp.length();
-      if (d < minD && d > 1e-5) this.pos.addScaledVector(this.tmp, (minD - d) / d);
-    }
+    // Collisions avec le décor (formes réelles des modèles)
+    this.decor?.resolve(this.pos, P.radius);
 
     // Saut (mémoire d'appui + tolérance après un rebord)
     this.jumpBuffer = Math.max(0, this.jumpBuffer - dt);

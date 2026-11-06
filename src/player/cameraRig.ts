@@ -42,14 +42,16 @@ export class CameraRig {
     // Axe de visée : de la cible vers la caméra
     const dir = this.dir.copy(player.camFwd).multiplyScalar(-Math.cos(this.pitch)).addScaledVector(up, Math.sin(this.pitch));
 
-    // Distance libre le long de l'axe : on avance depuis le perso jusqu'au premier contact avec le relief
+    // Distance libre le long de l'axe : on avance depuis le perso jusqu'au premier contact avec le
+    // relief ou le décor (mur, tronc...) ; la caméra se place juste avant
     let free = this.distance;
-    const STEPS = 24;
+    const STEPS = 32;
     for (let i = 1; i <= STEPS; i++) {
       const t = C.minDistanceToPlayer + (this.distance - C.minDistanceToPlayer) * (i / STEPS);
       const p = this.tmp.copy(this.target).addScaledVector(dir, t);
+      const blockedByDecor = player.decor?.occupied(p, C.groundClearance) ?? false;
       const r = p.length();
-      if (r < groundRadius(p.divideScalar(r)) + C.groundClearance) {
+      if (blockedByDecor || r < groundRadius(p.divideScalar(r)) + C.groundClearance) {
         free = Math.max(C.minDistanceToPlayer, C.minDistanceToPlayer + (this.distance - C.minDistanceToPlayer) * ((i - 1) / STEPS));
         break;
       }

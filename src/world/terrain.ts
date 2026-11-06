@@ -4,6 +4,7 @@ import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { PLANET, PLANET_RADIUS } from '../config/world';
 import { litMaterial } from '../render/materials';
 import { TERRAIN_PALETTE } from '../config/visual';
+import { ABBEY_DIR, DECOR_LAYOUT } from '../config/decor';
 
 const R = PLANET_RADIUS;
 const noise = new ImprovedNoise();
@@ -19,8 +20,22 @@ export function meadowAt(d: THREE.Vector3): number {
   return THREE.MathUtils.smoothstep(n, -0.5, -0.25);
 }
 
+/** Direction du centre de l'abbaye, et hauteur du terrain qu'on y aplanit. */
+export const abbeyDir = new THREE.Vector3(...ABBEY_DIR).normalize();
+const abbeyHeight = rawHeight(abbeyDir);
+const FLAT_IN = DECOR_LAYOUT.abbeyRadius / R, FLAT_OUT = (DECOR_LAYOUT.abbeyRadius + DECOR_LAYOUT.abbeyBlend) / R;
+
 /** Hauteur du relief (au-dessus du rayon de base) pour une direction unitaire. */
 export function heightAt(d: THREE.Vector3): number {
+  const h = rawHeight(d);
+  // Enclos de l'abbaye : terrain aplani, raccordé en douceur au relief
+  const c = d.dot(abbeyDir);
+  if (c < Math.cos(FLAT_OUT)) return h;
+  const w = 1 - THREE.MathUtils.smoothstep(Math.acos(Math.min(1, c)), FLAT_IN, FLAT_OUT);
+  return h + (abbeyHeight - h) * w;
+}
+
+function rawHeight(d: THREE.Vector3): number {
   const n1 = noise.noise(d.x * 2.1 + 11, d.y * 2.1, d.z * 2.1);
   const n2 = noise.noise(d.x * 6.3, d.y * 6.3 + 23, d.z * 6.3);
   const n3 = noise.noise(d.x * 17 + 5, d.y * 17, d.z * 17 - 7);
