@@ -21,7 +21,8 @@ export const HEALTH_HUD = {
 
 /** Bandeau de mort (façon « YOU DIED » / « WASTED ») et ambiance qui retombe. */
 export const DEATH_BANNER = {
-  text: "T'ES MORT",
+  /** Affiché en majuscules (la mise en forme s'en charge). */
+  text: 'Coma éthylique',
   /** Apparition après la mort (s, temps réel), durée du fondu, texte qui se resserre. */
   delay: 1.3,
   fadeIn: 0.8,

@@ -4,7 +4,8 @@ const CSS = `
 .death-band { position: fixed; left: 0; right: 0; top: 50%; transform: translateY(-50%); height: 190px; pointer-events: none;
   display: flex; align-items: center; justify-content: center; z-index: 20; opacity: 0;
   background: linear-gradient(rgba(8,4,2,0) 0%, rgba(8,4,2,.82) 22%, rgba(8,4,2,.82) 78%, rgba(8,4,2,0) 100%); }
-.death-text { font-family: 'Lilita One', system-ui, sans-serif; font-size: clamp(52px, 11vw, 132px); letter-spacing: .08em;
+.death-text { font-family: 'Lilita One', system-ui, sans-serif; font-size: clamp(34px, 8vw, 120px); letter-spacing: .06em;
+  text-transform: uppercase;
   color: #d6261a; line-height: 1; white-space: nowrap;
   text-shadow: 0 0 28px rgba(214,38,26,.45), 0 4px 0 #3a0a06; }
 `;
