@@ -11,6 +11,7 @@ import { buildTerrain, heightAt } from './world/terrain';
 import { createDecor } from './world/decor';
 import { AudioEngine } from './audio/audio';
 import { createAmbience } from './audio/ambience';
+import { createMusic } from './audio/music';
 import { AUDIO } from './config/audio';
 
 // --- Rendu
@@ -53,6 +54,7 @@ const buveur = new BuveurVisual(scene);
 // --- Sons (démarrent au premier clic ou à la première touche)
 const audio = new AudioEngine();
 const ambience = createAmbience(audio);
+const music = createMusic(audio);
 const jitter = (j: number) => 1 + (Math.random() * 2 - 1) * j;
 buveur.onSound = (e) => {
   const F = AUDIO.footsteps;
@@ -102,6 +104,7 @@ function frame(now: number) {
   clouds.update(dt);
   decor.update(dt, player.renderPos, 1 - sky.day);
   ambience.update(sky.day);
+  music.update();
   // Mise au point de la profondeur de champ sur le perso
   pipeline.focusDistance = camera.position.distanceTo(focusPoint.copy(player.renderPos).addScaledVector(player.upDir, 1.1));
   pipeline.render();

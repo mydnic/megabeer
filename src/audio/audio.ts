@@ -13,6 +13,7 @@ export class AudioEngine {
   ctx?: AudioContext;
   sfx?: GainNode;
   ambience?: GainNode;
+  music?: GainNode;
   private buffers = new Map<string, AudioBuffer[]>();
   private lastVariant = new Map<string, number>();
   private noise?: AudioBuffer;
@@ -45,6 +46,9 @@ export class AudioEngine {
     this.ambience = ctx.createGain();
     this.ambience.gain.value = A.ambience;
     this.ambience.connect(master);
+    this.music = ctx.createGain();
+    this.music.gain.value = A.music.volume;
+    this.music.connect(master);
     // Bruit blanc réutilisable (vent, souffle du saut)
     const n = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
     const d = n.getChannelData(0);
