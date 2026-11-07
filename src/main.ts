@@ -1,5 +1,7 @@
 import * as THREE from 'three';
-import { CAMERA } from './config/world';
+import { CAMERA, PLANET_RADIUS } from './config/world';
+import { loadZombieLibrary } from './enemies/zombie';
+import { createHorde } from './enemies/horde';
 import { initInput, readInput } from './core/input';
 import { BuveurVisual } from './player/buveurVisual';
 import { CameraRig } from './player/cameraRig';
@@ -51,6 +53,19 @@ player.camFwd.copy(decor.spawn.facing);
 player.interpolate(1);
 const buveur = new BuveurVisual(scene);
 
+// --- Zombies (checkpoint 1 : 4 zombies plantés sur le parvis, face au joueur)
+const horde = createHorde(scene, await loadZombieLibrary(), (p, r) => player.supportAt(p, r));
+{
+  const up = decor.spawn.dir.clone().normalize();
+  const fwd = decor.spawn.facing.clone();
+  const right = new THREE.Vector3().crossVectors(fwd, up).normalize();
+  const models = ['basic', 'chubby', 'arm', 'ribcage'] as const;
+  models.forEach((m, i) => {
+    const p = up.clone().multiplyScalar(PLANET_RADIUS).addScaledVector(fwd, 7 + (i % 2) * 1.5).addScaledVector(right, (i - 1.5) * 1.6);
+    horde.spawn(m, p, fwd.clone().negate());
+  });
+}
+
 // --- Sons (démarrent au premier clic ou à la première touche)
 const audio = new AudioEngine();
 const ambience = createAmbience(audio);
@@ -98,6 +113,7 @@ function frame(now: number) {
 
   const up = player.upDir;
   buveur.update(dt, player);
+  horde.update(dt, player.renderPos);
 
   rig.update(dt, input, player);
   sky.update(dt, player.renderPos, camera);
@@ -124,7 +140,7 @@ function frame(now: number) {
 requestAnimationFrame(frame);
 
 if (import.meta.env.DEV) {
-  Object.assign(window, { __game: { player, rig, camera, buveur, sky, heightAt, THREE, pipeline, renderer, decor, scene, music } });
+  Object.assign(window, { __game: { player, rig, camera, buveur, sky, heightAt, THREE, pipeline, renderer, decor, scene, music, horde } });
   // Dev : B bascule la musique de combat, en attendant les vagues d'ennemis
   addEventListener('keydown', (e) => {
     if (e.code === 'KeyB' && !e.repeat) music.setMode(music.mode === 'combat' ? 'explore' : 'combat');
