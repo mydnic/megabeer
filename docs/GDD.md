@@ -945,6 +945,12 @@ Aujourd'hui : flash rouge sur l'ennemi touché, sons d'impact, de mort et de ram
 - Navigation manette dans les menus.
 - Panneau de debug en développement (godmode, figer le temps, faire apparaître un ennemi).
 
+### Accueil dans l'espace [DÉCIDÉ le 2026-11-07]
+
+L'écran d'accueil se passe **dans l'espace** : on voit de loin la ou les planètes (une par map). On y **choisit son perso et sa map**, puis la caméra **plonge sur la planète choisie** jusqu'au perso pour lancer la run. À la fin d'une run, retour dans l'espace.
+
+Aujourd'hui (feature 3) : accueil provisoire posé sur la planète (logo, bouton Jouer, caméra qui tourne autour du Buveur), qui sera remplacé.
+
 ### Menu qui se dévoile [DÉCIDÉ]
 
 Au premier lancement, le menu n'a **qu'un bouton : Jouer**. Les autres (Boutique, Skill tree, Persos, Maps, Succès...) **apparaissent au fur et à mesure** que le joueur débloque des choses, comme dans Vampire Survivors. Le jeu se découvre en jouant, sans tutoriel.
