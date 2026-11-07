@@ -57,6 +57,10 @@ export class Pipeline {
   private outline: CharacterOutlinePass;
   /** Distance de mise au point (le perso), mise à jour chaque frame. */
   focusDistance = 16;
+  /**
+   * Retombée de l'image (mort) : 0 = normal, 1 = désaturée et assombrie aux valeurs données.
+   */
+  fade = { amount: 0, saturation: 1, vignette: 0 };
 
   constructor(private renderer: THREE.WebGLRenderer, scene: THREE.Scene, private camera: THREE.PerspectiveCamera) {
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -125,6 +129,10 @@ export class Pipeline {
     // Moins de flou quand on dézoome : le lointain reste lisible
     const D = RENDER.dof;
     dofU.aperture.value = D.aperture * THREE.MathUtils.clamp(D.fullUntil / Math.max(this.focusDistance, 0.01), D.minScale, 1);
+
+    const g = RENDER.grade, u = this.grade.uniforms, f = this.fade;
+    u.uSat.value = THREE.MathUtils.lerp(g.saturation, f.saturation, f.amount);
+    u.uVignette.value = THREE.MathUtils.lerp(g.vignette, Math.max(g.vignette, f.vignette), f.amount);
 
     this.renderer.shadowMap.needsUpdate = true;
     this.composer.render();

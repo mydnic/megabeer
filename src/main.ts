@@ -5,6 +5,8 @@ import { createHorde } from './enemies/horde';
 import { HIT_FEEDBACK, ZOMBIE_ATTACK } from './config/zombies';
 import { Health } from './player/health';
 import { PintProp } from './player/pintProp';
+import { createDeathBanner } from './ui/deathBanner';
+import { DEATH_BANNER } from './config/player';
 import { DEATH } from './config/buveur';
 import type { InputState } from './core/input';
 import { createHealthHud } from './ui/healthHud';
@@ -116,6 +118,7 @@ pint.onImpact = (p, speed) => {
   pintFirstImpact = false;
   audio.play(speed > 3 ? 'impactGlass_medium' : 'impactGlass_light', Math.min(0.6, 0.15 + speed * 0.06), jitter(0.08));
 };
+const deathBanner = createDeathBanner();
 let deadSince = -1; // temps réel écoulé depuis la mort (-1 : vivant)
 function onDeath() {
   deadSince = 0;
@@ -132,6 +135,8 @@ function onDeath() {
   pint.launch(pos, quat, vel, spin);
   horde.setPassive(true);
   rig.setFocus(DEATH.camera);
+  // Musique en retrait pendant l'écran de mort
+  if (audio.ctx && audio.music) audio.music.gain.setTargetAtTime(AUDIO.music.volume * DEATH_BANNER.musicDuck, audio.ctx.currentTime, 0.6);
 }
 /** Vitesse du temps : ralenti juste après la mort, puis retour progressif. */
 function timeScale() {
@@ -173,6 +178,13 @@ function frame(now: number) {
   health.update(dt);
   healthHud.update(realDt);
   if (health.dead && deadSince < 0) onDeath();
+  deathBanner.update(deadSince);
+  if (deadSince >= 0) {
+    const B = DEATH_BANNER;
+    pipeline.fade.amount = Math.min(1, deadSince / B.colorFade);
+    pipeline.fade.saturation = B.saturation;
+    pipeline.fade.vignette = B.vignette;
+  }
   pint.update(dt);
 
   rig.update(realDt, input, player);

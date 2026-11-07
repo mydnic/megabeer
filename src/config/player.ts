@@ -18,3 +18,19 @@ export const HEALTH_HUD = {
   vignetteMax: 0.75,
   pulseRate: 1.6,
 } as const;
+
+/** Bandeau de mort (façon « YOU DIED » / « WASTED ») et ambiance qui retombe. */
+export const DEATH_BANNER = {
+  text: "T'ES MORT",
+  /** Apparition après la mort (s, temps réel), durée du fondu, texte qui se resserre. */
+  delay: 1.3,
+  fadeIn: 0.8,
+  scaleFrom: 1.18,
+  settle: 0.9,
+  /** L'image se désature et s'assombrit (saturation et vignette visées, durée en s). */
+  saturation: 0.25,
+  vignette: 0.55,
+  colorFade: 1.6,
+  /** Musique baissée à cette fraction de son volume. */
+  musicDuck: 0.3,
+} as const;
