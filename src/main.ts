@@ -3,6 +3,8 @@ import { CAMERA, PLANET_RADIUS } from './config/world';
 import { loadZombieLibrary } from './enemies/zombie';
 import { createHorde } from './enemies/horde';
 import { HIT_FEEDBACK, ZOMBIE_ATTACK } from './config/zombies';
+import { Health } from './player/health';
+import { createHealthHud } from './ui/healthHud';
 import { initInput, readInput } from './core/input';
 import { BuveurVisual } from './player/buveurVisual';
 import { CameraRig } from './player/cameraRig';
@@ -90,7 +92,12 @@ buveur.onSound = (e) => {
 buveur.load().catch((e) => console.error(e));
 
 // --- Coup de zombie : recul, flash, tremblement
+const health = new Health();
+const healthHud = createHealthHud(health);
 horde.onHit = (_z, dir) => {
+  // Invulnérable juste après un coup : ni dégâts ni recul (pas d'enchaînement de coups)
+  if (!health.damage(ZOMBIE_ATTACK.damage)) return;
+  healthHud.hit();
   player.knock(dir, ZOMBIE_ATTACK.knockSpeed, ZOMBIE_ATTACK.knockLift, ZOMBIE_ATTACK.knockDecay);
   buveur.hurt(HIT_FEEDBACK.flashColor, HIT_FEEDBACK.flashTime);
   rig.shake(HIT_FEEDBACK.shake, HIT_FEEDBACK.shakeAmplitude, HIT_FEEDBACK.shakeDecay);
@@ -122,6 +129,8 @@ function frame(now: number) {
   const up = player.upDir;
   buveur.update(dt, player);
   horde.update(dt);
+  health.update(dt);
+  healthHud.update(dt);
 
   rig.update(dt, input, player);
   sky.update(dt, player.renderPos, camera);
@@ -148,7 +157,7 @@ function frame(now: number) {
 requestAnimationFrame(frame);
 
 if (import.meta.env.DEV) {
-  Object.assign(window, { __game: { player, rig, camera, buveur, sky, heightAt, THREE, pipeline, renderer, decor, scene, music, horde } });
+  Object.assign(window, { __game: { player, rig, camera, buveur, sky, heightAt, THREE, pipeline, renderer, decor, scene, music, horde, health } });
   const models = ['basic', 'chubby', 'arm', 'ribcage'] as const;
   const spawnRing = (n: number, rMin: number, rMax: number) => {
     const up = player.pos.clone().normalize();

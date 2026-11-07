@@ -128,7 +128,7 @@ Retirés volontairement :
 ### Saut [EXISTE]
 
 - Gravité et saut physiques, le joueur suit le relief du terrain.
-- **Esquive par le saut** : si le joueur est à plus de 0,6 unité au-dessus du sol, le contact zombie ne fait pas de dégâts.
+- [DÉCIDÉ le 2026-11-07] **Sauter ne protège pas** : un coup qui arrive en l'air fait ses dégâts (sinon on sauterait tout le temps). L'esquive par le saut du proto est abandonnée.
 - Après un coup reçu : 0,5 s d'invulnérabilité.
 
 [PROPOSITION] Garder le saut comme esquive mais le rendre plus lisible (ombre au sol, petit effet de poussière). Ajouter des objets qui jouent avec : double saut, onde de choc à l'atterrissage.

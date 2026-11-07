@@ -32,6 +32,8 @@ export const ZOMBIE_MOVE = {
 export const ZOMBIE_ATTACK = {
   /** Moment du coup dans l'animation d'attaque (fraction du clip : le bras arrive sur la cible). */
   hitAt: 0.45,
+  /** PV retirés par coup (zombie de base, GDD section 11). */
+  damage: 8,
   /** Distance maxi pour que le coup porte (m) : un joueur qui s'écarte à temps l'esquive. */
   reach: 2.0,
   /** Recul du Buveur : vitesse au sol (m/s), petit saut (m/s), amortissement (s). */
