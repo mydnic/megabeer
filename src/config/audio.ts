@@ -34,6 +34,6 @@ export const AUDIO = {
   clink: { volume: 0.12, chance: 0.6 },
   /** Ambiances synthétisées : vent permanent, oiseaux le jour, chouette la nuit. */
   wind: { volume: 0.22 },
-  birds: { volume: 0.12, everyMin: 0.8, everyMax: 3.5 },
+  birds: { volume: 0.05, everyMin: 0.8, everyMax: 3.5 },
   owl: { volume: 0.14, everyMin: 14, everyMax: 32 },
 } as const;
