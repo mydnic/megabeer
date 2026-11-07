@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+﻿import * as THREE from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { GTAOPass } from 'three/examples/jsm/postprocessing/GTAOPass.js';
@@ -9,6 +9,7 @@ import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { RENDER } from '../config/visual';
 import { LAYER_CHARACTER, LAYER_SKY } from './materials';
 import { CharacterOutlinePass } from './characterOutline';
+import { patchVat } from './vat';
 
 const GradeShader = {
   uniforms: {
@@ -78,6 +79,8 @@ export class Pipeline {
       thickness: RENDER.ao.thickness, scale: RENDER.ao.scale, samples: RENDER.ao.samples,
     });
     this.ao.blendIntensity = RENDER.ao.intensity;
+    // Les foules animées par la carte graphique doivent garder leur pose dans les passes à matériau imposé
+    patchVat(this.ao.normalMaterial, 'gtao-normal');
     this.composer.addPass(this.ao);
 
     // Contour des personnages (après l'AO, avant le halo et la profondeur de champ)
@@ -88,6 +91,7 @@ export class Pipeline {
     this.composer.addPass(this.bloom);
 
     this.dof = new BokehPass(scene, this.worldCam, { focus: 16, aperture: RENDER.dof.aperture, maxblur: RENDER.dof.maxBlur });
+    patchVat((this.dof as unknown as { _materialDepth: THREE.Material })._materialDepth, 'dof-depth');
     this.composer.addPass(this.dof);
 
     this.grade = new ShaderPass(GradeShader);

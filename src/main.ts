@@ -149,8 +149,21 @@ requestAnimationFrame(frame);
 
 if (import.meta.env.DEV) {
   Object.assign(window, { __game: { player, rig, camera, buveur, sky, heightAt, THREE, pipeline, renderer, decor, scene, music, horde } });
+  const models = ['basic', 'chubby', 'arm', 'ribcage'] as const;
+  const spawnRing = (n: number, rMin: number, rMax: number) => {
+    const up = player.pos.clone().normalize();
+    const a = new THREE.Vector3().crossVectors(up, player.facing).normalize(), b = player.facing.clone();
+    for (let i = 0; i < n; i++) {
+      const t = Math.random() * Math.PI * 2, r = rMin + Math.random() * (rMax - rMin);
+      const p = player.pos.clone().addScaledVector(a, Math.cos(t) * r).addScaledVector(b, Math.sin(t) * r);
+      horde.spawn(models[i % 4], p, player.pos.clone().sub(p));
+    }
+  };
+  Object.assign(window, { __spawnRing: spawnRing });
   // Dev : B bascule la musique de combat, en attendant les vagues d'ennemis
   addEventListener('keydown', (e) => {
     if (e.code === 'KeyB' && !e.repeat) music.setMode(music.mode === 'combat' ? 'explore' : 'combat');
+    // Dev : H fait apparaître 100 zombies en cercle autour du joueur (test de la horde)
+    if (e.code === 'KeyH' && !e.repeat) spawnRing(100, 18, 30);
   });
 }

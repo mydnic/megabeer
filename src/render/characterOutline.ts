@@ -1,8 +1,9 @@
-import * as THREE from 'three';
+﻿import * as THREE from 'three';
 import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass.js';
 import { CHARACTER_LOOK } from '../config/visual';
 import { LIGHTING } from '../config/lighting';
 import { LAYER_CHARACTER } from './materials';
+import { patchVat } from './vat';
 
 const O = CHARACTER_LOOK.outline;
 
@@ -34,6 +35,7 @@ export class CharacterOutlinePass extends Pass {
       sh.fragmentShader = sh.fragmentShader.replace('gl_FragColor.a = 1.0;', 'gl_FragColor.a = 0.0;');
     };
     this.normalChar.customProgramCacheKey = () => 'normal-character';
+    patchVat(this.normalChar, 'outline-normal');
 
     this.edgeMat = new THREE.ShaderMaterial({
       uniforms: {

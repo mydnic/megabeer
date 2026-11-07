@@ -52,6 +52,10 @@ export const HIT_FEEDBACK = {
 } as const;
 
 export const ZOMBIE_VISUAL = {
+  /** Nombre maximum de zombies par modèle (4 modèles). */
+  maxPerModel: 600,
+  /** Images par seconde des animations pré-calculées pour la carte graphique. */
+  bakeFps: 60,
   /** Clips du glTF utilisés pour chaque état (premier trouvé dans la liste). */
   clips: {
     idle: ['Idle'],
