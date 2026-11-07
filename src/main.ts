@@ -9,6 +9,9 @@ import { createSky } from './world/sky';
 import { createClouds } from './world/clouds';
 import { buildTerrain, heightAt } from './world/terrain';
 import { createDecor } from './world/decor';
+import { AudioEngine } from './audio/audio';
+import { createAmbience } from './audio/ambience';
+import { AUDIO } from './config/audio';
 
 // --- Rendu
 const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
@@ -46,6 +49,28 @@ player.facing.copy(decor.spawn.facing);
 player.camFwd.copy(decor.spawn.facing);
 player.interpolate(1);
 const buveur = new BuveurVisual(scene);
+
+// --- Sons (démarrent au premier clic ou à la première touche)
+const audio = new AudioEngine();
+const ambience = createAmbience(audio);
+const jitter = (j: number) => 1 + (Math.random() * 2 - 1) * j;
+buveur.onSound = (e) => {
+  const F = AUDIO.footsteps;
+  if (e.type === 'step') {
+    const s = F.surfaces[e.surface];
+    audio.play(s.sample, F.volume, s.rate * jitter(F.pitchJitter), e.side * 0.15);
+  } else if (e.type === 'jump') {
+    audio.whoosh(AUDIO.jump.volume);
+  } else if (e.type === 'land') {
+    const k = Math.min(AUDIO.land.max, 0.4 + e.speed * AUDIO.land.perSpeed);
+    audio.play('impactSoft_medium', AUDIO.land.volume * k, jitter(0.06));
+    const s = F.surfaces[e.surface];
+    audio.play(s.sample, F.volume, s.rate * 0.9);
+    if (Math.random() < AUDIO.clink.chance) audio.play('impactGlass_light', AUDIO.clink.volume, jitter(0.1));
+  } else if (e.type === 'foam') {
+    audio.foam(e.intensity);
+  }
+};
 buveur.load().catch((e) => console.error(e));
 const rig = new CameraRig(camera);
 initInput(renderer.domElement);
@@ -78,6 +103,7 @@ function frame(now: number) {
   sky.update(dt, player.renderPos, camera);
   clouds.update(dt);
   decor.update(dt, player.renderPos, 1 - sky.day);
+  ambience.update(sky.day);
   // Mise au point de la profondeur de champ sur le perso
   pipeline.focusDistance = camera.position.distanceTo(focusPoint.copy(player.renderPos).addScaledVector(player.upDir, 1.1));
   pipeline.render();

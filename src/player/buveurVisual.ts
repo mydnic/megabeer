@@ -5,10 +5,20 @@ import { BASE_SPEED } from '../config/world';
 import { BEER_SPLASH, BUVEUR_VISUAL as V } from '../config/buveur';
 import { characterMaterial, LAYER_CHARACTER } from '../render/materials';
 import { FootIK } from './footIK';
+import { heightAt, meadowAt } from '../world/terrain';
 import { BeerSplash } from './beerSplash';
 import type { PlayerController } from './controller';
 
 type Clip = 'idle' | 'run' | 'jump' | 'fall' | 'land';
+
+/** Sol sous un pied, pour le son des pas. */
+export type Surface = 'grass' | 'dirt' | 'stone' | 'snow';
+/** Événements sonores du perso (branchés sur le moteur audio par main). */
+export type BuveurSound =
+  | { type: 'step'; surface: Surface; side: -1 | 1 }
+  | { type: 'jump' }
+  | { type: 'land'; speed: number; surface: Surface }
+  | { type: 'foam'; intensity: number };
 
 /**
  * Modèle animé du Buveur : charge le GLB (généré par tools/blender/buveur.py), passe ses
@@ -42,6 +52,10 @@ export class BuveurVisual {
   private pintPos = new THREE.Vector3();
   private runPhase = 0;
   private baseVel = new THREE.Vector3();
+  /** Pied levé assez haut depuis le dernier appui (prêt à faire un bruit de pas). */
+  private armed = [false, false];
+  /** Reçoit les événements sonores (pas, saut, réception, mousse). */
+  onSound?: (e: BuveurSound) => void;
 
   constructor(scene: THREE.Scene) {
     this.root.add(this.lean);
@@ -154,6 +168,37 @@ export class BuveurVisual {
 
     // --- Éclaboussures de bière
     this.updateSplash(dt, player, up, ev);
+
+    // --- Sons : pas (quand un pied se pose), saut, réception
+    this.updateSounds(player, ev);
+  }
+
+  private surfaceUnder(p: THREE.Vector3, onDecor: boolean): Surface {
+    if (onDecor) return 'stone';
+    const d = this.tmp.copy(p).normalize();
+    if (heightAt(d) > 22) return 'snow';
+    return meadowAt(d) < 0.5 ? 'dirt' : 'grass';
+  }
+
+  private updateSounds(player: PlayerController, ev: PlayerController['events']) {
+    if (!this.onSound || !this.ik) return;
+    if (ev.jumped) this.onSound({ type: 'jump' });
+    if (ev.landed) {
+      const leg = this.ik.legs[0];
+      this.onSound({ type: 'land', speed: ev.landSpeed, surface: this.surfaceUnder(player.pos, leg.onObstacle) });
+    }
+    const moving = player.onGround && player.velocity.length() > 1;
+    this.ik.legs.forEach((leg, i) => {
+      // Un pas : le pied a été levé (armé) puis vient de toucher le sol
+      if (leg.lift > 0.08) this.armed[i] = true;
+      else if (this.armed[i] && leg.lift < 0.03) {
+        this.armed[i] = false;
+        if (moving) {
+          const p = leg.foot.getWorldPosition(this.pintPos.clone());
+          this.onSound!({ type: 'step', surface: this.surfaceUnder(p, leg.onObstacle), side: i === 0 ? -1 : 1 });
+        }
+      }
+    });
   }
 
   private updateSplash(dt: number, player: PlayerController, up: THREE.Vector3, ev: PlayerController['events']) {
@@ -168,17 +213,20 @@ export class BuveurVisual {
         const phase = (a.time / a.getClip().duration) % 1;
         const crossed = (p: number) => (this.runPhase < p && phase >= p) || (this.runPhase > phase && (phase >= p || this.runPhase < p));
         if ((crossed(0.25) || crossed(0.75)) && Math.random() < B.run.chance) {
+          this.onSound?.({ type: 'foam', intensity: 0.5 });
           this.splash.emit(this.pintPos, this.baseVel.copy(player.velocity).multiplyScalar(B.run.inherit), up,
             rand(B.run.count), [...B.run.upSpeed], B.run.spread);
         }
         this.runPhase = phase;
       }
       if (ev.jumped) {
+        this.onSound?.({ type: 'foam', intensity: 0.9 });
         this.splash.emit(this.pintPos, this.baseVel.copy(player.velocity).multiplyScalar(B.jump.inherit), up,
           B.jump.count, [...B.jump.upSpeed], B.jump.spread);
       }
       if (ev.landed) {
         const n = Math.min(B.land.max, Math.round(ev.landSpeed * B.land.countPerSpeed));
+        if (n > 0) this.onSound?.({ type: 'foam', intensity: Math.min(1, n / 4) });
         if (n > 0) this.splash.emit(this.pintPos, this.baseVel.copy(player.velocity).multiplyScalar(B.land.inherit), up,
           n, [...B.land.upSpeed], B.land.spread);
       }

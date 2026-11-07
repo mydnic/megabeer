@@ -3,7 +3,7 @@ import { FOOT_IK as F } from '../config/buveur';
 import { groundRadius, slopeGradient } from '../world/terrain';
 import type { PlayerController } from './controller';
 
-type Leg = { thigh: THREE.Object3D; shin: THREE.Object3D; foot: THREE.Object3D; delta: number; onObstacle: boolean };
+type Leg = { thigh: THREE.Object3D; shin: THREE.Object3D; foot: THREE.Object3D; delta: number; onObstacle: boolean; lift: number };
 
 const v1 = new THREE.Vector3(), v2 = new THREE.Vector3(), v3 = new THREE.Vector3();
 const H = new THREE.Vector3(), K = new THREE.Vector3(), A = new THREE.Vector3(), T = new THREE.Vector3();
@@ -24,7 +24,7 @@ function rotateWorld(bone: THREE.Object3D, rot: THREE.Quaternion) {
  * pied posé s'incline selon la pente.
  */
 export class FootIK {
-  private legs: Leg[];
+  readonly legs: Leg[];
   private drop = 0;
   private weight = 1;
   private ankleRest: number;
@@ -35,7 +35,7 @@ export class FootIK {
       if (!o) throw new Error(`Os manquant dans buveur.glb : ${name}`);
       return o;
     };
-    this.legs = ['L', 'R'].map((s) => ({ thigh: bone(`thigh.${s}`), shin: bone(`shin.${s}`), foot: bone(`foot.${s}`), delta: 0, onObstacle: false }));
+    this.legs = ['L', 'R'].map((s) => ({ thigh: bone(`thigh.${s}`), shin: bone(`shin.${s}`), foot: bone(`foot.${s}`), delta: 0, onObstacle: false, lift: 1 }));
     model.updateMatrixWorld(true);
     this.ankleRest = model.worldToLocal(this.legs[0].foot.getWorldPosition(v1)).y;
   }
@@ -117,6 +117,7 @@ export class FootIK {
       // 5. Pied posé : suit la pente (atténué quand il est levé)
       leg.foot.getWorldPosition(A);
       const lift = v1.subVectors(A, this.root.position).dot(up) - this.drop - leg.delta - this.ankleRest;
+      leg.lift = lift;
       const contact = 1 - THREE.MathUtils.clamp(lift / F.contactHeight, 0, 1);
       if (contact <= 0 || leg.onObstacle) continue; // sur un obstacle : dessus considéré plat
       slopeGradient(v1.copy(A).normalize(), facing, right, grad);
