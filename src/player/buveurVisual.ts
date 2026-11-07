@@ -17,8 +17,7 @@ export type Surface = 'grass' | 'dirt' | 'stone' | 'snow';
 export type BuveurSound =
   | { type: 'step'; surface: Surface; side: -1 | 1 }
   | { type: 'jump' }
-  | { type: 'land'; speed: number; surface: Surface }
-  | { type: 'foam'; intensity: number };
+  | { type: 'land'; speed: number; surface: Surface };
 
 /**
  * Modèle animé du Buveur : charge le GLB (généré par tools/blender/buveur.py), passe ses
@@ -54,7 +53,7 @@ export class BuveurVisual {
   private baseVel = new THREE.Vector3();
   /** Pied levé assez haut depuis le dernier appui (prêt à faire un bruit de pas). */
   private armed = [false, false];
-  /** Reçoit les événements sonores (pas, saut, réception, mousse). */
+  /** Reçoit les événements sonores (pas, saut, réception). */
   onSound?: (e: BuveurSound) => void;
 
   constructor(scene: THREE.Scene) {
@@ -213,20 +212,17 @@ export class BuveurVisual {
         const phase = (a.time / a.getClip().duration) % 1;
         const crossed = (p: number) => (this.runPhase < p && phase >= p) || (this.runPhase > phase && (phase >= p || this.runPhase < p));
         if ((crossed(0.25) || crossed(0.75)) && Math.random() < B.run.chance) {
-          this.onSound?.({ type: 'foam', intensity: 0.5 });
           this.splash.emit(this.pintPos, this.baseVel.copy(player.velocity).multiplyScalar(B.run.inherit), up,
             rand(B.run.count), [...B.run.upSpeed], B.run.spread);
         }
         this.runPhase = phase;
       }
       if (ev.jumped) {
-        this.onSound?.({ type: 'foam', intensity: 0.9 });
         this.splash.emit(this.pintPos, this.baseVel.copy(player.velocity).multiplyScalar(B.jump.inherit), up,
           B.jump.count, [...B.jump.upSpeed], B.jump.spread);
       }
       if (ev.landed) {
         const n = Math.min(B.land.max, Math.round(ev.landSpeed * B.land.countPerSpeed));
-        if (n > 0) this.onSound?.({ type: 'foam', intensity: Math.min(1, n / 4) });
         if (n > 0) this.splash.emit(this.pintPos, this.baseVel.copy(player.velocity).multiplyScalar(B.land.inherit), up,
           n, [...B.land.upSpeed], B.land.spread);
       }

@@ -45,7 +45,7 @@ export class AudioEngine {
     this.ambience = ctx.createGain();
     this.ambience.gain.value = A.ambience;
     this.ambience.connect(master);
-    // Bruit blanc réutilisable (vent, mousse)
+    // Bruit blanc réutilisable (vent, souffle du saut)
     const n = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
     const d = n.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
@@ -86,40 +86,6 @@ export class AudioEngine {
     p.pan.value = pan;
     src.connect(g).connect(p).connect(this.sfx);
     src.start();
-  }
-
-  /** Glouglou de mousse : souffle filtré qui descend + quelques bulles. */
-  foam(intensity: number) {
-    const ctx = this.ctx;
-    if (!ctx || !this.noise || !this.sfx) return;
-    const t = ctx.currentTime, v = A.foam.volume * Math.min(1, intensity);
-    const src = ctx.createBufferSource();
-    src.buffer = this.noise;
-    const bp = ctx.createBiquadFilter();
-    bp.type = 'bandpass';
-    bp.Q.value = 4;
-    bp.frequency.setValueAtTime(1500 + Math.random() * 400, t);
-    bp.frequency.exponentialRampToValueAtTime(450, t + 0.18);
-    const g = ctx.createGain();
-    g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(v, t + 0.015);
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
-    src.connect(bp).connect(g).connect(this.sfx);
-    src.start(t, Math.random() * 1.5, 0.25);
-    for (let k = 0; k < 2 + Math.floor(Math.random() * 2); k++) {
-      const o = ctx.createOscillator();
-      const og = ctx.createGain();
-      const t0 = t + 0.03 + k * 0.045 + Math.random() * 0.02;
-      const f = 700 + Math.random() * 600;
-      o.frequency.setValueAtTime(f, t0);
-      o.frequency.exponentialRampToValueAtTime(f * 1.6, t0 + 0.035);
-      og.gain.setValueAtTime(0, t0);
-      og.gain.linearRampToValueAtTime(v * 0.5, t0 + 0.005);
-      og.gain.exponentialRampToValueAtTime(0.001, t0 + 0.04);
-      o.connect(og).connect(this.sfx);
-      o.start(t0);
-      o.stop(t0 + 0.05);
-    }
   }
 
   /** Petit souffle d'impulsion au saut. */

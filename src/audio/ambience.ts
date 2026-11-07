@@ -3,7 +3,7 @@ import type { AudioEngine } from './audio';
 
 /**
  * Ambiances synthétisées (aucun fichier) : vent permanent qui souffle par rafales, oiseaux le jour,
- * grillons et chouette la nuit. Le mélange suit le facteur jour/nuit sous le joueur.
+ * chouette la nuit. Le mélange suit le facteur jour/nuit sous le joueur.
  */
 export function createAmbience(audio: AudioEngine) {
   let day = 1;
@@ -40,41 +40,6 @@ export function createAmbience(audio: AudioEngine) {
     nightBus = ctx.createGain();
     nightBus.connect(out);
 
-    // --- Grillons : sinus aigus hachés en trilles, chacun son rythme et sa place
-    for (let i = 0; i < A.crickets.count; i++) {
-      const o = ctx.createOscillator();
-      o.frequency.value = 4200 + Math.random() * 900;
-      const trill = ctx.createGain();
-      trill.gain.value = 0;
-      const chirp = ctx.createOscillator();
-      chirp.type = 'square';
-      chirp.frequency.value = 28 + Math.random() * 10;
-      const chirpGain = ctx.createGain();
-      chirpGain.gain.value = 0.5;
-      chirp.connect(chirpGain).connect(trill.gain);
-      // Enveloppe de phrase : 3 à 4 trilles puis silence
-      const phrase = ctx.createGain();
-      phrase.gain.value = 0;
-      const pan = ctx.createStereoPanner();
-      pan.pan.value = Math.random() * 1.6 - 0.8;
-      const vol = ctx.createGain();
-      vol.gain.value = A.crickets.volume * (0.6 + Math.random() * 0.6);
-      o.connect(trill).connect(phrase).connect(vol).connect(pan).connect(nightBus);
-      o.start(); chirp.start();
-      const period = 0.9 + Math.random() * 0.8, offset = Math.random() * period;
-      const schedule = () => {
-        const t = ctx.currentTime;
-        for (let k = 0; k < 8; k++) {
-          const s = t + offset + k * period;
-          phrase.gain.setValueAtTime(0, s);
-          phrase.gain.linearRampToValueAtTime(1, s + 0.02);
-          phrase.gain.setValueAtTime(1, s + 0.32);
-          phrase.gain.linearRampToValueAtTime(0, s + 0.36);
-        }
-      };
-      schedule();
-      setInterval(schedule, period * 8 * 1000);
-    }
     started = true;
   });
 

@@ -67,8 +67,6 @@ buveur.onSound = (e) => {
     const s = F.surfaces[e.surface];
     audio.play(s.sample, F.volume, s.rate * 0.9);
     if (Math.random() < AUDIO.clink.chance) audio.play('impactGlass_light', AUDIO.clink.volume, jitter(0.1));
-  } else if (e.type === 'foam') {
-    audio.foam(e.intensity);
   }
 };
 buveur.load().catch((e) => console.error(e));
