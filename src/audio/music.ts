@@ -11,7 +11,7 @@ export type MusicMode = 'explore' | 'combat';
 /**
  * Musique avec fondu enchaîné entre morceaux. Lecture en streaming (éléments <audio> branchés sur le
  * bus musique), pour ne pas décoder des fichiers de plusieurs minutes.
- * - Accueil : la playlist, morceaux tirés au hasard, jamais le même deux fois de suite.
+ * - Menu (accueil) : le morceau du menu, en boucle.
  * - Run : UN morceau tiré au hasard dans le dossier de la map au début de la run, joué en boucle
  *   jusqu'à la fin de la run.
  * - Combat (vague d'ennemis, boss) : la liste combat, par-dessus le reste.
@@ -19,7 +19,6 @@ export type MusicMode = 'explore' | 'combat';
 export function createMusic(audio: AudioEngine) {
   const M = A.music;
   let mode: MusicMode = 'explore';
-  let lastExplore = -1;
   let lastCombat = -1;
   let runTrack: string | undefined; // url du morceau de la run en cours
   let current: { el: HTMLAudioElement; gain: GainNode } | undefined;
@@ -56,11 +55,8 @@ export function createMusic(audio: AudioEngine) {
     if (mode === 'combat') {
       lastCombat = pick(M.combat.length, lastCombat);
       play(urlOf(M.combat[lastCombat]));
-    } else if (runTrack) {
-      play(runTrack, true);
     } else {
-      lastExplore = pick(M.playlist.length, lastExplore);
-      play(urlOf(M.playlist[lastExplore]));
+      play(runTrack ?? urlOf(M.menu), true);
     }
   }
 
@@ -74,14 +70,14 @@ export function createMusic(audio: AudioEngine) {
       mode = m;
       if (audio.ctx) next();
     },
-    /** Début de run : tire un morceau du dossier de la map (sinon garde la playlist). */
+    /** Début de run : tire un morceau du dossier de la map (sinon garde la musique du menu). */
     startRun(map: string) {
       const list = mapTracks(map);
       runTrack = list.length ? list[Math.floor(Math.random() * list.length)] : undefined;
       mode = 'explore';
       if (audio.ctx && runTrack) next();
     },
-    /** Fin de run (retour à l'accueil) : retour à la playlist. */
+    /** Fin de run (retour à l'accueil) : retour à la musique du menu. */
     endRun() {
       if (!runTrack) return;
       runTrack = undefined;
