@@ -5,13 +5,13 @@ export const AUDIO = {
   sfx: 0.9,
   ambience: 0.55,
   /**
-   * Musique (CC0, RandomMind, opengameart.org) : morceaux de src/assets/music enchaînés en fondu.
+   * Musique (Modal Journey : maison, Suno ; les autres CC0, RandomMind, opengameart.org) : morceaux de src/assets/music enchaînés en fondu.
    * À venir : une piste nerveuse pour les vagues d'ennemis et les boss.
    */
   music: {
     volume: 0.35,
     fade: 4,
-    playlist: ['tavern_old_tower_inn.mp3', 'exploration.mp3'],
+    playlist: ['modal_journey.mp3', 'tavern_old_tower_inn.mp3', 'exploration.mp3'],
   },
   /** Pas : volume, variation de hauteur (+-), et hauteur selon le sol. */
   footsteps: {
