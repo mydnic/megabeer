@@ -39,6 +39,7 @@ import { createAmbience } from './audio/ambience';
 import { createMusic } from './audio/music';
 import { loadSettings, saveSettings } from './core/settings';
 import { createOptionsPanel } from './ui/optionsPanel';
+import { createPauseMenu } from './ui/pauseMenu';
 import { AUDIO } from './config/audio';
 
 // --- Rendu
@@ -126,7 +127,10 @@ const runLog = createRunLog();
 // --- Coup de zombie : recul, flash, tremblement
 const health = new Health();
 const healthHud = createHealthHud(health);
+/** Triches du panneau de dev (toujours faux dans le build final). */
+const cheats = { god: false };
 horde.onHit = (z, dir) => {
+  if (cheats.god) return;
   // Invulnérable juste après un coup : ni dégâts ni recul (pas d'enchaînement de coups)
   const took = health.damage(ZOMBIE_ATTACK.damage);
   runLog.hurt(z.model, ZOMBIE_ATTACK.damage, health.hp, !took);
@@ -221,6 +225,36 @@ let runTime = 0;    // durée de la run en cours (s de jeu)
 let phase: 'home' | 'run' | 'dead' = 'home';
 const home = createHomeScreen(() => startRun(), () => options.show(() => home.focus()));
 
+// --- Pause (Échap en run, ou perte du curseur verrouillé) : monde figé
+const pause = createPauseMenu({
+  resume: () => resumeRun(),
+  options: () => options.show(() => pause.focus()),
+  quit: () => {
+    runLog.end('abandon', { survived: runTime, kills: runKills });
+    goHome();
+  },
+});
+let pausedAt = 0;
+function pauseRun() {
+  if (phase !== 'run' || pause.open || levelUp.open) return;
+  pause.show();
+  pausedAt = performance.now();
+}
+function resumeRun() {
+  if (!pause.open) return;
+  options.close();
+  pause.hide();
+  renderer.domElement.requestPointerLock?.()?.catch?.(() => {});
+}
+// Échap libère le curseur verrouillé (le navigateur ne transmet alors pas la touche) : on met en pause
+document.addEventListener('pointerlockchange', () => { if (!document.pointerLockElement) pauseRun(); });
+addEventListener('keydown', (e) => {
+  if (e.code !== 'Escape' || e.repeat) return;
+  if (!pause.open) pauseRun();
+  // Ignore l'Échap qui vient d'ouvrir la pause via la perte du curseur
+  else if (performance.now() - pausedAt > 300) resumeRun();
+});
+
 /** Retour à l'accueil : le monde revient à l'état de départ, sans zombies, sans recharger la page. */
 function goHome() {
   phase = 'home';
@@ -239,6 +273,8 @@ function goHome() {
   playerStats.xpGain = 1;
   progression.reset();
   levelUp.hide();
+  pause.hide();
+  options.close();
   playerStats.luck = 0;
   xpDrops.clear();
   alcoholHud.setVisible(false);
@@ -324,8 +360,8 @@ function frame(now: number) {
   last = now;
   renderer.info.reset();
   if (deadSince >= 0) deadSince += realDt;
-  // Écran de level-up ouvert : le monde est en pause (la caméra et l'interface continuent)
-  const paused = levelUp.open;
+  // Écran de level-up ou menu pause ouvert : le monde est figé (la caméra et l'interface continuent)
+  const paused = levelUp.open || pause.open;
   const dt = paused ? 0 : realDt * timeScale() * devTimeScale;
   const input = readInput();
   // Accueil et mort : le joueur ne contrôle pas le Buveur (la caméra reste libre en jeu)
@@ -416,23 +452,51 @@ requestAnimationFrame(frame);
 
 if (import.meta.env.DEV) {
   Object.assign(window, { __game: { player, rig, camera, buveur, sky, heightAt, THREE, pipeline, renderer, decor, scene, music, horde, health, blonde, bottles, playerStats, progression, setTimeScale: (k: number) => { devTimeScale = k; } } });
+  // Panneau admin : chaque action est notée dans le journal de run (run "trichée")
+  const { createDevPanel } = await import('./dev/devPanel');
   const models = ['basic', 'chubby', 'arm', 'ribcage'] as const;
-  const spawnRing = (n: number, rMin: number, rMax: number) => {
-    const up = player.pos.clone().normalize();
-    const a = new THREE.Vector3().crossVectors(up, player.facing).normalize(), b = player.facing.clone();
-    for (let i = 0; i < n; i++) {
-      const t = Math.random() * Math.PI * 2, r = rMin + Math.random() * (rMax - rMin);
-      const p = player.pos.clone().addScaledVector(a, Math.cos(t) * r).addScaledVector(b, Math.sin(t) * r);
-      horde.spawn(models[i % 4], p, player.pos.clone().sub(p));
-    }
+  const gainXp = (xp: number) => {
+    const gained = progression.add(xp);
+    for (let i = 0; i < gained; i++) runLog.levelUp(progression.level - gained + 1 + i);
   };
-  Object.assign(window, { __spawnRing: spawnRing });
-  // Dev : B bascule la musique de combat, en attendant les vagues d'ennemis
-  addEventListener('keydown', (e) => {
-    if (e.code === 'KeyB' && !e.repeat) music.setMode(music.mode === 'combat' ? 'explore' : 'combat');
-    // Dev : H fait apparaître 100 zombies en cercle autour du joueur (test de la horde)
-    if (e.code === 'KeyH' && !e.repeat) spawnRing(100, 18, 30);
-    // Dev : L donne juste assez d'XP pour le niveau suivant (test des cartes)
-    if (e.code === 'KeyL' && !e.repeat && phase === 'run') progression.add(Math.max(1, progression.next - progression.xp));
+  createDevPanel({
+    models,
+    cheats,
+    spawn(model, n, rMin, rMax) {
+      const up = player.pos.clone().normalize();
+      const a = new THREE.Vector3().crossVectors(up, player.facing).normalize(), b = player.facing.clone();
+      for (let i = 0; i < n; i++) {
+        const t = Math.random() * Math.PI * 2, r = rMin + Math.random() * (rMax - rMin);
+        const p = player.pos.clone().addScaledVector(a, Math.cos(t) * r).addScaledVector(b, Math.sin(t) * r);
+        horde.spawn(model === 'mix' ? models[i % models.length] : model as typeof models[number], p, player.pos.clone().sub(p));
+      }
+      runLog.event('dev', 'spawn', model, n);
+    },
+    killAll(withXp) {
+      for (const z of horde.zombies) {
+        if (z.dead) continue;
+        hitDir.copy(z.pos).sub(player.pos).normalize();
+        z.damage(z.hp + 1, hitDir);
+        runKills++;
+        if (withXp) xpDrops.drop(z.pos, XP_DROPS.perZombie);
+      }
+      runLog.event('dev', 'killAll');
+    },
+    clearZombies() { horde.clear(); runLog.event('dev', 'clear'); },
+    setPassive(v) { horde.setPassive(v); runLog.event('dev', 'passive', v ? 1 : 0); },
+    giveXp(xp) { if (phase === 'run') { gainXp(xp); runLog.event('dev', 'xp', xp); } },
+    levelUp() { if (phase === 'run') { gainXp(Math.max(1, progression.next - progression.xp)); runLog.event('dev', 'level'); } },
+    heal() { health.reset(); runLog.event('dev', 'heal'); },
+    die() { if (phase === 'run') { health.invuln = 0; health.damage(health.hp); runLog.event('dev', 'die'); } },
+    toggleCombatMusic() {
+      music.setMode(music.mode === 'combat' ? 'explore' : 'combat');
+      return music.mode === 'combat' ? 'combat' : 'exploration';
+    },
+    setTimeScale(k) { devTimeScale = k; },
+    status() {
+      let alive = 0;
+      for (const z of horde.zombies) if (!z.dead) alive++;
+      return `${phase} | ${alive} zombies | niv ${progression.level} | ${Math.round(health.hp)} PV${cheats.god ? ' | GOD' : ''}`;
+    },
   });
 }

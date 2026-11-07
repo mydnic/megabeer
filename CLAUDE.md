@@ -34,7 +34,11 @@ yarn deploy     # build + wrangler deploy (seulement sur demande)
 
 Pas de tests automatisés : vérifier par `yarn build`, puis en jeu dans le navigateur. En dev,
 `window.__game` expose les objets principaux (joueur, caméra, ciel, décor, musique...) pour piloter
-et inspecter depuis la console ; F3 affiche le debug.
+et inspecter depuis la console ; F3 affiche le debug. Le **panneau DEV** (coin haut droit, `src/dev/devPanel.ts`,
+importé seulement en dev donc absent du build) fait apparaître des ennemis, donne de l'XP, godmode,
+vitesse du temps, musique de combat... : c'est là qu'on ajoute les outils de test, **jamais de
+touches cachées** dans le jeu. En run, Échap met en pause (et libère le curseur pour cliquer dans
+le panneau). Les actions du panneau sont notées dans le journal de run (`dev`).
 
 ## Règle : toutes les valeurs de jeu dans `src/config/`
 

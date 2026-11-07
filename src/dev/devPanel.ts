@@ -1,0 +1,72 @@
+/**
+ * Panneau admin de développement (yarn dev seulement : importé dynamiquement derrière
+ * import.meta.env.DEV, donc absent du build final). Volontairement sans style.
+ * Le curseur est verrouillé en run : Échap (pause) pour cliquer dedans.
+ */
+export interface DevApi {
+  models: readonly string[];
+  spawn(model: string | 'mix', count: number, rMin: number, rMax: number): void;
+  killAll(withXp: boolean): void;
+  clearZombies(): void;
+  setPassive(v: boolean): void;
+  giveXp(amount: number): void;
+  levelUp(): void;
+  heal(): void;
+  die(): void;
+  cheats: { god: boolean };
+  toggleCombatMusic(): string;
+  setTimeScale(k: number): void;
+  status(): string;
+}
+
+export function createDevPanel(api: DevApi) {
+  const el = document.createElement('details');
+  el.open = true;
+  el.style.cssText = 'position:fixed;top:8px;right:8px;z-index:100;background:#fff;color:#000;font:12px monospace;padding:6px 8px;border:1px solid #000;max-width:260px;opacity:.92';
+  el.innerHTML = `
+    <summary style="cursor:pointer"><b>DEV</b> <span data-k="status"></span></summary>
+    <fieldset><legend>Ennemis</legend>
+      <select data-k="model"><option value="mix">mélange</option>${api.models.map((m) => `<option>${m}</option>`).join('')}</select>
+      x <input data-k="count" type="number" value="50" min="1" max="2000" style="width:5em">
+      <br>distance <input data-k="rmin" type="number" value="15" style="width:3.5em"> à <input data-k="rmax" type="number" value="30" style="width:3.5em">
+      <br><button data-a="spawn">Faire apparaître</button>
+      <br><button data-a="killXp">Tuer tout (+XP)</button> <button data-a="clear">Effacer tout</button>
+      <br><label><input data-k="passive" type="checkbox"> passifs</label>
+    </fieldset>
+    <fieldset><legend>Joueur</legend>
+      <label><input data-k="god" type="checkbox"> godmode</label>
+      <br><input data-k="xp" type="number" value="25" min="1" style="width:5em"> <button data-a="xp">+XP</button> <button data-a="level">+1 niveau</button>
+      <br><button data-a="heal">Soigner</button> <button data-a="die">Mourir</button>
+    </fieldset>
+    <fieldset><legend>Monde</legend>
+      vitesse <select data-k="time"><option>0.1</option><option>0.25</option><option>0.5</option><option selected>1</option><option>2</option><option>4</option></select>
+      <br><button data-a="music">Musique : exploration</button>
+    </fieldset>`;
+  document.body.appendChild(el);
+
+  const q = <T extends HTMLElement>(k: string) => el.querySelector<T>(`[data-k="${k}"]`)!;
+  const num = (k: string) => Number(q<HTMLInputElement>(k).value);
+  const actions: Record<string, (b: HTMLButtonElement) => void> = {
+    spawn: () => api.spawn(q<HTMLSelectElement>('model').value, num('count'), num('rmin'), num('rmax')),
+    killXp: () => api.killAll(true),
+    clear: () => api.clearZombies(),
+    xp: () => api.giveXp(num('xp')),
+    level: () => api.levelUp(),
+    heal: () => api.heal(),
+    die: () => api.die(),
+    music: (b) => { b.textContent = `Musique : ${api.toggleCombatMusic()}`; },
+  };
+  for (const b of el.querySelectorAll<HTMLButtonElement>('button')) {
+    b.addEventListener('click', (e) => { e.stopPropagation(); actions[b.dataset.a!](b); b.blur(); });
+  }
+  q<HTMLInputElement>('god').addEventListener('change', (e) => { api.cheats.god = (e.target as HTMLInputElement).checked; });
+  q<HTMLInputElement>('passive').addEventListener('change', (e) => api.setPassive((e.target as HTMLInputElement).checked));
+  q<HTMLSelectElement>('time').addEventListener('change', (e) => api.setTimeScale(Number((e.target as HTMLSelectElement).value)));
+  // Taper dans un champ ne pilote pas le jeu (sauf Échap)
+  el.addEventListener('keydown', (e) => { if (e.code !== 'Escape') e.stopPropagation(); });
+  // Le panneau ne déclenche ni le verrouillage du curseur ni le démarrage de l'audio
+  el.addEventListener('pointerdown', (e) => e.stopPropagation());
+
+  const status = q('status');
+  setInterval(() => { status.textContent = api.status(); }, 250);
+}

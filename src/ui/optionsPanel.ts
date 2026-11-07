@@ -71,7 +71,12 @@ export function createOptionsPanel(settings: Settings, onVolume: (ch: VolumeChan
   };
   veil.querySelector('.opt-close')!.addEventListener('click', (e) => { e.stopPropagation(); close(); });
   veil.addEventListener('click', (e) => { if (e.target === veil) close(); });
-  addEventListener('keydown', (e) => { if (e.code === 'Escape') close(); });
+  // Échap ferme le panneau, et seulement lui (le menu pause dessous reste ouvert)
+  addEventListener('keydown', (e) => {
+    if (e.code !== 'Escape' || veil.classList.contains('off')) return;
+    e.stopImmediatePropagation();
+    close();
+  });
 
   return {
     get open() { return !veil.classList.contains('off'); },
