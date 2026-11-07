@@ -16,6 +16,9 @@ import { XP_DROPS } from './config/xp';
 import { Progression } from './player/progression';
 import { createXpDrops } from './pickups/xpDrops';
 import { createAlcoholHud } from './ui/alcoholHud';
+import { createLevelUpScreen } from './ui/levelUpScreen';
+import { applyCard, rollCards } from './game/levelUpCards';
+import { LEVEL_UP_SCREEN, RARITIES } from './config/upgrades';
 import { WEAPONS } from './config/weapons';
 import { ZOMBIE_STATS } from './config/zombies';
 import { DEATH_BANNER, HOME_CAMERA, PLAYER_STATS } from './config/player';
@@ -145,12 +148,26 @@ const playerStats = {
   extraProjectiles: PLAYER_STATS.extraProjectiles as number,
   pickupRange: XP_DROPS.pickupRange as number,
   xpGain: 1,
+  luck: 0,
 };
 // --- XP : gouttes de bière, alcoolémie, degré
 const progression = new Progression();
 const alcoholHud = createAlcoholHud(progression);
 const xpDrops = createXpDrops(scene, (p) => player.supportAt(p, p.length()));
 const chest = new THREE.Vector3();
+// --- Level-up : pause et 3 cartes (améliorations de la Blonde, avec rareté)
+const levelUp = createLevelUpScreen((card) => {
+  applyCard(card, blonde.mods);
+  progression.pending--;
+  runLog.event('cardPicked', card.upgrade.id, RARITIES[card.tier].id, blonde.mods.level);
+  if (progression.pending > 0) openLevelUp();
+  else renderer.domElement.requestPointerLock?.()?.catch?.(() => {});
+}, () => {});
+function openLevelUp() {
+  const cards = rollCards(LEVEL_UP_SCREEN.cards, playerStats.luck);
+  runLog.event('cardsOffered', ...cards.map((c) => `:${RARITIES[c.tier].id}`));
+  levelUp.show(progression.level - progression.pending + 1, cards);
+}
 // --- Arme de départ : la Blonde
 const bottles = await createBottles(scene);
 const blonde = createBlonde({
@@ -206,6 +223,8 @@ function goHome() {
   playerStats.pickupRange = XP_DROPS.pickupRange;
   playerStats.xpGain = 1;
   progression.reset();
+  levelUp.hide();
+  playerStats.luck = 0;
   xpDrops.clear();
   alcoholHud.setVisible(false);
   playerStats.extraProjectiles = PLAYER_STATS.extraProjectiles;
@@ -288,10 +307,14 @@ function frame(now: number) {
   last = now;
   renderer.info.reset();
   if (deadSince >= 0) deadSince += realDt;
-  const dt = realDt * timeScale() * devTimeScale;
+  // Écran de level-up ouvert : le monde est en pause (la caméra et l'interface continuent)
+  const paused = levelUp.open;
+  const dt = paused ? 0 : realDt * timeScale() * devTimeScale;
   const input = readInput();
   // Accueil et mort : le joueur ne contrôle pas le Buveur (la caméra reste libre en jeu)
-  const moveInput = phase === 'run' ? input : NO_MOVE;
+  const moveInput = phase === 'run' && !paused ? input : NO_MOVE;
+  levelUp.input(input.moveX, input.jumpPressed);
+  if (phase === 'run' && !paused && progression.pending > 0) openLevelUp();
   // Accueil : la caméra tourne lentement autour du Buveur
   if (phase === 'home') player.camFwd.applyAxisAngle(player.upDir, HOME_CAMERA.orbitSpeed * realDt);
   player.feed(moveInput);
@@ -335,6 +358,7 @@ function frame(now: number) {
   // Espace ou bouton A : Jouer sur l'accueil, Continuer sur le bilan de mort
   if (input.jumpPressed) {
     if (phase === 'home') startRun();
+    else if (paused) { /* géré par l'écran de level-up */ }
     else if (phase === 'dead' && deathBanner.ready) goHome();
   }
   if (deadSince >= 0) {
@@ -370,7 +394,7 @@ function frame(now: number) {
 requestAnimationFrame(frame);
 
 if (import.meta.env.DEV) {
-  Object.assign(window, { __game: { player, rig, camera, buveur, sky, heightAt, THREE, pipeline, renderer, decor, scene, music, horde, health, blonde, bottles, playerStats, setTimeScale: (k: number) => { devTimeScale = k; } } });
+  Object.assign(window, { __game: { player, rig, camera, buveur, sky, heightAt, THREE, pipeline, renderer, decor, scene, music, horde, health, blonde, bottles, playerStats, progression, setTimeScale: (k: number) => { devTimeScale = k; } } });
   const models = ['basic', 'chubby', 'arm', 'ribcage'] as const;
   const spawnRing = (n: number, rMin: number, rMax: number) => {
     const up = player.pos.clone().normalize();

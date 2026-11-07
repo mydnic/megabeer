@@ -37,6 +37,8 @@ type Pending = { t: number; index: number };
  */
 export function createBlonde(d: Deps) {
   let timer = 0.3;
+  /** Améliorations de l'arme (cartes de level-up) : multiplicateurs propres à la Blonde. */
+  const mods = { level: 1, damage: 1, rate: 1, projectiles: 0, speed: 1, range: 1 };
   const pending: Pending[] = [];
   const tmp = new THREE.Vector3();
   const up = new THREE.Vector3();
@@ -51,7 +53,7 @@ export function createBlonde(d: Deps) {
     for (const z of d.zombies()) {
       if (z.dead) continue;
       const dist = z.pos.distanceTo(from);
-      if (dist < W.range) list.push({ z, d: dist });
+      if (dist < W.range * mods.range) list.push({ z, d: dist });
     }
     list.sort((a, b) => a.d - b.d);
     return list.slice(0, n).map((x) => x.z);
@@ -66,7 +68,7 @@ export function createBlonde(d: Deps) {
       const dlt = tmp.subVectors(aim, from);
       const h = dlt.dot(up);
       dlt.addScaledVector(up, -h); // partie horizontale
-      t = Math.max(0.08, dlt.length() / W.speed);
+      t = Math.max(0.08, dlt.length() / (W.speed * mods.speed));
       if (i === 2) out.copy(dlt).divideScalar(t).addScaledVector(up, h / t + 0.5 * W.gravity * t);
     }
     return out;
@@ -94,7 +96,7 @@ export function createBlonde(d: Deps) {
   return {
     update(dt: number) {
       const s = d.stats();
-      const interval = W.cooldown / s.attackSpeed;
+      const interval = W.cooldown / (s.attackSpeed * mods.rate);
       // Lâchers en attente (volée en cours)
       for (let i = pending.length - 1; i >= 0; i--) {
         pending[i].t -= dt;
@@ -108,7 +110,7 @@ export function createBlonde(d: Deps) {
       // Geste accéléré quand la cadence monte (un geste complet tient dans l'intervalle)
       const rate = Math.min(W.maxGestureRate, Math.max(1, W.gestureDuration / interval));
       d.gesture(rate);
-      const n = 1 + s.extraProjectiles;
+      const n = 1 + s.extraProjectiles + mods.projectiles;
       const first = W.releaseDelay / rate;
       // Rafale : les bouteilles d'une volée partent à la suite, l'écart se resserre avec la cadence
       const gap = Math.min(W.volleyGap, interval / (n + 1));
@@ -120,7 +122,7 @@ export function createBlonde(d: Deps) {
         for (const z of d.zombies()) {
           if (z.dead || z.pos.distanceToSquared(b.pos) > 9) continue;
           if (segToZombie(prev, b.pos, z) < W.radius + W.zombieRadius) {
-            d.onHitZombie(z, b.pos, b.vel, W.damage);
+            d.onHitZombie(z, b.pos, b.vel, W.damage * mods.damage);
             return false;
           }
         }
@@ -128,7 +130,11 @@ export function createBlonde(d: Deps) {
         return true;
       });
     },
-    reset() { timer = 0.3; pending.length = 0; d.bottles.clear(); },
+    mods,
+    reset() {
+      timer = 0.3; pending.length = 0; d.bottles.clear();
+      Object.assign(mods, { level: 1, damage: 1, rate: 1, projectiles: 0, speed: 1, range: 1 });
+    },
   };
 }
 
