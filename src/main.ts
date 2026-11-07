@@ -63,7 +63,7 @@ const buveur = new BuveurVisual(scene);
 
 // --- Zombies (provisoire : 4 zombies sur le parvis, en attendant le spawn des vagues)
 const horde = createHorde(scene, await loadZombieLibrary(), player, decor.collider);
-{
+function spawnStartZombies() {
   const up = decor.spawn.dir.clone().normalize();
   const fwd = decor.spawn.facing.clone();
   const right = new THREE.Vector3().crossVectors(fwd, up).normalize();
@@ -73,6 +73,7 @@ const horde = createHorde(scene, await loadZombieLibrary(), player, decor.collid
     horde.spawn(m, p, fwd.clone().negate());
   });
 }
+spawnStartZombies();
 
 // --- Sons (démarrent au premier clic ou à la première touche)
 const audio = new AudioEngine();
@@ -118,8 +119,27 @@ pint.onImpact = (p, speed) => {
   pintFirstImpact = false;
   audio.play(speed > 3 ? 'impactGlass_medium' : 'impactGlass_light', Math.min(0.6, 0.15 + speed * 0.06), jitter(0.08));
 };
-const deathBanner = createDeathBanner();
+const deathBanner = createDeathBanner(() => restartRun());
 let deadSince = -1; // temps réel écoulé depuis la mort (-1 : vivant)
+let runTime = 0;    // durée de la run en cours (s de jeu)
+
+/** Nouvelle run : tout revient à l'état de départ, sans recharger la page. */
+function restartRun() {
+  if (deadSince < 0) return;
+  deadSince = -1;
+  runTime = 0;
+  health.reset();
+  player.reset(decor.spawn.dir, decor.spawn.facing);
+  buveur.revive();
+  pint.hide();
+  horde.clear();
+  horde.setPassive(false);
+  spawnStartZombies();
+  rig.setFocus(null);
+  pipeline.fade.amount = 0;
+  if (audio.ctx && audio.music) audio.music.gain.setTargetAtTime(AUDIO.music.volume, audio.ctx.currentTime, 0.4);
+  renderer.domElement.requestPointerLock?.()?.catch?.(() => {});
+}
 function onDeath() {
   deadSince = 0;
   const pos = new THREE.Vector3(), quat = new THREE.Quaternion();
@@ -178,7 +198,10 @@ function frame(now: number) {
   health.update(dt);
   healthHud.update(realDt);
   if (health.dead && deadSince < 0) onDeath();
-  deathBanner.update(deadSince);
+  if (deadSince < 0) runTime += dt;
+  deathBanner.update(deadSince, runTime);
+  // Espace ou bouton A de la manette relance la run une fois le bilan affiché
+  if (deathBanner.ready && input.jumpPressed) restartRun();
   if (deadSince >= 0) {
     const B = DEATH_BANNER;
     pipeline.fade.amount = Math.min(1, deadSince / B.colorFade);

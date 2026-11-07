@@ -28,6 +28,8 @@ export const DEATH_BANNER = {
   fadeIn: 0.8,
   scaleFrom: 1.18,
   settle: 0.9,
+  /** Apparition du bilan et du bouton Rejouer (s après la mort, temps réel). */
+  endDelay: 2.6,
   /** L'image se désature et s'assombrit (saturation et vignette visées, durée en s). */
   saturation: 0.25,
   vignette: 0.55,

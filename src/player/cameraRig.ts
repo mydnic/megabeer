@@ -29,7 +29,8 @@ export class CameraRig {
   private focus: { distance: number; pitch: number; sharpness: number } | null = null;
   setFocus(f: { distance: number; pitch: number; sharpness: number } | null) {
     this.focus = f;
-    if (!f) this.distTarget = C.distance;
+    // Fin du cadrage imposé : retour direct au cadrage de départ (nouvelle run, coupe franche)
+    if (!f) { this.distTarget = this.distance = this.blockedDist = C.distance; this.pitch = C.pitch; }
   }
 
   /** Ajoute un tremblement (coup reçu, explosion...). */

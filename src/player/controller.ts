@@ -78,6 +78,22 @@ export class PlayerController {
     return this.decor ? Math.max(ground, this.decor.supportAt(p, feetR)) : ground;
   }
 
+  /** Replace le joueur au sol à une direction, immobile, regardant vers `facing` (nouvelle run). */
+  reset(dir: THREE.Vector3, facing: THREE.Vector3) {
+    const d = this.tmp.copy(dir).normalize();
+    this.pos.copy(d).multiplyScalar(groundRadius(d));
+    this.velocity.set(0, 0, 0);
+    this.knockVel.set(0, 0, 0);
+    this.vr = 0;
+    this.onGround = true;
+    this.facing.copy(facing);
+    this.camFwd.copy(facing);
+    this.prevPos.copy(this.pos);
+    this.prevFacing.copy(this.facing);
+    this.events.jumped = this.events.landed = false;
+    this.interpolate(1);
+  }
+
   /** Recul : projeté dans la direction `dir` (tangente), avec un petit saut. */
   knock(dir: THREE.Vector3, speed: number, lift: number, decay: number) {
     this.knockVel.copy(dir).multiplyScalar(speed);
