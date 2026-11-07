@@ -7,17 +7,16 @@ const urlOf = (file: string) => Object.entries(urls).find(([p]) => p.endsWith('/
 export type MusicMode = 'explore' | 'combat';
 
 /**
- * Musique en deux modes, avec fondu enchaîné entre morceaux :
- * - exploration : la playlist dans l'ordre, en boucle ;
- * - combat (vague d'ennemis, boss) : un morceau de combat au hasard (jamais le même deux fois de
- *   suite), puis un autre au hasard tant que le combat dure.
- * En quittant le combat, l'exploration reprend au morceau suivant. Lecture en streaming
+ * Musique en deux modes, avec fondu enchaîné entre morceaux. Dans chaque mode, les morceaux sont
+ * tirés au hasard dans leur liste, jamais le même deux fois de suite :
+ * - exploration : la playlist ;
+ * - combat (vague d'ennemis, boss) : la liste combat. Lecture en streaming
  * (éléments <audio> branchés sur le bus musique), pour ne pas décoder des fichiers de plusieurs minutes.
  */
 export function createMusic(audio: AudioEngine) {
   const M = A.music;
   let mode: MusicMode = 'explore';
-  let exploreIndex = 0;
+  let lastExplore = -1;
   let lastCombat = -1;
   let current: { el: HTMLAudioElement; gain: GainNode } | undefined;
 
@@ -42,16 +41,20 @@ export function createMusic(audio: AudioEngine) {
     current = { el, gain };
   }
 
+  /** Indice au hasard dans une liste, jamais le même que le précédent. */
+  function pick(n: number, last: number) {
+    let i = Math.floor(Math.random() * n);
+    if (n > 1 && i === last) i = (i + 1 + Math.floor(Math.random() * (n - 1))) % n;
+    return i;
+  }
+
   function next() {
     if (mode === 'combat') {
-      const list = M.combat;
-      let i = Math.floor(Math.random() * list.length);
-      if (list.length > 1 && i === lastCombat) i = (i + 1 + Math.floor(Math.random() * (list.length - 1))) % list.length;
-      lastCombat = i;
-      play(list[i]);
+      lastCombat = pick(M.combat.length, lastCombat);
+      play(M.combat[lastCombat]);
     } else {
-      play(M.playlist[exploreIndex % M.playlist.length]);
-      exploreIndex++;
+      lastExplore = pick(M.playlist.length, lastExplore);
+      play(M.playlist[lastExplore]);
     }
   }
 

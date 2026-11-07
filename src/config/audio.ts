@@ -5,14 +5,14 @@ export const AUDIO = {
   sfx: 0.9,
   ambience: 0.55,
   /**
-   * Musique (Zombie Survival : maison, Suno ; les autres CC0, RandomMind, opengameart.org) : morceaux de src/assets/music enchaînés en fondu.
+   * Musique (Zombie Survival, Modal Journey : maison, Suno ; les autres CC0, RandomMind, opengameart.org) : morceaux de src/assets/music enchaînés en fondu.
    * Combat (vagues d'ennemis, boss) : un morceau de `combat` au hasard (Boss songs : maison, Suno).
    */
   music: {
     volume: 0.35,
     fade: 4,
-    /** Exploration : dans l'ordre, en boucle. */
-    playlist: ['zombie_survival.mp3', 'zombie_survival_alt.mp3', 'tavern_old_tower_inn.mp3', 'exploration.mp3'],
+    /** Exploration : tirage au hasard, sans répéter le précédent. */
+    playlist: ['zombie_survival.mp3', 'zombie_survival_alt.mp3', 'modal_journey.mp3', 'tavern_old_tower_inn.mp3', 'exploration.mp3'],
     /** Combat : tirage au hasard, sans répéter le précédent. */
     combat: ['boss_1.mp3', 'boss_2.mp3', 'boss_3.mp3'],
   },
