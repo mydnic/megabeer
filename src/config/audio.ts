@@ -29,6 +29,11 @@ export const AUDIO = {
     },
   },
   jump: { volume: 0.35 },
+  /**
+   * Ramassage des gouttes d'XP (bulles CC0, OpenGameArt). Les ramassages rapprochés montent en
+   * hauteur (petit effet de série) ; un écart minimum évite la bouillie quand on en avale des dizaines.
+   */
+  pickup: { sample: 'bubble', volume: 0.4, minGap: 0.045, pitchStep: 0.05, pitchMax: 1.7, comboReset: 0.5 },
   land: { volume: 0.55, perSpeed: 0.05, max: 1 },
   /** Tintement de la pinte au saut et à la réception. */
   clink: { volume: 0.12, chance: 0.6 },

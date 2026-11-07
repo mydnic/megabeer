@@ -155,6 +155,15 @@ const progression = new Progression();
 const alcoholHud = createAlcoholHud(progression);
 const xpDrops = createXpDrops(scene, (p) => player.supportAt(p, p.length()));
 const chest = new THREE.Vector3();
+/** Son de ramassage : une bulle, de plus en plus aiguë quand on en avale plusieurs à la suite. */
+let lastPickup = -1, pickupCombo = 0;
+function playPickup() {
+  const P = AUDIO.pickup, now = performance.now() / 1000;
+  if (now - lastPickup < P.minGap) return;
+  pickupCombo = now - lastPickup > P.comboReset ? 0 : pickupCombo + 1;
+  lastPickup = now;
+  audio.play(P.sample, P.volume, Math.min(P.pitchMax, 1 + pickupCombo * P.pitchStep) * jitter(0.04));
+}
 // --- Level-up : pause et 3 cartes (améliorations de la Blonde, avec rareté)
 const levelUp = createLevelUpScreen((card) => {
   applyCard(card, blonde.mods);
@@ -348,6 +357,7 @@ function frame(now: number) {
   chest.copy(player.renderPos).addScaledVector(player.upDir, 1.0);
   xpDrops.update(dt, chest, phase === 'run' ? playerStats.pickupRange : 0, (v) => {
     const xp = v * playerStats.xpGain;
+    playPickup();
     runLog.xp(xp);
     const gained = progression.add(xp);
     for (let i = 0; i < gained; i++) runLog.levelUp(progression.level - gained + 1 + i);

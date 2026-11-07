@@ -1,6 +1,6 @@
-import { AUDIO as A } from '../config/audio';
+﻿import { AUDIO as A } from '../config/audio';
 
-const sampleUrls = import.meta.glob('../assets/kenney-impact-sounds/**/*.ogg', {
+const sampleUrls = import.meta.glob(['../assets/kenney-impact-sounds/**/*.ogg', '../assets/sfx/*.{wav,ogg,mp3}'], {
   query: '?url', import: 'default', eager: true,
 }) as Record<string, string>;
 
@@ -63,7 +63,7 @@ export class AudioEngine {
     const ctx = this.ctx!;
     await Promise.all(Object.entries(sampleUrls).map(async ([path, url]) => {
       const file = path.split('/').pop()!;
-      const group = file.replace(/_\d+\.ogg$/, '');
+      const group = file.replace(/(_\d+)?\.(ogg|wav|mp3)$/, '');
       try {
         const buf = await ctx.decodeAudioData(await (await fetch(url)).arrayBuffer());
         if (!this.buffers.has(group)) this.buffers.set(group, []);

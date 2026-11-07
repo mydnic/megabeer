@@ -19,3 +19,6 @@ dist
 
 # Journaux de run (dev)
 logs/
+
+# Sons candidats en cours d'ecoute
+sons-a-valider/
