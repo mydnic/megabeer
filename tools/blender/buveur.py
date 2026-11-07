@@ -255,8 +255,11 @@ def build_body():
     # Haut du torse
     ellipsoid('torse', (0, 0.02, 1.25), (0.32, 0.25, 0.22), 'marcel', 'chest')
     ellipsoid('poitrail', (0, -0.08, 1.33), (0.16, 0.12, 0.10), 'peau', 'chest')
+    # Ligne d'épaules : trapèzes en pente douce du cou vers les bras (plus de boule)
+    ellipsoid('trapezes', (0, 0.02, 1.37), (0.33, 0.17, 0.085), 'peau', 'chest', seg=18, rings=9)
     for s, side in ((1, 'L'), (-1, 'R')):
-        ellipsoid(f'epaule.{side}', (0.29 * s, 0.01, 1.35), (0.105, 0.10, 0.10), 'peau', 'chest')
+        # Deltoïde : galbe allongé dans l'axe du bras, suit le bras (pas de jointure visible)
+        ellipsoid(f'deltoide.{side}', (0.31 * s, 0.0, 1.30), (0.094, 0.094, 0.115), 'peau', f'upperarm.{side}', seg=12, rings=8, rot=(0, -13 * s, 0))
     limb('cou', (0, 0.0, 1.36), (0, 0.0, 1.50), 0.10, 0.10, 'peau', 'head')
 
     # Bras gauche, ballant
