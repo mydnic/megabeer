@@ -234,6 +234,8 @@ B = {
     'upperarm.R':((-0.31, 0, 1.36), (-0.36, 0.03, 1.10), 'chest'),
     'forearm.R': ((-0.36, 0.03, 1.10), (-0.36, -0.25, 1.08), 'upperarm.R'),
     'hand.R':    ((-0.36, -0.25, 1.08), (-0.36, -0.36, 1.08), 'forearm.R'),
+    # La pinte a son propre os : le jeu la cache et lance une vraie pinte quand le Buveur meurt
+    'pint':      ((-0.31, -0.39, 0.96), (-0.31, -0.39, 1.20), 'hand.R'),
     'thigh.L':   ((0.15, 0, 0.82), (0.16, 0, 0.46), 'hips'),
     'shin.L':    ((0.16, 0, 0.46), (0.17, 0.01, 0.12), 'thigh.L'),
     'foot.L':    ((0.17, 0.01, 0.12), (0.17, -0.16, 0.05), 'shin.L'),
@@ -284,11 +286,11 @@ def build_body():
 
     # Pinte (nonic) : verre, bière, mousse qui déborde
     px, py, pz = -0.31, -0.39, 0.96
-    limb('verre', (px, py, pz), (px, py, pz + 0.24), 0.068, 0.082, 'verre', 'hand.R', seg=12)
-    limb('biere', (px, py, pz + 0.012), (px, py, pz + 0.205), 0.072, 0.085, 'biere', 'hand.R', seg=12)
-    limb('mousse', (px, py, pz + 0.20), (px, py, pz + 0.245), 0.088, 0.09, 'mousse', 'hand.R', seg=12)
-    ellipsoid('mousse_dome', (px, py, pz + 0.245), (0.09, 0.09, 0.04), 'mousse', 'hand.R', seg=12, rings=6)
-    ellipsoid('coulure', (px + 0.02, py - 0.075, pz + 0.18), (0.03, 0.025, 0.06), 'mousse', 'hand.R', seg=8, rings=6)
+    limb('verre', (px, py, pz), (px, py, pz + 0.24), 0.068, 0.082, 'verre', 'pint', seg=12)
+    limb('biere', (px, py, pz + 0.012), (px, py, pz + 0.205), 0.072, 0.085, 'biere', 'pint', seg=12)
+    limb('mousse', (px, py, pz + 0.20), (px, py, pz + 0.245), 0.088, 0.09, 'mousse', 'pint', seg=12)
+    ellipsoid('mousse_dome', (px, py, pz + 0.245), (0.09, 0.09, 0.04), 'mousse', 'pint', seg=12, rings=6)
+    ellipsoid('coulure', (px + 0.02, py - 0.075, pz + 0.18), (0.03, 0.025, 0.06), 'mousse', 'pint', seg=8, rings=6)
 
     # Tête
     hz = 1.64
@@ -538,6 +540,57 @@ def build_clips(arm):
     rest = idle[0]
     make_clip(arm, 'land', 12, {0: crouch, 3: crouch, 12: rest}, loop=False)
 
+    # ---- DEATH : il encaisse, la pinte lui échappe, les genoux lâchent, il tombe sur le dos (1,4 s)
+    recoil = merge(arms(), {
+        'hips': {'r': (-8, 0, 0)},
+        'spine': {'r': (-15, 0, 4)},
+        'head': {'r': (-25, 0, 6)},
+        'upperarm.L': {'r': (-40, -60, 0)}, 'forearm.L': {'r': (-30, 0, 0)},
+        'upperarm.R': {'r': (-75, 45, 0)}, 'forearm.R': {'r': (25, 0, 0)},
+        'shin.L': {'r': (15, 0, 0)}, 'shin.R': {'r': (15, 0, 0)},
+        'belly': {'s': (1.04, 1.04, 0.97)},
+    })
+    buckle = merge(recoil, {
+        'hips': {'r': (-22, 0, 0), 'l': (0, 0.05, -0.2)},
+        'spine': {'r': (-18, 0, 0)},
+        'head': {'r': (-15, 0, 0)},
+        'thigh.L': {'r': (-35, 0, 0)}, 'shin.L': {'r': (65, 0, 0)}, 'foot.L': {'r': (-25, 0, 0)},
+        'thigh.R': {'r': (-30, 0, 0)}, 'shin.R': {'r': (60, 0, 0)}, 'foot.R': {'r': (-25, 0, 0)},
+        'upperarm.L': {'r': (-30, -75, 0)}, 'upperarm.R': {'r': (-40, 70, 0)},
+        'belly': {'l': (0, 0, 0.03)},
+    })
+    falling = merge(buckle, {
+        'hips': {'r': (-62, 0, 0), 'l': (0, 0.2, -0.42)},
+        'spine': {'r': (-10, 0, 0)},
+        'head': {'r': (-10, 0, 0)},
+        'thigh.L': {'r': (-45, 0, 0)}, 'shin.L': {'r': (35, 0, 0)},
+        'thigh.R': {'r': (-40, 0, 0)}, 'shin.R': {'r': (40, 0, 0)},
+        'upperarm.L': {'r': (-15, -88, 0)}, 'forearm.L': {'r': (-15, 0, 0)},
+        'upperarm.R': {'r': (-15, 88, 0)}, 'forearm.R': {'r': (-15, 0, 0)},
+    })
+    flat = merge(falling, {
+        'hips': {'r': (-92, 0, 0), 'l': (0, 0.32, -0.55)},
+        'spine': {'r': (0, 0, 0)},
+        'chest': {'r': (0, 0, 0)},
+        'head': {'r': (8, 0, 0)},
+        'thigh.L': {'r': (-28, 0, 0)}, 'shin.L': {'r': (30, 0, 0)}, 'foot.L': {'r': (0, 0, 0)},
+        'thigh.R': {'r': (-22, 0, 0)}, 'shin.R': {'r': (25, 0, 0)}, 'foot.R': {'r': (0, 0, 0)},
+        'upperarm.L': {'r': (0, -92, 0)}, 'forearm.L': {'r': (-8, 0, 0)},
+        'upperarm.R': {'r': (0, 92, 0)}, 'forearm.R': {'r': (-8, 0, 0)},
+        'belly': {'l': (0, 0, 0), 's': (1.1, 1.1, 0.88)},
+    })
+    bounce = merge(flat, {
+        'hips': {'r': (-90, 0, 0), 'l': (0, 0.32, -0.5)},
+        'belly': {'s': (0.94, 0.94, 1.08)},
+        'thigh.L': {'r': (-38, 0, 0)}, 'thigh.R': {'r': (-30, 0, 0)},
+        'head': {'r': (0, 0, 0)},
+    })
+    settled = merge(flat, {
+        'belly': {'s': (1.02, 1.02, 0.98)},
+        'head': {'r': (10, 0, 28)},
+    })
+    make_clip(arm, 'death', 42, {0: rest, 5: recoil, 14: buckle, 24: falling, 30: flat, 34: bounce, 42: settled}, loop=False)
+
 # ---------------------------------------------------------------- export
 build_body()
 arm = build_armature()
@@ -613,4 +666,6 @@ if RENDER_DIR:
     shoot('jump_face.png', -25, 5, action='jump', frame=8)
     shoot('fall_face.png', -25, 5, action='fall', frame=4)
     shoot('idle_dos.png', 200, 5, action='idle', frame=15)
+    for f in (5, 14, 24, 30, 42):
+        shoot(f'death_{f:02d}.png', 70, 10, action='death', frame=f)
     print('RENDERS_OK', RENDER_DIR)

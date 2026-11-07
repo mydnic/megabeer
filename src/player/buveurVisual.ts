@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+﻿import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import buveurUrl from '../assets/models/buveur.glb?url';
 import { BASE_SPEED } from '../config/world';
@@ -9,7 +9,7 @@ import { heightAt, meadowAt } from '../world/terrain';
 import { BeerSplash } from './beerSplash';
 import type { PlayerController } from './controller';
 
-type Clip = 'idle' | 'run' | 'jump' | 'fall' | 'land';
+type Clip = 'idle' | 'run' | 'jump' | 'fall' | 'land' | 'death';
 
 /** Sol sous un pied, pour le son des pas. */
 export type Surface = 'grass' | 'dirt' | 'stone' | 'snow';
@@ -54,6 +54,9 @@ export class BuveurVisual {
   /** Pied levé assez haut depuis le dernier appui (prêt à faire un bruit de pas). */
   private armed = [false, false];
   private materials: THREE.MeshToonMaterial[] = [];
+  private pintBone?: THREE.Object3D;
+  /** Mort : animation de chute jouée jusqu'au bout, plus d'IK, d'éclaboussures ni de pas. */
+  dead = false;
   private flashTime = 0;
   private flashDuration = 0.2;
   private flashColor = new THREE.Color();
@@ -93,14 +96,45 @@ export class BuveurVisual {
         .applyMatrix4(this.hand.matrixWorld.clone().invert());
     }
     this.mixer = new THREE.AnimationMixer(gltf.scene);
-    for (const name of ['idle', 'run', 'jump', 'fall', 'land'] as Clip[]) {
+    for (const name of ['idle', 'run', 'jump', 'fall', 'land', 'death'] as Clip[]) {
       const clip = gltf.animations.find((a) => a.name === name);
       if (!clip) throw new Error(`Animation manquante dans buveur.glb : ${name}`);
       const action = this.mixer.clipAction(clip);
-      if (name === 'jump' || name === 'land') { action.setLoop(THREE.LoopOnce, 1); action.clampWhenFinished = true; }
+      if (name === 'jump' || name === 'land' || name === 'death') { action.setLoop(THREE.LoopOnce, 1); action.clampWhenFinished = true; }
       this.actions[name] = action;
     }
+    this.pintBone = gltf.scene.getObjectByName('pint');
     this.play('idle', 0);
+  }
+
+  /** Mort : animation de chute, la pinte du modèle disparaît. Renvoie la position et l'orientation de la pinte. */
+  die(outPos: THREE.Vector3, outQuat: THREE.Quaternion) {
+    this.dead = true;
+    this.play('death', 0.08);
+    this.kick(-0.15);
+    if (this.pintBone) {
+      this.root.updateMatrixWorld(true);
+      // Centre de la pinte : 12 cm au-dessus de la base de l'os
+      this.pintBone.getWorldQuaternion(outQuat);
+      outPos.set(0, 0.12, 0).applyQuaternion(outQuat).add(this.pintBone.getWorldPosition(this.tmp));
+    }
+  }
+
+  /** Remet le Buveur debout (nouvelle run). */
+  revive() {
+    this.dead = false;
+    this.pintBone?.scale.setScalar(1);
+    this.play('idle', 0);
+  }
+
+  /** Gerbe de mousse à un endroit (pinte qui touche le sol). */
+  splashAt(pos: THREE.Vector3, count: number) {
+    this.splash.emit(pos, this.baseVel.set(0, 0, 0), this.tmp.copy(pos).normalize(), count, [1.5, 3.5], 1.6);
+  }
+
+  /** Couleur d'un matériau du modèle (pour la pinte lancée). */
+  color(name: string) {
+    return this.materials.find((m) => m.name === name)?.color ?? new THREE.Color(1, 1, 1);
   }
 
   private play(name: Clip, fade: number) {
@@ -121,6 +155,19 @@ export class BuveurVisual {
     this.root.quaternion.setFromRotationMatrix(this.basis.makeBasis(this.right, up, facing));
     if (!this.mixer) return;
     this.updateFlash(dt);
+
+    if (this.dead) {
+      this.mixer.update(dt);
+      this.pintBone?.scale.setScalar(0);
+      const S = V.squash;
+      this.squashVel += (-S.stiffness * this.squash - S.damping * this.squashVel) * dt;
+      this.squash += this.squashVel * dt;
+      const sy = 1 + this.squash, sxz = 1 / Math.sqrt(Math.max(0.3, sy));
+      this.squashGroup.scale.set(sxz, sy, sxz);
+      this.lean.rotation.set(0, 0, 0);
+      this.splash.update(dt);
+      return;
+    }
 
     // --- Choix de l'animation
     const hSpeed = player.velocity.length();

@@ -4,6 +4,9 @@ import { loadZombieLibrary } from './enemies/zombie';
 import { createHorde } from './enemies/horde';
 import { HIT_FEEDBACK, ZOMBIE_ATTACK } from './config/zombies';
 import { Health } from './player/health';
+import { PintProp } from './player/pintProp';
+import { DEATH } from './config/buveur';
+import type { InputState } from './core/input';
 import { createHealthHud } from './ui/healthHud';
 import { initInput, readInput } from './core/input';
 import { BuveurVisual } from './player/buveurVisual';
@@ -105,6 +108,40 @@ horde.onHit = (_z, dir) => {
 const rig = new CameraRig(camera);
 initInput(renderer.domElement);
 
+// --- Mort : la pinte s'échappe, ralenti, caméra qui plonge sur le corps, zombies autour
+const pint = new PintProp(scene, { verre: new THREE.Color(), biere: new THREE.Color(), mousse: new THREE.Color() }, (p, r) => player.supportAt(p, r));
+let pintFirstImpact = true;
+pint.onImpact = (p, speed) => {
+  if (pintFirstImpact) buveur.splashAt(p, DEATH.pint.splashCount);
+  pintFirstImpact = false;
+  audio.play(speed > 3 ? 'impactGlass_medium' : 'impactGlass_light', Math.min(0.6, 0.15 + speed * 0.06), jitter(0.08));
+};
+let deadSince = -1; // temps réel écoulé depuis la mort (-1 : vivant)
+function onDeath() {
+  deadSince = 0;
+  const pos = new THREE.Vector3(), quat = new THREE.Quaternion();
+  buveur.die(pos, quat);
+  // Pinte lancée vers le haut, un peu devant et sur sa droite, en tournant
+  const up = player.upDir.clone(), fwd = player.facing.clone();
+  const right = new THREE.Vector3().crossVectors(up, fwd).negate().normalize();
+  const P = DEATH.pint;
+  const vel = up.multiplyScalar(P.throwUp).addScaledVector(fwd, P.throwForward).addScaledVector(right, P.throwSide).add(player.velocity);
+  const spin = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().multiplyScalar(P.spin);
+  pint.setColors(buveur.color('verre'), buveur.color('biere'), buveur.color('mousse'));
+  pintFirstImpact = true;
+  pint.launch(pos, quat, vel, spin);
+  horde.setPassive(true);
+  rig.setFocus(DEATH.camera);
+}
+/** Vitesse du temps : ralenti juste après la mort, puis retour progressif. */
+function timeScale() {
+  if (deadSince < 0) return 1;
+  const S = DEATH.slowMo;
+  if (deadSince < S.hold) return S.scale;
+  return THREE.MathUtils.lerp(S.scale, 1, Math.min(1, (deadSince - S.hold) / S.ramp));
+}
+const NO_MOVE: InputState = { moveX: 0, moveY: 0, lookX: 0, lookY: 0, mouseDX: 0, mouseDY: 0, zoom: 0, jump: false, jumpPressed: false };
+
 // --- Debug (F3)
 const debugEl = document.getElementById('debug')!;
 let debugOn = import.meta.env.DEV;
@@ -117,22 +154,28 @@ let acc = 0, last = performance.now();
 const focusPoint = new THREE.Vector3();
 
 function frame(now: number) {
-  const dt = Math.min(0.1, (now - last) / 1000);
+  const realDt = Math.min(0.1, (now - last) / 1000);
   last = now;
   renderer.info.reset();
+  if (deadSince >= 0) deadSince += realDt;
+  const dt = realDt * timeScale();
   const input = readInput();
-  player.feed(input);
+  // Mort : le joueur ne contrôle plus le Buveur (la caméra reste libre)
+  const moveInput = deadSince >= 0 ? NO_MOVE : input;
+  player.feed(moveInput);
   acc += dt;
-  while (acc >= STEP) { player.step(STEP, input); acc -= STEP; }
+  while (acc >= STEP) { player.step(STEP, moveInput); acc -= STEP; }
   player.interpolate(acc / STEP);
 
   const up = player.upDir;
   buveur.update(dt, player);
   horde.update(dt);
   health.update(dt);
-  healthHud.update(dt);
+  healthHud.update(realDt);
+  if (health.dead && deadSince < 0) onDeath();
+  pint.update(dt);
 
-  rig.update(dt, input, player);
+  rig.update(realDt, input, player);
   sky.update(dt, player.renderPos, camera);
   clouds.update(dt);
   decor.update(dt, player.renderPos, 1 - sky.day);

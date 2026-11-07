@@ -57,3 +57,26 @@ export const BEER_SPLASH = {
   /** Haut de la pinte, dans le repère du modèle (glTF, mètres). */
   pintTop: [-0.31, 1.2, 0.39] as const,
 } as const;
+
+/** Mort du Buveur : pinte qui s'échappe, ralenti, caméra. */
+export const DEATH = {
+  pint: {
+    /** Lancer : vers le haut, vers l'avant, vers son côté droit (m/s), rotation (rad/s). */
+    throwUp: 5.5,
+    throwForward: -1.4, // négatif : vers l'arrière, dans le sens de la chute (visible, pas sous les zombies)
+    throwSide: 1.8,
+    spin: 11,
+    /** Rebond (0 à 1), part de vitesse au sol gardée à chaque rebond, rotation gardée. */
+    bounce: 0.35,
+    friction: 0.55,
+    spinKeep: 0.55,
+    /** Rayon de la pinte couchée (m). */
+    radius: 0.08,
+    /** Gerbe de mousse au premier impact. */
+    splashCount: 26,
+  },
+  /** Ralenti : vitesse du temps, durée tenue (s, temps réel) puis retour progressif (s). */
+  slowMo: { scale: 0.3, hold: 0.9, ramp: 0.9 },
+  /** Caméra : se rapproche et plonge sur le corps. */
+  camera: { distance: 6, pitch: 0.95, sharpness: 2.2 },
+} as const;

@@ -25,6 +25,13 @@ export class CameraRig {
   private shakeDecay = 2.5;
   private shakeT = 0;
 
+  /** Cadrage imposé (mort) : distance et inclinaison visées, rejointes en douceur. null = libre. */
+  private focus: { distance: number; pitch: number; sharpness: number } | null = null;
+  setFocus(f: { distance: number; pitch: number; sharpness: number } | null) {
+    this.focus = f;
+    if (!f) this.distTarget = C.distance;
+  }
+
   /** Ajoute un tremblement (coup reçu, explosion...). */
   shake(amount: number, amplitude: number, decay: number) {
     this.trauma = Math.min(1, this.trauma + amount);
@@ -43,7 +50,11 @@ export class CameraRig {
       this.pitch + input.mouseDY * C.mouseSensitivity + input.lookY * C.stickSensitivity * 0.7 * dt,
       C.pitchMin, C.pitchMax,
     );
-    if (input.zoom) this.distTarget = THREE.MathUtils.clamp(this.distTarget * (input.zoom > 0 ? 1.12 : 0.89), C.distanceMin, C.distanceMax);
+    if (this.focus) {
+      const k = 1 - Math.exp(-dt * this.focus.sharpness);
+      this.distTarget = this.focus.distance;
+      this.pitch += (this.focus.pitch - this.pitch) * k;
+    } else if (input.zoom) this.distTarget = THREE.MathUtils.clamp(this.distTarget * (input.zoom > 0 ? 1.12 : 0.89), C.distanceMin, C.distanceMax);
     this.distance += (this.distTarget - this.distance) * (1 - Math.exp(-dt * 10));
 
     // Cible lissée (amortit les petites secousses du relief), position calculée autour d'elle

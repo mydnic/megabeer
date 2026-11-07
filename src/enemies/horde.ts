@@ -65,6 +65,11 @@ export function createHorde(scene: THREE.Scene, lib: ZombieLibrary, player: Play
     want.addScaledVector(up, -want.dot(up));
     const dist = want.length();
     z.turnToward(target, dt);
+    // Joueur mort : ils s'approchent du corps et restent plantés autour, sans frapper
+    if (passive && dist < V.attackRange + 0.3) {
+      if (z.state !== 'attack' || z.attackDone) z.play('idle');
+      return;
+    }
     // Un coup commencé va au bout ; il enchaîne tant que le joueur reste un peu au-delà de la portée
     if (z.state === 'attack' && (!z.attackDone || dist < V.attackRange + V.attackExit)) {
       z.attackDone = z.attackDone && dist >= V.attackRange + V.attackExit;
@@ -141,9 +146,14 @@ export function createHorde(scene: THREE.Scene, lib: ZombieLibrary, player: Play
     }
   }
 
+  let passive = false;
   const api = {
     zombies,
     spawn,
+    /** Joueur mort : plus de coups, ils se rassemblent autour du corps. */
+    setPassive(v: boolean) { passive = v; },
+    /** Retire tous les zombies (nouvelle run). */
+    clear() { zombies.length = 0; },
     update(dt: number) {
       for (const z of zombies) step(z, dt, player.pos);
       separate();
@@ -152,7 +162,7 @@ export function createHorde(scene: THREE.Scene, lib: ZombieLibrary, player: Play
         snap(z.pos);
         z.update(dt);
         // Le coup porte si le joueur est encore à portée au moment où le bras arrive
-        if (z.hitNow && z.pos.distanceTo(player.pos) < ZOMBIE_ATTACK.reach) {
+        if (!passive && z.hitNow && z.pos.distanceTo(player.pos) < ZOMBIE_ATTACK.reach) {
           up.copy(player.pos).normalize();
           push.subVectors(player.pos, z.pos);
           push.addScaledVector(up, -push.dot(up));
