@@ -30,7 +30,7 @@ const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).p
  * Écran de mort : bandeau façon « YOU DIED » / « WASTED » (bande sombre, gros texte rouge qui se
  * resserre), puis le bilan de la run et le bouton Rejouer.
  */
-export function createDeathBanner(onReplay: () => void) {
+export function createDeathBanner(onContinue: () => void) {
   const style = document.createElement('style');
   style.textContent = CSS;
   document.head.appendChild(style);
@@ -43,11 +43,11 @@ export function createDeathBanner(onReplay: () => void) {
 
   const end = document.createElement('div');
   end.className = 'death-end';
-  end.innerHTML = `<div class="death-time"></div><button class="death-btn">Rejouer</button><div class="death-hint">Espace ou A pour rejouer</div>`;
+  end.innerHTML = `<div class="death-time"></div><button class="death-btn">Continuer</button><div class="death-hint">Espace ou A</div>`;
   document.body.appendChild(end);
   const time = end.querySelector<HTMLElement>('.death-time')!;
   const btn = end.querySelector<HTMLButtonElement>('.death-btn')!;
-  btn.addEventListener('click', (e) => { e.stopPropagation(); onReplay(); });
+  btn.addEventListener('click', (e) => { e.stopPropagation(); onContinue(); });
 
   let shown = false;
   return {

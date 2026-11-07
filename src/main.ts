@@ -6,7 +6,8 @@ import { HIT_FEEDBACK, ZOMBIE_ATTACK } from './config/zombies';
 import { Health } from './player/health';
 import { PintProp } from './player/pintProp';
 import { createDeathBanner } from './ui/deathBanner';
-import { DEATH_BANNER } from './config/player';
+import { createHomeScreen } from './ui/homeScreen';
+import { DEATH_BANNER, HOME_CAMERA } from './config/player';
 import { DEATH } from './config/buveur';
 import type { InputState } from './core/input';
 import { createHealthHud } from './ui/healthHud';
@@ -73,7 +74,6 @@ function spawnStartZombies() {
     horde.spawn(m, p, fwd.clone().negate());
   });
 }
-spawnStartZombies();
 
 // --- Sons (démarrent au premier clic ou à la première touche)
 const audio = new AudioEngine();
@@ -119,28 +119,50 @@ pint.onImpact = (p, speed) => {
   pintFirstImpact = false;
   audio.play(speed > 3 ? 'impactGlass_medium' : 'impactGlass_light', Math.min(0.6, 0.15 + speed * 0.06), jitter(0.08));
 };
-const deathBanner = createDeathBanner(() => restartRun());
+const deathBanner = createDeathBanner(() => goHome());
 let deadSince = -1; // temps réel écoulé depuis la mort (-1 : vivant)
 let runTime = 0;    // durée de la run en cours (s de jeu)
+/** Accueil (le monde tourne en fond), run en cours, ou mort (bandeau puis bilan). */
+let phase: 'home' | 'run' | 'dead' = 'home';
+const home = createHomeScreen(() => startRun());
 
-/** Nouvelle run : tout revient à l'état de départ, sans recharger la page. */
-function restartRun() {
-  if (deadSince < 0) return;
+/** Retour à l'accueil : le monde revient à l'état de départ, sans zombies, sans recharger la page. */
+function goHome() {
+  phase = 'home';
   deadSince = -1;
-  runTime = 0;
   health.reset();
   player.reset(decor.spawn.dir, decor.spawn.facing);
   buveur.revive();
   pint.hide();
   horde.clear();
   horde.setPassive(false);
-  spawnStartZombies();
-  rig.setFocus(null);
+  rig.setFocus(HOME_CAMERA);
   pipeline.fade.amount = 0;
+  healthHud.setVisible(false);
+  deathBanner.update(-1, 0);
   if (audio.ctx && audio.music) audio.music.gain.setTargetAtTime(AUDIO.music.volume, audio.ctx.currentTime, 0.4);
+  home.show();
+}
+
+// Le jeu s'ouvre sur l'accueil
+rig.setFocus(HOME_CAMERA);
+healthHud.setVisible(false);
+home.show();
+
+/** Nouvelle run depuis l'accueil. */
+function startRun() {
+  if (phase !== 'home') return;
+  phase = 'run';
+  runTime = 0;
+  home.hide();
+  healthHud.setVisible(true);
+  player.reset(decor.spawn.dir, decor.spawn.facing);
+  rig.setFocus(null);
+  spawnStartZombies();
   renderer.domElement.requestPointerLock?.()?.catch?.(() => {});
 }
 function onDeath() {
+  phase = 'dead';
   deadSince = 0;
   const pos = new THREE.Vector3(), quat = new THREE.Quaternion();
   buveur.die(pos, quat);
@@ -185,8 +207,10 @@ function frame(now: number) {
   if (deadSince >= 0) deadSince += realDt;
   const dt = realDt * timeScale();
   const input = readInput();
-  // Mort : le joueur ne contrôle plus le Buveur (la caméra reste libre)
-  const moveInput = deadSince >= 0 ? NO_MOVE : input;
+  // Accueil et mort : le joueur ne contrôle pas le Buveur (la caméra reste libre en jeu)
+  const moveInput = phase === 'run' ? input : NO_MOVE;
+  // Accueil : la caméra tourne lentement autour du Buveur
+  if (phase === 'home') player.camFwd.applyAxisAngle(player.upDir, HOME_CAMERA.orbitSpeed * realDt);
   player.feed(moveInput);
   acc += dt;
   while (acc >= STEP) { player.step(STEP, moveInput); acc -= STEP; }
@@ -197,11 +221,14 @@ function frame(now: number) {
   horde.update(dt);
   health.update(dt);
   healthHud.update(realDt);
-  if (health.dead && deadSince < 0) onDeath();
-  if (deadSince < 0) runTime += dt;
-  deathBanner.update(deadSince, runTime);
-  // Espace ou bouton A de la manette relance la run une fois le bilan affiché
-  if (deathBanner.ready && input.jumpPressed) restartRun();
+  if (phase === 'run' && health.dead) onDeath();
+  if (phase === 'run') runTime += dt;
+  if (phase === 'dead') deathBanner.update(deadSince, runTime);
+  // Espace ou bouton A : Jouer sur l'accueil, Continuer sur le bilan de mort
+  if (input.jumpPressed) {
+    if (phase === 'home') startRun();
+    else if (phase === 'dead' && deathBanner.ready) goHome();
+  }
   if (deadSince >= 0) {
     const B = DEATH_BANNER;
     pipeline.fade.amount = Math.min(1, deadSince / B.colorFade);

@@ -42,6 +42,11 @@ export function createHealthHud(health: Health) {
   let shown = -1, trailRatio = 1, trailWait = 0, t = 0;
 
   return {
+    /** Masquée sur l'écran d'accueil. */
+    setVisible(v: boolean) {
+      wrap.style.display = v ? '' : 'none';
+      if (!v) vignette.style.opacity = '0';
+    },
     /** Petit tremblement de la barre quand un coup est encaissé. */
     hit() {
       wrap.classList.remove('hit');
