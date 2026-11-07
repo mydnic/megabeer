@@ -10,6 +10,24 @@ export const ZOMBIE_MODELS = {
 
 export type ZombieModel = keyof typeof ZOMBIE_MODELS;
 
+/** Déplacement des zombies (le joueur va à 9 m/s). */
+export const ZOMBIE_MOVE = {
+  /** Vitesse de marche (m/s), variée par zombie de +- speedJitter. */
+  speed: 2.8,
+  speedJitter: 0.15,
+  /** Rayon du corps (collisions décor, écartement entre zombies). */
+  radius: 0.4,
+  /** Rayon du joueur pour la poussée corps contre corps. */
+  playerRadius: 0.45,
+  /** Bloqué si l'avancée réelle est sous ce ratio de l'avancée voulue. */
+  stuckRatio: 0.3,
+  /** Contournement : durée (s) et part de déviation sur le côté. */
+  detourTime: 0.8,
+  detourBlend: 0.75,
+  /** Vitesse de marche (m/s) pour laquelle l'animation Walk joue à vitesse normale (pas de patinage). */
+  walkAnimAt: 2.2,
+} as const;
+
 export const ZOMBIE_VISUAL = {
   /** Clips du glTF utilisés pour chaque état (premier trouvé dans la liste). */
   clips: {

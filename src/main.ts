@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+﻿import * as THREE from 'three';
 import { CAMERA, PLANET_RADIUS } from './config/world';
 import { loadZombieLibrary } from './enemies/zombie';
 import { createHorde } from './enemies/horde';
@@ -53,8 +53,8 @@ player.camFwd.copy(decor.spawn.facing);
 player.interpolate(1);
 const buveur = new BuveurVisual(scene);
 
-// --- Zombies (checkpoint 1 : 4 zombies plantés sur le parvis, face au joueur)
-const horde = createHorde(scene, await loadZombieLibrary(), (p, r) => player.supportAt(p, r));
+// --- Zombies (provisoire : 4 zombies sur le parvis, en attendant le spawn des vagues)
+const horde = createHorde(scene, await loadZombieLibrary(), player, decor.collider);
 {
   const up = decor.spawn.dir.clone().normalize();
   const fwd = decor.spawn.facing.clone();
@@ -113,7 +113,7 @@ function frame(now: number) {
 
   const up = player.upDir;
   buveur.update(dt, player);
-  horde.update(dt, player.renderPos);
+  horde.update(dt);
 
   rig.update(dt, input, player);
   sky.update(dt, player.renderPos, camera);

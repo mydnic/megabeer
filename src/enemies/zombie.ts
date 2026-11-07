@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js';
-import { ZOMBIE_MODELS, ZOMBIE_VISUAL as V, type ZombieModel } from '../config/zombies';
+import { ZOMBIE_MODELS, ZOMBIE_MOVE, ZOMBIE_VISUAL as V, type ZombieModel } from '../config/zombies';
 import { characterMaterial, LAYER_CHARACTER } from '../render/materials';
 
 const urls = import.meta.glob('../assets/quaternius-zombies/*.gltf', { query: '?url', import: 'default', eager: true }) as Record<string, string>;
@@ -51,6 +51,14 @@ export class Zombie {
   readonly pos = new THREE.Vector3();
   readonly facing = new THREE.Vector3();
   state: ZombieState = 'idle';
+  /** Multiplicateur de vitesse propre à ce zombie (ils ne marchent pas tous pareil). */
+  readonly speedMul = 1 + (Math.random() * 2 - 1) * ZOMBIE_MOVE.speedJitter;
+  /** Contournement d'obstacle en cours : temps restant et côté. */
+  detour = 0;
+  detourSide = 1;
+  /** Vitesse réelle au dernier pas (cale la cadence de l'animation de marche). */
+  walkSpeed = 0;
+  private animSpeed = 1;
   private mixer: THREE.AnimationMixer;
   private actions = {} as Record<ZombieState, THREE.AnimationAction>;
   private current?: ZombieState;
@@ -65,7 +73,7 @@ export class Zombie {
     this.root.add(body);
     scene.add(this.root);
     this.mixer = new THREE.AnimationMixer(body);
-    const speed = 1 + (Math.random() * 2 - 1) * V.animJitter;
+    const speed = this.animSpeed = 1 + (Math.random() * 2 - 1) * V.animJitter;
     for (const state of Object.keys(V.clips) as ZombieState[]) {
       const clip = V.clips[state].map((n) => t.clips.find((c) => c.name === n)).find(Boolean);
       if (!clip) throw new Error(`Animation ${state} manquante pour le zombie ${model}`);
@@ -99,6 +107,9 @@ export class Zombie {
   }
 
   update(dt: number) {
+    // Cadence des pas calée sur la vitesse réelle : les pieds ne patinent pas
+    if (this.state === 'walk') this.actions.walk.timeScale = Math.max(0.3, this.walkSpeed / ZOMBIE_MOVE.walkAnimAt);
+    else this.actions.walk.timeScale = this.animSpeed;
     this.mixer.update(dt);
     const up = this.up.copy(this.pos).normalize();
     this.right.crossVectors(up, this.facing).normalize();
