@@ -432,5 +432,7 @@ if (import.meta.env.DEV) {
     if (e.code === 'KeyB' && !e.repeat) music.setMode(music.mode === 'combat' ? 'explore' : 'combat');
     // Dev : H fait apparaître 100 zombies en cercle autour du joueur (test de la horde)
     if (e.code === 'KeyH' && !e.repeat) spawnRing(100, 18, 30);
+    // Dev : L donne juste assez d'XP pour le niveau suivant (test des cartes)
+    if (e.code === 'KeyL' && !e.repeat && phase === 'run') progression.add(Math.max(1, progression.next - progression.xp));
   });
 }
