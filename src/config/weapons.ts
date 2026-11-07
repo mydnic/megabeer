@@ -1,4 +1,4 @@
-// Armes (GDD section 6). Chaque arme est une entrée de config ; les chiffres se calent en jouant.
+﻿// Armes (GDD section 6). Chaque arme est une entrée de config ; les chiffres se calent en jouant.
 
 export const WEAPONS = {
   /** Blonde : bouteille lancée vers le zombie le plus proche (arme de départ du Buveur). */
@@ -8,15 +8,21 @@ export const WEAPONS = {
     damage: 16,
     /** Portée de détection de la cible (m). */
     range: 18,
-    /** Nombre de zombies traversés en plus du premier (perçage). */
-    pierce: 1,
     /** Vitesse horizontale de la bouteille (m/s) et gravité propre (m/s², plus faible que le joueur : cloche douce). */
     speed: 17,
     gravity: 14,
     /** Rotation de la bouteille en vol (tours par seconde). */
     spinRate: 2.2,
     /** Rayon de contact de la bouteille (m). */
-    radius: 0.35,
+    radius: 0.15,
+    /** Corps d'un zombie pour les impacts : hauteur et rayon (m). La bouteille s'écrase sur le premier touché. */
+    zombieHeight: 1.8,
+    zombieRadius: 0.4,
+    /** Geste : durée à vitesse normale (s) et accélération maxi quand la cadence monte. */
+    gestureDuration: 0.6,
+    maxGestureRate: 4,
+    /** Écart entre les bouteilles d'une même volée (s), resserré quand la cadence monte. */
+    volleyGap: 0.07,
     /** Délai entre le début du geste et le lâcher (s), aligné sur l'animation « throw ». */
     releaseDelay: 0.22,
     /** Hauteur visée sur le zombie (m au-dessus de ses pieds). */

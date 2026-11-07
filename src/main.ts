@@ -9,7 +9,7 @@ import { createDeathBanner } from './ui/deathBanner';
 import { createHomeScreen } from './ui/homeScreen';
 import { createBottles } from './weapons/bottles';
 import { createBlonde } from './weapons/blonde';
-import { DEATH_BANNER, HOME_CAMERA } from './config/player';
+import { DEATH_BANNER, HOME_CAMERA, PLAYER_STATS } from './config/player';
 import { DEATH } from './config/buveur';
 import type { InputState } from './core/input';
 import { createHealthHud } from './ui/healthHud';
@@ -121,18 +121,20 @@ pint.onImpact = (p, speed) => {
   pintFirstImpact = false;
   audio.play(speed > 3 ? 'impactGlass_medium' : 'impactGlass_light', Math.min(0.6, 0.15 + speed * 0.06), jitter(0.08));
 };
+// --- Stats du joueur modifiables en run (objets, level-up) : départ = valeurs du Buveur
+const playerStats = { attackSpeed: PLAYER_STATS.attackSpeed as number, extraProjectiles: PLAYER_STATS.extraProjectiles as number };
 // --- Arme de départ : la Blonde
 const bottles = await createBottles(scene);
 const blonde = createBlonde({
   bottles,
   zombies: () => horde.zombies,
   playerPos: () => player.pos,
-  throwFromHand: (delay, cb) => buveur.throwFromHand(delay, cb),
+  gesture: (rate) => buveur.throwGesture(rate),
+  handPos: (out) => buveur.leftHandPos(out),
+  stats: () => playerStats,
   groundAt: (p) => player.supportAt(p, p.length()),
-  onGround: (p) => {
-    buveur.splashAt(p, 10);
-    audio.play('impactGlass_medium', 0.35, jitter(0.1));
-  },
+  onGround: (p) => buveur.splashAt(p, 10),
+  onHitZombie: (_z, p) => buveur.splashAt(p, 14),
 });
 
 const deathBanner = createDeathBanner(() => goHome());
@@ -153,6 +155,8 @@ function goHome() {
   horde.clear();
   horde.setPassive(false);
   blonde.reset();
+  playerStats.attackSpeed = PLAYER_STATS.attackSpeed;
+  playerStats.extraProjectiles = PLAYER_STATS.extraProjectiles;
   rig.setFocus(HOME_CAMERA);
   pipeline.fade.amount = 0;
   healthHud.setVisible(false);
@@ -282,7 +286,7 @@ function frame(now: number) {
 requestAnimationFrame(frame);
 
 if (import.meta.env.DEV) {
-  Object.assign(window, { __game: { player, rig, camera, buveur, sky, heightAt, THREE, pipeline, renderer, decor, scene, music, horde, health, blonde, bottles, setTimeScale: (k: number) => { devTimeScale = k; } } });
+  Object.assign(window, { __game: { player, rig, camera, buveur, sky, heightAt, THREE, pipeline, renderer, decor, scene, music, horde, health, blonde, bottles, playerStats, setTimeScale: (k: number) => { devTimeScale = k; } } });
   const models = ['basic', 'chubby', 'arm', 'ribcage'] as const;
   const spawnRing = (n: number, rMin: number, rMax: number) => {
     const up = player.pos.clone().normalize();

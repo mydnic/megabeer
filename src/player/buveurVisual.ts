@@ -57,9 +57,6 @@ export class BuveurVisual {
   private pintBone?: THREE.Object3D;
   private handL?: THREE.Object3D;
   private throwAction?: THREE.AnimationAction;
-  /** Lancer en cours : temps avant le lâcher et rappel. */
-  private release: { t: number; cb: (handPos: THREE.Vector3) => void } | null = null;
-  private handPos = new THREE.Vector3();
   /** Mort : animation de chute jouée jusqu'au bout, plus d'IK, d'éclaboussures ni de pas. */
   dead = false;
   private flashTime = 0;
@@ -124,7 +121,6 @@ export class BuveurVisual {
   /** Mort : animation de chute, la pinte du modèle disparaît. Renvoie la position et l'orientation de la pinte. */
   die(outPos: THREE.Vector3, outQuat: THREE.Quaternion) {
     this.dead = true;
-    this.release = null;
     this.throwAction?.stop();
     this.play('death', 0.08);
     this.kick(-0.15);
@@ -137,14 +133,22 @@ export class BuveurVisual {
   }
 
   /**
-   * Lance de la main gauche : joue le geste, puis appelle `onRelease` au moment du lâcher avec la
-   * position de la main (monde). Renvoie false si un lancer est déjà en cours.
+   * Geste de lancer de la main gauche, à la vitesse `rate`. Un geste encore dans sa phase d'armé
+   * n'est pas relancé (à haute cadence, le bras enchaîne sans repartir de zéro à chaque bouteille).
    */
-  throwFromHand(releaseDelay: number, onRelease: (handPos: THREE.Vector3) => void) {
-    if (!this.throwAction || this.dead || this.release) return false;
-    this.throwAction.reset().play();
-    this.release = { t: releaseDelay, cb: onRelease };
-    return true;
+  throwGesture(rate: number) {
+    const a = this.throwAction;
+    if (!a || this.dead) return;
+    a.timeScale = rate;
+    const armed = a.isRunning() && a.time < a.getClip().duration * 0.3;
+    if (!armed) a.reset().play();
+  }
+
+  /** Position actuelle de la main gauche (monde), d'où partent les bouteilles. */
+  leftHandPos(out: THREE.Vector3) {
+    this.root.updateMatrixWorld(true);
+    if (this.handL) return this.handL.getWorldPosition(out);
+    return out.copy(this.root.position).addScaledVector(this.tmp.copy(this.root.position).normalize(), 1.6);
   }
 
   /** Remet le Buveur debout (nouvelle run). */
@@ -243,20 +247,6 @@ export class BuveurVisual {
 
     // --- Jambes calées sur le relief (après l'animation)
     this.ik?.update(dt, up, facing, this.right, player);
-
-    // --- Lâcher de la bouteille (position de la main après animation et inclinaison)
-    if (this.release) {
-      this.release.t -= dt;
-      if (this.release.t <= 0) {
-        const r = this.release;
-        this.release = null;
-        this.root.updateMatrixWorld(true);
-        if (this.handL) this.handL.getWorldPosition(this.handPos);
-        else this.handPos.copy(this.root.position).addScaledVector(up, 1.6);
-        r.cb(this.handPos);
-      }
-    }
-
     // --- Éclaboussures de bière
     this.updateSplash(dt, player, up, ev);
 

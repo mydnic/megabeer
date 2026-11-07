@@ -1,10 +1,14 @@
-// Statistiques du joueur (GDD section 4). Valeurs du Buveur, perso de référence.
+﻿// Statistiques du joueur (GDD section 4). Valeurs du Buveur, perso de référence.
 
 export const PLAYER_STATS = {
   /** Points de vie max. */
   maxHp: 100,
   /** Invulnérabilité après un coup reçu (s) : quatre zombies qui frappent ensemble ne font qu'un coup. */
   invulnTime: 0.5,
+  /** Multiplicateur global de cadence des armes (stat Vitesse d'attaque). */
+  attackSpeed: 1,
+  /** Projectiles en plus pour les armes à projectiles (stat Nombre de projectiles). */
+  extraProjectiles: 0,
 } as const;
 
 /** Barre de PV et alerte de PV bas. */
