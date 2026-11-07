@@ -123,4 +123,10 @@ function frame(now: number) {
 }
 requestAnimationFrame(frame);
 
-if (import.meta.env.DEV) Object.assign(window, { __game: { player, rig, camera, buveur, sky, heightAt, THREE, pipeline, renderer, decor, scene } });
+if (import.meta.env.DEV) {
+  Object.assign(window, { __game: { player, rig, camera, buveur, sky, heightAt, THREE, pipeline, renderer, decor, scene, music } });
+  // Dev : B bascule la musique de combat, en attendant les vagues d'ennemis
+  addEventListener('keydown', (e) => {
+    if (e.code === 'KeyB' && !e.repeat) music.setMode(music.mode === 'combat' ? 'explore' : 'combat');
+  });
+}
