@@ -1,4 +1,4 @@
-"""
+﻿"""
 Le Buveur : modèle low-poly, squelette et animations, généré entièrement par script.
 
     blender -b --factory-startup -P tools/blender/buveur.py -- --out src/assets/models/buveur.glb [--render DIR]
@@ -117,10 +117,11 @@ def _smoothstep(a, b, x):
     t = max(0.0, min(1.0, (x - a) / (b - a)))
     return t * t * (3 - 2 * t)
 
-def tube_chain(name, pts, radii, bones, material, seg=12, blend=0.07):
+def tube_chain(name, pts, radii, bones, material, seg=12, blend=0.07, dome_start=False):
     """
     Membre continu en deux segments (épaule-coude-poignet, hanche-genou-cheville) : un seul tube
     dont les poids passent en douceur d'un os à l'autre autour de l'articulation (pas de boule).
+    dome_start : le début du tube se termine en dôme (épaule), dans la même maille que le bras.
     """
     p0, p1, p2 = (Vector(p) for p in pts)
     d1, d2 = (p1 - p0), (p2 - p1)
@@ -129,11 +130,16 @@ def tube_chain(name, pts, radii, bones, material, seg=12, blend=0.07):
     L = L1 + L2
     stations = sorted(set([0.0, L1 * 0.33, L1 * 0.66, L1 - blend, L1 - blend * 0.5, L1, L1 + blend * 0.5,
                            L1 + blend, L1 + L2 * 0.4, L1 + L2 * 0.75, L]))
+    if dome_start:
+        stations = [-radii[0] * math.sin(math.radians(a)) for a in (80, 65, 48, 30, 14)] + stations
     bm = bmesh.new()
     rings, weights = [], []
     n_prev = None
     for st in stations:
-        if st <= L1:
+        if st < 0:
+            c = p0 + d1 * st
+            r = radii[0] * math.cos(math.asin(min(1.0, -st / radii[0])))
+        elif st <= L1:
             c = p0 + d1 * st
             r = radii[0] + (radii[1] - radii[0]) * (st / L1)
         else:
@@ -155,7 +161,13 @@ def tube_chain(name, pts, radii, bones, material, seg=12, blend=0.07):
     for i in range(len(rings) - 1):
         for k in range(seg):
             bm.faces.new((rings[i][k], rings[i][(k + 1) % seg], rings[i + 1][(k + 1) % seg], rings[i + 1][k]))
-    bm.faces.new(list(reversed(rings[0])))
+    if dome_start:
+        # Pôle du dôme : éventail de triangles autour d'un sommet
+        pole = bm.verts.new(p0 - d1 * radii[0])
+        for k in range(seg):
+            bm.faces.new((pole, rings[0][(k + 1) % seg], rings[0][k]))
+    else:
+        bm.faces.new(list(reversed(rings[0])))
     bm.faces.new(rings[-1])
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
     obj = _obj_from_bm(bm, name)
@@ -167,6 +179,8 @@ def tube_chain(name, pts, radii, bones, material, seg=12, blend=0.07):
             g1.add(idx, 1 - w2, 'REPLACE')
         if w2 > 0:
             g2.add(idx, w2, 'REPLACE')
+    if dome_start:
+        g1.add([len(rings) * seg], 1.0, 'REPLACE')
     return _finish(obj, material, None)
 
 def box(name, center, size, material, bone, bevel=0.0, rot=(0, 0, 0)):
@@ -255,19 +269,17 @@ def build_body():
     # Haut du torse
     ellipsoid('torse', (0, 0.02, 1.25), (0.32, 0.25, 0.22), 'marcel', 'chest')
     ellipsoid('poitrail', (0, -0.08, 1.33), (0.16, 0.12, 0.10), 'peau', 'chest')
-    for s, side in ((1, 'L'), (-1, 'R')):
-        # Haut du bras arrondi, du même diamètre que le bras et qui bouge avec lui (pas de boule)
-        ellipsoid(f'epaule.{side}', (0.30 * s, 0.0, 1.36), (0.089, 0.088, 0.088), 'peau', f'upperarm.{side}')
+    # Épaules : pas de pièce séparée, le haut des bras se termine en dôme (dome_start)
     limb('cou', (0, 0.0, 1.36), (0, 0.0, 1.50), 0.10, 0.10, 'peau', 'head')
 
     # Bras gauche, ballant
     tube_chain('bras.L', [(0.30, 0, 1.37), (0.37, 0.01, 1.08), (0.40, -0.03, 0.82)],
-               [0.086, 0.073, 0.064], ['upperarm.L', 'forearm.L'], 'peau', seg=12, blend=0.06)
+               [0.086, 0.073, 0.064], ['upperarm.L', 'forearm.L'], 'peau', seg=12, blend=0.06, dome_start=True)
     ellipsoid('main.L', (0.405, -0.035, 0.78), (0.075, 0.07, 0.09), 'peau', 'hand.L', seg=10, rings=7)
 
     # Bras droit, plié, tient la pinte
     tube_chain('bras.R', [(-0.30, 0, 1.37), (-0.36, 0.03, 1.10), (-0.36, -0.27, 1.08)],
-               [0.086, 0.073, 0.064], ['upperarm.R', 'forearm.R'], 'peau', seg=12, blend=0.05)
+               [0.086, 0.073, 0.064], ['upperarm.R', 'forearm.R'], 'peau', seg=12, blend=0.05, dome_start=True)
     ellipsoid('main.R', (-0.35, -0.31, 1.07), (0.075, 0.085, 0.07), 'peau', 'hand.R', seg=10, rings=7)
 
     # Pinte (nonic) : verre, bière, mousse qui déborde
