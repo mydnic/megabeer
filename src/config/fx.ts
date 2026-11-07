@@ -28,4 +28,8 @@ export const DAMAGE_NUMBERS = {
   /** Couleur normale et taille de police (px). */
   color: '#fff6dc',
   size: 24,
+  /** Coup critique (GDD : critiques en gros) : couleur, taille relative, suffixe. */
+  critColor: '#ffc93a',
+  critScale: 1.6,
+  critSuffix: ' !',
 } as const;

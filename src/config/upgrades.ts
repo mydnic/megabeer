@@ -19,13 +19,18 @@ export const LUCK = {
 /**
  * Améliorations de la Blonde. `value` = effet en Commun (multiplié par le tier, sauf `fixed`).
  * `minTier` : rareté minimum pour que la carte existe (index dans RARITIES).
+ * Affichage selon `kind` : percent et points -> « +15 % », flat -> « +1 », mult -> « +0,15 ».
+ * (points : points de pourcentage ajoutés, ex. chances de critique 5 % -> 9 %).
  */
 export const BLONDE_UPGRADES = [
   { id: 'damage', label: 'dégâts', value: 0.15, kind: 'percent' },
-  { id: 'rate', label: 'cadence', value: 0.10, kind: 'percent' },
-  { id: 'projectiles', label: 'bouteille en plus', value: 1, kind: 'flat', fixed: true, minTier: 2 },
-  { id: 'speed', label: 'vitesse des bouteilles', value: 0.10, kind: 'percent' },
+  { id: 'rate', label: "vitesse d'attaque", value: 0.10, kind: 'percent' },
+  { id: 'projectiles', label: 'projectile en plus', value: 1, kind: 'flat', fixed: true, minTier: 2 },
+  { id: 'speed', label: 'vitesse des projectiles', value: 0.10, kind: 'percent' },
   { id: 'range', label: 'portée', value: 0.10, kind: 'percent' },
+  { id: 'critChance', label: 'chances de critique', value: 0.04, kind: 'points' },
+  { id: 'critMult', label: 'multiplicateur critique', value: 0.15, kind: 'mult' },
+  { id: 'size', label: 'taille', value: 0.10, kind: 'percent' },
 ] as const;
 
 /** Écran de level-up. */

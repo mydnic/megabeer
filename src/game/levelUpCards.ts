@@ -33,21 +33,19 @@ export function cardValue(c: Card) {
   return fixed ? c.upgrade.value : c.upgrade.value * RARITIES[c.tier].mult;
 }
 
-/** Texte de l'effet, ex. « +30 % dégâts », « +1 bouteille en plus ». */
+/** Texte de l'effet, ex. "+30 % dégâts", "+1 projectile en plus", "+0,3 multiplicateur critique". */
 export function cardText(c: Card) {
   const v = cardValue(c);
-  return c.upgrade.kind === 'percent' ? `+${Math.round(v * 100)} % ${c.upgrade.label}` : `+${v} ${c.upgrade.label}`;
+  const k = c.upgrade.kind;
+  if (k === 'percent' || k === 'points') return `+${Math.round(v * 100)} % ${c.upgrade.label}`;
+  return `+${String(Math.round(v * 100) / 100).replace('.', ',')} ${c.upgrade.label}`;
 }
 
-/** Applique une carte aux améliorations de l'arme. */
-export function applyCard(c: Card, mods: { level: number; damage: number; rate: number; projectiles: number; speed: number; range: number }) {
-  const v = cardValue(c);
+/** Améliorations d'une arme : un champ par id de carte, plus son niveau. */
+export type WeaponMods = { level: number } & Record<Upgrade['id'], number>;
+
+/** Applique une carte aux améliorations de l'arme (toutes additives). */
+export function applyCard(c: Card, mods: WeaponMods) {
   mods.level++;
-  switch (c.upgrade.id) {
-    case 'damage': mods.damage += v; break;
-    case 'rate': mods.rate += v; break;
-    case 'projectiles': mods.projectiles += v; break;
-    case 'speed': mods.speed += v; break;
-    case 'range': mods.range += v; break;
-  }
+  mods[c.upgrade.id] += cardValue(c);
 }

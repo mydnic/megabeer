@@ -201,16 +201,16 @@ const blonde = createBlonde({
     buveur.splashAt(p, 10);
     shards.burst(p, hitDir.copy(v).normalize().multiplyScalar(0.3));
   },
-  onHitZombie: (z, p, v, damage) => {
+  onHitZombie: (z, p, v, damage, crit) => {
     // Direction du coup dans le plan du sol (le zombie recule dans le sens de la bouteille)
     const up = hitUp.copy(z.pos).normalize();
     hitDir.copy(v).addScaledVector(up, -v.dot(up)).normalize();
     const killed = z.damage(damage, hitDir);
-    runLog.hit('blonde', z.model, damage, z.hp);
+    runLog.hit('blonde', z.model, damage, z.hp, crit);
     if (killed) { runKills++; runLog.kill('blonde', z.model); xpDrops.drop(z.pos, XP_DROPS.perZombie); }
     buveur.splashAt(p, 14);
     shards.burst(p, hitDir);
-    damageNumbers.spawn(hitPos.copy(z.pos).addScaledVector(up, 2.0), damage);
+    damageNumbers.spawn(hitPos.copy(z.pos).addScaledVector(up, 2.0), damage, crit);
   },
 });
 const hitDir = new THREE.Vector3(), hitUp = new THREE.Vector3(), hitPos = new THREE.Vector3();

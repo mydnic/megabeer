@@ -2,6 +2,7 @@
 import { WEAPONS } from '../config/weapons';
 import type { Zombie } from '../enemies/zombie';
 import type { Bottles } from './bottles';
+import type { WeaponMods } from '../game/levelUpCards';
 
 const W = WEAPONS.blonde;
 
@@ -19,8 +20,8 @@ type Deps = {
   groundAt: (p: THREE.Vector3) => number;
   /** La bouteille touche le sol (position, vitesse). */
   onGround: (pos: THREE.Vector3, vel: THREE.Vector3) => void;
-  /** La bouteille s'écrase sur un zombie (point d'impact). */
-  onHitZombie: (z: Zombie, pos: THREE.Vector3, vel: THREE.Vector3, damage: number) => void;
+  /** La bouteille s'écrase sur un zombie (point d'impact), en coup critique ou non. */
+  onHitZombie: (z: Zombie, pos: THREE.Vector3, vel: THREE.Vector3, damage: number, crit: boolean) => void;
 };
 
 /** Bouteille en attente de lâcher (volée en cours). */
@@ -37,8 +38,12 @@ type Pending = { t: number; index: number };
  */
 export function createBlonde(d: Deps) {
   let timer = 0.3;
-  /** Améliorations de l'arme (cartes de level-up) : multiplicateurs propres à la Blonde. */
-  const mods = { level: 1, damage: 1, rate: 1, projectiles: 0, speed: 1, range: 1 };
+  /**
+   * Améliorations de l'arme (cartes de level-up), propres à la Blonde : multiplicateurs (dégâts,
+   * cadence, vitesse, portée, taille) et ajouts (projectiles, chance et multiplicateur critiques).
+   */
+  const MODS0: WeaponMods = { level: 1, damage: 1, rate: 1, projectiles: 0, speed: 1, range: 1, critChance: 0, critMult: 0, size: 1 };
+  const mods: WeaponMods = { ...MODS0 };
   const pending: Pending[] = [];
   const tmp = new THREE.Vector3();
   const up = new THREE.Vector3();
@@ -83,7 +88,7 @@ export function createBlonde(d: Deps) {
     const z = targets[index % targets.length];
     solve(hand, z, vel);
     if (index >= targets.length) vel.applyAxisAngle(tmp.copy(hand).normalize(), (Math.random() - 0.5) * 0.25);
-    d.bottles.launch(hand, vel, W.gravity, W.spinRate * (0.85 + Math.random() * 0.3), null);
+    d.bottles.launch(hand, vel, W.gravity, W.spinRate * (0.85 + Math.random() * 0.3), null, mods.size);
   }
 
   /** Distance entre le segment [p, q] et l'axe du zombie (pieds -> tête). */
@@ -121,8 +126,10 @@ export function createBlonde(d: Deps) {
       d.bottles.update(dt, W.life, (b, prev) => {
         for (const z of d.zombies()) {
           if (z.dead || z.pos.distanceToSquared(b.pos) > 9) continue;
-          if (segToZombie(prev, b.pos, z) < W.radius + W.zombieRadius) {
-            d.onHitZombie(z, b.pos, b.vel, W.damage * mods.damage);
+          if (segToZombie(prev, b.pos, z) < W.radius * mods.size + W.zombieRadius) {
+            const crit = Math.random() < W.critChance + mods.critChance;
+            const dmg = W.damage * mods.damage * (crit ? W.critMult + mods.critMult : 1);
+            d.onHitZombie(z, b.pos, b.vel, dmg, crit);
             return false;
           }
         }
@@ -133,7 +140,7 @@ export function createBlonde(d: Deps) {
     mods,
     reset() {
       timer = 0.3; pending.length = 0; d.bottles.clear();
-      Object.assign(mods, { level: 1, damage: 1, rate: 1, projectiles: 0, speed: 1, range: 1 });
+      Object.assign(mods, MODS0);
     },
   };
 }

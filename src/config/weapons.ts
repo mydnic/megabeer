@@ -6,6 +6,9 @@ export const WEAPONS = {
     /** Temps entre deux lancers (s). */
     cooldown: 1.0,
     damage: 16,
+    /** Coup critique : chance de base (0 à 1) et multiplicateur de dégâts de base (GDD : x2). */
+    critChance: 0.05,
+    critMult: 2,
     /** Portée de détection de la cible (m). */
     range: 18,
     /** Vitesse horizontale de la bouteille (m/s) et gravité propre (m/s², plus faible que le joueur : cloche douce). */
@@ -13,7 +16,7 @@ export const WEAPONS = {
     gravity: 14,
     /** Rotation de la bouteille en vol (tours par seconde). */
     spinRate: 2.2,
-    /** Rayon de contact de la bouteille (m). */
+    /** Rayon de contact de la bouteille (m), multiplié par la Taille comme le modèle. */
     radius: 0.15,
     /** Corps d'un zombie pour les impacts : hauteur et rayon (m). La bouteille s'écrase sur le premier touché. */
     zombieHeight: 1.8,

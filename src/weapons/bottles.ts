@@ -56,8 +56,8 @@ export async function createBottles(scene: THREE.Scene) {
   const up = new THREE.Vector3();
 
   return {
-    /** Lance une bouteille. */
-    launch(pos: THREE.Vector3, vel: THREE.Vector3, gravity: number, spinRate: number, payload: unknown) {
+    /** Lance une bouteille, à l'échelle `size` (stat Taille). */
+    launch(pos: THREE.Vector3, vel: THREE.Vector3, gravity: number, spinRate: number, payload: unknown, size = 1) {
       let b = pool.find((x) => !x.active);
       if (!b) {
         const mesh = holder.clone();
@@ -78,6 +78,7 @@ export async function createBottles(scene: THREE.Scene) {
       if (b.spinAxis.lengthSq() < 1e-6) b.spinAxis.set(1, 0, 0);
       b.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), up);
       b.mesh.position.copy(pos);
+      b.mesh.scale.setScalar(holder.scale.x * size);
       b.mesh.visible = true;
       return b;
     },

@@ -20,7 +20,7 @@ export function createRunLog() {
   let open = false;
   // Totaux
   const sum = {
-    dmgDealt: {} as Record<string, number>, hits: {} as Record<string, number>, overkill: {} as Record<string, number>,
+    dmgDealt: {} as Record<string, number>, hits: {} as Record<string, number>, crits: {} as Record<string, number>, overkill: {} as Record<string, number>,
     kills: {} as Record<string, number>, killsByWeapon: {} as Record<string, number>,
     dmgTaken: 0, hitsTaken: 0, hitsBlocked: 0, spawns: {} as Record<string, number>,
     xp: 0, levels: [] as { t: number; level: number }[],
@@ -77,13 +77,14 @@ export function createRunLog() {
     event(type: string, ...data: (string | number)[]) { if (open) events.push([r2(t), type, ...data]); },
 
     spawn(model: string) { if (!open) return; add(sum.spawns, model, 1); this.event('spawn', model); },
-    /** Coup donné : arme, cible, dégâts, PV restants (négatif = dégâts perdus). */
-    hit(weapon: string, target: string, dmg: number, hpAfter: number) {
+    /** Coup donné : arme, cible, dégâts, PV restants (négatif = dégâts perdus), critique (1) ou non. */
+    hit(weapon: string, target: string, dmg: number, hpAfter: number, crit = false) {
       if (!open) return;
       add(sum.dmgDealt, weapon, dmg + Math.min(0, hpAfter));
       add(sum.overkill, weapon, -Math.min(0, hpAfter));
       add(sum.hits, weapon, 1);
-      this.event('hit', weapon, target, dmg, r2(hpAfter));
+      if (crit) add(sum.crits, weapon, 1);
+      this.event('hit', weapon, target, r2(dmg), r2(hpAfter), crit ? 1 : 0);
     },
     kill(weapon: string, target: string) {
       if (!open) return;

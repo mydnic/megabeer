@@ -5,6 +5,8 @@ const CSS = `
 .dmg { position: fixed; left: 0; top: 0; pointer-events: none; z-index: 8; font-family: 'Lilita One', system-ui, sans-serif;
   font-size: ${D.size}px; color: ${D.color}; white-space: nowrap; will-change: transform, opacity;
   text-shadow: -2px 0 #1a120c, 2px 0 #1a120c, 0 -2px #1a120c, 0 2px #1a120c, 2px 2px #1a120c, -2px 2px #1a120c; }
+.dmg.crit { color: ${D.critColor}; font-size: ${Math.round(D.size * D.critScale)}px; z-index: 9;
+  text-shadow: -3px 0 #1a120c, 3px 0 #1a120c, 0 -3px #1a120c, 0 3px #1a120c, 3px 3px #1a120c, -3px 3px #1a120c; }
 `;
 
 /** Chiffres de dégâts qui jaillissent au-dessus des zombies touchés, montent et s'effacent. */
@@ -17,7 +19,7 @@ export function createDamageNumbers(camera: THREE.Camera) {
   const p = new THREE.Vector3();
 
   return {
-    spawn(pos: THREE.Vector3, value: number) {
+    spawn(pos: THREE.Vector3, value: number, crit = false) {
       if (!D.enabled) return;
       let n = pool.find((x) => !x.active);
       if (!n) {
@@ -30,7 +32,8 @@ export function createDamageNumbers(camera: THREE.Camera) {
           pool.push(n);
         }
       }
-      n.el.textContent = String(Math.round(value));
+      n.el.textContent = String(Math.round(value)) + (crit ? D.critSuffix : '');
+      n.el.classList.toggle('crit', crit);
       n.pos.copy(pos);
       n.up.copy(pos).normalize();
       n.t = 0;
