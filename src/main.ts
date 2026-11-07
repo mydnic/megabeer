@@ -12,6 +12,10 @@ import { createBlonde } from './weapons/blonde';
 import { createGlassShards } from './fx/glassShards';
 import { createDamageNumbers } from './ui/damageNumbers';
 import { createRunLog } from './dev/runLog';
+import { XP_DROPS } from './config/xp';
+import { Progression } from './player/progression';
+import { createXpDrops } from './pickups/xpDrops';
+import { createAlcoholHud } from './ui/alcoholHud';
 import { WEAPONS } from './config/weapons';
 import { ZOMBIE_STATS } from './config/zombies';
 import { DEATH_BANNER, HOME_CAMERA, PLAYER_STATS } from './config/player';
@@ -136,7 +140,17 @@ pint.onImpact = (p, speed) => {
   audio.play(speed > 3 ? 'impactGlass_medium' : 'impactGlass_light', Math.min(0.6, 0.15 + speed * 0.06), jitter(0.08));
 };
 // --- Stats du joueur modifiables en run (objets, level-up) : départ = valeurs du Buveur
-const playerStats = { attackSpeed: PLAYER_STATS.attackSpeed as number, extraProjectiles: PLAYER_STATS.extraProjectiles as number };
+const playerStats = {
+  attackSpeed: PLAYER_STATS.attackSpeed as number,
+  extraProjectiles: PLAYER_STATS.extraProjectiles as number,
+  pickupRange: XP_DROPS.pickupRange as number,
+  xpGain: 1,
+};
+// --- XP : gouttes de bière, alcoolémie, degré
+const progression = new Progression();
+const alcoholHud = createAlcoholHud(progression);
+const xpDrops = createXpDrops(scene, (p) => player.supportAt(p, p.length()));
+const chest = new THREE.Vector3();
 // --- Arme de départ : la Blonde
 const bottles = await createBottles(scene);
 const blonde = createBlonde({
@@ -157,7 +171,7 @@ const blonde = createBlonde({
     hitDir.copy(v).addScaledVector(up, -v.dot(up)).normalize();
     const killed = z.damage(damage, hitDir);
     runLog.hit('blonde', z.model, damage, z.hp);
-    if (killed) { runKills++; runLog.kill('blonde', z.model); }
+    if (killed) { runKills++; runLog.kill('blonde', z.model); xpDrops.drop(z.pos, XP_DROPS.perZombie); }
     buveur.splashAt(p, 14);
     shards.burst(p, hitDir);
     damageNumbers.spawn(hitPos.copy(z.pos).addScaledVector(up, 2.0), damage);
@@ -189,6 +203,11 @@ function goHome() {
   shards.clear();
   damageNumbers.clear();
   playerStats.attackSpeed = PLAYER_STATS.attackSpeed;
+  playerStats.pickupRange = XP_DROPS.pickupRange;
+  playerStats.xpGain = 1;
+  progression.reset();
+  xpDrops.clear();
+  alcoholHud.setVisible(false);
   playerStats.extraProjectiles = PLAYER_STATS.extraProjectiles;
   rig.setFocus(HOME_CAMERA);
   pipeline.fade.amount = 0;
@@ -201,6 +220,7 @@ function goHome() {
 // Le jeu s'ouvre sur l'accueil
 rig.setFocus(HOME_CAMERA);
 healthHud.setVisible(false);
+alcoholHud.setVisible(false);
 home.show();
 
 /** Nouvelle run depuis l'accueil. */
@@ -211,6 +231,7 @@ function startRun() {
   runKills = 0;
   home.hide();
   healthHud.setVisible(true);
+  alcoholHud.setVisible(true);
   player.reset(decor.spawn.dir, decor.spawn.facing);
   rig.setFocus(null);
   runLog.start({
@@ -296,11 +317,19 @@ function frame(now: number) {
         if (d < 5) near5++;
         if (d < 10) near10++;
       }
-      return { hp: health.hp, alive, near5, near10, kills: runKills, fps: Math.round(fps), atkSpd: playerStats.attackSpeed, proj: playerStats.extraProjectiles };
+      return { hp: health.hp, level: progression.level, xp: Math.round(progression.xp), alive, near5, near10, kills: runKills, fps: Math.round(fps), atkSpd: playerStats.attackSpeed, proj: playerStats.extraProjectiles };
     });
   }
   blonde.updateBottles(dt);
   shards.update(dt);
+  chest.copy(player.renderPos).addScaledVector(player.upDir, 1.0);
+  xpDrops.update(dt, chest, phase === 'run' ? playerStats.pickupRange : 0, (v) => {
+    const xp = v * playerStats.xpGain;
+    runLog.xp(xp);
+    const gained = progression.add(xp);
+    for (let i = 0; i < gained; i++) runLog.levelUp(progression.level - gained + 1 + i);
+  });
+  alcoholHud.update();
   damageNumbers.update(realDt);
   if (phase === 'dead') deathBanner.update(deadSince, runTime, runKills);
   // Espace ou bouton A : Jouer sur l'accueil, Continuer sur le bilan de mort
