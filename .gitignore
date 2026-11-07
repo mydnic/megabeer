@@ -16,3 +16,6 @@ dist
 !.dev.vars.example
 .env*
 !.env.example
+
+# Journaux de run (dev)
+logs/

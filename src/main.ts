@@ -11,6 +11,9 @@ import { createBottles } from './weapons/bottles';
 import { createBlonde } from './weapons/blonde';
 import { createGlassShards } from './fx/glassShards';
 import { createDamageNumbers } from './ui/damageNumbers';
+import { createRunLog } from './dev/runLog';
+import { WEAPONS } from './config/weapons';
+import { ZOMBIE_STATS } from './config/zombies';
 import { DEATH_BANNER, HOME_CAMERA, PLAYER_STATS } from './config/player';
 import { DEATH } from './config/buveur';
 import type { InputState } from './core/input';
@@ -101,12 +104,21 @@ buveur.onSound = (e) => {
 };
 buveur.load().catch((e) => console.error(e));
 
+// --- Journal de run (dev) : tout est noté pour analyser l'équilibrage
+const runLog = createRunLog();
+{
+  const rawSpawn = horde.spawn;
+  horde.spawn = (model, dir, facing) => { const z = rawSpawn(model, dir, facing); if (z) runLog.spawn(model); return z; };
+}
+
 // --- Coup de zombie : recul, flash, tremblement
 const health = new Health();
 const healthHud = createHealthHud(health);
-horde.onHit = (_z, dir) => {
+horde.onHit = (z, dir) => {
   // Invulnérable juste après un coup : ni dégâts ni recul (pas d'enchaînement de coups)
-  if (!health.damage(ZOMBIE_ATTACK.damage)) return;
+  const took = health.damage(ZOMBIE_ATTACK.damage);
+  runLog.hurt(z.model, ZOMBIE_ATTACK.damage, health.hp, !took);
+  if (!took) return;
   healthHud.hit();
   player.knock(dir, ZOMBIE_ATTACK.knockSpeed, ZOMBIE_ATTACK.knockLift, ZOMBIE_ATTACK.knockDecay);
   buveur.hurt(HIT_FEEDBACK.flashColor, HIT_FEEDBACK.flashTime);
@@ -143,7 +155,9 @@ const blonde = createBlonde({
     // Direction du coup dans le plan du sol (le zombie recule dans le sens de la bouteille)
     const up = hitUp.copy(z.pos).normalize();
     hitDir.copy(v).addScaledVector(up, -v.dot(up)).normalize();
-    if (z.damage(damage, hitDir)) runKills++;
+    const killed = z.damage(damage, hitDir);
+    runLog.hit('blonde', z.model, damage, z.hp);
+    if (killed) { runKills++; runLog.kill('blonde', z.model); }
     buveur.splashAt(p, 14);
     shards.burst(p, hitDir);
     damageNumbers.spawn(hitPos.copy(z.pos).addScaledVector(up, 2.0), damage);
@@ -199,10 +213,15 @@ function startRun() {
   healthHud.setVisible(true);
   player.reset(decor.spawn.dir, decor.spawn.facing);
   rig.setFocus(null);
+  runLog.start({
+    character: 'buveur', map: 'abbaye', difficulty: 'sobre',
+    stats: { ...playerStats, maxHp: health.max }, weapons: { blonde: WEAPONS.blonde }, zombie: ZOMBIE_STATS,
+  });
   spawnStartZombies();
   renderer.domElement.requestPointerLock?.()?.catch?.(() => {});
 }
 function onDeath() {
+  runLog.end('mort', { survived: runTime, kills: runKills });
   phase = 'dead';
   deadSince = 0;
   const pos = new THREE.Vector3(), quat = new THREE.Quaternion();
@@ -265,7 +284,21 @@ function frame(now: number) {
   health.update(dt);
   healthHud.update(realDt);
   if (phase === 'run' && health.dead) onDeath();
-  if (phase === 'run') { runTime += dt; blonde.update(dt); }
+  if (phase === 'run') {
+    runTime += dt;
+    blonde.update(dt);
+    runLog.tick(dt, () => {
+      let alive = 0, near5 = 0, near10 = 0;
+      for (const z of horde.zombies) {
+        if (z.dead) continue;
+        alive++;
+        const d = z.pos.distanceTo(player.pos);
+        if (d < 5) near5++;
+        if (d < 10) near10++;
+      }
+      return { hp: health.hp, alive, near5, near10, kills: runKills, fps: Math.round(fps), atkSpd: playerStats.attackSpeed, proj: playerStats.extraProjectiles };
+    });
+  }
   blonde.updateBottles(dt);
   shards.update(dt);
   damageNumbers.update(realDt);

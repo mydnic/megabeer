@@ -423,8 +423,8 @@ Même objet, effet plus fort au tier supérieur. Certains objets n'existent qu'�
 ### Présentation : le degré d'alcool [DÉCIDÉ]
 
 Mécaniquement c'est de l'XP classique, mais tout est présenté comme de l'alcool :
-- Les zombies lâchent des **capsules** (les points d'XP).
-- La barre d'XP s'appelle **Alcoolémie** : elle se remplit avec les capsules.
+- Les zombies lâchent des **gouttes de bière** (les points d'XP) : rondes, dorées, elles flottent en lévitation au-dessus du sol [DÉCIDÉ le 2026-11-07, remplacent les capsules du proto ; « capsule » reste le nom dans les anciens passages de ce document].
+- La barre d'XP s'appelle **Alcoolémie** : elle se remplit avec les gouttes.
 - Le niveau s'appelle le **degré** : barre pleine = un degré de plus (affiché "56°"). Le joueur dit "je suis arrivé au 56e degré".
 - La stat "Gain d'XP" s'affiche **Descente** dans le jeu ("avoir une bonne descente"). Dans le code et ce document, on garde les termes XP et niveau.
 
@@ -1059,6 +1059,10 @@ Recommandation : **three.js + TypeScript**, refait de zéro avec une architectur
 4. Interface finale si la feature en a (HUD, carte, écran).
 5. Toutes les valeurs dans la config, avec un premier réglage testé en jeu.
 6. Validé par l'utilisateur en jouant.
+
+### Journal de run [DÉCIDÉ le 2026-11-07]
+
+En développement, **chaque run est enregistrée en détail dans un fichier** (`logs/runs/`, hors dépôt git) : apparitions, coups donnés et reçus par arme et par ennemi, morts, XP, level-ups et cartes proposées / choisies, PV, fps, avec un instantané chaque seconde. Le but : analyser l'équilibrage à partir de vraies parties, pas seulement au ressenti du joueur.
 
 ### Exceptions assumées
 
