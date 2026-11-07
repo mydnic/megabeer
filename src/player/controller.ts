@@ -19,6 +19,9 @@ export class PlayerController {
   /** Direction du modèle. */
   readonly facing = new THREE.Vector3();
   readonly velocity = new THREE.Vector3(); // tangentielle
+  /** Recul subi (coup reçu) : vitesse tangentielle qui s'amortit, en plus du déplacement voulu. */
+  readonly knockVel = new THREE.Vector3();
+  private knockDecay = 0.2;
   vr = 0;
   onGround = true;
   speed = BASE_SPEED;
@@ -75,6 +78,13 @@ export class PlayerController {
     return this.decor ? Math.max(ground, this.decor.supportAt(p, feetR)) : ground;
   }
 
+  /** Recul : projeté dans la direction `dir` (tangente), avec un petit saut. */
+  knock(dir: THREE.Vector3, speed: number, lift: number, decay: number) {
+    this.knockVel.copy(dir).multiplyScalar(speed);
+    this.knockDecay = decay;
+    if (lift > 0 && this.vr < lift) { this.vr = lift; this.onGround = false; }
+  }
+
   /** Appelé une fois par frame avec l'entrée de la frame (le saut est mis en mémoire). */
   feed(input: InputState) {
     this.events.jumped = this.events.landed = false;
@@ -122,7 +132,8 @@ export class PlayerController {
 
     // Déplacement tangent, reprojeté sur la sphère au même rayon
     const r = this.pos.length();
-    this.pos.addScaledVector(this.velocity, dt).setLength(r);
+    this.knockVel.addScaledVector(up, -this.knockVel.dot(up)).multiplyScalar(Math.exp(-dt / this.knockDecay));
+    this.pos.addScaledVector(this.velocity, dt).addScaledVector(this.knockVel, dt).setLength(r);
 
     // Collisions avec le décor (formes réelles des modèles)
     this.decor?.resolve(this.pos, P.radius);

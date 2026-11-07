@@ -2,6 +2,7 @@
 import { CAMERA, PLANET_RADIUS } from './config/world';
 import { loadZombieLibrary } from './enemies/zombie';
 import { createHorde } from './enemies/horde';
+import { HIT_FEEDBACK, ZOMBIE_ATTACK } from './config/zombies';
 import { initInput, readInput } from './core/input';
 import { BuveurVisual } from './player/buveurVisual';
 import { CameraRig } from './player/cameraRig';
@@ -87,6 +88,14 @@ buveur.onSound = (e) => {
   }
 };
 buveur.load().catch((e) => console.error(e));
+
+// --- Coup de zombie : recul, flash, tremblement, son
+horde.onHit = (_z, dir) => {
+  player.knock(dir, ZOMBIE_ATTACK.knockSpeed, ZOMBIE_ATTACK.knockLift, ZOMBIE_ATTACK.knockDecay);
+  buveur.hurt(HIT_FEEDBACK.flashColor, HIT_FEEDBACK.flashTime);
+  rig.shake(HIT_FEEDBACK.shake, HIT_FEEDBACK.shakeAmplitude, HIT_FEEDBACK.shakeDecay);
+  audio.play(HIT_FEEDBACK.sound, HIT_FEEDBACK.volume, jitter(0.08));
+};
 const rig = new CameraRig(camera);
 initInput(renderer.domElement);
 

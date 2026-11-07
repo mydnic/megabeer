@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { ZOMBIE_MOVE as M, ZOMBIE_VISUAL as V, type ZombieModel } from '../config/zombies';
+import { ZOMBIE_ATTACK, ZOMBIE_MOVE as M, ZOMBIE_VISUAL as V, type ZombieModel } from '../config/zombies';
 import { PLANET_RADIUS } from '../config/world';
 import { heightAt } from '../world/terrain';
 import type { DecorCollider } from '../world/decor/collider';
@@ -95,13 +95,28 @@ export function createHorde(scene: THREE.Scene, lib: ZombieLibrary, player: Play
     }
   }
 
-  return {
+  const api = {
     zombies,
     spawn,
     update(dt: number) {
       for (const z of zombies) step(z, dt, player.pos);
       separate();
-      for (const z of zombies) { decor?.resolve(z.pos, M.radius); snap(z.pos); z.update(dt); }
+      for (const z of zombies) {
+        decor?.resolve(z.pos, M.radius);
+        snap(z.pos);
+        z.update(dt);
+        // Le coup porte si le joueur est encore à portée au moment où le bras arrive
+        if (z.hitNow && z.pos.distanceTo(player.pos) < ZOMBIE_ATTACK.reach) {
+          up.copy(player.pos).normalize();
+          push.subVectors(player.pos, z.pos);
+          push.addScaledVector(up, -push.dot(up));
+          if (push.lengthSq() < 1e-6) push.copy(z.facing);
+          api.onHit?.(z, push.normalize());
+        }
+      }
     },
+    /** Appelé quand un zombie touche le joueur, avec la direction du coup (du zombie vers le joueur). */
+    onHit: undefined as ((z: Zombie, dir: THREE.Vector3) => void) | undefined,
   };
+  return api;
 }

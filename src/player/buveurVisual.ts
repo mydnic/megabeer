@@ -53,6 +53,10 @@ export class BuveurVisual {
   private baseVel = new THREE.Vector3();
   /** Pied levé assez haut depuis le dernier appui (prêt à faire un bruit de pas). */
   private armed = [false, false];
+  private materials: THREE.MeshToonMaterial[] = [];
+  private flashTime = 0;
+  private flashDuration = 0.2;
+  private flashColor = new THREE.Color();
   /** Reçoit les événements sonores (pas, saut, réception). */
   onSound?: (e: BuveurSound) => void;
 
@@ -71,7 +75,7 @@ export class BuveurVisual {
       if (!mesh.isMesh) return;
       const src = mesh.material as THREE.MeshStandardMaterial;
       let m = mats.get(src.name);
-      if (!m) { m = characterMaterial({ color: src.color }); m.name = src.name; mats.set(src.name, m); }
+      if (!m) { m = characterMaterial({ color: src.color }); m.name = src.name; mats.set(src.name, m); this.materials.push(m as THREE.MeshToonMaterial); }
       mesh.material = m;
       mesh.castShadow = true;
       // Pas d'ombre reçue : la carte d'ombre est trop grossière pour un perso de 1,9 m (taches au dos)
@@ -116,6 +120,7 @@ export class BuveurVisual {
     this.root.position.copy(player.renderPos);
     this.root.quaternion.setFromRotationMatrix(this.basis.makeBasis(this.right, up, facing));
     if (!this.mixer) return;
+    this.updateFlash(dt);
 
     // --- Choix de l'animation
     const hSpeed = player.velocity.length();
@@ -228,6 +233,21 @@ export class BuveurVisual {
       }
     }
     this.splash.update(dt);
+  }
+
+  /** Coup reçu : flash de couleur sur tout le corps et écrasement. */
+  hurt(color: number, duration: number) {
+    this.flashColor.set(color);
+    this.flashTime = this.flashDuration = duration;
+    this.kick(-0.12);
+  }
+
+  private updateFlash(dt: number) {
+    if (this.flashTime <= 0 && this.flashDuration === 0) return;
+    this.flashTime = Math.max(0, this.flashTime - dt);
+    const k = this.flashDuration > 0 ? this.flashTime / this.flashDuration : 0;
+    for (const m of this.materials) m.emissive.copy(this.flashColor).multiplyScalar(k * k);
+    if (this.flashTime === 0) this.flashDuration = 0;
   }
 
   private kick(amount: number) {

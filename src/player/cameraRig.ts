@@ -19,6 +19,18 @@ export class CameraRig {
   private blockedDist: number = C.distance;
   private tmp = new THREE.Vector3();
   private initialized = false;
+  /** Tremblement en cours (0 à 1) : l'amplitude suit son carré, il s'amortit tout seul. */
+  private trauma = 0;
+  private shakeAmp = 0.3;
+  private shakeDecay = 2.5;
+  private shakeT = 0;
+
+  /** Ajoute un tremblement (coup reçu, explosion...). */
+  shake(amount: number, amplitude: number, decay: number) {
+    this.trauma = Math.min(1, this.trauma + amount);
+    this.shakeAmp = amplitude;
+    this.shakeDecay = decay;
+  }
 
   constructor(readonly camera: THREE.PerspectiveCamera) {}
 
@@ -64,5 +76,13 @@ export class CameraRig {
     this.camera.position.copy(this.desired);
     this.camera.up.copy(up);
     this.camera.lookAt(this.target);
+    // Tremblement : décalage latéral et vertical, bruit lisse (sinus décorrélés)
+    if (this.trauma > 0) {
+      this.shakeT += dt;
+      const a = this.trauma * this.trauma * this.shakeAmp, t = this.shakeT * 38;
+      this.camera.translateX(a * (Math.sin(t) * 0.6 + Math.sin(t * 2.3 + 1.7) * 0.4));
+      this.camera.translateY(a * (Math.sin(t * 1.3 + 4.1) * 0.6 + Math.sin(t * 2.9) * 0.4));
+      this.trauma = Math.max(0, this.trauma - this.shakeDecay * dt);
+    }
   }
 }

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js';
-import { ZOMBIE_MODELS, ZOMBIE_MOVE, ZOMBIE_VISUAL as V, type ZombieModel } from '../config/zombies';
+import { ZOMBIE_ATTACK, ZOMBIE_MODELS, ZOMBIE_MOVE, ZOMBIE_VISUAL as V, type ZombieModel } from '../config/zombies';
 import { characterMaterial, LAYER_CHARACTER } from '../render/materials';
 
 const urls = import.meta.glob('../assets/quaternius-zombies/*.gltf', { query: '?url', import: 'default', eager: true }) as Record<string, string>;
@@ -59,6 +59,9 @@ export class Zombie {
   /** Vitesse réelle au dernier pas (cale la cadence de l'animation de marche). */
   walkSpeed = 0;
   private animSpeed = 1;
+  private attackPhase = 0;
+  /** Vrai pendant la frame où le coup arrive (le bras touche la cible). */
+  hitNow = false;
   private mixer: THREE.AnimationMixer;
   private actions = {} as Record<ZombieState, THREE.AnimationAction>;
   private current?: ZombieState;
@@ -111,6 +114,15 @@ export class Zombie {
     if (this.state === 'walk') this.actions.walk.timeScale = Math.max(0.3, this.walkSpeed / ZOMBIE_MOVE.walkAnimAt);
     else this.actions.walk.timeScale = this.animSpeed;
     this.mixer.update(dt);
+    // Moment du coup : passage de la phase de l'attaque sur hitAt
+    this.hitNow = false;
+    if (this.state === 'attack') {
+      const a = this.actions.attack;
+      const phase = (a.time / a.getClip().duration) % 1;
+      const h = ZOMBIE_ATTACK.hitAt;
+      if ((this.attackPhase < h && phase >= h) || (phase < this.attackPhase && (phase >= h || this.attackPhase < h))) this.hitNow = true;
+      this.attackPhase = phase;
+    } else this.attackPhase = 0;
     const up = this.up.copy(this.pos).normalize();
     this.right.crossVectors(up, this.facing).normalize();
     this.root.position.copy(this.pos);

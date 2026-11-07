@@ -28,6 +28,32 @@ export const ZOMBIE_MOVE = {
   walkAnimAt: 2.2,
 } as const;
 
+/** Le coup au contact (les dégâts arriveront avec les PV, feature 3). */
+export const ZOMBIE_ATTACK = {
+  /** Moment du coup dans l'animation d'attaque (fraction du clip : le bras arrive sur la cible). */
+  hitAt: 0.45,
+  /** Distance maxi pour que le coup porte (m) : un joueur qui s'écarte à temps l'esquive. */
+  reach: 2.0,
+  /** Recul du Buveur : vitesse au sol (m/s), petit saut (m/s), amortissement (s). */
+  knockSpeed: 8,
+  knockLift: 3.5,
+  knockDecay: 0.18,
+} as const;
+
+/** Ressenti du coup reçu. */
+export const HIT_FEEDBACK = {
+  /** Flash rouge du Buveur : durée (s) et couleur. */
+  flashTime: 0.18,
+  flashColor: 0xff2a10,
+  /** Tremblement de caméra (0 à 1, s'additionne) et amplitude maxi (m). */
+  shake: 0.55,
+  shakeAmplitude: 0.35,
+  shakeDecay: 2.5,
+  /** Son : groupe Kenney et volume. */
+  sound: 'impactPunch_heavy',
+  volume: 0.7,
+} as const;
+
 export const ZOMBIE_VISUAL = {
   /** Clips du glTF utilisés pour chaque état (premier trouvé dans la liste). */
   clips: {
