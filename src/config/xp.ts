@@ -1,4 +1,4 @@
-// XP présentée comme de l'alcool (GDD section 9) : gouttes de bière, alcoolémie, degrés.
+﻿// XP présentée comme de l'alcool (GDD section 9) : gouttes de bière, alcoolémie, degrés.
 
 /** Gouttes de bière lâchées par les zombies. */
 export const XP_DROPS = {
@@ -12,9 +12,10 @@ export const XP_DROPS = {
   bobSpeed: 2.2,
   /** Ramassage de base (stat Ramassage, m) : au-delà la goutte attend, en deçà elle file vers le joueur. */
   pickupRange: 5,
-  /** Attraction : accélération (m/s²) et vitesse maxi (m/s). Ramassée sous `collectDist` (m). */
-  attract: 60,
-  maxSpeed: 22,
+  /** Aspiration en ligne droite : vitesse de départ et accélération (m/s, m/s²), vitesse maxi. Ramassée sous `collectDist` (m). */
+  startSpeed: 6,
+  attract: 45,
+  maxSpeed: 30,
   collectDist: 0.7,
   /** Couleur de la bière (dorée) et lueur. */
   color: 0xffb21e,

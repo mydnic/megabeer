@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+﻿import * as THREE from 'three';
 import { XP_DROPS as X } from '../config/xp';
 import { LAYER_CHARACTER } from '../render/materials';
 
@@ -16,7 +16,7 @@ export function createXpDrops(scene: THREE.Scene, groundAt: (p: THREE.Vector3) =
   mesh.count = 0;
   scene.add(mesh);
 
-  type Drop = { pos: THREE.Vector3; base: THREE.Vector3; vel: THREE.Vector3; value: number; size: number; phase: number; flying: boolean; age: number };
+  type Drop = { pos: THREE.Vector3; base: THREE.Vector3; speed: number; value: number; size: number; phase: number; flying: boolean; age: number };
   const drops: Drop[] = [];
   const up = new THREE.Vector3(), tmp = new THREE.Vector3(), m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3();
 
@@ -31,7 +31,7 @@ export function createXpDrops(scene: THREE.Scene, groundAt: (p: THREE.Vector3) =
       off.addScaledVector(up, -off.dot(up));
       const base = at.clone().add(off);
       base.setLength(groundAt(base));
-      drops.push({ pos: base.clone().addScaledVector(up, X.hover), base, vel: new THREE.Vector3(), value, size, phase: Math.random() * 6.28, flying: false, age: 0 });
+      drops.push({ pos: base.clone().addScaledVector(up, X.hover), base, speed: X.startSpeed, value, size, phase: Math.random() * 6.28, flying: false, age: 0 });
     },
     /**
      * Avance les gouttes. `target` = point d'aspiration (le torse du joueur), `range` = rayon de
@@ -43,13 +43,13 @@ export function createXpDrops(scene: THREE.Scene, groundAt: (p: THREE.Vector3) =
         d.age += dt;
         if (!d.flying && d.pos.distanceTo(target) < range) d.flying = true;
         if (d.flying) {
-          // Aspirée : accélère vers le joueur
+          // Aspirée : file en ligne droite sur le joueur, de plus en plus vite (jamais d'orbite)
           tmp.subVectors(target, d.pos);
           const dist = tmp.length();
-          if (dist < X.collectDist) { onCollect(d.value); drops.splice(i, 1); continue; }
-          d.vel.addScaledVector(tmp.divideScalar(dist), X.attract * dt);
-          if (d.vel.length() > X.maxSpeed) d.vel.setLength(X.maxSpeed);
-          d.pos.addScaledVector(d.vel, dt);
+          d.speed = Math.min(X.maxSpeed, d.speed + X.attract * dt);
+          const stepLen = d.speed * dt;
+          if (dist < X.collectDist || stepLen >= dist) { onCollect(d.value); drops.splice(i, 1); continue; }
+          d.pos.addScaledVector(tmp, stepLen / dist);
         } else {
           // Lévitation au-dessus du point de chute
           up.copy(d.base).normalize();
