@@ -42,6 +42,29 @@ export const ZOMBIE_ATTACK = {
   knockDecay: 0.18,
 } as const;
 
+/** Zombie de base (GDD section 11) : points de vie, et réaction quand il est touché. */
+export const ZOMBIE_STATS = {
+  hp: 9,
+} as const;
+
+/** Ressenti quand un zombie est touché, puis meurt. */
+export const ZOMBIE_HURT = {
+  /** Flash blanc (s) et intensité. */
+  flashTime: 0.12,
+  flashIntensity: 1.6,
+  /** Recul : vitesse (m/s) et amortissement (s). */
+  knockSpeed: 4.5,
+  knockDecay: 0.14,
+  /** Réaction au coup (animation HitReact) : durée pendant laquelle il n'avance ni ne frappe (s). */
+  stagger: 0.35,
+  /** Mort : temps couché au sol (s, après la fin de l'animation), puis enfoncement dans le sol (s, m). */
+  corpseTime: 0.8,
+  sinkTime: 1.0,
+  sinkDepth: 1.2,
+  /** Recul plus fort sur le coup fatal (multiplicateur). */
+  deathKnock: 1.6,
+} as const;
+
 /** Ressenti du coup reçu. */
 export const HIT_FEEDBACK = {
   /** Flash rouge du Buveur : durée (s) et couleur. */
@@ -65,6 +88,7 @@ export const ZOMBIE_VISUAL = {
     // Le zombie à côtes n'a pas d'attaque : il bondit (Jump) à la place
     attack: ['Idle_Attack', 'Punch', 'Jump'],
     hit: ['HitReact'],
+    death: ['Death'],
   },
   /** Fondu entre deux animations (s). */
   fade: 0.25,

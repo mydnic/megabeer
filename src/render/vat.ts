@@ -34,8 +34,11 @@ mat4 vatSkin(float row) {
 }
 `;
 
-/** Ajoute l'animation de foule à un matériau (les objets sans `aAnim` ne sont pas touchés). */
-export function patchVat(material: THREE.Material, key: string) {
+/**
+ * Ajoute l'animation de foule à un matériau (les objets sans `aAnim` ne sont pas touchés).
+ * `flash` : le matériau éclaire l'instance en blanc selon -aAnim.w (zombie touché).
+ */
+export function patchVat(material: THREE.Material, key: string, flash = 0) {
   const prev = material.onBeforeCompile;
   material.onBeforeCompile = (shader, renderer) => {
     prev?.call(material, shader, renderer);
@@ -47,6 +50,13 @@ export function patchVat(material: THREE.Material, key: string) {
   if (vatOn) vatM = aAnim.z > 0.001 ? mat4(vatSkin(aAnim.x) * (1.0 - aAnim.z) + vatSkin(aAnim.y) * aAnim.z) : vatSkin(aAnim.x);`);
     vs = vs.replace('#include <beginnormal_vertex>', '#include <beginnormal_vertex>\n  if (vatOn) objectNormal = mat3(vatM) * objectNormal;');
     vs = vs.replace('#include <begin_vertex>', '#include <begin_vertex>\n  if (vatOn) transformed = (vatM * vec4(transformed, 1.0)).xyz;');
+    if (flash > 0) {
+      vs = vs.replace('#include <common>', '#include <common>\nvarying float vVatFlash;');
+      vs = vs.replace('#include <begin_vertex>', '#include <begin_vertex>\n  vVatFlash = vatOn ? -aAnim.w : 0.0;');
+      shader.fragmentShader = shader.fragmentShader
+        .replace('#include <common>', '#include <common>\nvarying float vVatFlash;')
+        .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>\n  totalEmissiveRadiance += vec3(vVatFlash * ${flash.toFixed(3)});`);
+    }
     shader.vertexShader = vs;
   };
   const prevKey = material.customProgramCacheKey.bind(material);

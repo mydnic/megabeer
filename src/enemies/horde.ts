@@ -1,5 +1,5 @@
 ﻿import * as THREE from 'three';
-import { ZOMBIE_ATTACK, ZOMBIE_MOVE as M, ZOMBIE_VISUAL as V, type ZombieModel } from '../config/zombies';
+import { ZOMBIE_ATTACK, ZOMBIE_HURT as H, ZOMBIE_MOVE as M, ZOMBIE_VISUAL as V, type ZombieModel } from '../config/zombies';
 import { PLANET_RADIUS } from '../config/world';
 import { heightAt } from '../world/terrain';
 import type { DecorCollider } from '../world/decor/collider';
@@ -61,6 +61,14 @@ export function createHorde(scene: THREE.Scene, lib: ZombieLibrary, player: Play
 
   function step(z: Zombie, dt: number, target: THREE.Vector3) {
     up.copy(z.pos).normalize();
+    // Recul subi (coup de bouteille), amorti
+    if (z.knockVel.lengthSq() > 1e-4) {
+      z.knockVel.addScaledVector(up, -z.knockVel.dot(up));
+      z.pos.addScaledVector(z.knockVel, dt);
+      z.knockVel.multiplyScalar(Math.exp(-dt / H.knockDecay));
+    }
+    // Mort ou sonné : ni marche ni coup
+    if (z.dead || z.stagger > 0) { z.walkSpeed = 0; return; }
     want.subVectors(target, z.pos);
     want.addScaledVector(up, -want.dot(up));
     const dist = want.length();
@@ -112,6 +120,7 @@ export function createHorde(scene: THREE.Scene, lib: ZombieLibrary, player: Play
     const minD = M.radius * 2, cell = minD;
     for (const list of grid.values()) list.length = 0;
     zombies.forEach((z, i) => {
+      if (z.dead) return; // les corps ne gênent personne
       const k = cellKey(Math.floor(z.pos.x / cell), Math.floor(z.pos.y / cell), Math.floor(z.pos.z / cell));
       let list = grid.get(k);
       if (!list) { list = []; grid.set(k, list); }
@@ -119,6 +128,7 @@ export function createHorde(scene: THREE.Scene, lib: ZombieLibrary, player: Play
     });
     for (let i = 0; i < zombies.length; i++) {
       const a = zombies[i];
+      if (a.dead) continue;
       const cx = Math.floor(a.pos.x / cell), cy = Math.floor(a.pos.y / cell), cz = Math.floor(a.pos.z / cell);
       for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) {
         const list = grid.get(cellKey(cx + dx, cy + dy, cz + dz));
@@ -137,6 +147,7 @@ export function createHorde(scene: THREE.Scene, lib: ZombieLibrary, player: Play
     // Le joueur est repoussé hors des corps (sur le plan tangent)
     const pr = M.radius + M.playerRadius;
     for (const z of zombies) {
+      if (z.dead) continue;
       push.subVectors(player.pos, z.pos);
       up.copy(player.pos).normalize();
       push.addScaledVector(up, -push.dot(up));
@@ -162,7 +173,7 @@ export function createHorde(scene: THREE.Scene, lib: ZombieLibrary, player: Play
         snap(z.pos);
         z.update(dt);
         // Le coup porte si le joueur est encore à portée au moment où le bras arrive
-        if (!passive && z.hitNow && z.pos.distanceTo(player.pos) < ZOMBIE_ATTACK.reach) {
+        if (!passive && !z.dead && z.hitNow && z.pos.distanceTo(player.pos) < ZOMBIE_ATTACK.reach) {
           up.copy(player.pos).normalize();
           push.subVectors(player.pos, z.pos);
           push.addScaledVector(up, -push.dot(up));
@@ -170,6 +181,8 @@ export function createHorde(scene: THREE.Scene, lib: ZombieLibrary, player: Play
           api.onHit?.(z, push.normalize());
         }
       }
+      // Corps entièrement enfoncés : retirés
+      for (let i = zombies.length - 1; i >= 0; i--) if (zombies[i].gone) zombies.splice(i, 1);
       // Instances : matrice (repère local, taille du modèle) et lignes d'animation
       for (const c of crowds) c.mesh.count = 0;
       for (const z of zombies) {
@@ -177,7 +190,8 @@ export function createHorde(scene: THREE.Scene, lib: ZombieLibrary, player: Play
         const i = c.mesh.count++;
         up.copy(z.pos).normalize();
         right.crossVectors(up, z.facing).normalize();
-        basis.makeBasis(right, up, z.facing).scale(scaleV.setScalar(z.kind.scale)).setPosition(z.pos);
+        tmp.copy(z.pos).addScaledVector(up, -z.sink);
+        basis.makeBasis(right, up, z.facing).scale(scaleV.setScalar(z.kind.scale)).setPosition(tmp);
         c.mesh.setMatrixAt(i, basis);
         z.animRows(c.anim.array as Float32Array, i * 4);
       }
@@ -190,6 +204,8 @@ export function createHorde(scene: THREE.Scene, lib: ZombieLibrary, player: Play
         c.anim.needsUpdate = true;
       }
     },
+    /** Zombies encore debout (cibles des armes). */
+    alive() { return zombies.filter((z) => !z.dead); },
     /** Appelé quand un zombie touche le joueur, avec la direction du coup (du zombie vers le joueur). */
     onHit: undefined as ((z: Zombie, dir: THREE.Vector3) => void) | undefined,
   };

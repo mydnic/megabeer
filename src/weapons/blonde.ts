@@ -17,10 +17,10 @@ type Deps = {
   stats: () => { attackSpeed: number; extraProjectiles: number };
   /** Rayon du sol sous un point. */
   groundAt: (p: THREE.Vector3) => number;
-  /** La bouteille touche le sol. */
-  onGround: (pos: THREE.Vector3) => void;
+  /** La bouteille touche le sol (position, vitesse). */
+  onGround: (pos: THREE.Vector3, vel: THREE.Vector3) => void;
   /** La bouteille s'écrase sur un zombie (point d'impact). */
-  onHitZombie: (z: Zombie, pos: THREE.Vector3) => void;
+  onHitZombie: (z: Zombie, pos: THREE.Vector3, vel: THREE.Vector3, damage: number) => void;
 };
 
 /** Bouteille en attente de lâcher (volée en cours). */
@@ -49,6 +49,7 @@ export function createBlonde(d: Deps) {
   function nearest(from: THREE.Vector3, n: number) {
     const list: { z: Zombie; d: number }[] = [];
     for (const z of d.zombies()) {
+      if (z.dead) continue;
       const dist = z.pos.distanceTo(from);
       if (dist < W.range) list.push({ z, d: dist });
     }
@@ -117,13 +118,13 @@ export function createBlonde(d: Deps) {
     updateBottles(dt: number) {
       d.bottles.update(dt, W.life, (b, prev) => {
         for (const z of d.zombies()) {
-          if (z.pos.distanceToSquared(b.pos) > 9) continue;
+          if (z.dead || z.pos.distanceToSquared(b.pos) > 9) continue;
           if (segToZombie(prev, b.pos, z) < W.radius + W.zombieRadius) {
-            d.onHitZombie(z, b.pos);
+            d.onHitZombie(z, b.pos, b.vel, W.damage);
             return false;
           }
         }
-        if (b.pos.length() <= d.groundAt(b.pos)) { d.onGround(b.pos); return false; }
+        if (b.pos.length() <= d.groundAt(b.pos)) { d.onGround(b.pos, b.vel); return false; }
         return true;
       });
     },

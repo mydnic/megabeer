@@ -1,4 +1,4 @@
-import { DEATH_BANNER as D } from '../config/player';
+﻿import { DEATH_BANNER as D } from '../config/player';
 
 const CSS = `
 .death-band { position: fixed; left: 0; right: 0; top: 50%; transform: translateY(-50%); height: 190px; pointer-events: none;
@@ -11,7 +11,7 @@ const CSS = `
   align-items: center; gap: 18px; z-index: 21; opacity: 0; pointer-events: none; transition: opacity .5s, transform .5s;
   transform: translateY(12px); font-family: 'Lilita One', system-ui, sans-serif; }
 .death-end.on { opacity: 1; pointer-events: auto; transform: translateY(0); }
-.death-time { color: #f3e6cf; font-size: 24px; letter-spacing: .04em;
+.death-time { color: #f3e6cf; font-size: 24px; letter-spacing: .04em; text-align: center; line-height: 1.35;
   text-shadow: -2px 0 #1a120c, 2px 0 #1a120c, 0 -2px #1a120c, 0 2px #1a120c; }
 .death-time b { color: #ffc23a; font-weight: normal; }
 .death-btn { font: inherit; font-size: 26px; letter-spacing: .05em; color: #2a1608; cursor: pointer;
@@ -54,7 +54,7 @@ export function createDeathBanner(onContinue: () => void) {
     /** Vrai quand le bilan et le bouton sont affichés (Rejouer possible). */
     get ready() { return shown; },
     /** t : temps réel depuis la mort (s), -1 si vivant ; survived : durée de la run (s). */
-    update(t: number, survived: number) {
+    update(t: number, survived: number, kills = 0) {
       if (t < D.delay) {
         band.style.opacity = '0';
         if (shown) { end.classList.remove('on'); shown = false; }
@@ -67,7 +67,7 @@ export function createDeathBanner(onContinue: () => void) {
       text.style.transform = `scale(${s})`;
       if (!shown && t >= D.endDelay) {
         shown = true;
-        time.innerHTML = `Tu as tenu <b>${fmt(survived)}</b>`;
+        time.innerHTML = `Tu as tenu <b>${fmt(survived)}</b><br><b>${kills}</b> zombie${kills > 1 ? 's éclatés' : ' éclaté'}`;
         end.classList.add('on');
         // La souris est libérée pour cliquer sur le bouton
         if (document.pointerLockElement) document.exitPointerLock();

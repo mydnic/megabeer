@@ -9,6 +9,8 @@ import { createDeathBanner } from './ui/deathBanner';
 import { createHomeScreen } from './ui/homeScreen';
 import { createBottles } from './weapons/bottles';
 import { createBlonde } from './weapons/blonde';
+import { createGlassShards } from './fx/glassShards';
+import { createDamageNumbers } from './ui/damageNumbers';
 import { DEATH_BANNER, HOME_CAMERA, PLAYER_STATS } from './config/player';
 import { DEATH } from './config/buveur';
 import type { InputState } from './core/input';
@@ -133,9 +135,24 @@ const blonde = createBlonde({
   handPos: (out) => buveur.leftHandPos(out),
   stats: () => playerStats,
   groundAt: (p) => player.supportAt(p, p.length()),
-  onGround: (p) => buveur.splashAt(p, 10),
-  onHitZombie: (_z, p) => buveur.splashAt(p, 14),
+  onGround: (p, v) => {
+    buveur.splashAt(p, 10);
+    shards.burst(p, hitDir.copy(v).normalize().multiplyScalar(0.3));
+  },
+  onHitZombie: (z, p, v, damage) => {
+    // Direction du coup dans le plan du sol (le zombie recule dans le sens de la bouteille)
+    const up = hitUp.copy(z.pos).normalize();
+    hitDir.copy(v).addScaledVector(up, -v.dot(up)).normalize();
+    if (z.damage(damage, hitDir)) runKills++;
+    buveur.splashAt(p, 14);
+    shards.burst(p, hitDir);
+    damageNumbers.spawn(hitPos.copy(z.pos).addScaledVector(up, 2.0), damage);
+  },
 });
+const hitDir = new THREE.Vector3(), hitUp = new THREE.Vector3(), hitPos = new THREE.Vector3();
+const shards = createGlassShards(scene, (p) => player.supportAt(p, p.length()));
+const damageNumbers = createDamageNumbers(camera);
+let runKills = 0;
 
 const deathBanner = createDeathBanner(() => goHome());
 let deadSince = -1; // temps réel écoulé depuis la mort (-1 : vivant)
@@ -155,6 +172,8 @@ function goHome() {
   horde.clear();
   horde.setPassive(false);
   blonde.reset();
+  shards.clear();
+  damageNumbers.clear();
   playerStats.attackSpeed = PLAYER_STATS.attackSpeed;
   playerStats.extraProjectiles = PLAYER_STATS.extraProjectiles;
   rig.setFocus(HOME_CAMERA);
@@ -175,6 +194,7 @@ function startRun() {
   if (phase !== 'home') return;
   phase = 'run';
   runTime = 0;
+  runKills = 0;
   home.hide();
   healthHud.setVisible(true);
   player.reset(decor.spawn.dir, decor.spawn.facing);
@@ -247,7 +267,9 @@ function frame(now: number) {
   if (phase === 'run' && health.dead) onDeath();
   if (phase === 'run') { runTime += dt; blonde.update(dt); }
   blonde.updateBottles(dt);
-  if (phase === 'dead') deathBanner.update(deadSince, runTime);
+  shards.update(dt);
+  damageNumbers.update(realDt);
+  if (phase === 'dead') deathBanner.update(deadSince, runTime, runKills);
   // Espace ou bouton A : Jouer sur l'accueil, Continuer sur le bilan de mort
   if (input.jumpPressed) {
     if (phase === 'home') startRun();

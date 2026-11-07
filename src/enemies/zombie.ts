@@ -1,13 +1,15 @@
-import * as THREE from 'three';
+﻿import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { ZOMBIE_ATTACK, ZOMBIE_MODELS, ZOMBIE_MOVE, ZOMBIE_VISUAL as V, type ZombieModel } from '../config/zombies';
+import { ZOMBIE_ATTACK, ZOMBIE_HURT as H, ZOMBIE_MODELS, ZOMBIE_MOVE, ZOMBIE_STATS, ZOMBIE_VISUAL as V, type ZombieModel } from '../config/zombies';
 import { characterMaterial } from '../render/materials';
 import { patchVat, vatUniforms } from '../render/vat';
 
 const urls = import.meta.glob('../assets/quaternius-zombies/*.gltf', { query: '?url', import: 'default', eager: true }) as Record<string, string>;
 
-export type ZombieState = 'idle' | 'walk' | 'attack' | 'hit';
+export type ZombieState = 'idle' | 'walk' | 'attack' | 'hit' | 'death';
+/** Animations jouées une seule fois (elles restent sur leur dernière image). */
+const ONCE: ZombieState[] = ['hit', 'death'];
 const STATES = Object.keys(V.clips) as ZombieState[];
 
 /** Une animation pré-calculée : première ligne dans la texture, nombre d'images, durée (s). */
@@ -117,7 +119,7 @@ export async function loadZombieLibrary() {
       for (const row of c.rows) { data.set(row, y * width * 4); y++; }
     }
     const material = characterMaterial({ map: b.srcMat.map, color: b.srcMat.color, side: b.srcMat.side });
-    patchVat(material, 'zombie');
+    patchVat(material, 'zombie', H.flashIntensity);
     const depthMaterial = new THREE.MeshDepthMaterial();
     patchVat(depthMaterial, 'zombie-depth');
     lib[b.id] = { geometry: b.geometry, material, depthMaterial, scale: b.scale, clips };
@@ -153,6 +155,20 @@ export class Zombie {
   attackDone = true;
   /** Temps passé dans l'état courant (évite les allers-retours marche / arrêt). */
   stateTime = 0;
+  /** Points de vie ; à 0, il meurt (animation, puis le corps s'enfonce dans le sol). */
+  hp: number = ZOMBIE_STATS.hp;
+  /** Recul subi (tangent), qui s'amortit. */
+  readonly knockVel = new THREE.Vector3();
+  /** Flash blanc restant (0 à 1). */
+  flash = 0;
+  /** Temps restant de réaction au coup (n'avance ni ne frappe). */
+  stagger = 0;
+  /** Mort : temps écoulé depuis la mort, et enfoncement actuel dans le sol (m). */
+  deadTime = -1;
+  sink = 0;
+  /** Vrai quand le corps a fini de s'enfoncer : la horde le retire. */
+  gone = false;
+  get dead() { return this.deadTime >= 0; }
   private animSpeed = 1 + (Math.random() * 2 - 1) * V.animJitter;
   /** Temps dans l'animation courante, et dans la précédente (fondu). */
   private time = Math.random() * 3;
@@ -164,8 +180,9 @@ export class Zombie {
 
   constructor(readonly kind: ZombieKind, readonly model: ZombieModel) {}
 
-  play(state: ZombieState) {
-    if (this.state === state) return;
+  play(state: ZombieState, force = false) {
+    if (this.state === state && !force) return;
+    if (this.dead && state !== 'death') return; // un mort ne se relève pas
     this.prevState = this.state;
     this.prevTime = this.time;
     this.fade = 0;
@@ -173,6 +190,26 @@ export class Zombie {
     this.time = 0;
     this.stateTime = 0;
     if (state === 'attack') this.attackDone = false;
+  }
+
+  /**
+   * Encaisse un coup venant de la direction dir (tangente, du tireur vers le zombie).
+   * Renvoie true si le coup le tue.
+   */
+  damage(amount: number, dir: THREE.Vector3) {
+    if (this.dead) return false;
+    this.hp -= amount;
+    this.flash = 1;
+    const killed = this.hp <= 0;
+    this.knockVel.copy(dir).multiplyScalar(H.knockSpeed * (killed ? H.deathKnock : 1));
+    if (killed) {
+      this.deadTime = 0;
+      this.play('death');
+    } else {
+      this.stagger = H.stagger;
+      this.play('hit', true); // relancée même s'il était déjà en train de réagir
+    }
+    return killed;
   }
 
   /** Tourne progressivement vers une cible, dans le plan tangent. */
@@ -195,6 +232,17 @@ export class Zombie {
     this.prevTime += dt * this.animSpeed;
     this.fade = Math.min(1, this.fade + dt / V.fade);
     this.stateTime += dt;
+    this.flash = Math.max(0, this.flash - dt / H.flashTime);
+    this.stagger = Math.max(0, this.stagger - dt);
+    // Mort : couché le temps de l'animation et un peu plus, puis il s'enfonce dans le sol
+    if (this.dead) {
+      this.deadTime += dt;
+      const lie = c.duration + H.corpseTime;
+      if (this.deadTime > lie) {
+        this.sink = Math.min(1, (this.deadTime - lie) / H.sinkTime) * H.sinkDepth;
+        if (this.deadTime > lie + H.sinkTime) this.gone = true;
+      }
+    }
     // Moment du coup : passage de la phase de l'attaque sur hitAt ; fin de cycle = coup terminé
     this.hitNow = false;
     if (this.state === 'attack') {
@@ -208,7 +256,8 @@ export class Zombie {
 
   private row(state: ZombieState, t: number) {
     const c = this.kind.clips[state];
-    return c.start + (Math.floor((t / c.duration) * c.frames) % c.frames);
+    const f = Math.floor((t / c.duration) * c.frames);
+    return c.start + (ONCE.includes(state) ? Math.min(f, c.frames - 1) : f % c.frames);
   }
 
   /** (ligne A, ligne B, mélange) pour le shader : fondu de l'animation précédente vers la courante. */
@@ -216,6 +265,6 @@ export class Zombie {
     const cur = this.row(this.state, this.time);
     if (this.fade >= 1) { out[o] = cur; out[o + 1] = cur; out[o + 2] = 0; }
     else { out[o] = this.row(this.prevState, this.prevTime); out[o + 1] = cur; out[o + 2] = this.fade; }
-    out[o + 3] = 0;
+    out[o + 3] = -this.flash; // négatif ou nul : instance de foule (voir render/vat.ts), valeur = flash blanc
   }
 }
