@@ -243,6 +243,7 @@ function goHome() {
   healthHud.setVisible(false);
   deathBanner.update(-1, 0);
   if (audio.ctx && audio.music) audio.music.gain.setTargetAtTime(AUDIO.music.volume, audio.ctx.currentTime, 0.4);
+  music.endRun();
   home.show();
 }
 
@@ -268,6 +269,7 @@ function startRun() {
     stats: { ...playerStats, maxHp: health.max }, weapons: { blonde: WEAPONS.blonde }, zombie: ZOMBIE_STATS,
   });
   spawnStartZombies();
+  music.startRun('abbaye');
   renderer.domElement.requestPointerLock?.()?.catch?.(() => {});
 }
 function onDeath() {
@@ -324,7 +326,10 @@ function frame(now: number) {
   // Accueil et mort : le joueur ne contrôle pas le Buveur (la caméra reste libre en jeu)
   const moveInput = phase === 'run' && !paused ? input : NO_MOVE;
   levelUp.input(input.moveX, input.jumpPressed);
-  if (phase === 'run' && !paused && progression.pending > 0) openLevelUp();
+  if (phase === 'run' && !paused && progression.pending > 0) {
+    audio.play(AUDIO.levelUp.sample, AUDIO.levelUp.volume);
+    openLevelUp();
+  }
   // Accueil : la caméra tourne lentement autour du Buveur
   if (phase === 'home') player.camFwd.applyAxisAngle(player.upDir, HOME_CAMERA.orbitSpeed * realDt);
   player.feed(moveInput);

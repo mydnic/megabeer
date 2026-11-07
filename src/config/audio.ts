@@ -5,7 +5,9 @@ export const AUDIO = {
   sfx: 0.9,
   ambience: 0.55,
   /**
-   * Musique (Zombie Survival, Modal Journey : maison, Suno ; les autres CC0, RandomMind, opengameart.org) : morceaux de src/assets/music enchaînés en fondu.
+   * Musique (Zombie Survival, Modal Journey : maison, Suno ; les autres CC0, RandomMind, opengameart.org).
+   * Accueil : `playlist` enchaînée en fondu. Run : un morceau tiré au hasard dans src/assets/music/<map>/
+   * (déposer un mp3 dans le dossier suffit), joué en boucle toute la run.
    * Combat (vagues d'ennemis, boss) : un morceau de `combat` au hasard (Boss songs : maison, Suno).
    */
   music: {
@@ -35,6 +37,8 @@ export const AUDIO = {
    */
   /** Cartes de level-up (générés avec ElevenLabs, validés à l'écoute) : survol et choix. */
   cards: { hover: 'card_hover', hoverVolume: 0.5, pick: 'card_pick', pickVolume: 0.7 },
+  /** Level-up : gorgée et "aaah" satisfait (ElevenLabs), à l'ouverture de l'écran des cartes. */
+  levelUp: { sample: 'levelup', volume: 0.7 },
   pickup: { sample: 'bubble', volume: 0.4, minGap: 0.045, pitchStep: 0.05, pitchMax: 1.7, comboReset: 0.5 },
   land: { volume: 0.55, perSpeed: 0.05, max: 1 },
   /** Tintement de la pinte au saut et à la réception. */
