@@ -62,6 +62,10 @@ export class Zombie {
   private attackPhase = 0;
   /** Vrai pendant la frame où le coup arrive (le bras touche la cible). */
   hitNow = false;
+  /** Vrai quand le coup en cours est allé au bout de son animation (il peut changer d'état). */
+  attackDone = true;
+  /** Temps passé dans l'état courant (évite les allers-retours marche / arrêt). */
+  stateTime = 0;
   private mixer: THREE.AnimationMixer;
   private actions = {} as Record<ZombieState, THREE.AnimationAction>;
   private current?: ZombieState;
@@ -96,6 +100,8 @@ export class Zombie {
     if (this.current) this.actions[this.current].crossFadeTo(next, V.fade, false);
     this.current = state;
     this.state = state;
+    this.stateTime = 0;
+    if (state === 'attack') { this.attackDone = false; this.attackPhase = 0; }
   }
 
   /** Tourne progressivement vers une cible, dans le plan tangent. */
@@ -114,6 +120,7 @@ export class Zombie {
     if (this.state === 'walk') this.actions.walk.timeScale = Math.max(0.3, this.walkSpeed / ZOMBIE_MOVE.walkAnimAt);
     else this.actions.walk.timeScale = this.animSpeed;
     this.mixer.update(dt);
+    this.stateTime += dt;
     // Moment du coup : passage de la phase de l'attaque sur hitAt
     this.hitNow = false;
     if (this.state === 'attack') {
@@ -121,6 +128,7 @@ export class Zombie {
       const phase = (a.time / a.getClip().duration) % 1;
       const h = ZOMBIE_ATTACK.hitAt;
       if ((this.attackPhase < h && phase >= h) || (phase < this.attackPhase && (phase >= h || this.attackPhase < h))) this.hitNow = true;
+      if (phase < this.attackPhase) this.attackDone = true; // fin de cycle
       this.attackPhase = phase;
     } else this.attackPhase = 0;
     const up = this.up.copy(this.pos).normalize();

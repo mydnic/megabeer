@@ -43,6 +43,11 @@ export function createHorde(scene: THREE.Scene, lib: ZombieLibrary, player: Play
     want.addScaledVector(up, -want.dot(up));
     const dist = want.length();
     z.turnToward(target, dt);
+    // Un coup commencé va au bout ; il enchaîne tant que le joueur reste un peu au-delà de la portée
+    if (z.state === 'attack' && (!z.attackDone || dist < V.attackRange + V.attackExit)) {
+      z.attackDone = z.attackDone && dist >= V.attackRange + V.attackExit;
+      return;
+    }
     if (dist < V.attackRange) { z.play('attack'); return; }
     // Avance dans la direction du regard (il tourne, il ne glisse pas de côté)
     want.normalize();
@@ -66,7 +71,9 @@ export function createHorde(scene: THREE.Scene, lib: ZombieLibrary, player: Play
       z.detourSide = Math.random() < 0.5 ? -1 : 1;
     }
     z.walkSpeed = dt > 0 ? moved / dt : 0;
-    z.play(z.walkSpeed > 0.3 ? 'walk' : 'idle');
+    // Marche / arrêt : on garde l'état un minimum de temps (pas de clignotement d'animation)
+    const next = z.walkSpeed > 0.3 ? 'walk' : 'idle';
+    if (z.state === 'attack' || z.stateTime > V.minStateTime) z.play(next);
   }
 
   /** Écarte les zombies trop proches entre eux, et du joueur (les corps sont solides). */

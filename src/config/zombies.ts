@@ -1,4 +1,4 @@
-// Zombies (GDD section 11). Modèles CC0 Quaternius, passés en cel-shading comme le Buveur.
+﻿// Zombies (GDD section 11). Modèles CC0 Quaternius, passés en cel-shading comme le Buveur.
 
 /** Les 4 variantes de zombie de base : fichier glTF et taille en jeu (mètres). */
 export const ZOMBIE_MODELS = {
@@ -49,9 +49,6 @@ export const HIT_FEEDBACK = {
   shake: 0.55,
   shakeAmplitude: 0.35,
   shakeDecay: 2.5,
-  /** Son : groupe Kenney et volume. */
-  sound: 'impactPunch_heavy',
-  volume: 0.7,
 } as const;
 
 export const ZOMBIE_VISUAL = {
@@ -69,6 +66,10 @@ export const ZOMBIE_VISUAL = {
   turnRate: 5,
   /** Distance au joueur à laquelle il frappe (m). */
   attackRange: 1.7,
+  /** Marge au-delà de la portée avant d'arrêter d'enchaîner les coups (m). */
+  attackExit: 0.6,
+  /** Temps minimum dans un état avant de passer de la marche à l'arrêt ou l'inverse (s). */
+  minStateTime: 0.3,
   /** Distance à laquelle il remarque le joueur et se tourne vers lui (m). */
   noticeRange: 14,
   /** Variation de vitesse d'animation par zombie (+-), pour qu'ils ne bougent pas en rythme. */
