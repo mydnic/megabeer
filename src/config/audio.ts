@@ -1,17 +1,17 @@
-// Sons du Buveur et ambiances (aucune dépendance three.js). Volumes de 0 à 1.
+﻿// Sons du Buveur et ambiances (aucune dépendance three.js). Volumes de 0 à 1.
 
 export const AUDIO = {
   master: 0.8,
   sfx: 0.9,
   ambience: 0.55,
   /**
-   * Musique (Modal Journey : maison, Suno ; les autres CC0, RandomMind, opengameart.org) : morceaux de src/assets/music enchaînés en fondu.
+   * Musique (Zombie Survival : maison, Suno ; les autres CC0, RandomMind, opengameart.org) : morceaux de src/assets/music enchaînés en fondu.
    * À venir : une piste nerveuse pour les vagues d'ennemis et les boss.
    */
   music: {
     volume: 0.35,
     fade: 4,
-    playlist: ['modal_journey.mp3', 'tavern_old_tower_inn.mp3', 'exploration.mp3'],
+    playlist: ['zombie_survival.mp3', 'zombie_survival_alt.mp3', 'tavern_old_tower_inn.mp3', 'exploration.mp3'],
   },
   /** Pas : volume, variation de hauteur (+-), et hauteur selon le sol. */
   footsteps: {
