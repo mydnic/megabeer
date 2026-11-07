@@ -540,6 +540,22 @@ def build_clips(arm):
     rest = idle[0]
     make_clip(arm, 'land', 12, {0: crouch, 3: crouch, 12: rest}, loop=False)
 
+    # ---- THROW : lancer de la main gauche, joué par-dessus les autres animations (additif dans le jeu).
+    # Seuls le bras gauche et un peu le buste bougent ; image 0 = référence du mélange additif (0,6 s)
+    base = arms()
+    def throw_pose(ua, fa, spine_z=0.0):
+        return merge(base, {
+            'upperarm.L': {'r': ua}, 'forearm.L': {'r': fa}, 'hand.L': {'r': (0, 0, 0)},
+            'spine': {'r': (0, 0, spine_z)},
+        })
+    make_clip(arm, 'throw', 18, {
+        0: throw_pose((0, -6, 4), (-12, 0, 0)),
+        4: throw_pose((70, -35, 10), (-95, 0, 0), spine_z=12),     # armé : bras en arrière, coude plié
+        7: throw_pose((-125, -20, 0), (-15, 0, 0), spine_z=-14),   # lâcher : bras tendu vers l'avant et le haut
+        11: throw_pose((-55, -10, 0), (-35, 0, 0), spine_z=-8),    # accompagnement
+        18: throw_pose((0, -6, 4), (-12, 0, 0)),
+    }, loop=False)
+
     # ---- DEATH : il encaisse, la pinte lui échappe, les genoux lâchent, il tombe sur le dos (1,4 s)
     recoil = merge(arms(), {
         'hips': {'r': (-8, 0, 0)},
@@ -666,6 +682,8 @@ if RENDER_DIR:
     shoot('jump_face.png', -25, 5, action='jump', frame=8)
     shoot('fall_face.png', -25, 5, action='fall', frame=4)
     shoot('idle_dos.png', 200, 5, action='idle', frame=15)
+    for f in (4, 7, 11):
+        shoot(f'throw_{f:02d}.png', 60, 5, action='throw', frame=f)
     for f in (5, 14, 24, 30, 42):
         shoot(f'death_{f:02d}.png', 70, 10, action='death', frame=f)
     print('RENDERS_OK', RENDER_DIR)

@@ -7,6 +7,8 @@ import { Health } from './player/health';
 import { PintProp } from './player/pintProp';
 import { createDeathBanner } from './ui/deathBanner';
 import { createHomeScreen } from './ui/homeScreen';
+import { createBottles } from './weapons/bottles';
+import { createBlonde } from './weapons/blonde';
 import { DEATH_BANNER, HOME_CAMERA } from './config/player';
 import { DEATH } from './config/buveur';
 import type { InputState } from './core/input';
@@ -119,6 +121,20 @@ pint.onImpact = (p, speed) => {
   pintFirstImpact = false;
   audio.play(speed > 3 ? 'impactGlass_medium' : 'impactGlass_light', Math.min(0.6, 0.15 + speed * 0.06), jitter(0.08));
 };
+// --- Arme de départ : la Blonde
+const bottles = await createBottles(scene);
+const blonde = createBlonde({
+  bottles,
+  zombies: () => horde.zombies,
+  playerPos: () => player.pos,
+  throwFromHand: (delay, cb) => buveur.throwFromHand(delay, cb),
+  groundAt: (p) => player.supportAt(p, p.length()),
+  onGround: (p) => {
+    buveur.splashAt(p, 10);
+    audio.play('impactGlass_medium', 0.35, jitter(0.1));
+  },
+});
+
 const deathBanner = createDeathBanner(() => goHome());
 let deadSince = -1; // temps réel écoulé depuis la mort (-1 : vivant)
 let runTime = 0;    // durée de la run en cours (s de jeu)
@@ -136,6 +152,7 @@ function goHome() {
   pint.hide();
   horde.clear();
   horde.setPassive(false);
+  blonde.reset();
   rig.setFocus(HOME_CAMERA);
   pipeline.fade.amount = 0;
   healthHud.setVisible(false);
@@ -187,6 +204,8 @@ function timeScale() {
   if (deadSince < S.hold) return S.scale;
   return THREE.MathUtils.lerp(S.scale, 1, Math.min(1, (deadSince - S.hold) / S.ramp));
 }
+/** Ralenti de développement (window.__game.setTimeScale), 1 en jeu. */
+let devTimeScale = 1;
 const NO_MOVE: InputState = { moveX: 0, moveY: 0, lookX: 0, lookY: 0, mouseDX: 0, mouseDY: 0, zoom: 0, jump: false, jumpPressed: false };
 
 // --- Debug (F3)
@@ -205,7 +224,7 @@ function frame(now: number) {
   last = now;
   renderer.info.reset();
   if (deadSince >= 0) deadSince += realDt;
-  const dt = realDt * timeScale();
+  const dt = realDt * timeScale() * devTimeScale;
   const input = readInput();
   // Accueil et mort : le joueur ne contrôle pas le Buveur (la caméra reste libre en jeu)
   const moveInput = phase === 'run' ? input : NO_MOVE;
@@ -222,7 +241,8 @@ function frame(now: number) {
   health.update(dt);
   healthHud.update(realDt);
   if (phase === 'run' && health.dead) onDeath();
-  if (phase === 'run') runTime += dt;
+  if (phase === 'run') { runTime += dt; blonde.update(dt); }
+  blonde.updateBottles(dt);
   if (phase === 'dead') deathBanner.update(deadSince, runTime);
   // Espace ou bouton A : Jouer sur l'accueil, Continuer sur le bilan de mort
   if (input.jumpPressed) {
@@ -262,7 +282,7 @@ function frame(now: number) {
 requestAnimationFrame(frame);
 
 if (import.meta.env.DEV) {
-  Object.assign(window, { __game: { player, rig, camera, buveur, sky, heightAt, THREE, pipeline, renderer, decor, scene, music, horde, health } });
+  Object.assign(window, { __game: { player, rig, camera, buveur, sky, heightAt, THREE, pipeline, renderer, decor, scene, music, horde, health, blonde, bottles, setTimeScale: (k: number) => { devTimeScale = k; } } });
   const models = ['basic', 'chubby', 'arm', 'ribcage'] as const;
   const spawnRing = (n: number, rMin: number, rMax: number) => {
     const up = player.pos.clone().normalize();
