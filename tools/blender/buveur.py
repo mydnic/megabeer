@@ -256,7 +256,8 @@ def build_body():
     ellipsoid('torse', (0, 0.02, 1.25), (0.32, 0.25, 0.22), 'marcel', 'chest')
     ellipsoid('poitrail', (0, -0.08, 1.33), (0.16, 0.12, 0.10), 'peau', 'chest')
     for s, side in ((1, 'L'), (-1, 'R')):
-        ellipsoid(f'epaule.{side}', (0.29 * s, 0.01, 1.35), (0.105, 0.10, 0.10), 'peau', 'chest')
+        # Haut du bras arrondi, du même diamètre que le bras et qui bouge avec lui (pas de boule)
+        ellipsoid(f'epaule.{side}', (0.30 * s, 0.0, 1.36), (0.089, 0.088, 0.088), 'peau', f'upperarm.{side}')
     limb('cou', (0, 0.0, 1.36), (0, 0.0, 1.50), 0.10, 0.10, 'peau', 'head')
 
     # Bras gauche, ballant
