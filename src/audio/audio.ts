@@ -1,4 +1,5 @@
 ﻿import { AUDIO as A } from '../config/audio';
+import type { VolumeChannel } from '../core/settings';
 
 const sampleUrls = import.meta.glob(['../assets/kenney-impact-sounds/**/*.ogg', '../assets/sfx/*.{wav,ogg,mp3}'], {
   query: '?url', import: 'default', eager: true,
@@ -14,6 +15,10 @@ export class AudioEngine {
   sfx?: GainNode;
   ambience?: GainNode;
   music?: GainNode;
+  ui?: GainNode;
+  /** Volumes du joueur (Options), un gain par canal entre les bus et la sortie. */
+  private user: Record<VolumeChannel, number> = { ...A.userVolume };
+  private userGain = new Map<VolumeChannel, GainNode>();
   private buffers = new Map<string, AudioBuffer[]>();
   private lastVariant = new Map<string, number>();
   private noise?: AudioBuffer;
@@ -40,15 +45,24 @@ export class AudioEngine {
     const master = ctx.createGain();
     master.gain.value = A.master;
     master.connect(ctx.destination);
+    for (const ch of ['music', 'fx', 'ui'] as const) {
+      const g = ctx.createGain();
+      g.gain.value = this.user[ch];
+      g.connect(master);
+      this.userGain.set(ch, g);
+    }
     this.sfx = ctx.createGain();
     this.sfx.gain.value = A.sfx;
-    this.sfx.connect(master);
+    this.sfx.connect(this.userGain.get('fx')!);
     this.ambience = ctx.createGain();
     this.ambience.gain.value = A.ambience;
-    this.ambience.connect(master);
+    this.ambience.connect(this.userGain.get('fx')!);
     this.music = ctx.createGain();
     this.music.gain.value = A.music.volume;
-    this.music.connect(master);
+    this.music.connect(this.userGain.get('music')!);
+    this.ui = ctx.createGain();
+    this.ui.gain.value = A.ui;
+    this.ui.connect(this.userGain.get('ui')!);
     // Bruit blanc réutilisable (vent, souffle du saut)
     const n = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
     const d = n.getChannelData(0);
@@ -74,10 +88,18 @@ export class AudioEngine {
 
   get noiseBuffer() { return this.noise; }
 
-  /** Joue une variante au hasard du groupe (sans répéter la précédente). */
-  play(group: string, volume: number, rate = 1, pan = 0) {
+  /** Volume du joueur pour un canal (0 à 1), appliqué tout de suite si l'audio tourne. */
+  setUserVolume(ch: VolumeChannel, v: number) {
+    this.user[ch] = v;
+    const g = this.userGain.get(ch);
+    if (g && this.ctx) g.gain.setTargetAtTime(v, this.ctx.currentTime, 0.03);
+  }
+
+  /** Joue une variante au hasard du groupe (sans répéter la précédente), sur le bus effets ou interface. */
+  play(group: string, volume: number, rate = 1, pan = 0, bus: 'fx' | 'ui' = 'fx') {
     const ctx = this.ctx, list = this.buffers.get(group);
-    if (!ctx || !list?.length || !this.sfx) return;
+    const out = bus === 'ui' ? this.ui : this.sfx;
+    if (!ctx || !list?.length || !out) return;
     let i = Math.floor(Math.random() * list.length);
     if (list.length > 1 && i === this.lastVariant.get(group)) i = (i + 1) % list.length;
     this.lastVariant.set(group, i);
@@ -88,7 +110,7 @@ export class AudioEngine {
     g.gain.value = volume;
     const p = ctx.createStereoPanner();
     p.pan.value = pan;
-    src.connect(g).connect(p).connect(this.sfx);
+    src.connect(g).connect(p).connect(out);
     src.start();
   }
 

@@ -4,6 +4,13 @@ export const AUDIO = {
   master: 0.8,
   sfx: 0.9,
   ambience: 0.55,
+  /** Sons d'interface (cartes, level-up). */
+  ui: 1,
+  /**
+   * Volumes réglés par le joueur dans Options (0 à 1), par-dessus les volumes ci-dessus : musique,
+   * effets (sons du jeu et ambiances), interface. Valeurs par défaut au premier lancement.
+   */
+  userVolume: { music: 1, fx: 1, ui: 1 },
   /**
    * Musique (Zombie Survival, Modal Journey : maison, Suno ; les autres CC0, RandomMind, opengameart.org).
    * Menu (accueil) : `menu` en boucle. Run : un morceau tiré au hasard dans src/assets/music/<map>/

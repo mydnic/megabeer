@@ -37,6 +37,8 @@ import { createDecor } from './world/decor';
 import { AudioEngine } from './audio/audio';
 import { createAmbience } from './audio/ambience';
 import { createMusic } from './audio/music';
+import { loadSettings, saveSettings } from './core/settings';
+import { createOptionsPanel } from './ui/optionsPanel';
 import { AUDIO } from './config/audio';
 
 // --- Rendu
@@ -91,6 +93,9 @@ function spawnStartZombies() {
 
 // --- Sons (démarrent au premier clic ou à la première touche)
 const audio = new AudioEngine();
+const settings = loadSettings();
+for (const ch of ['music', 'fx', 'ui'] as const) audio.setUserVolume(ch, settings.volume[ch]);
+const options = createOptionsPanel(settings, (ch, v) => audio.setUserVolume(ch, v), () => saveSettings(settings));
 const ambience = createAmbience(audio);
 const music = createMusic(audio);
 const jitter = (j: number) => 1 + (Math.random() * 2 - 1) * j;
@@ -166,13 +171,13 @@ function playPickup() {
 }
 // --- Level-up : pause et 3 cartes (améliorations de la Blonde, avec rareté)
 const levelUp = createLevelUpScreen((card) => {
-  audio.play(AUDIO.cards.pick, AUDIO.cards.pickVolume, jitter(0.03));
+  audio.play(AUDIO.cards.pick, AUDIO.cards.pickVolume, jitter(0.03), 0, 'ui');
   applyCard(card, blonde.mods);
   progression.pending--;
   runLog.event('cardPicked', card.upgrade.id, RARITIES[card.tier].id, blonde.mods.level);
   if (progression.pending > 0) openLevelUp();
   else renderer.domElement.requestPointerLock?.()?.catch?.(() => {});
-}, () => audio.play(AUDIO.cards.hover, AUDIO.cards.hoverVolume, jitter(0.05)));
+}, () => audio.play(AUDIO.cards.hover, AUDIO.cards.hoverVolume, jitter(0.05), 0, 'ui'));
 function openLevelUp() {
   const cards = rollCards(LEVEL_UP_SCREEN.cards, playerStats.luck);
   runLog.event('cardsOffered', ...cards.map((c) => `:${RARITIES[c.tier].id}`));
@@ -214,7 +219,7 @@ let deadSince = -1; // temps réel écoulé depuis la mort (-1 : vivant)
 let runTime = 0;    // durée de la run en cours (s de jeu)
 /** Accueil (le monde tourne en fond), run en cours, ou mort (bandeau puis bilan). */
 let phase: 'home' | 'run' | 'dead' = 'home';
-const home = createHomeScreen(() => startRun());
+const home = createHomeScreen(() => startRun(), () => options.show(() => home.focus()));
 
 /** Retour à l'accueil : le monde revient à l'état de départ, sans zombies, sans recharger la page. */
 function goHome() {
@@ -327,7 +332,7 @@ function frame(now: number) {
   const moveInput = phase === 'run' && !paused ? input : NO_MOVE;
   levelUp.input(input.moveX, input.jumpPressed);
   if (phase === 'run' && !paused && progression.pending > 0) {
-    audio.play(AUDIO.levelUp.sample, AUDIO.levelUp.volume);
+    audio.play(AUDIO.levelUp.sample, AUDIO.levelUp.volume, 1, 0, 'ui');
     openLevelUp();
   }
   // Accueil : la caméra tourne lentement autour du Buveur
@@ -373,7 +378,7 @@ function frame(now: number) {
   if (phase === 'dead') deathBanner.update(deadSince, runTime, runKills);
   // Espace ou bouton A : Jouer sur l'accueil, Continuer sur le bilan de mort
   if (input.jumpPressed) {
-    if (phase === 'home') startRun();
+    if (phase === 'home') { if (!options.open) startRun(); }
     else if (paused) { /* géré par l'écran de level-up */ }
     else if (phase === 'dead' && deathBanner.ready) goHome();
   }

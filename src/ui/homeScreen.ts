@@ -15,6 +15,10 @@ const CSS = `
   transition: transform .08s; }
 .home-play:hover, .home-play:focus-visible { transform: scale(1.06); outline: none; }
 .home-play:active { transform: translateY(4px); box-shadow: 0 3px 0 #1a120c, inset 0 4px 0 rgba(255,255,255,.45); }
+.home-options { font: inherit; font-size: 22px; letter-spacing: .05em; color: #f3e6cf; cursor: pointer; margin-top: -2vh;
+  padding: 6px 26px 9px; border: 3px solid #1a120c; border-radius: 16px; background: rgba(42,22,8,.75);
+  box-shadow: 0 4px 0 #1a120c; transition: transform .08s; }
+.home-options:hover, .home-options:focus-visible { transform: scale(1.06); outline: none; background: rgba(90,58,28,.9); }
 .home-hint { color: #f3e6cf; font-size: 16px; letter-spacing: .04em; margin-top: -2vh;
   text-shadow: -2px 0 #1a120c, 2px 0 #1a120c, 0 -2px #1a120c, 0 2px #1a120c; }
 `;
@@ -23,16 +27,20 @@ const CSS = `
  * Écran d'accueil (GDD section 16) : au départ, un seul bouton, Jouer. Les autres (boutique,
  * skill tree, persos...) apparaîtront au fil des déblocages. Le monde tourne en fond.
  */
-export function createHomeScreen(onPlay: () => void) {
+export function createHomeScreen(onPlay: () => void, onOptions: () => void) {
   const style = document.createElement('style');
   style.textContent = CSS;
   document.head.appendChild(style);
   const el = document.createElement('div');
   el.className = 'home';
-  el.innerHTML = `<div class="home-logo">MEGABEER</div><button class="home-play">Jouer</button><div class="home-hint">Espace ou A</div>`;
+  el.innerHTML = `<div class="home-logo">MEGABEER</div><button class="home-play">Jouer</button><div class="home-hint">Espace ou A</div><button class="home-options">Options</button>`;
   document.body.appendChild(el);
   const btn = el.querySelector<HTMLButtonElement>('.home-play')!;
   btn.addEventListener('click', (e) => { e.stopPropagation(); onPlay(); });
+  const opt = el.querySelector<HTMLButtonElement>('.home-options')!;
+  opt.addEventListener('click', (e) => { e.stopPropagation(); onOptions(); });
+  // Espace sur Options ouvre le panneau, sans lancer la run
+  opt.addEventListener('keydown', (e) => { if (e.code === 'Space' || e.code === 'Enter') e.stopPropagation(); });
 
   return {
     get visible() { return !el.classList.contains('off'); },
@@ -42,5 +50,7 @@ export function createHomeScreen(onPlay: () => void) {
       btn.focus({ preventScroll: true });
     },
     hide() { el.classList.add('off'); },
+    /** Remet le focus sur Jouer (après la fermeture d'un panneau). */
+    focus() { btn.focus({ preventScroll: true }); },
   };
 }
