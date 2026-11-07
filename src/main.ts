@@ -166,12 +166,13 @@ function playPickup() {
 }
 // --- Level-up : pause et 3 cartes (améliorations de la Blonde, avec rareté)
 const levelUp = createLevelUpScreen((card) => {
+  audio.play(AUDIO.cards.pick, AUDIO.cards.pickVolume, jitter(0.03));
   applyCard(card, blonde.mods);
   progression.pending--;
   runLog.event('cardPicked', card.upgrade.id, RARITIES[card.tier].id, blonde.mods.level);
   if (progression.pending > 0) openLevelUp();
   else renderer.domElement.requestPointerLock?.()?.catch?.(() => {});
-}, () => {});
+}, () => audio.play(AUDIO.cards.hover, AUDIO.cards.hoverVolume, jitter(0.05)));
 function openLevelUp() {
   const cards = rollCards(LEVEL_UP_SCREEN.cards, playerStats.luck);
   runLog.event('cardsOffered', ...cards.map((c) => `:${RARITIES[c.tier].id}`));
