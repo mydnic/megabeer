@@ -1,0 +1,58 @@
+import { RUN_HUD as R } from '../config/hud';
+
+const CSS = `
+.run-hud { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 10; pointer-events: none;
+  user-select: none; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  font-family: 'Lilita One', system-ui, sans-serif; color: #fff; }
+.run-time { font-size: 40px; line-height: 1; letter-spacing: .04em; font-variant-numeric: tabular-nums;
+  text-shadow: -3px 0 #1a120c, 3px 0 #1a120c, 0 -3px #1a120c, 0 3px #1a120c, 3px 3px #1a120c, -3px 3px #1a120c,
+    3px -3px #1a120c, -3px -3px #1a120c, 0 6px 0 #1a120c; }
+.run-time.closing { color: #ff6a48; }
+.run-kills { display: flex; align-items: center; gap: 6px; padding: 2px 12px 3px 8px; border-radius: 14px;
+  background: rgba(26,18,12,.55); font-size: 20px; line-height: 1; font-variant-numeric: tabular-nums;
+  text-shadow: -2px 0 #1a120c, 2px 0 #1a120c, 0 -2px #1a120c, 0 2px #1a120c; }
+.run-kills svg { width: 22px; height: 22px; flex: none; }
+.run-kills.pop { animation: run-pop .22s ease-out; }
+@keyframes run-pop { 0% { transform: scale(1) } 40% { transform: scale(1.18) } 100% { transform: scale(1) } }
+`;
+
+/** Tête de zombie (crâne vert) pour le compteur de kills. */
+const SKULL = `<svg viewBox="0 0 24 24"><path d="M12 2C6.9 2 3.5 5.6 3.5 10.2c0 2.9 1.3 4.8 3 5.9V19a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2v-2.9c1.7-1.1 3-3 3-5.9C20.5 5.6 17.1 2 12 2z" fill="#8fc45a" stroke="#1a120c" stroke-width="2"/><circle cx="8.6" cy="11" r="2.3" fill="#1a120c"/><circle cx="15.4" cy="11" r="2.3" fill="#1a120c"/><path d="M10 17v3M14 17v3" stroke="#1a120c" stroke-width="1.6"/></svg>`;
+
+/** Chrono de la run (temps de jeu, figé en pause) et compteur de zombies tués, en haut au centre. */
+export function createRunHud() {
+  const style = document.createElement('style');
+  style.textContent = CSS;
+  document.head.appendChild(style);
+  const el = document.createElement('div');
+  el.className = 'run-hud';
+  el.innerHTML = `<div class="run-time">00:00</div><div class="run-kills">${SKULL}<span>0</span></div>`;
+  document.body.appendChild(el);
+  const time = el.querySelector<HTMLElement>('.run-time')!;
+  const kills = el.querySelector<HTMLElement>('.run-kills')!;
+  const killsText = kills.querySelector('span')!;
+  let shownSec = -1, shownKills = -1, lastPop = 0;
+
+  return {
+    setVisible(v: boolean) { el.style.display = v ? '' : 'none'; },
+    update(runTime: number, killCount: number) {
+      const s = Math.floor(runTime);
+      if (s !== shownSec) {
+        shownSec = s;
+        time.textContent = `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+        time.classList.toggle('closing', runTime >= R.closingTime);
+      }
+      if (killCount !== shownKills) {
+        const now = performance.now() / 1000;
+        if (killCount > shownKills && shownKills >= 0 && now - lastPop > R.killPopGap) {
+          lastPop = now;
+          kills.classList.remove('pop');
+          void kills.offsetWidth;
+          kills.classList.add('pop');
+        }
+        shownKills = killCount;
+        killsText.textContent = killCount.toLocaleString('fr');
+      }
+    },
+  };
+}

@@ -40,6 +40,7 @@ import { createMusic } from './audio/music';
 import { loadSettings, saveSettings } from './core/settings';
 import { createOptionsPanel } from './ui/optionsPanel';
 import { createPauseMenu } from './ui/pauseMenu';
+import { createRunHud } from './ui/runHud';
 import { AUDIO } from './config/audio';
 
 // --- Rendu
@@ -217,6 +218,8 @@ const hitDir = new THREE.Vector3(), hitUp = new THREE.Vector3(), hitPos = new TH
 const shards = createGlassShards(scene, (p) => player.supportAt(p, p.length()));
 const damageNumbers = createDamageNumbers(camera);
 let runKills = 0;
+const runHud = createRunHud();
+runHud.setVisible(false);
 
 const deathBanner = createDeathBanner(() => goHome());
 let deadSince = -1; // temps réel écoulé depuis la mort (-1 : vivant)
@@ -282,6 +285,7 @@ function goHome() {
   rig.setFocus(HOME_CAMERA);
   pipeline.fade.amount = 0;
   healthHud.setVisible(false);
+  runHud.setVisible(false);
   deathBanner.update(-1, 0);
   if (audio.ctx && audio.music) audio.music.gain.setTargetAtTime(AUDIO.music.volume, audio.ctx.currentTime, 0.4);
   music.endRun();
@@ -303,6 +307,7 @@ function startRun() {
   home.hide();
   healthHud.setVisible(true);
   alcoholHud.setVisible(true);
+  runHud.setVisible(true);
   player.reset(decor.spawn.dir, decor.spawn.facing);
   rig.setFocus(null);
   runLog.start({
@@ -410,6 +415,7 @@ function frame(now: number) {
     for (let i = 0; i < gained; i++) runLog.levelUp(progression.level - gained + 1 + i);
   });
   alcoholHud.update();
+  runHud.update(runTime, runKills);
   damageNumbers.update(realDt);
   if (phase === 'dead') deathBanner.update(deadSince, runTime, runKills);
   // Espace ou bouton A : Jouer sur l'accueil, Continuer sur le bilan de mort
