@@ -101,6 +101,8 @@ export class Zombie {
     want.addScaledVector(up, -want.dot(up));
     if (want.lengthSq() < 1e-6) return;
     want.normalize();
+    // Dos tourné pile à la cible : le mélange des deux directions s'annulerait, il pivote d'abord sur le côté
+    if (this.facing.dot(want) < -0.999) this.facing.cross(up).normalize();
     const k = 1 - Math.exp(-V.turnRate * dt);
     this.facing.lerp(want, k).addScaledVector(up, -this.facing.dot(up)).normalize();
   }
