@@ -10,6 +10,7 @@ import { loadZombieLibrary } from './enemies/zombieLibrary';
 import { createHordeView } from './enemies/hordeView';
 import { createXpDropsView } from './pickups/xpDropsView';
 import { createBottleView } from './weapons/bottleView';
+import { createEnemyShotsView } from './enemies/enemyShotsView';
 import { createGlassShards } from './fx/glassShards';
 import { createDamageNumbers } from './ui/damageNumbers';
 import { createRunLog } from './dev/runLog';
@@ -66,6 +67,7 @@ game.setThrowRig({ gesture: (rate) => buveur.throwGesture(rate), handPos: (out) 
 const hordeView = createHordeView(scene, zombieLib);
 const xpView = createXpDropsView(scene);
 const bottleView = await createBottleView(scene);
+const enemyShotsView = await createEnemyShotsView(scene);
 const groundAt = (p: THREE.Vector3) => game.player.supportAt(p, p.length());
 const shards = createGlassShards(scene, groundAt);
 const damageNumbers = createDamageNumbers(camera);
@@ -111,6 +113,7 @@ function frame(now: number) {
   hordeView.sync(game.horde.zombies);
   xpView.sync(game.xp.drops);
   bottleView.sync(projectiles());
+  enemyShotsView.sync(game.shots.shots);
   shards.update(dt);
   damageNumbers.update(realDt);
   pint.update(dt);

@@ -1,4 +1,4 @@
-﻿// Sons du Buveur et ambiances (aucune dépendance three.js). Volumes de 0 à 1.
+// Sons du Buveur et ambiances (aucune dépendance three.js). Volumes de 0 à 1.
 
 export const AUDIO = {
   master: 0.8,
@@ -49,6 +49,8 @@ export const AUDIO = {
   land: { volume: 0.55, perSpeed: 0.05, max: 1 },
   /** Tintement de la pinte au saut et à la réception. */
   clink: { volume: 0.12, chance: 0.6 },
+  /** Bouteilles lancées par les moines : souffle au lancer, verre brisé à l'impact (atténué avec la distance, m). */
+  enemyShot: { throwVolume: 0.12, breakVolume: 0.5, hearDist: 30 },
   /** Ambiances synthétisées : vent permanent, oiseaux le jour, chouette la nuit. */
   wind: { volume: 0.22 },
   birds: { volume: 0.05, everyMin: 0.8, everyMax: 3.5 },

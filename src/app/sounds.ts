@@ -1,3 +1,4 @@
+import type * as THREE from 'three';
 import { BELL_SOUND } from '../config/abbey';
 import { AUDIO } from '../config/audio';
 import { DEATH_BANNER } from '../config/player';
@@ -44,6 +45,13 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
   // Level-up : le "aaah" au premier écran d'une série, puis le son de la carte choisie
   game.events.on('levelUpOffered', ({ first }) => {
     if (first) audio.play(AUDIO.levelUp.sample, AUDIO.levelUp.volume, 1, 0, 'ui');
+  });
+  // Bouteilles des moines : plus fort quand ça tombe près du joueur
+  const near = (p: THREE.Vector3) => Math.max(0, 1 - p.distanceTo(game.player.pos) / AUDIO.enemyShot.hearDist);
+  game.events.on('enemyThrow', ({ shot }) => { const k = near(shot.from); if (k > 0) audio.whoosh(AUDIO.enemyShot.throwVolume * k); });
+  game.events.on('enemyShotLanded', ({ shot, hit }) => {
+    const k = hit ? 1 : near(shot.to);
+    if (k > 0) audio.play('impactGlass_heavy', AUDIO.enemyShot.breakVolume * k, jitter(0.08));
   });
   // Cloches de l'Abbaye : coups d'alerte, puis un coup plus grave au débarquement
   game.events.on('bellToll', () => audio.bell(BELL_SOUND.tollVolume, BELL_SOUND.pitch, BELL_SOUND.reverb));

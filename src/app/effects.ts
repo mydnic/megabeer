@@ -42,6 +42,11 @@ export function wireEffects(game: Game, d: Deps) {
     buveur.splashAt(pos, 10);
     shards.burst(pos, soft.copy(vel).normalize().multiplyScalar(0.3));
   });
+  // Bouteille d'un moine qui éclate au sol
+  game.events.on('enemyShotLanded', ({ shot }) => {
+    up.copy(shot.to).normalize();
+    shards.burst(numPos.copy(shot.to).addScaledVector(up, 0.25), soft.copy(shot.vel).normalize().multiplyScalar(0.3));
+  });
   game.events.on('playerHurt', ({ blocked }) => {
     if (blocked) return;
     buveur.hurt(HIT_FEEDBACK.flashColor, HIT_FEEDBACK.flashTime);
