@@ -1,7 +1,10 @@
 const CSS = `
 .home { position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column; align-items: center;
   justify-content: flex-end; padding-bottom: 14vh; gap: 4vh; font-family: 'Lilita One', system-ui, sans-serif;
-  background: linear-gradient(rgba(10,6,3,0) 45%, rgba(10,6,3,.55) 100%); transition: opacity .45s; }
+  background: radial-gradient(ellipse at 50% 35%, #5a3418 0%, #2a170b 55%, #120a05 100%); transition: opacity .45s; }
+.home::before { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .5;
+  background: radial-gradient(circle, rgba(255,214,120,.22) 0 3px, transparent 4px) 0 0 / 46px 46px,
+    radial-gradient(circle, rgba(255,214,120,.14) 0 2px, transparent 3px) 23px 23px / 46px 46px; }
 .home.off { opacity: 0; pointer-events: none; }
 .home-logo { position: absolute; top: 9vh; left: 0; right: 0; text-align: center; pointer-events: none;
   font-size: clamp(56px, 13vw, 170px); line-height: .9; letter-spacing: .03em; color: #ffc93a;
@@ -24,8 +27,10 @@ const CSS = `
 `;
 
 /**
- * Écran d'accueil (GDD section 16) : au départ, un seul bouton, Jouer. Les autres (boutique,
- * skill tree, persos...) apparaîtront au fil des déblocages. Le monde tourne en fond.
+ * Écran d'accueil provisoire (GDD section 16), séparé du jeu : fond opaque, le monde n'est ni montré
+ * ni rendu tant qu'on y est ; la run (et le Buveur sur la planète) commence avec Jouer. Sera remplacé
+ * par l'accueil dans l'espace. Boutons : Jouer, Options ; les autres (boutique, skill tree, persos...)
+ * apparaîtront au fil des déblocages.
  */
 export function createHomeScreen(onPlay: () => void, onOptions: () => void) {
   const style = document.createElement('style');

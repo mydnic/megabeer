@@ -91,6 +91,11 @@ export const DECOR_LAYOUT = {
   /** Nombre d'amas de ruines et de cimetières répartis sur la planète. */
   ruinClusters: 26,
   graveyardClusters: 16,
+  /**
+   * Départ de run : point tiré au hasard sur la planète, sur un terrain praticable (mêmes règles
+   * d'altitude et de pente que le décor) et sans aucun élément du décor dans ce rayon (m).
+   */
+  spawnClearance: 4,
 } as const;
 
 /** Lumières des lanternes la nuit : un petit nombre de vraies lumières, sur les plus proches. */

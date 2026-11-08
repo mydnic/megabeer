@@ -21,7 +21,7 @@ import { applyCard, rollCards } from './game/levelUpCards';
 import { LEVEL_UP_SCREEN, RARITIES } from './config/upgrades';
 import { WEAPONS } from './config/weapons';
 import { ZOMBIE_STATS } from './config/zombies';
-import { DEATH_BANNER, HOME_CAMERA, PLAYER_STATS } from './config/player';
+import { DEATH_BANNER, PLAYER_STATS } from './config/player';
 import { DEATH } from './config/buveur';
 import type { InputState } from './core/input';
 import { createHealthHud } from './ui/healthHud';
@@ -83,11 +83,11 @@ player.camFwd.copy(decor.spawn.facing);
 player.interpolate(1);
 const buveur = new BuveurVisual(scene);
 
-// --- Zombies (provisoire : 4 zombies sur le parvis, en attendant le spawn des vagues)
+// --- Zombies (provisoire : 4 zombies devant le joueur au départ, en attendant le spawn des vagues)
 const horde = createHorde(scene, await loadZombieLibrary(), player, decor.collider);
 function spawnStartZombies() {
-  const up = decor.spawn.dir.clone().normalize();
-  const fwd = decor.spawn.facing.clone();
+  const up = player.pos.clone().normalize();
+  const fwd = player.facing.clone();
   const right = new THREE.Vector3().crossVectors(fwd, up).normalize();
   const models = ['basic', 'chubby', 'arm', 'ribcage'] as const;
   models.forEach((m, i) => {
@@ -318,7 +318,6 @@ function goHome() {
   xpDrops.clear();
   alcoholHud.setVisible(false);
   playerStats.extraProjectiles = PLAYER_STATS.extraProjectiles;
-  rig.setFocus(HOME_CAMERA);
   pipeline.fade.amount = 0;
   healthHud.setVisible(false);
   runHud.setVisible(false);
@@ -329,8 +328,7 @@ function goHome() {
   home.show();
 }
 
-// Le jeu s'ouvre sur l'accueil
-rig.setFocus(HOME_CAMERA);
+// Le jeu s'ouvre sur l'accueil (le monde n'est pas rendu tant qu'on y est)
 healthHud.setVisible(false);
 alcoholHud.setVisible(false);
 home.show();
@@ -346,7 +344,9 @@ function startRun() {
   alcoholHud.setVisible(true);
   runHud.setVisible(true);
   weaponHud.setVisible(true);
-  player.reset(decor.spawn.dir, decor.spawn.facing);
+  // Le Buveur arrive à un endroit tiré au hasard sur la planète
+  const start = decor.randomSpawn();
+  player.reset(start.dir, start.facing);
   rig.setFocus(null);
   runLog.start({
     character: 'buveur', map: 'abbaye', difficulty: 'sobre',
@@ -415,7 +415,6 @@ function frame(now: number) {
     openLevelUp();
   }
   // Accueil : la caméra tourne lentement autour du Buveur
-  if (phase === 'home') player.camFwd.applyAxisAngle(player.upDir, HOME_CAMERA.orbitSpeed * realDt);
   player.feed(moveInput);
   acc += dt;
   while (acc >= STEP) { player.step(STEP, moveInput); acc -= STEP; }
@@ -479,7 +478,8 @@ function frame(now: number) {
   ambience.update(sky.day);
   // Mise au point de la profondeur de champ sur le perso
   pipeline.focusDistance = camera.position.distanceTo(focusPoint.copy(player.renderPos).addScaledVector(player.upDir, 1.1));
-  pipeline.render();
+  // Accueil : écran séparé, le monde n'est pas rendu
+  if (phase !== 'home') pipeline.render();
 
   fpsAcc += dt; fpsN++;
   if (fpsAcc > 0.5) { fps = fpsN / fpsAcc; fpsAcc = 0; fpsN = 0; }
@@ -508,6 +508,7 @@ if (import.meta.env.DEV) {
     models,
     cheats,
     spawn(model, n, rMin, rMax) {
+      if (phase !== 'run') return;
       const up = player.pos.clone().normalize();
       const a = new THREE.Vector3().crossVectors(up, player.facing).normalize(), b = player.facing.clone();
       for (let i = 0; i < n; i++) {
@@ -518,6 +519,7 @@ if (import.meta.env.DEV) {
       runLog.event('dev', 'spawn', model, n);
     },
     killAll(withXp) {
+      if (phase !== 'run') return;
       for (const z of horde.zombies) {
         if (z.dead) continue;
         hitDir.copy(z.pos).sub(player.pos).normalize();
@@ -527,17 +529,18 @@ if (import.meta.env.DEV) {
       }
       runLog.event('dev', 'killAll');
     },
-    clearZombies() { horde.clear(); runLog.event('dev', 'clear'); },
-    setPassive(v) { horde.setPassive(v); runLog.event('dev', 'passive', v ? 1 : 0); },
+    clearZombies() { if (phase === 'run') { horde.clear(); runLog.event('dev', 'clear'); } },
+    setPassive(v) { if (phase === 'run') { horde.setPassive(v); runLog.event('dev', 'passive', v ? 1 : 0); } },
     giveXp(xp) { if (phase === 'run') { gainXp(xp); runLog.event('dev', 'xp', xp); } },
     levelUp() { if (phase === 'run') { gainXp(Math.max(1, progression.next - progression.xp)); runLog.event('dev', 'level'); } },
-    heal() { health.reset(); runLog.event('dev', 'heal'); },
+    heal() { if (phase === 'run') { health.reset(); runLog.event('dev', 'heal'); } },
     die() { if (phase === 'run') { health.invuln = 0; health.damage(health.hp); runLog.event('dev', 'die'); } },
     toggleCombatMusic() {
       if (music.boss) music.endBoss();
-      else music.startBoss('test');
+      else if (phase === 'run') music.startBoss('test');
       return music.boss ? 'boss' : 'run';
     },
+    inRun: () => phase === 'run',
     setTimeScale(k) { devTimeScale = k; },
     status() {
       let alive = 0;

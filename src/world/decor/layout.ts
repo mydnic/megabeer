@@ -54,6 +54,25 @@ function suitable(d: THREE.Vector3) {
 const pick = <T>(r: () => number, list: readonly T[]) => list[Math.floor(r() * list.length)];
 
 /** Génère tout le décor de la planète Abbaye (reproductible : même graine, même planète). */
+/**
+ * Point de départ d'une run tiré au hasard : terrain praticable, et `isClear(dir)` (rien du décor
+ * autour). Regard dans une direction au hasard. Null si rien n'est trouvé (très improbable).
+ */
+export function randomSpawn(isClear: (dir: THREE.Vector3) => boolean) {
+  for (let i = 0; i < 400; i++) {
+    const u = Math.random() * 2 - 1, a = Math.random() * Math.PI * 2, s = Math.sqrt(1 - u * u);
+    const dir = new THREE.Vector3(s * Math.cos(a), u, s * Math.sin(a));
+    if (!suitable(dir) || !isClear(dir)) continue;
+    const t1 = new THREE.Vector3().crossVectors(dir, Y);
+    if (t1.lengthSq() < 1e-6) t1.set(1, 0, 0);
+    t1.normalize();
+    const t2 = new THREE.Vector3().crossVectors(dir, t1);
+    const yaw = Math.random() * Math.PI * 2;
+    return { dir, facing: t1.multiplyScalar(Math.cos(yaw)).addScaledVector(t2, Math.sin(yaw)).normalize() };
+  }
+  return null;
+}
+
 export function layoutAbbeyPlanet(): { placements: Placement[]; spawn: { dir: THREE.Vector3; facing: THREE.Vector3 } } {
   const r = rng(D.seed);
   const out: Placement[] = [];

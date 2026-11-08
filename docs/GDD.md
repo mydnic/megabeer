@@ -949,7 +949,7 @@ Aujourd'hui : flash rouge sur l'ennemi touché, sons d'impact, de mort et de ram
 
 L'écran d'accueil se passe **dans l'espace** : on voit de loin la ou les planètes (une par map). On y **choisit son perso et sa map**, puis la caméra **plonge sur la planète choisie** jusqu'au perso pour lancer la run. À la fin d'une run, retour dans l'espace.
 
-Aujourd'hui (feature 3) : accueil provisoire posé sur la planète (logo, bouton Jouer, caméra qui tourne autour du Buveur), qui sera remplacé.
+Aujourd'hui : accueil provisoire, écran séparé du jeu (logo, Jouer, Options, sur fond uni ; le monde n'est pas rendu), qui sera remplacé. La run commence avec Jouer : le Buveur arrive à un endroit **tiré au hasard sur la planète** (terrain praticable, loin du décor), pas forcément devant l'abbaye [DÉCIDÉ le 2026-11-08].
 
 ### Menu qui se dévoile [DÉCIDÉ]
 

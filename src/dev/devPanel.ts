@@ -17,6 +17,8 @@ export interface DevApi {
   toggleCombatMusic(): string;
   setTimeScale(k: number): void;
   status(): string;
+  /** Une run est-elle en cours ? Les blocs Ennemis et Joueur ne marchent que pendant une run. */
+  inRun(): boolean;
 }
 
 export function createDevPanel(api: DevApi) {
@@ -25,7 +27,7 @@ export function createDevPanel(api: DevApi) {
   el.style.cssText = 'position:fixed;top:8px;right:8px;z-index:100;background:#fff;color:#000;font:12px monospace;padding:6px 8px;border:1px solid #000;max-width:260px;opacity:.92';
   el.innerHTML = `
     <summary style="cursor:pointer"><b>DEV</b> <span data-k="status"></span></summary>
-    <fieldset><legend>Ennemis</legend>
+    <fieldset data-run><legend>Ennemis</legend>
       <select data-k="model"><option value="mix">mélange</option>${api.models.map((m) => `<option>${m}</option>`).join('')}</select>
       x <input data-k="count" type="number" value="50" min="1" max="2000" style="width:5em">
       <br>distance <input data-k="rmin" type="number" value="15" style="width:3.5em"> à <input data-k="rmax" type="number" value="30" style="width:3.5em">
@@ -33,7 +35,7 @@ export function createDevPanel(api: DevApi) {
       <br><button data-a="killXp">Tuer tout (+XP)</button> <button data-a="clear">Effacer tout</button>
       <br><label><input data-k="passive" type="checkbox"> passifs</label>
     </fieldset>
-    <fieldset><legend>Joueur</legend>
+    <fieldset data-run><legend>Joueur</legend>
       <label><input data-k="god" type="checkbox"> godmode</label>
       <br><input data-k="xp" type="number" value="25" min="1" style="width:5em"> <button data-a="xp">+XP</button> <button data-a="level">+1 niveau</button>
       <br><button data-a="heal">Soigner</button> <button data-a="die">Mourir</button>
@@ -68,5 +70,12 @@ export function createDevPanel(api: DevApi) {
   el.addEventListener('pointerdown', (e) => e.stopPropagation());
 
   const status = q('status');
-  setInterval(() => { status.textContent = api.status(); }, 250);
+  const runOnly = [...el.querySelectorAll<HTMLFieldSetElement>('fieldset[data-run]')];
+  const refresh = () => {
+    status.textContent = api.status();
+    const off = !api.inRun();
+    for (const f of runOnly) f.disabled = off;
+  };
+  refresh();
+  setInterval(refresh, 250);
 }

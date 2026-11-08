@@ -1,8 +1,9 @@
 import * as THREE from 'three';
-import { DECOR_LIGHTS as LI, LIGHT_SOURCES, type DecorModelId } from '../../config/decor';
+import { DECOR_LAYOUT, DECOR_LIGHTS as LI, LIGHT_SOURCES, type DecorModelId } from '../../config/decor';
 import { PLANET_RADIUS, PLAYER_PHYSICS } from '../../config/world';
 import { DecorCollider, type Bend, type DecorBody } from './collider';
-import { layoutAbbeyPlanet } from './layout';
+import { layoutAbbeyPlanet, randomSpawn } from './layout';
+import { heightAt } from '../terrain';
 import { LAYER_CHARACTER } from '../../render/materials';
 import { loadDecorLibrary } from './library';
 
@@ -137,9 +138,14 @@ export async function createDecor(scene: THREE.Scene) {
   const order: number[] = [];
   let refresh = 0;
 
+  const spawnTmp = new THREE.Vector3();
   return {
     collider,
     spawn,
+    /** Départ de run au hasard sur la planète, loin de tout élément du décor (repli : le parvis). */
+    randomSpawn() {
+      return randomSpawn((dir) => collider.near(spawnTmp.copy(dir).multiplyScalar(PLANET_RADIUS + heightAt(dir)), DECOR_LAYOUT.spawnClearance).length === 0) ?? spawn;
+    },
     /** `night` : 0 en plein jour, 1 en pleine nuit. */
     update(dt: number, playerPos: THREE.Vector3, night: number) {
       refresh -= dt;

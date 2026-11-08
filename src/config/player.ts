@@ -41,11 +41,3 @@ export const DEATH_BANNER = {
   /** Musique baissée à cette fraction de son volume. */
   musicDuck: 0.3,
 } as const;
-
-/** Caméra de l'écran d'accueil : cadrage sur le Buveur et rotation lente autour de lui (rad/s). */
-export const HOME_CAMERA = {
-  distance: 7,
-  pitch: 0.28,
-  sharpness: 3,
-  orbitSpeed: 0.12,
-} as const;
