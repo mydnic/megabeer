@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { PLANET_RADIUS } from '../config/world';
-import { ZOMBIE_ATTACK, type ZombieModel } from '../config/zombies';
+import { ZOMBIE_ATTACK, ZOMBIE_MODELS, type ZombieModel } from '../config/zombies';
 import { ARRIVAL } from '../config/player';
 import { DEATH } from '../config/buveur';
 import { XP_DROPS } from '../config/xp';
@@ -276,7 +276,7 @@ export class Game {
     const up = p.pos.clone().normalize();
     const fwd = p.facing.clone();
     const right = new THREE.Vector3().crossVectors(fwd, up).normalize();
-    const models: ZombieModel[] = ['basic', 'chubby', 'arm', 'ribcage'];
+    const models = Object.keys(ZOMBIE_MODELS) as ZombieModel[];
     models.forEach((m, i) => {
       const at = up.clone().multiplyScalar(PLANET_RADIUS).addScaledVector(fwd, 7 + (i % 2) * 1.5).addScaledVector(right, (i - 1.5) * 1.6);
       this.spawnZombie(m, at, fwd.clone().negate());

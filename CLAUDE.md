@@ -29,10 +29,18 @@ Cloudflare (wrangler).
 ```
 yarn dev        # http://localhost:5173
 yarn build      # tsc --noEmit puis vite build : à lancer après chaque changement
+yarn test       # tests fonctionnels (vitest, Node, sans navigateur) : à lancer après chaque changement
 yarn deploy     # build + wrangler deploy (seulement sur demande)
 ```
 
-Pas de tests automatisés : vérifier par `yarn build`, puis en jeu dans le navigateur. En dev,
+**Tests fonctionnels** (`tests/features/*.test.ts`) : des user stories ("une bouteille s'écrase
+sur le premier zombie", "le level-up fige le jeu et propose 3 cartes") qui pilotent le noyau `Game`
+comme un joueur via `tests/support/testGame.ts` (vraie planète d'une seed fixe, sans décor ni
+rendu). Ils testent le comportement, pas l'implémentation : un refactor ne doit pas les casser.
+Valeurs attendues lues dans `src/config/`, jamais recopiées. Toute nouvelle feature arrive avec
+ses tests ; tout bug trouvé en jeu devient un test qui échoue avant d'être corrigé.
+
+Ensuite vérifier en jeu dans le navigateur. En dev,
 `window.__game` expose les objets principaux (joueur, caméra, ciel, décor, musique...) pour piloter
 et inspecter depuis la console ; F3 affiche le debug. Le **panneau DEV** (coin haut droit, `src/dev/devPanel.ts`,
 importé seulement en dev donc absent du build) fait apparaître des ennemis, donne de l'XP, godmode,
@@ -47,10 +55,28 @@ en dur dans les systèmes. `world.ts` (planète, physique, caméra), `visual.ts`
 contours), `lighting.ts` (jour/nuit, brouillard), `decor.ts` (modèles, placement, lumières),
 `buveur.ts` (animation, IK des pieds, éclaboussures), `audio.ts` (volumes, sons, musique).
 
-## Architecture (`src/`)
+## Architecture (`src/`) : principes SOLID, deux couches
 
-- `main.ts` : assemble tout, boucle avec **physique à pas fixe 120 Hz** et rendu interpolé
-  (`player.renderPos`).
+**Le noyau (`src/game/` et la simulation des autres dossiers) ne connaît ni le navigateur, ni
+three.js côté rendu, ni l'interface, ni les sons** : il tourne tel quel dans les tests. Tout ce qui
+s'affiche ou s'entend s'abonne à ses événements typés (`game.events.on('zombieHit', ...)`) et
+recopie son état à chaque image. Ne jamais remettre de logique de jeu dans `main.ts` ni dans `app/`.
+
+- `game/` : `game.ts` (**le jeu** : phases accueil / run / mort, arrivée, combat, XP, level-up,
+  pause ; `step(dt, input)` ; événements `GameEvents`), `playerStats.ts`, `loadout.ts` (armes
+  équipées, 4 max), `levelUpCards.ts` (tirage sur les armes équipées), `emitter.ts`.
+- `weapons/` : `weapon.ts` (**interface `Weapon`** et `WeaponContext`), `registry.ts`, une arme
+  par fichier (`blonde.ts`, simulation et projectiles), son rendu à part (`bottleView.ts`).
+  **Ajouter une arme** = un fichier qui implémente `Weapon`, une entrée dans le registre, sa config
+  et ses cartes, son icône (`ui/icons.ts`), son rendu, et ses tests. Rien d'autre à toucher.
+- `enemies/` : `zombie.ts` et `horde.ts` (simulation), `hordeView.ts` et `zombieLibrary.ts`
+  (rendu, modèles et animations pré-calculées). `pickups/` : `xpDrops.ts` + `xpDropsView.ts`.
+- `app/` : l'application navigateur branchée sur le noyau, une responsabilité par fichier :
+  `planet.ts` (seed, relief, décor, chargement), `screens.ts` (accueil, HUD, pause, level-up,
+  mort), `effects.ts` (impacts, caméra, séquence de mort), `sounds.ts` (sons et musique),
+  `runLogging.ts` (journal de run), `devTools.ts` (panneau DEV).
+- `main.ts` : **assemblage seulement** (création des objets, boucle : `game.step` puis les vues).
+  Physique du joueur à pas fixe 120 Hz dans le noyau, rendu interpolé (`player.renderPos`).
 - `world/` : `terrain.ts` (planète sphérique, `heightAt(dir)` est la source de vérité du sol,
   sites des abbayes aplanis), `sky.ts` (soleil et lune en orbite, période 600 s, ombres),
   `clouds.ts`, `decor/` (chargement des GLB, placement, instancing, collisions par grille + BVH,

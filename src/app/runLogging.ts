@@ -12,7 +12,9 @@ import type { Game } from '../game/game';
 export function wireRunLog(game: Game, runLog: ReturnType<typeof createRunLog>, meta: () => { seed: number; fps: number }) {
   game.events.on('runStarted', () => runLog.start({
     character: 'buveur', map: 'abbaye', seed: meta().seed, difficulty: 'sobre',
-    stats: { ...game.stats, maxHp: game.health.max }, weapons: { blonde: WEAPONS.blonde }, zombie: ZOMBIE_STATS,
+    stats: { ...game.stats, maxHp: game.health.max },
+    weapons: Object.fromEntries(game.loadout.weapons.map((w) => [w.id, WEAPONS[w.id]])),
+    zombie: ZOMBIE_STATS,
   }));
   game.events.on('landed', () => runLog.event('landed'));
   game.events.on('zombieSpawned', ({ zombie }) => runLog.spawn(zombie.model));

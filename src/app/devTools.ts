@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { ZombieModel } from '../config/zombies';
+import { ZOMBIE_MODELS, type ZombieModel } from '../config/zombies';
 import type { createMusic } from '../audio/music';
 import type { createRunLog } from '../dev/runLog';
 import type { Game } from '../game/game';
@@ -15,7 +15,7 @@ export async function wireDevTools(game: Game, d: {
 }) {
   const { createDevPanel } = await import('../dev/devPanel');
   const { music, runLog } = d;
-  const models: ZombieModel[] = ['basic', 'chubby', 'arm', 'ribcage'];
+  const models = Object.keys(ZOMBIE_MODELS) as ZombieModel[];
   const inRun = () => game.phase === 'run';
   createDevPanel({
     models,
