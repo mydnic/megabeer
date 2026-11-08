@@ -1,7 +1,8 @@
-import { BLONDE_UPGRADES, LUCK, RARITIES } from '../config/upgrades';
+import { LUCK, RARITIES, type UpgradeDef } from '../config/upgrades';
+import type { Weapon } from '../weapons/weapon';
 
-export type Upgrade = (typeof BLONDE_UPGRADES)[number];
-export type Card = { weapon: 'blonde'; upgrade: Upgrade; tier: number };
+/** Une carte de level-up : une amélioration d'une arme équipée, avec sa rareté. */
+export type Card = { weapon: Weapon; upgrade: UpgradeDef; tier: number };
 
 /** Tire un tier de rareté selon la LUCK (les tiers hauts gagnent du poids, plafonné). */
 export function rollTier(luck: number) {
@@ -12,25 +13,25 @@ export function rollTier(luck: number) {
   return 0;
 }
 
-/** Tire `n` cartes d'améliorations différentes, chacune avec sa rareté. */
-export function rollCards(n: number, luck: number): Card[] {
+/** Tire `n` cartes différentes parmi les améliorations des armes équipées, chacune avec sa rareté. */
+export function rollCards(n: number, luck: number, weapons: readonly Weapon[]): Card[] {
   const cards: Card[] = [];
   const used = new Set<string>();
+  const all = weapons.flatMap((weapon) => weapon.upgrades.map((upgrade) => ({ weapon, upgrade })));
   for (let i = 0; i < n; i++) {
     const tier = rollTier(luck);
-    const pool = BLONDE_UPGRADES.filter((u) => !used.has(u.id) && ('minTier' in u ? u.minTier : 0) <= tier);
+    const pool = all.filter((c) => !used.has(`${c.weapon.id}:${c.upgrade.id}`) && (c.upgrade.minTier ?? 0) <= tier);
     if (!pool.length) break;
-    const upgrade = pool[Math.floor(Math.random() * pool.length)];
-    used.add(upgrade.id);
-    cards.push({ weapon: 'blonde', upgrade, tier });
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+    used.add(`${pick.weapon.id}:${pick.upgrade.id}`);
+    cards.push({ ...pick, tier });
   }
   return cards;
 }
 
 /** Valeur de l'effet d'une carte (multipliée par son tier, sauf effets fixes). */
 export function cardValue(c: Card) {
-  const fixed = 'fixed' in c.upgrade && c.upgrade.fixed;
-  return fixed ? c.upgrade.value : c.upgrade.value * RARITIES[c.tier].mult;
+  return c.upgrade.fixed ? c.upgrade.value : c.upgrade.value * RARITIES[c.tier].mult;
 }
 
 /** Texte de l'effet, ex. "+30 % dégâts", "+1 projectile en plus", "+0,3 multiplicateur critique". */
@@ -41,11 +42,8 @@ export function cardText(c: Card) {
   return `+${String(Math.round(v * 100) / 100).replace('.', ',')} ${c.upgrade.label}`;
 }
 
-/** Améliorations d'une arme : un champ par id de carte, plus son niveau. */
-export type WeaponMods = { level: number } & Record<Upgrade['id'], number>;
-
-/** Applique une carte aux améliorations de l'arme (toutes additives). */
-export function applyCard(c: Card, mods: WeaponMods) {
-  mods.level++;
-  mods[c.upgrade.id] += cardValue(c);
+/** Applique une carte à son arme (améliorations additives, l'arme monte d'un niveau). */
+export function applyCard(c: Card) {
+  c.weapon.mods.level++;
+  c.weapon.mods[c.upgrade.id] = (c.weapon.mods[c.upgrade.id] ?? 0) + cardValue(c);
 }

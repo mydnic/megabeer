@@ -1,9 +1,6 @@
 import { LEVEL_UP_SCREEN as L, RARITIES } from '../config/upgrades';
 import { cardText, type Card } from '../game/levelUpCards';
-
-import { blondeIcon } from './icons';
-
-const BOTTLE_SVG = blondeIcon('lu-bottle');
+import { weaponIcon } from './icons';
 
 const CSS = `
 .lu { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -89,8 +86,8 @@ export function createLevelUpScreen(onPick: (card: Card) => void, onHover: () =>
         const d = document.createElement('div');
         d.className = `lu-card t${c.tier}${i === 0 ? ' sel' : ''}`;
         d.style.setProperty('--c', r.color);
-        d.innerHTML = `<div class="lu-key">${i + 1}</div><div class="lu-tier">${r.name}</div>${BOTTLE_SVG}
-          <div class="lu-name">Blonde</div><div class="lu-eff">${cardText(c)}</div>`;
+        d.innerHTML = `<div class="lu-key">${i + 1}</div><div class="lu-tier">${r.name}</div>${weaponIcon(c.weapon.id, 'lu-bottle')}
+          <div class="lu-name">${c.weapon.name}</div><div class="lu-eff">${cardText(c)}</div>`;
         d.addEventListener('mouseenter', () => select(i));
         d.addEventListener('click', (e) => { e.stopPropagation(); pick(i); });
         row.appendChild(d);

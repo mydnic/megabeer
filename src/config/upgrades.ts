@@ -17,12 +17,27 @@ export const LUCK = {
 } as const;
 
 /**
+ * Une carte d'amélioration d'arme. `id` = champ des améliorations de l'arme qu'elle augmente.
+ * `kind` : percent et points -> « +15 % », flat -> « +1 », mult -> « +0,15 ».
+ */
+export type UpgradeDef = {
+  id: string;
+  label: string;
+  value: number;
+  kind: 'percent' | 'points' | 'flat' | 'mult';
+  /** Effet fixe : non multiplié par la rareté. */
+  fixed?: boolean;
+  /** Rareté minimum pour que la carte existe (index dans RARITIES). */
+  minTier?: number;
+};
+
+/**
  * Améliorations de la Blonde. `value` = effet en Commun (multiplié par le tier, sauf `fixed`).
  * `minTier` : rareté minimum pour que la carte existe (index dans RARITIES).
  * Affichage selon `kind` : percent et points -> « +15 % », flat -> « +1 », mult -> « +0,15 ».
  * (points : points de pourcentage ajoutés, ex. chances de critique 5 % -> 9 %).
  */
-export const BLONDE_UPGRADES = [
+export const BLONDE_UPGRADES: readonly UpgradeDef[] = [
   { id: 'damage', label: 'dégâts', value: 0.15, kind: 'percent' },
   { id: 'rate', label: "vitesse d'attaque", value: 0.10, kind: 'percent' },
   { id: 'projectiles', label: 'projectile en plus', value: 1, kind: 'flat', fixed: true, minTier: 2 },
@@ -31,7 +46,7 @@ export const BLONDE_UPGRADES = [
   { id: 'critChance', label: 'chances de critique', value: 0.04, kind: 'points' },
   { id: 'critMult', label: 'multiplicateur critique', value: 0.15, kind: 'mult' },
   { id: 'size', label: 'taille', value: 0.10, kind: 'percent' },
-] as const;
+];
 
 /** Écran de level-up. */
 export const LEVEL_UP_SCREEN = {

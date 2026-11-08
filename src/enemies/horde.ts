@@ -1,38 +1,18 @@
-﻿import * as THREE from 'three';
+import * as THREE from 'three';
 import { ZOMBIE_ATTACK, ZOMBIE_HURT as H, ZOMBIE_MOVE as M, ZOMBIE_VISUAL as V, type ZombieModel } from '../config/zombies';
 import { PLANET_RADIUS } from '../config/world';
 import { heightAt } from '../world/terrain';
 import type { DecorCollider } from '../world/decor/collider';
 import type { PlayerController } from '../player/controller';
-import { LAYER_CHARACTER } from '../render/materials';
-import { Zombie, type ZombieLibrary } from './zombie';
+import { Zombie, type ZombieTimings } from './zombie';
 
 /**
- * Ensemble des zombies en jeu : poursuite du joueur sur la sphère (dans le plan tangent), collage
- * au sol et au décor, glissement le long des murs, écartement entre zombies, corps solides.
+ * Ensemble des zombies en jeu (simulation seule, le rendu est dans hordeView.ts) : poursuite du joueur
+ * sur la sphère (dans le plan tangent), collage au sol et au décor, glissement le long des murs,
+ * écartement entre zombies, corps solides, coups portés au joueur.
  */
-export function createHorde(scene: THREE.Scene, lib: ZombieLibrary, player: PlayerController, decor?: DecorCollider) {
+export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: PlayerController, decor?: DecorCollider) {
   const zombies: Zombie[] = [];
-  // Rendu : un seul dessin par modèle (instances animées par la carte graphique, render/vat.ts)
-  const crowds = (Object.keys(lib) as ZombieModel[]).map((model) => {
-    const k = lib[model];
-    const mesh = new THREE.InstancedMesh(k.geometry, k.material, V.maxPerModel);
-    const anim = new THREE.InstancedBufferAttribute(new Float32Array(V.maxPerModel * 4), 4);
-    anim.setUsage(THREE.DynamicDrawUsage);
-    k.geometry.setAttribute('aAnim', anim);
-    mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-    mesh.customDepthMaterial = k.depthMaterial;
-    mesh.castShadow = true;
-    mesh.receiveShadow = false;
-    mesh.frustumCulled = false; // les instances couvrent toute la planète
-    mesh.layers.set(LAYER_CHARACTER);
-    mesh.count = 0;
-    scene.add(mesh);
-    return { model, mesh, anim };
-  });
-  const basis = new THREE.Matrix4();
-  const right = new THREE.Vector3();
-  const scaleV = new THREE.Vector3();
   const tmp = new THREE.Vector3();
   const up = new THREE.Vector3();
   const want = new THREE.Vector3();
@@ -48,7 +28,7 @@ export function createHorde(scene: THREE.Scene, lib: ZombieLibrary, player: Play
   /** Pose un zombie sur le sol, à la direction donnée, regardant vers `facing`. */
   function spawn(model: ZombieModel, dir: THREE.Vector3, facing: THREE.Vector3) {
     if (zombies.filter((z) => z.model === model).length >= V.maxPerModel) return undefined;
-    const z = new Zombie(lib[model], model);
+    const z = new Zombie(kinds[model], model);
     // Sonde un peu au-dessus du relief : trouve aussi le dessus du décor (dalles, marches)
     z.pos.copy(dir).normalize();
     z.pos.setLength(PLANET_RADIUS + heightAt(z.pos) + 2.5);
@@ -56,6 +36,7 @@ export function createHorde(scene: THREE.Scene, lib: ZombieLibrary, player: Play
     const n = tmp.copy(z.pos).normalize();
     z.facing.copy(facing).addScaledVector(n, -facing.dot(n)).normalize();
     zombies.push(z);
+    api.onSpawn?.(z);
     return z;
   }
 
@@ -183,31 +164,13 @@ export function createHorde(scene: THREE.Scene, lib: ZombieLibrary, player: Play
       }
       // Corps entièrement enfoncés : retirés
       for (let i = zombies.length - 1; i >= 0; i--) if (zombies[i].gone) zombies.splice(i, 1);
-      // Instances : matrice (repère local, taille du modèle) et lignes d'animation
-      for (const c of crowds) c.mesh.count = 0;
-      for (const z of zombies) {
-        const c = crowds.find((x) => x.model === z.model)!;
-        const i = c.mesh.count++;
-        up.copy(z.pos).normalize();
-        right.crossVectors(up, z.facing).normalize();
-        tmp.copy(z.pos).addScaledVector(up, -z.sink);
-        basis.makeBasis(right, up, z.facing).scale(scaleV.setScalar(z.kind.scale)).setPosition(tmp);
-        c.mesh.setMatrixAt(i, basis);
-        z.animRows(c.anim.array as Float32Array, i * 4);
-      }
-      for (const c of crowds) {
-        c.mesh.instanceMatrix.clearUpdateRanges();
-        c.mesh.instanceMatrix.addUpdateRange(0, c.mesh.count * 16);
-        c.mesh.instanceMatrix.needsUpdate = true;
-        c.anim.clearUpdateRanges();
-        c.anim.addUpdateRange(0, c.mesh.count * 4);
-        c.anim.needsUpdate = true;
-      }
     },
     /** Zombies encore debout (cibles des armes). */
     alive() { return zombies.filter((z) => !z.dead); },
     /** Appelé quand un zombie touche le joueur, avec la direction du coup (du zombie vers le joueur). */
     onHit: undefined as ((z: Zombie, dir: THREE.Vector3) => void) | undefined,
+    /** Appelé à chaque apparition de zombie. */
+    onSpawn: undefined as ((z: Zombie) => void) | undefined,
   };
   return api;
 }

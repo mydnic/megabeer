@@ -1,26 +1,23 @@
 ﻿import * as THREE from 'three';
 import { XP_DROPS as X } from '../config/xp';
-import { LAYER_CHARACTER } from '../render/materials';
+
+/** Une goutte de bière (XP) : position, point de chute, valeur, et son état d'aspiration. */
+export type XpDrop = {
+  pos: THREE.Vector3; base: THREE.Vector3; speed: number; value: number;
+  size: number; phase: number; flying: boolean; age: number;
+};
 
 /**
- * Gouttes de bière (XP) : rondes, dorées, en lévitation au-dessus du sol, qui flottent doucement.
- * À portée de ramassage, elles filent vers le Buveur en accélérant et sont avalées. Un seul dessin.
+ * Gouttes de bière (XP), simulation seule (rendu dans xpDropsView.ts) : en lévitation au-dessus du
+ * sol ; à portée de ramassage, elles filent en ligne droite vers le joueur en accélérant et sont
+ * avalées (jamais d'orbite).
  */
-export function createXpDrops(scene: THREE.Scene, groundAt: (p: THREE.Vector3) => number) {
-  const geo = new THREE.SphereGeometry(1, 16, 12);
-  const mat = new THREE.MeshToonMaterial({ color: X.color, emissive: X.color, emissiveIntensity: X.glow });
-  const mesh = new THREE.InstancedMesh(geo, mat, X.max);
-  mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-  mesh.frustumCulled = false;
-  mesh.layers.set(LAYER_CHARACTER); // contour comme les persos : lisible sur l'herbe
-  mesh.count = 0;
-  scene.add(mesh);
-
-  type Drop = { pos: THREE.Vector3; base: THREE.Vector3; speed: number; value: number; size: number; phase: number; flying: boolean; age: number };
-  const drops: Drop[] = [];
-  const up = new THREE.Vector3(), tmp = new THREE.Vector3(), m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3();
+export function createXpDrops(groundAt: (p: THREE.Vector3) => number) {
+  const drops: XpDrop[] = [];
+  const up = new THREE.Vector3(), tmp = new THREE.Vector3();
 
   return {
+    drops: drops as readonly XpDrop[],
     /** Lâche une goutte de valeur `value` (XP) au point donné (pieds du zombie). */
     drop(at: THREE.Vector3, value: number) {
       if (drops.length >= X.max) return;
@@ -43,7 +40,6 @@ export function createXpDrops(scene: THREE.Scene, groundAt: (p: THREE.Vector3) =
         d.age += dt;
         if (!d.flying && d.pos.distanceTo(target) < range) d.flying = true;
         if (d.flying) {
-          // Aspirée : file en ligne droite sur le joueur, de plus en plus vite (jamais d'orbite)
           tmp.subVectors(target, d.pos);
           const dist = tmp.length();
           d.speed = Math.min(X.maxSpeed, d.speed + X.attract * dt);
@@ -57,14 +53,8 @@ export function createXpDrops(scene: THREE.Scene, groundAt: (p: THREE.Vector3) =
           d.pos.copy(d.base).addScaledVector(up, X.hover * rise + Math.sin(d.age * X.bobSpeed + d.phase) * X.bob);
         }
       }
-      drops.forEach((d, i) => {
-        // Légère pulsation, apparition en grossissant
-        const k = d.size * Math.min(1, d.age * 6) * (1 + Math.sin(d.age * 5 + d.phase) * 0.06);
-        mesh.setMatrixAt(i, m.compose(d.pos, q, s.setScalar(k)));
-      });
-      mesh.count = drops.length;
-      mesh.instanceMatrix.needsUpdate = true;
     },
-    clear() { drops.length = 0; mesh.count = 0; },
+    clear() { drops.length = 0; },
   };
 }
+export type XpDrops = ReturnType<typeof createXpDrops>;

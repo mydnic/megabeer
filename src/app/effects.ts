@@ -1,0 +1,104 @@
+import * as THREE from 'three';
+import { ARRIVAL, DEATH_BANNER } from '../config/player';
+import { DEATH } from '../config/buveur';
+import { HIT_FEEDBACK } from '../config/zombies';
+import type { AudioEngine } from '../audio/audio';
+import type { Game } from '../game/game';
+import type { BuveurVisual } from '../player/buveurVisual';
+import type { CameraRig } from '../player/cameraRig';
+import type { PintProp } from '../player/pintProp';
+import type { Pipeline } from '../render/pipeline';
+import type { createGlassShards } from '../fx/glassShards';
+import type { createDamageNumbers } from '../ui/damageNumbers';
+import { jitter } from './sounds';
+
+type Deps = {
+  buveur: BuveurVisual;
+  rig: CameraRig;
+  pint: PintProp;
+  pipeline: Pipeline;
+  audio: AudioEngine;
+  shards: ReturnType<typeof createGlassShards>;
+  damageNumbers: ReturnType<typeof createDamageNumbers>;
+};
+
+/**
+ * Retours visuels, branchés sur les événements du noyau : gerbes de bière et éclats de verre aux
+ * impacts, chiffres de dégâts, flash et tremblement quand le Buveur est touché, caméra de l'arrivée,
+ * séquence de mort (pinte qui s'échappe, plongée de la caméra, image qui se désature).
+ */
+export function wireEffects(game: Game, d: Deps) {
+  const { buveur, rig, pint, pipeline, shards, damageNumbers } = d;
+  const up = new THREE.Vector3(), numPos = new THREE.Vector3(), soft = new THREE.Vector3();
+
+  game.events.on('zombieHit', ({ zombie, impact, dir, damage, crit }) => {
+    buveur.splashAt(impact, 14);
+    shards.burst(impact, dir);
+    up.copy(zombie.pos).normalize();
+    damageNumbers.spawn(numPos.copy(zombie.pos).addScaledVector(up, 2.0), damage, crit);
+  });
+  game.events.on('projectileHitGround', ({ pos, vel }) => {
+    buveur.splashAt(pos, 10);
+    shards.burst(pos, soft.copy(vel).normalize().multiplyScalar(0.3));
+  });
+  game.events.on('playerHurt', ({ blocked }) => {
+    if (blocked) return;
+    buveur.hurt(HIT_FEEDBACK.flashColor, HIT_FEEDBACK.flashTime);
+    rig.shake(HIT_FEEDBACK.shake, HIT_FEEDBACK.shakeAmplitude, HIT_FEEDBACK.shakeDecay);
+  });
+
+  // Arrivée : caméra déjà posée sur le point d'atterrissage, le Buveur tombe dedans ; impact
+  game.events.on('runStarted', ({ landing }) => {
+    rig.setFocus(null);
+    rig.setAnchor(landing);
+    rig.snap();
+  });
+  game.events.on('landed', ({ pos }) => {
+    rig.setAnchor(null);
+    rig.shake(ARRIVAL.shake.amount, ARRIVAL.shake.amplitude, ARRIVAL.shake.decay);
+    buveur.splashAt(pos, ARRIVAL.splash);
+  });
+
+  // Mort : la pinte s'échappe, la caméra plonge sur le corps
+  let pintFirstImpact = true;
+  pint.onImpact = (p, speed) => {
+    if (pintFirstImpact) buveur.splashAt(p, DEATH.pint.splashCount);
+    pintFirstImpact = false;
+    d.audio.play(speed > 3 ? 'impactGlass_medium' : 'impactGlass_light', Math.min(0.6, 0.15 + speed * 0.06), jitter(0.08));
+  };
+  game.events.on('died', () => {
+    const player = game.player;
+    const pos = new THREE.Vector3(), quat = new THREE.Quaternion();
+    buveur.die(pos, quat);
+    // Pinte lancée vers le haut, un peu devant et sur sa droite, en tournant
+    const u = player.upDir.clone(), fwd = player.facing.clone();
+    const right = new THREE.Vector3().crossVectors(u, fwd).negate().normalize();
+    const P = DEATH.pint;
+    const vel = u.multiplyScalar(P.throwUp).addScaledVector(fwd, P.throwForward).addScaledVector(right, P.throwSide).add(player.velocity);
+    const spin = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().multiplyScalar(P.spin);
+    pint.setColors(buveur.color('verre'), buveur.color('biere'), buveur.color('mousse'));
+    pintFirstImpact = true;
+    pint.launch(pos, quat, vel, spin);
+    rig.setFocus(DEATH.camera);
+  });
+
+  game.events.on('home', () => {
+    buveur.revive();
+    pint.hide();
+    shards.clear();
+    damageNumbers.clear();
+    rig.setAnchor(null);
+    pipeline.fade.amount = 0;
+  });
+
+  return {
+    /** Image qui se désature et s'assombrit après la mort. */
+    update() {
+      if (game.deadTime < 0) return;
+      const B = DEATH_BANNER;
+      pipeline.fade.amount = Math.min(1, game.deadTime / B.colorFade);
+      pipeline.fade.saturation = B.saturation;
+      pipeline.fade.vignette = B.vignette;
+    },
+  };
+}

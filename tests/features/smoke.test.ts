@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { rollCards } from '../../src/game/levelUpCards';
+import { createTestGame } from '../support/testGame';
 
-describe('mise en place des tests', () => {
-  it('tire 3 cartes différentes', () => {
-    const cards = rollCards(3, 0);
-    expect(cards).toHaveLength(3);
-    expect(new Set(cards.map((c) => c.upgrade.id)).size).toBe(3);
+describe('le jeu tourne sans navigateur', () => {
+  it('une run démarre, le Buveur atterrit et les zombies de départ arrivent', () => {
+    const t = createTestGame();
+    t.startRunAndLand();
+    expect(t.game.phase).toBe('run');
+    expect(t.game.arriving).toBe(false);
+    expect(t.events('landed')).toHaveLength(1);
+    expect(t.events('zombieSpawned')).toHaveLength(4);
   });
 });

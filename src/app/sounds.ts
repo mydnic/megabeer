@@ -1,0 +1,58 @@
+import { AUDIO } from '../config/audio';
+import { DEATH_BANNER } from '../config/player';
+import type { AudioEngine } from '../audio/audio';
+import type { createMusic } from '../audio/music';
+import type { Game } from '../game/game';
+import type { BuveurVisual } from '../player/buveurVisual';
+
+/** Petite variation de hauteur autour de 1 (évite la répétition). */
+export const jitter = (j: number) => 1 + (Math.random() * 2 - 1) * j;
+
+/**
+ * Sons du jeu, branchés sur les événements du noyau et de l'animation du Buveur : pas, saut,
+ * réception, ramassage d'XP, level-up et choix de carte.
+ */
+export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual) {
+  // Pas, saut, réception : déclenchés par l'animation (le pied touche le sol)
+  buveur.onSound = (e) => {
+    const F = AUDIO.footsteps;
+    if (e.type === 'step') {
+      const s = F.surfaces[e.surface];
+      audio.play(s.sample, F.volume, s.rate * jitter(F.pitchJitter), e.side * 0.15);
+    } else if (e.type === 'jump') {
+      audio.whoosh(AUDIO.jump.volume);
+    } else if (e.type === 'land') {
+      const k = Math.min(AUDIO.land.max, 0.4 + e.speed * AUDIO.land.perSpeed);
+      audio.play('impactSoft_medium', AUDIO.land.volume * k, jitter(0.06));
+      const s = F.surfaces[e.surface];
+      audio.play(s.sample, F.volume, s.rate * 0.9);
+      if (Math.random() < AUDIO.clink.chance) audio.play('impactGlass_light', AUDIO.clink.volume, jitter(0.1));
+    }
+  };
+
+  // Ramassage : une bulle, de plus en plus aiguë quand on en avale plusieurs à la suite
+  let lastPickup = -1, combo = 0;
+  game.events.on('xpCollected', () => {
+    const P = AUDIO.pickup, now = performance.now() / 1000;
+    if (now - lastPickup < P.minGap) return;
+    combo = now - lastPickup > P.comboReset ? 0 : combo + 1;
+    lastPickup = now;
+    audio.play(P.sample, P.volume, Math.min(P.pitchMax, 1 + combo * P.pitchStep) * jitter(0.04));
+  });
+
+  // Level-up : le "aaah" au premier écran d'une série, puis le son de la carte choisie
+  game.events.on('levelUpOffered', ({ first }) => {
+    if (first) audio.play(AUDIO.levelUp.sample, AUDIO.levelUp.volume, 1, 0, 'ui');
+  });
+  game.events.on('cardPicked', () => audio.play(AUDIO.cards.pick, AUDIO.cards.pickVolume, jitter(0.03), 0, 'ui'));
+}
+
+/** Musique : celle de la map pendant la run, en retrait pendant l'écran de mort, celle du menu à l'accueil. */
+export function wireMusic(game: Game, audio: AudioEngine, music: ReturnType<typeof createMusic>, map: string) {
+  const volume = (k: number, tc: number) => {
+    if (audio.ctx && audio.music) audio.music.gain.setTargetAtTime(AUDIO.music.volume * k, audio.ctx.currentTime, tc);
+  };
+  game.events.on('runStarted', () => music.startRun(map));
+  game.events.on('died', () => volume(DEATH_BANNER.musicDuck, 0.6));
+  game.events.on('home', () => { volume(1, 0.4); music.endRun(); });
+}
