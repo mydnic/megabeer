@@ -1,4 +1,4 @@
-// Mécanique propre à l'Abbaye (GDD section 13) : les cloches et le débarquement.
+// Mécanique propre à l'Abbaye (GDD section 13) : les cloches et le débarquement (30 s d'arrivées en masse).
 
 export const BELLS = {
   /** Une sonnerie toutes les `every` secondes de run (la première à 2:00). */

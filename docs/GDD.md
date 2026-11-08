@@ -1159,7 +1159,7 @@ L'ordre après l'étape 7 est indicatif : il se rediscute à chaque feature vali
 | Zombies distancés | Au-delà de 60 m, ils ressortent de terre devant le joueur : on ne sème pas la horde en courant |
 | Montée en difficulté | Valeurs de départ : 6 zombies à 0:00, 80 à 5:00, 200 à 10:00 ; PV x2,3 à 5:00, x4,5 à 10:00. Après 10:00 la pression continue de monter, en attendant les videurs. À caler avec le journal de run |
 | Difficultés | Multiplicateurs Sobre / Pompette / Bourré en config et branchés (PV, nombre, dégâts). Seule Sobre est jouable, le choix est dans le panneau DEV |
-| Cloches de l'Abbaye | Toutes les 2 min (2:00, 4:00...) : 3 coups d'alerte sur 4,5 s avec un bandeau, puis 100 zombies (x difficulté) sortent de terre en cercle à 18-26 m autour du joueur, coup de cloche grave et secousse. Cloche synthétisée (pas de fichier son). Pas de changement de musique |
+| Cloches de l'Abbaye | Toutes les 2 min (2:00, 4:00...) : 3 coups d'alerte sur 4,5 s avec un bandeau, puis le débarquement : pendant 30 s, un seul type d'ennemi (tiré au hasard) sort de terre en continu et en masse tout autour du joueur, à 18-26 m (8 par seconde, soit 240, x difficulté). Cloche synthétisée, pas de changement de musique |
 | Mécaniques de map | Une interface `MapMechanic` et un registre par map (`src/game/mechanics/`) : la Brasserie et la Fête de village s'y ajoutent sans toucher au noyau |
 | Équilibrage | Reporté : impossible avec un seul type d'ennemi tué en un coup. Il se fera une fois les ennemis de l'Abbaye, les élites, les boss et les armes en place |
 | Plus tard | Les nouveaux types d'ennemis par minute, les élites, les boss et les videurs arrivent avec leurs features |
