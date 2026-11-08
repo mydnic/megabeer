@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { DIFFICULTIES, type DifficultyId } from '../config/spawn';
 import { ZOMBIE_MODELS, type ZombieModel } from '../config/zombies';
 import type { createMusic } from '../audio/music';
 import type { createRunLog } from '../dev/runLog';
@@ -43,6 +44,10 @@ export async function wireDevTools(game: Game, d: {
       runLog.event('dev', 'killAll');
     },
     clearZombies() { if (inRun()) { game.horde.clear(); runLog.event('dev', 'clear'); } },
+    setAutoSpawn(v) { game.director.enabled = v; runLog.event('dev', 'autoSpawn', v ? 1 : 0); },
+    skipTime(s) { if (inRun()) { game.runTime += s; runLog.event('dev', 'skipTime', s); } },
+    difficulties: (Object.keys(DIFFICULTIES) as DifficultyId[]).map((id) => ({ id, label: DIFFICULTIES[id].label })),
+    setDifficulty(id) { game.difficulty = id as DifficultyId; },
     setPassive(v) { if (inRun()) { game.horde.setPassive(v); runLog.event('dev', 'passive', v ? 1 : 0); } },
     giveXp(xp) { if (inRun()) { game.addXp(xp); runLog.event('dev', 'xp', xp); } },
     levelUp() {
@@ -68,7 +73,7 @@ export async function wireDevTools(game: Game, d: {
     status() {
       let alive = 0;
       for (const z of game.horde.zombies) if (!z.dead) alive++;
-      return `${game.phase} | seed ${d.seed()} | ${alive} zombies | niv ${game.progression.level} | ${Math.round(game.health.hp)} PV${game.cheats.god ? ' | GOD' : ''}`;
+      return `${game.phase} | seed ${d.seed()} | ${alive}/${game.director.target} zombies | ${DIFFICULTIES[game.difficulty].label} | niv ${game.progression.level} | ${Math.round(game.health.hp)} PV${game.cheats.god ? ' | GOD' : ''}`;
     },
   });
 }

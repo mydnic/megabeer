@@ -9,6 +9,12 @@ export interface DevApi {
   killAll(withXp: boolean): void;
   clearZombies(): void;
   setPassive(v: boolean): void;
+  /** Arrivées automatiques de zombies (directeur de vagues). */
+  setAutoSpawn(v: boolean): void;
+  /** Avance le chrono de la run (la courbe de difficulté suit). */
+  skipTime(seconds: number): void;
+  difficulties: readonly { id: string; label: string }[];
+  setDifficulty(id: string): void;
   giveXp(amount: number): void;
   levelUp(): void;
   heal(): void;
@@ -33,7 +39,8 @@ export function createDevPanel(api: DevApi) {
       <br>distance <input data-k="rmin" type="number" value="15" style="width:3.5em"> à <input data-k="rmax" type="number" value="30" style="width:3.5em">
       <br><button data-a="spawn">Faire apparaître</button>
       <br><button data-a="killXp">Tuer tout (+XP)</button> <button data-a="clear">Effacer tout</button>
-      <br><label><input data-k="passive" type="checkbox"> passifs</label>
+      <br><label><input data-k="passive" type="checkbox"> passifs</label> <label><input data-k="auto" type="checkbox" checked> vagues</label>
+      <br>chrono <button data-a="skip60">+1 min</button> <button data-a="skip300">+5 min</button>
     </fieldset>
     <fieldset data-run><legend>Joueur</legend>
       <label><input data-k="god" type="checkbox"> godmode</label>
@@ -41,6 +48,7 @@ export function createDevPanel(api: DevApi) {
       <br><button data-a="heal">Soigner</button> <button data-a="die">Mourir</button>
     </fieldset>
     <fieldset><legend>Monde</legend>
+      difficulté <select data-k="diff">${api.difficulties.map((d) => `<option value="${d.id}">${d.label}</option>`).join('')}</select> (run suivante)<br>
       vitesse <select data-k="time"><option>0.1</option><option>0.25</option><option>0.5</option><option selected>1</option><option>2</option><option>4</option></select>
       <br><button data-a="music">Musique : run</button>
     </fieldset>`;
@@ -56,6 +64,8 @@ export function createDevPanel(api: DevApi) {
     level: () => api.levelUp(),
     heal: () => api.heal(),
     die: () => api.die(),
+    skip60: () => api.skipTime(60),
+    skip300: () => api.skipTime(300),
     music: (b) => { b.textContent = `Musique : ${api.toggleCombatMusic()}`; },
   };
   for (const b of el.querySelectorAll<HTMLButtonElement>('button')) {
@@ -63,6 +73,8 @@ export function createDevPanel(api: DevApi) {
   }
   q<HTMLInputElement>('god').addEventListener('change', (e) => { api.cheats.god = (e.target as HTMLInputElement).checked; });
   q<HTMLInputElement>('passive').addEventListener('change', (e) => api.setPassive((e.target as HTMLInputElement).checked));
+  q<HTMLInputElement>('auto').addEventListener('change', (e) => api.setAutoSpawn((e.target as HTMLInputElement).checked));
+  q<HTMLSelectElement>('diff').addEventListener('change', (e) => api.setDifficulty((e.target as HTMLSelectElement).value));
   q<HTMLSelectElement>('time').addEventListener('change', (e) => api.setTimeScale(Number((e.target as HTMLSelectElement).value)));
   // Taper dans un champ ne pilote pas le jeu (sauf Échap)
   el.addEventListener('keydown', (e) => { if (e.code !== 'Escape') e.stopPropagation(); });
