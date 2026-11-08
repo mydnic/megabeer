@@ -72,13 +72,36 @@ export class SpawnDirector {
     let alive = 0;
     for (const z of this.d.zombies()) if (!z.dead) alive++;
     while (this.budget >= 1 && alive < this.target) {
-      if (!this.place(this.at)) break;
-      const model = MODELS[Math.floor(Math.random() * MODELS.length)];
-      const facing = this.d.player.pos.clone().sub(this.at.clone().multiplyScalar(PLANET_RADIUS));
-      if (!this.d.spawn(model, this.at, facing)) break;
+      if (!this.place(this.at) || !this.spawnAt(this.at)) break;
       this.budget--;
       alive++;
     }
+  }
+
+  /**
+   * Fait sortir de terre `count` zombies en cercle autour du joueur, entre `minDist` et `maxDist` m
+   * (débarquements des événements de map). Renvoie le nombre réellement placé.
+   */
+  surround(count: number, minDist: number, maxDist: number) {
+    this.frame();
+    const base = Math.random() * Math.PI * 2;
+    let placed = 0;
+    for (let i = 0; i < count; i++) {
+      const angle = base + (i / count) * Math.PI * 2;
+      for (let k = 0; k < SPAWN.tries; k++) {
+        const jitter = (Math.random() - 0.5) * (Math.PI * 2 / count) * (1 + k);
+        if (!this.tryPoint(this.at, angle + jitter, minDist + Math.random() * (maxDist - minDist))) continue;
+        if (this.spawnAt(this.at)) placed++;
+        break;
+      }
+    }
+    return placed;
+  }
+
+  private spawnAt(dir: THREE.Vector3) {
+    const model = MODELS[Math.floor(Math.random() * MODELS.length)];
+    const facing = this.d.player.pos.clone().sub(dir.clone().multiplyScalar(PLANET_RADIUS));
+    return this.d.spawn(model, dir, facing) !== undefined;
   }
 
   /** Zombies distancés : ils ressortent de terre sur l'anneau, devant le joueur. */
@@ -94,24 +117,32 @@ export class SpawnDirector {
 
   /** Cherche un point libre sur l'anneau d'apparition (direction depuis le centre de la planète). */
   private place(out: THREE.Vector3, ahead = Math.random() < SPAWN.aheadShare) {
+    this.frame();
+    for (let i = 0; i < SPAWN.tries; i++) {
+      const angle = ahead ? (Math.random() * 2 - 1) * SPAWN.aheadSpread : Math.random() * Math.PI * 2;
+      if (this.tryPoint(out, angle, SPAWN.minDist + Math.random() * (SPAWN.maxDist - SPAWN.minDist))) return true;
+    }
+    return false;
+  }
+
+  /** Repère du joueur : haut, devant (sens de la course, ou du regard s'il est immobile), droite. */
+  private frame() {
     const p = this.d.player;
     const up = this.up.copy(p.pos).normalize();
-    // Devant : dans le sens de la course (ou du regard s'il est immobile)
     const v = this.tang.copy(p.velocity).addScaledVector(up, -p.velocity.dot(up));
     this.fwd.copy(v.lengthSq() > 1 ? v : p.facing);
     this.fwd.addScaledVector(up, -this.fwd.dot(up)).normalize();
     this.right.crossVectors(this.fwd, up);
-    for (let i = 0; i < SPAWN.tries; i++) {
-      const angle = ahead ? (Math.random() * 2 - 1) * SPAWN.aheadSpread : Math.random() * Math.PI * 2;
-      const dist = SPAWN.minDist + Math.random() * (SPAWN.maxDist - SPAWN.minDist);
-      // Distance au sol : on tourne autour du centre de la planète de l'angle correspondant
-      const arc = dist / PLANET_RADIUS;
-      this.tang.copy(this.fwd).multiplyScalar(Math.cos(angle)).addScaledVector(this.right, Math.sin(angle));
-      out.copy(up).multiplyScalar(Math.cos(arc)).addScaledVector(this.tang, Math.sin(arc)).normalize();
-      // Le corps (à hauteur de taille) ne doit pas être dans un mur ou un rocher
-      this.probe.copy(out).multiplyScalar(PLANET_RADIUS + heightAt(out) + 1);
-      if (!this.d.collider.occupied(this.probe, SPAWN.clearance)) return true;
-    }
-    return false;
+  }
+
+  /** Point au sol à `dist` m du joueur dans la direction `angle` (0 : devant) ; faux s'il tombe dans le décor. */
+  private tryPoint(out: THREE.Vector3, angle: number, dist: number) {
+    // Distance au sol : on tourne autour du centre de la planète de l'angle correspondant
+    const arc = dist / PLANET_RADIUS;
+    this.tang.copy(this.fwd).multiplyScalar(Math.cos(angle)).addScaledVector(this.right, Math.sin(angle));
+    out.copy(this.up).multiplyScalar(Math.cos(arc)).addScaledVector(this.tang, Math.sin(arc)).normalize();
+    // Le corps (à hauteur de taille) ne doit pas être dans un mur ou un rocher
+    this.probe.copy(out).multiplyScalar(PLANET_RADIUS + heightAt(out) + 1);
+    return !this.d.collider.occupied(this.probe, SPAWN.clearance);
   }
 }

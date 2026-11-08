@@ -19,6 +19,7 @@ import { applyCard, rollCards, type Card } from './levelUpCards';
 import { Loadout } from './loadout';
 import { PlayerStats } from './playerStats';
 import { SpawnDirector, spawnCurveAt } from './spawnDirector';
+import { MAP_MECHANICS, type MapId, type MapMechanic } from './mechanics/mechanic';
 
 export type Phase = 'home' | 'run' | 'dead';
 export type Spawn = { dir: THREE.Vector3; facing: THREE.Vector3 };
@@ -46,6 +47,12 @@ export type GameEvents = {
   runEnded: { reason: RunEnd; survived: number; kills: number };
   /** Retour à l'accueil : tout est remis à zéro. */
   home: Record<string, never>;
+  /** Abbaye : les cloches commencent à sonner, débarquement dans `inSeconds` s. */
+  bellsRinging: { inSeconds: number };
+  /** Un coup de cloche d'alerte. */
+  bellToll: { index: number };
+  /** Débarquement : `count` zombies sortent de terre en cercle autour du joueur. */
+  bellsLanding: { count: number };
   /** Fin d'un pas de jeu en run (le joueur a atterri), avec la durée de jeu écoulée. */
   tick: { dt: number };
 };
@@ -57,6 +64,8 @@ export type GameDeps = {
   collider: DecorCollider;
   /** Arme de départ du perso. */
   startingWeapon?: WeaponId;
+  /** Map jouée (sa mécanique propre). */
+  map?: MapId;
 };
 
 /** Aucune entrée : joueur immobile (accueil, mort, pause, chute d'arrivée). */
@@ -81,6 +90,8 @@ export class Game {
   readonly loadout: Loadout;
   /** Arrivée des zombies et montée en difficulté au fil de la run. */
   readonly director: SpawnDirector;
+  /** Mécanique propre à la map (Abbaye : les cloches). */
+  readonly mechanic: MapMechanic;
   /** Triches des outils de dev (toujours faux en jeu normal). */
   readonly cheats = { god: false };
 
@@ -134,6 +145,7 @@ export class Game {
       hitGround: (weapon, pos, vel) => this.events.emit('projectileHitGround', { weapon, pos, vel }),
     };
     this.loadout = new Loadout(this.weaponCtx, deps.startingWeapon ?? 'blonde');
+    this.mechanic = MAP_MECHANICS[deps.map ?? 'abbaye'](this);
   }
 
   /** Branche le geste de lancer du perso affiché (sinon : main devant le torse). */
@@ -215,7 +227,10 @@ export class Game {
     if (this.phase === 'run' && this.health.dead) this.die();
     if (this.phase === 'run' && !this.arriving) {
       this.runTime += dt;
-      this.director.update(dt, this.runTime, this.mods.count);
+      if (!frozen) {
+        this.director.update(dt, this.runTime, this.mods.count);
+        this.mechanic.update(dt);
+      }
       this.loadout.update(dt);
       this.events.emit('tick', { dt });
     }
@@ -324,6 +339,7 @@ export class Game {
     this.horde.clear();
     this.horde.setPassive(false);
     this.director.reset();
+    this.mechanic?.reset();
     this.xp.clear();
   }
 }
