@@ -1,9 +1,9 @@
 import * as THREE from 'three';
 import { DIFFICULTIES, type DifficultyId } from '../config/spawn';
-import { ZOMBIE_ATTACK, ZOMBIE_STATS, type ZombieModel } from '../config/zombies';
+import { ENEMIES, ROSTERS, type EnemyId } from '../config/enemies';
+import { ZOMBIE_ATTACK, type ZombieModel } from '../config/zombies';
 import { ARRIVAL } from '../config/player';
 import { DEATH } from '../config/buveur';
-import { XP_DROPS } from '../config/xp';
 import { LEVEL_UP_SCREEN } from '../config/upgrades';
 import type { InputState } from '../core/input';
 import { createHorde } from '../enemies/horde';
@@ -52,7 +52,7 @@ export type GameEvents = {
   /** Un coup de cloche d'alerte. */
   bellToll: { index: number };
   /** Débarquement : pendant `duration` s, des zombies de type `model` sortent de terre en masse autour du joueur. */
-  bellsLanding: { duration: number; model: ZombieModel };
+  bellsLanding: { duration: number; enemy: EnemyId };
   /** Fin du débarquement, `count` zombies sont sortis de terre. */
   bellsSurgeEnded: { count: number };
   /** Fin d'un pas de jeu en run (le joueur a atterri), avec la durée de jeu écoulée. */
@@ -130,8 +130,9 @@ export class Game {
     this.xp = createXpDrops(groundAt);
     this.director = new SpawnDirector({
       player, collider: deps.collider, zombies: () => this.horde.zombies,
-      spawn: (model, at, facing) => {
-        const z = this.spawnZombie(model, at, facing);
+      roster: ROSTERS[deps.map ?? 'abbaye'],
+      spawn: (enemy, at, facing) => {
+        const z = this.spawnZombie(enemy, at, facing);
         z?.emerge();
         return z;
       },
@@ -251,9 +252,9 @@ export class Game {
    * Fait apparaître un zombie au sol à la direction `at`, tourné vers `facing`. Plus la run avance,
    * plus il a de PV (courbe de la run et difficulté).
    */
-  spawnZombie(model: ZombieModel, at: THREE.Vector3, facing: THREE.Vector3) {
-    const z = this.horde.spawn(model, at, facing);
-    if (z) z.hp = Math.round(ZOMBIE_STATS.hp * spawnCurveAt(this.runTime).hpMul * this.mods.hp);
+  spawnZombie(enemy: EnemyId, at: THREE.Vector3, facing: THREE.Vector3) {
+    const z = this.horde.spawn(enemy, at, facing);
+    if (z) z.hp = Math.round(ENEMIES[enemy].hp * spawnCurveAt(this.runTime).hpMul * this.mods.hp);
     return z;
   }
 
@@ -267,7 +268,7 @@ export class Game {
     const killed = z.damage(damage, dir);
     if (killed) {
       this.kills++;
-      this.xp.drop(z.pos, XP_DROPS.perZombie);
+      this.xp.drop(z.pos, z.def.xp);
     }
     this.events.emit('zombieHit', { weapon, zombie: z, damage, crit, killed, hpAfter: z.hp, impact: impact.clone(), dir });
     return killed;
@@ -287,7 +288,7 @@ export class Game {
   }
 
   private hurtPlayer(z: Zombie, dir: THREE.Vector3) {
-    const damage = ZOMBIE_ATTACK.damage * this.mods.damage;
+    const damage = z.def.damage * this.mods.damage;
     // Invulnérable juste après un coup : ni dégâts ni recul (pas d'enchaînement de coups)
     const took = !this.cheats.god && this.health.damage(damage);
     this.events.emit('playerHurt', { zombie: z, dir, damage, hp: this.health.hp, blocked: !took });

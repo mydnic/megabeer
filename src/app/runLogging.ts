@@ -1,6 +1,6 @@
 import { WEAPONS } from '../config/weapons';
 import { RARITIES } from '../config/upgrades';
-import { ZOMBIE_ATTACK, ZOMBIE_STATS } from '../config/zombies';
+import { ENEMIES } from '../config/enemies';
 import type { createRunLog } from '../dev/runLog';
 import type { Game } from '../game/game';
 
@@ -14,21 +14,21 @@ export function wireRunLog(game: Game, runLog: ReturnType<typeof createRunLog>, 
     character: 'buveur', map: 'abbaye', seed: meta().seed, difficulty: game.difficulty,
     stats: { ...game.stats, maxHp: game.health.max },
     weapons: Object.fromEntries(game.loadout.weapons.map((w) => [w.id, WEAPONS[w.id]])),
-    zombie: ZOMBIE_STATS,
+    enemies: ENEMIES,
   }));
   game.events.on('landed', () => runLog.event('landed'));
-  game.events.on('zombieSpawned', ({ zombie }) => runLog.spawn(zombie.model));
+  game.events.on('zombieSpawned', ({ zombie }) => runLog.spawn(zombie.enemy));
   game.events.on('zombieHit', ({ weapon, zombie, damage, hpAfter, crit, killed }) => {
     const w = weapon?.id ?? 'dev';
-    runLog.hit(w, zombie.model, damage, hpAfter, crit);
-    if (killed) runLog.kill(w, zombie.model);
+    runLog.hit(w, zombie.enemy, damage, hpAfter, crit);
+    if (killed) runLog.kill(w, zombie.enemy);
   });
-  game.events.on('playerHurt', ({ zombie, hp, blocked }) => runLog.hurt(zombie.model, ZOMBIE_ATTACK.damage, hp, blocked));
+  game.events.on('playerHurt', ({ zombie, damage, hp, blocked }) => runLog.hurt(zombie.enemy, damage, hp, blocked));
   game.events.on('xpCollected', ({ amount }) => runLog.xp(amount));
   game.events.on('levelGained', ({ level }) => runLog.levelUp(level));
   game.events.on('levelUpOffered', ({ cards }) => runLog.event('cardsOffered', ...cards.map((c) => `${c.weapon.id}:${c.upgrade.id}:${RARITIES[c.tier].id}`)));
   game.events.on('cardPicked', ({ card }) => runLog.event('cardPicked', `${card.weapon.id}:${card.upgrade.id}`, RARITIES[card.tier].id, card.weapon.mods.level));
-  game.events.on('bellsLanding', ({ model }) => runLog.event('bells', model));
+  game.events.on('bellsLanding', ({ enemy }) => runLog.event('bells', enemy));
   game.events.on('bellsSurgeEnded', ({ count }) => runLog.event('bellsEnd', count));
   game.events.on('runEnded', ({ reason, survived, kills }) => runLog.end(reason, { survived, kills }));
   game.events.on('tick', ({ dt }) => runLog.tick(dt, () => {

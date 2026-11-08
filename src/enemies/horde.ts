@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { ENEMIES, type EnemyId } from '../config/enemies';
 import { ZOMBIE_ATTACK, ZOMBIE_HURT as H, ZOMBIE_MOVE as M, ZOMBIE_VISUAL as V, type ZombieModel } from '../config/zombies';
 import { PLANET_RADIUS } from '../config/world';
 import { heightAt } from '../world/terrain';
@@ -26,8 +27,8 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
   }
 
   /** Pose un zombie sur le sol, à la direction donnée, regardant vers `facing`. */
-  function spawn(model: ZombieModel, dir: THREE.Vector3, facing: THREE.Vector3) {
-    const z = new Zombie(kinds[model], model);
+  function spawn(enemy: EnemyId, dir: THREE.Vector3, facing: THREE.Vector3) {
+    const z = new Zombie(kinds[ENEMIES[enemy].model], enemy);
     // Sonde un peu au-dessus du relief : trouve aussi le dessus du décor (dalles, marches)
     z.pos.copy(dir).normalize();
     z.pos.setLength(PLANET_RADIUS + heightAt(z.pos) + 2.5);
@@ -67,13 +68,13 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
     // Avance dans la direction du regard (il tourne, il ne glisse pas de côté)
     want.normalize();
     const align = Math.max(0, z.facing.dot(want));
-    let speed = M.speed * z.speedMul * align;
+    let speed = z.def.speed * z.speedMul * align;
     // Contournement : bloqué contre un mur au pas précédent, il longe l'obstacle quelque temps
     if (z.detour > 0) {
       z.detour -= dt;
       side.crossVectors(up, want).multiplyScalar(z.detourSide);
       want.lerp(side, M.detourBlend).normalize();
-      speed = M.speed * z.speedMul;
+      speed = z.def.speed * z.speedMul;
     }
     before.copy(z.pos);
     z.pos.addScaledVector(want, speed * dt);

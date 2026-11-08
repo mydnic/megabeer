@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { SPAWN } from '../config/spawn';
-import { ZOMBIE_ATTACK, ZOMBIE_HURT as H, ZOMBIE_MOVE, ZOMBIE_STATS, ZOMBIE_VISUAL as V, type ZombieModel } from '../config/zombies';
+import { ENEMIES, type EnemyId } from '../config/enemies';
+import { ZOMBIE_ATTACK, ZOMBIE_HURT as H, ZOMBIE_MODELS, ZOMBIE_MOVE, ZOMBIE_VISUAL as V } from '../config/zombies';
 
 export type ZombieState = 'idle' | 'walk' | 'attack' | 'hit' | 'death';
 export const ZOMBIE_STATES = Object.keys(V.clips) as ZombieState[];
@@ -39,7 +40,7 @@ export class Zombie {
   /** Temps passé dans l'état courant (évite les allers-retours marche / arrêt). */
   stateTime = 0;
   /** Points de vie ; à 0, il meurt (animation, puis le corps s'enfonce dans le sol). */
-  hp: number = ZOMBIE_STATS.hp;
+  hp: number;
   /** Recul subi (tangent), qui s'amortit. */
   readonly knockVel = new THREE.Vector3();
   /** Flash blanc restant (0 à 1). */
@@ -63,7 +64,14 @@ export class Zombie {
   private up = new THREE.Vector3();
   private tmp = new THREE.Vector3();
 
-  constructor(readonly kind: ZombieTimings, readonly model: ZombieModel) {}
+  constructor(readonly kind: ZombieTimings, readonly enemy: EnemyId) {
+    this.hp = ENEMIES[enemy].hp;
+  }
+
+  /** Fiche de l'ennemi (PV, vitesse, dégâts, XP). */
+  get def() { return ENEMIES[this.enemy]; }
+  /** Modèle 3D affiché. */
+  get model() { return ENEMIES[this.enemy].model; }
 
   play(state: ZombieState, force = false) {
     if (this.state === state && !force) return;
@@ -119,7 +127,8 @@ export class Zombie {
 
   update(dt: number) {
     // Cadence des pas calée sur la vitesse réelle : les pieds ne patinent pas
-    const rate = this.state === 'walk' ? Math.max(0.3, this.walkSpeed / ZOMBIE_MOVE.walkAnimAt) : this.animSpeed;
+    const animAt = (ZOMBIE_MODELS[this.model] as { walkAnimAt?: number }).walkAnimAt ?? ZOMBIE_MOVE.walkAnimAt;
+    const rate = this.state === 'walk' ? Math.max(0.3, this.walkSpeed / animAt) : this.animSpeed;
     const c = this.kind.clips[this.state];
     const before = (this.time % c.duration) / c.duration;
     this.time += dt * rate;

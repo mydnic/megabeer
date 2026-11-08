@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { PLANET_RADIUS } from '../config/world';
 import { SPAWN, SPAWN_CURVE } from '../config/spawn';
-import { ZOMBIE_MODELS, type ZombieModel } from '../config/zombies';
+import type { EnemyId, RosterEntry } from '../config/enemies';
 import type { Zombie } from '../enemies/zombie';
 import type { PlayerController } from '../player/controller';
 import type { DecorCollider } from '../world/decor/collider';
@@ -27,11 +27,11 @@ export type SpawnDirectorDeps = {
   player: PlayerController;
   collider: DecorCollider;
   zombies: () => readonly Zombie[];
+  /** Roster de la map : quels ennemis arrivent, à partir de quand. */
+  roster: readonly RosterEntry[];
   /** Fait apparaître un zombie (PV réglés par le jeu selon le moment de la run). */
-  spawn: (model: ZombieModel, at: THREE.Vector3, facing: THREE.Vector3) => Zombie | undefined;
+  spawn: (enemy: EnemyId, at: THREE.Vector3, facing: THREE.Vector3) => Zombie | undefined;
 };
-
-const MODELS = Object.keys(ZOMBIE_MODELS) as ZombieModel[];
 
 /**
  * Le directeur de vagues : les zombies arrivent en continu, à un rythme qui accélère avec la run
@@ -68,7 +68,7 @@ export class SpawnDirector {
     this.budget += this.rate * dt;
     while (this.budget >= 1) {
       // Aucun point libre cette image (décor) : on réessaie à la suivante, sans accumuler de retard
-      if (!this.place(this.at) || !this.spawnAt(this.at)) { this.budget = Math.min(this.budget, 1); break; }
+      if (!this.place(this.at) || !this.spawnAt(this.at, this.pickEnemy(runTime))) { this.budget = Math.min(this.budget, 1); break; }
       this.budget--;
     }
   }
@@ -76,22 +76,30 @@ export class SpawnDirector {
    * Fait sortir de terre `count` zombies de type `model` tout autour du joueur, entre `minDist` et
    * `maxDist` m (événements de map). Renvoie le nombre réellement placé.
    */
-  spawnAround(count: number, minDist: number, maxDist: number, model: ZombieModel) {
+  spawnAround(count: number, minDist: number, maxDist: number, enemy: EnemyId) {
     this.frame();
     let placed = 0;
     for (let i = 0; i < count; i++) {
       for (let k = 0; k < SPAWN.tries; k++) {
         if (!this.tryPoint(this.at, Math.random() * Math.PI * 2, minDist + Math.random() * (maxDist - minDist))) continue;
-        if (this.spawnAt(this.at, model)) placed++;
+        if (this.spawnAt(this.at, enemy)) placed++;
         break;
       }
     }
     return placed;
   }
 
-  private spawnAt(dir: THREE.Vector3, model = MODELS[Math.floor(Math.random() * MODELS.length)]) {
+  /** Tire un ennemi parmi ceux du roster déjà arrivés à ce moment de la run (selon leur poids). */
+  pickEnemy(runTime: number): EnemyId {
+    const open = this.d.roster.filter((e) => e.from <= runTime);
+    let r = Math.random() * open.reduce((sum, e) => sum + e.weight, 0);
+    for (const e of open) if ((r -= e.weight) < 0) return e.enemy;
+    return open[open.length - 1].enemy;
+  }
+
+  private spawnAt(dir: THREE.Vector3, enemy: EnemyId) {
     const facing = this.d.player.pos.clone().sub(dir.clone().multiplyScalar(PLANET_RADIUS));
-    return this.d.spawn(model, dir, facing);
+    return this.d.spawn(enemy, dir, facing);
   }
 
   /** Zombies distancés : ils ressortent de terre sur l'anneau, devant le joueur. */

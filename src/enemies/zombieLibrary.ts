@@ -18,6 +18,8 @@ export type ZombieKind = ZombieTimings & {
  * Charge les 4 modèles et pré-calcule leurs animations dans une seule texture (voir render/vat.ts) :
  * pour chaque image, la matrice de chaque os (os animé x inverse de liaison), dans le repère du modèle.
  */
+type ModelDef = { clips?: Partial<Record<ZombieState, readonly string[]>> };
+
 export async function loadZombieLibrary() {
   const loader = new GLTFLoader();
   const ids = Object.keys(ZOMBIE_MODELS) as ZombieModel[];
@@ -70,7 +72,9 @@ export async function loadZombieLibrary() {
     const m = new THREE.Matrix4();
     const clipRows = {} as Record<ZombieState, { rows: Float32Array[]; duration: number }>;
     for (const state of STATES) {
-      const clip = V.clips[state].map((n) => gltf.animations.find((c) => c.name === n)).find(Boolean);
+      // Clips propres au modèle (ex. le Novice court au lieu de marcher), sinon ceux de tous les zombies
+      const names: readonly string[] = (def as ModelDef).clips?.[state] ?? V.clips[state];
+      const clip = names.map((n) => gltf.animations.find((c) => c.name === n)).find(Boolean);
       if (!clip) throw new Error(`Animation ${state} manquante pour le zombie ${id}`);
       const action = mixer.clipAction(clip);
       action.play();

@@ -1,9 +1,7 @@
 import { BELLS as B } from '../../config/abbey';
-import { ZOMBIE_MODELS, type ZombieModel } from '../../config/zombies';
+import type { EnemyId } from '../../config/enemies';
 import type { Game } from '../game';
 import type { MapMechanic } from './mechanic';
-
-const MODELS = Object.keys(ZOMBIE_MODELS) as ZombieModel[];
 
 /**
  * Les cloches de l'Abbaye : toutes les 2 min, elles sonnent quelques coups d'alerte, puis c'est le
@@ -14,16 +12,17 @@ export function createAbbeyBells(game: Game): MapMechanic {
   /** Temps de run du prochain débarquement ; début de la sonnerie en cours et coups déjà sonnés (-1 : silence). */
   let next: number = B.every, ringStart = 0, tolled = -1;
   /** Débarquement en cours : temps restant (s, 0 : aucun), type d'ennemi, arrivées en attente et total. */
-  let surge = 0, model: ZombieModel = MODELS[0], budget = 0, landed = 0;
+  let surge = 0, enemy: EnemyId = 'zombie', budget = 0, landed = 0;
 
   const startSurge = () => {
     tolled = -1;
     next = (Math.floor(game.runTime / B.every) + 1) * B.every;
     surge = B.duration;
-    model = MODELS[Math.floor(Math.random() * MODELS.length)];
+    // Un seul type pour tout le débarquement, parmi ceux déjà arrivés dans la run
+    enemy = game.director.pickEnemy(game.runTime);
     budget = 1;
     landed = 0;
-    game.events.emit('bellsLanding', { duration: B.duration, model });
+    game.events.emit('bellsLanding', { duration: B.duration, enemy });
   };
 
   const updateSurge = (dt: number) => {
@@ -33,7 +32,7 @@ export function createAbbeyBells(game: Game): MapMechanic {
     const n = Math.floor(budget);
     if (n > 0) {
       budget -= n;
-      landed += game.director.spawnAround(n, B.minDist, B.maxDist, model);
+      landed += game.director.spawnAround(n, B.minDist, B.maxDist, enemy);
     }
     if (surge <= 0) game.events.emit('bellsSurgeEnded', { count: landed });
   };

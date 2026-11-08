@@ -55,7 +55,7 @@ describe("Les cloches de l'Abbaye", () => {
     const surge = watchSurge(t);
     t.playUntil(() => t.events('bellsLanding').length > 0, 10);
     const start = t.game.runTime;
-    const { model } = t.events('bellsLanding')[0];
+    const { enemy } = t.events('bellsLanding')[0];
     t.play(BELLS.duration + 3);
 
     // En continu : il en arrive encore au début, au milieu et à la fin
@@ -70,7 +70,7 @@ describe("Les cloches de l'Abbaye", () => {
     expect(surge.every((s) => s.at <= start + BELLS.duration + 0.05)).toBe(true);
     expect(t.events('bellsSurgeEnded')[0].count).toBe(surge.length);
     // Un seul type d'ennemi pour tout le débarquement
-    expect(surge.every((s) => s.zombie.model === model)).toBe(true);
+    expect(surge.every((s) => s.zombie.enemy === enemy)).toBe(true);
 
     // Tout autour : chaque quart du cercle reçoit des zombies
     expect(new Set(surge.map((s) => s.quarter)).size).toBe(4);

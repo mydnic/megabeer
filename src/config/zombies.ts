@@ -1,19 +1,23 @@
 // Zombies (GDD section 11). Modèles CC0 Quaternius, passés en cel-shading comme le Buveur.
 
-/** Les 4 variantes de zombie de base : fichier glTF et taille en jeu (mètres). */
+/**
+ * Les modèles 3D des ennemis (un par type d'ennemi, voir enemies.ts) : fichier glTF, taille en jeu
+ * (mètres), et au besoin clips propres (sinon ceux de ZOMBIE_VISUAL.clips) et vitesse (m/s) pour
+ * laquelle l'animation de déplacement joue à vitesse normale.
+ */
 export const ZOMBIE_MODELS = {
   basic: { file: 'Zombie_Basic.gltf', height: 1.85 },
   chubby: { file: 'Zombie_Chubby.gltf', height: 1.9 },
   arm: { file: 'Zombie_Arm.gltf', height: 1.85 },
-  ribcage: { file: 'Zombie_Ribcage.gltf', height: 1.7 },
+  // Le Novice : il court (et bondit pour frapper, il n'a pas d'attaque)
+  ribcage: { file: 'Zombie_Ribcage.gltf', height: 1.7, clips: { walk: ['Run'] }, walkAnimAt: 4.5 },
 } as const;
 
 export type ZombieModel = keyof typeof ZOMBIE_MODELS;
 
 /** Déplacement des zombies (le joueur va à 9 m/s). */
 export const ZOMBIE_MOVE = {
-  /** Vitesse de marche (m/s), variée par zombie de +- speedJitter. */
-  speed: 2.8,
+  /** Variation de vitesse par zombie (+-), la vitesse elle-même est propre à chaque ennemi (enemies.ts). */
   speedJitter: 0.15,
   /** Rayon du corps (collisions décor, écartement entre zombies). */
   radius: 0.4,
@@ -32,19 +36,12 @@ export const ZOMBIE_MOVE = {
 export const ZOMBIE_ATTACK = {
   /** Moment du coup dans l'animation d'attaque (fraction du clip : le bras arrive sur la cible). */
   hitAt: 0.45,
-  /** PV retirés par coup (zombie de base, GDD section 11). */
-  damage: 8,
   /** Distance maxi pour que le coup porte (m) : un joueur qui s'écarte à temps l'esquive. */
   reach: 2.0,
   /** Recul du Buveur : vitesse au sol (m/s), petit saut (m/s), amortissement (s). */
   knockSpeed: 8,
   knockLift: 3.5,
   knockDecay: 0.18,
-} as const;
-
-/** Zombie de base (GDD section 11) : points de vie, et réaction quand il est touché. */
-export const ZOMBIE_STATS = {
-  hp: 9,
 } as const;
 
 /** Ressenti quand un zombie est touché, puis meurt. */

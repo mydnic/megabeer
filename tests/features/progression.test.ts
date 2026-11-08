@@ -1,3 +1,4 @@
+import { ENEMIES } from '../../src/config/enemies';
 import { describe, expect, it } from 'vitest';
 import { LEVELS, XP_DROPS } from '../../src/config/xp';
 import { LEVEL_UP_SCREEN, RARITIES } from '../../src/config/upgrades';
@@ -16,10 +17,10 @@ function arena() {
 describe("Les gouttes de bière (XP)", () => {
   it('tombent quand un zombie meurt', () => {
     const t = arena();
-    const z = t.game.spawnZombie('basic', t.inFront(12), t.game.player.facing.clone())!;
+    const z = t.game.spawnZombie('zombie', t.inFront(12), t.game.player.facing.clone())!;
     t.game.hitZombie(z, z.hp + 1, false, z.pos, t.game.player.facing.clone());
     expect(t.game.xp.drops).toHaveLength(1);
-    expect(t.game.xp.drops[0].value).toBe(XP_DROPS.perZombie);
+    expect(t.game.xp.drops[0].value).toBe(ENEMIES.zombie.xp);
   });
 
   it('filent vers le Buveur et sont avalées quand il passe à portée', () => {

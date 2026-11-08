@@ -1,9 +1,9 @@
+import { ENEMIES } from '../../src/config/enemies';
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { PLANET_RADIUS } from '../../src/config/world';
 import { DIFFICULTIES, SPAWN, SPAWN_CURVE } from '../../src/config/spawn';
 import { randomSpawn } from '../../src/world/decor/layout';
-import { ZOMBIE_ATTACK, ZOMBIE_STATS } from '../../src/config/zombies';
 import { spawnCurveAt } from '../../src/game/spawnDirector';
 import { createTestGame } from '../support/testGame';
 
@@ -78,8 +78,8 @@ describe('Les zombies arrivent', () => {
 
   it("n'ont aucune limite de nombre : avec 700 zombies debout, d'autres arrivent encore", () => {
     const t = observe();
-    for (let i = 0; i < 700; i++) t.game.spawnZombie('basic', t.inFront(40 + (i % 20), (i / 20) % 30), t.game.player.facing.clone());
-    expect(t.game.horde.zombies.filter((z) => z.model === 'basic').length).toBeGreaterThanOrEqual(700);
+    for (let i = 0; i < 700; i++) t.game.spawnZombie('zombie', t.inFront(40 + (i % 20), (i / 20) % 30), t.game.player.facing.clone());
+    expect(t.game.horde.zombies.filter((z) => z.enemy === 'zombie').length).toBeGreaterThanOrEqual(700);
     const before = standing(t).length;
     t.play(3);
     expect(standing(t).length).toBeGreaterThan(before);
@@ -87,20 +87,20 @@ describe('Les zombies arrivent', () => {
   it('plus la run avance, plus ils sont coriaces', () => {
     const t = observe();
     t.play(1 / 60);
-    expect(standing(t)[0].hp).toBe(ZOMBIE_STATS.hp);
+    expect(standing(t)[0].hp).toBe(ENEMIES.zombie.hp);
     t.noSpawns();
     t.game.director.enabled = true;
     t.game.runTime = 480;
     t.play(1);
     const late = standing(t)[0];
-    expect(late.hp).toBe(Math.round(ZOMBIE_STATS.hp * spawnCurveAt(t.game.runTime - 1).hpMul));
-    expect(late.hp).toBeGreaterThan(ZOMBIE_STATS.hp * 3);
+    expect(late.hp).toBe(Math.round(late.def.hp * spawnCurveAt(t.game.runTime - 1).hpMul));
+    expect(late.hp).toBeGreaterThan(late.def.hp * 3);
   });
 
   it('un zombie distancé ressort de terre devant le joueur', () => {
     const t = observe();
     t.noSpawns();
-    const z = t.game.spawnZombie('basic', t.inFront(-(SPAWN.recycleDist + 15)), t.game.player.facing.clone())!;
+    const z = t.game.spawnZombie('zombie', t.inFront(-(SPAWN.recycleDist + 15)), t.game.player.facing.clone())!;
     t.play(1 / 60);
     const d = groundDist(z.pos, t.game.player.pos);
     expect(d).toBeLessThan(SPAWN.maxDist * 1.05);
@@ -138,10 +138,10 @@ describe('La difficulté', () => {
     t.game.loadout.weapons[0].mods.range = 0;
     t.play(1 / 60);
     expect(standing(t).length).toBe(Math.round(SPAWN.startCount * B.count));
-    expect(standing(t)[0].hp).toBe(Math.round(ZOMBIE_STATS.hp * B.hp));
+    expect(standing(t)[0].hp).toBe(Math.round(ENEMIES.zombie.hp * B.hp));
     t.noSpawns();
-    t.game.spawnZombie('basic', t.inFront(1.2), t.game.player.facing.clone().negate());
+    t.game.spawnZombie('zombie', t.inFront(1.2), t.game.player.facing.clone().negate());
     t.playUntil(() => t.events('playerHurt').some((h) => !h.blocked), 4);
-    expect(t.events('playerHurt').find((h) => !h.blocked)!.damage).toBeCloseTo(ZOMBIE_ATTACK.damage * B.damage);
+    expect(t.events('playerHurt').find((h) => !h.blocked)!.damage).toBeCloseTo(ENEMIES.zombie.damage * B.damage);
   });
 });

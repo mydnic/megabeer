@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { DIFFICULTIES, type DifficultyId } from '../config/spawn';
-import { ZOMBIE_MODELS, type ZombieModel } from '../config/zombies';
+import { ENEMIES, type EnemyId } from '../config/enemies';
 import type { createMusic } from '../audio/music';
 import type { createRunLog } from '../dev/runLog';
 import type { Game } from '../game/game';
@@ -16,7 +16,7 @@ export async function wireDevTools(game: Game, d: {
 }) {
   const { createDevPanel } = await import('../dev/devPanel');
   const { music, runLog } = d;
-  const models = Object.keys(ZOMBIE_MODELS) as ZombieModel[];
+  const models = Object.keys(ENEMIES) as EnemyId[];
   const inRun = () => game.phase === 'run';
   createDevPanel({
     models,
@@ -29,7 +29,7 @@ export async function wireDevTools(game: Game, d: {
       for (let i = 0; i < n; i++) {
         const t = Math.random() * Math.PI * 2, r = rMin + Math.random() * (rMax - rMin);
         const at = p.pos.clone().addScaledVector(a, Math.cos(t) * r).addScaledVector(b, Math.sin(t) * r);
-        game.spawnZombie(model === 'mix' ? models[i % models.length] : model as ZombieModel, at, p.pos.clone().sub(at));
+        game.spawnZombie(model === 'mix' ? models[i % models.length] : model as EnemyId, at, p.pos.clone().sub(at));
       }
       runLog.event('dev', 'spawn', model, n);
     },

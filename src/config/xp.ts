@@ -1,9 +1,7 @@
-﻿// XP présentée comme de l'alcool (GDD section 9) : gouttes de bière, alcoolémie, degrés.
+// XP présentée comme de l'alcool (GDD section 9) : gouttes de bière, alcoolémie, degrés.
 
-/** Gouttes de bière lâchées par les zombies. */
+/** Gouttes de bière lâchées par les zombies (leur valeur est propre à chaque ennemi, enemies.ts). */
 export const XP_DROPS = {
-  /** XP lâchée par un zombie de base. */
-  perZombie: 2,
   /** Rayon de la goutte (m) pour 1 XP ; elle grossit avec sa valeur (racine cubique). */
   radius: 0.13,
   /** Lévitation : hauteur au-dessus du sol (m), amplitude et vitesse du flottement. */

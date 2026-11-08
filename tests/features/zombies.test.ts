@@ -1,6 +1,6 @@
+import { ENEMIES } from '../../src/config/enemies';
 import { describe, expect, it } from 'vitest';
 import { PLAYER_STATS } from '../../src/config/player';
-import { ZOMBIE_ATTACK } from '../../src/config/zombies';
 import { createTestGame } from '../support/testGame';
 
 /** Une run au sol, Blonde désarmée (portée nulle), sans les zombies de départ. */
@@ -15,7 +15,7 @@ function arena() {
 describe('Un zombie', () => {
   it('marche vers le joueur', () => {
     const t = arena();
-    const z = t.game.spawnZombie('basic', t.inFront(15), t.game.player.facing.clone())!;
+    const z = t.game.spawnZombie('zombie', t.inFront(15), t.game.player.facing.clone())!;
     const before = z.pos.distanceTo(t.game.player.pos);
     t.play(3);
     expect(z.pos.distanceTo(t.game.player.pos)).toBeLessThan(before - 2);
@@ -23,17 +23,17 @@ describe('Un zombie', () => {
 
   it('frappe au contact : le Buveur perd des PV et recule', () => {
     const t = arena();
-    t.game.spawnZombie('basic', t.inFront(1.2), t.game.player.facing.clone().negate());
+    t.game.spawnZombie('zombie', t.inFront(1.2), t.game.player.facing.clone().negate());
     const start = t.game.player.pos.clone();
     expect(t.playUntil(() => t.events('playerHurt').some((h) => !h.blocked), 4)).toBe(true);
-    expect(t.game.health.hp).toBe(PLAYER_STATS.maxHp - ZOMBIE_ATTACK.damage);
+    expect(t.game.health.hp).toBe(PLAYER_STATS.maxHp - ENEMIES.zombie.damage);
     t.play(0.2);
     expect(t.game.player.pos.distanceTo(start)).toBeGreaterThan(0.3);
   });
 
   it("ne peut pas enchaîner les coups : juste après un coup, le Buveur est invulnérable un instant", () => {
     const t = arena();
-    for (const side of [-0.8, 0, 0.8]) t.game.spawnZombie('basic', t.inFront(1.2, side), t.game.player.facing.clone().negate());
+    for (const side of [-0.8, 0, 0.8]) t.game.spawnZombie('zombie', t.inFront(1.2, side), t.game.player.facing.clone().negate());
     t.playUntil(() => t.events('playerHurt').some((h) => !h.blocked), 4);
     const firstHp = t.game.health.hp;
     t.play(PLAYER_STATS.invulnTime * 0.5);
@@ -42,7 +42,7 @@ describe('Un zombie', () => {
 
   it('frappe aussi un Buveur en plein saut (sauter ne protège pas)', () => {
     const t = arena();
-    t.game.spawnZombie('basic', t.inFront(1.2), t.game.player.facing.clone().negate());
+    t.game.spawnZombie('zombie', t.inFront(1.2), t.game.player.facing.clone().negate());
     // Le Buveur saute sans arrêt : un coup doit quand même finir par porter
     let hurt = false;
     for (let i = 0; i < 6 * 60 && !hurt; i++) {
@@ -55,14 +55,14 @@ describe('Un zombie', () => {
   it("ne fait rien en godmode (outil de dev)", () => {
     const t = arena();
     t.game.cheats.god = true;
-    t.game.spawnZombie('basic', t.inFront(1.2), t.game.player.facing.clone().negate());
+    t.game.spawnZombie('zombie', t.inFront(1.2), t.game.player.facing.clone().negate());
     t.play(4);
     expect(t.game.health.hp).toBe(PLAYER_STATS.maxHp);
   });
 
   it('meurt, se couche puis disparaît dans le sol', () => {
     const t = arena();
-    const z = t.game.spawnZombie('basic', t.inFront(8), t.game.player.facing.clone())!;
+    const z = t.game.spawnZombie('zombie', t.inFront(8), t.game.player.facing.clone())!;
     t.game.horde.setPassive(true);
     t.game.hitZombie(z, z.hp + 1, false, z.pos, t.game.player.facing.clone());
     expect(z.dead).toBe(true);
@@ -84,7 +84,7 @@ describe('La mort du Buveur', () => {
     const dt = t.game.step(1 / 60);
     expect(dt).toBeLessThan(1 / 60);
     // Plus de coups, même au contact
-    t.game.spawnZombie('basic', t.inFront(1.2), t.game.player.facing.clone().negate());
+    t.game.spawnZombie('zombie', t.inFront(1.2), t.game.player.facing.clone().negate());
     const hurtBefore = t.events('playerHurt').length;
     t.play(4);
     expect(t.events('playerHurt').length).toBe(hurtBefore);

@@ -1,6 +1,6 @@
+import { ENEMIES } from '../../src/config/enemies';
 import { describe, expect, it } from 'vitest';
 import { WEAPONS } from '../../src/config/weapons';
-import { ZOMBIE_STATS } from '../../src/config/zombies';
 import { createTestGame } from '../support/testGame';
 
 const W = WEAPONS.blonde;
@@ -16,7 +16,7 @@ function arena() {
 describe('La Blonde', () => {
   it('lance toute seule une bouteille sur un zombie à portée et le tue', () => {
     const t = arena();
-    const z = t.game.spawnZombie('basic', t.inFront(8), t.game.player.facing.clone().negate())!;
+    const z = t.game.spawnZombie('zombie', t.inFront(8), t.game.player.facing.clone().negate())!;
     t.play(2);
     const hits = t.events('zombieHit');
     expect(hits.length).toBeGreaterThan(0);
@@ -27,7 +27,7 @@ describe('La Blonde', () => {
 
   it("ne tire pas quand aucun zombie n'est à portée", () => {
     const t = arena();
-    t.game.spawnZombie('basic', t.inFront(W.range + 15), t.game.player.facing.clone().negate());
+    t.game.spawnZombie('zombie', t.inFront(W.range + 15), t.game.player.facing.clone().negate());
     t.play(1);
     expect(t.game.loadout.weapons[0].projectiles.filter((p) => p.active)).toHaveLength(0);
     expect(t.events('zombieHit')).toHaveLength(0);
@@ -37,7 +37,7 @@ describe('La Blonde', () => {
     const t = arena();
     const blonde = t.game.loadout.weapons[0];
     blonde.mods.critChance = -W.critChance; // aucun critique
-    t.game.spawnZombie('basic', t.inFront(8), t.game.player.facing.clone().negate());
+    t.game.spawnZombie('zombie', t.inFront(8), t.game.player.facing.clone().negate());
     t.playUntil(() => t.events('zombieHit').length > 0, 3);
     const hit = t.events('zombieHit')[0];
     expect(hit.crit).toBe(false);
@@ -48,7 +48,7 @@ describe('La Blonde', () => {
     const t = arena();
     const blonde = t.game.loadout.weapons[0];
     blonde.mods.critChance = 1;
-    t.game.spawnZombie('basic', t.inFront(8), t.game.player.facing.clone().negate());
+    t.game.spawnZombie('zombie', t.inFront(8), t.game.player.facing.clone().negate());
     t.playUntil(() => t.events('zombieHit').length > 0, 3);
     const hit = t.events('zombieHit')[0];
     expect(hit.crit).toBe(true);
@@ -58,8 +58,8 @@ describe('La Blonde', () => {
   it("s'écrase sur le premier zombie touché (pas de perçage)", () => {
     const t = arena();
     // Deux zombies alignés : la bouteille ne peut toucher que le premier
-    t.game.spawnZombie('basic', t.inFront(7), t.game.player.facing.clone().negate());
-    t.game.spawnZombie('basic', t.inFront(7.6), t.game.player.facing.clone().negate());
+    t.game.spawnZombie('zombie', t.inFront(7), t.game.player.facing.clone().negate());
+    t.game.spawnZombie('zombie', t.inFront(7.6), t.game.player.facing.clone().negate());
     t.playUntil(() => t.events('zombieHit').length > 0, 3);
     t.play(0.05);
     expect(t.events('zombieHit')).toHaveLength(1);
@@ -70,7 +70,7 @@ describe('La Blonde', () => {
     const blonde = t.game.loadout.weapons[0];
     blonde.mods.projectiles = 2;
     blonde.mods.critChance = -W.critChance;
-    for (const side of [-3, 0, 3]) t.game.spawnZombie('basic', t.inFront(9, side), t.game.player.facing.clone().negate());
+    for (const side of [-3, 0, 3]) t.game.spawnZombie('zombie', t.inFront(9, side), t.game.player.facing.clone().negate());
     // Un seul lancer : 3 bouteilles, une par zombie
     t.playUntil(() => t.events('zombieHit').length >= 3, 3);
     const victims = new Set(t.events('zombieHit').map((h) => h.zombie));
@@ -82,8 +82,8 @@ describe('La Blonde', () => {
       const t = arena();
       t.game.loadout.weapons[0].mods.rate = rate;
       // Un zombie qui ne meurt jamais : on compte les coups
-      const z = t.game.spawnZombie('basic', t.inFront(9), t.game.player.facing.clone().negate())!;
-      t.game.events.on('zombieHit', () => { z.hp = ZOMBIE_STATS.hp; z.deadTime = -1; });
+      const z = t.game.spawnZombie('zombie', t.inFront(9), t.game.player.facing.clone().negate())!;
+      t.game.events.on('zombieHit', () => { z.hp = ENEMIES.zombie.hp; z.deadTime = -1; });
       t.game.horde.setPassive(true);
       t.play(4);
       return t.events('zombieHit').length;
