@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { SPAWN } from '../config/spawn';
-import { ENEMIES, type EnemyId } from '../config/enemies';
+import { ENEMIES, type EnemyDef, type EnemyId } from '../config/enemies';
 import { ZOMBIE_ATTACK, ZOMBIE_HURT as H, ZOMBIE_MODELS, ZOMBIE_MOVE, ZOMBIE_VISUAL as V } from '../config/zombies';
 
 export type ZombieState = 'idle' | 'walk' | 'attack' | 'hit' | 'death';
@@ -50,6 +50,9 @@ export class Zombie {
   /** Mort : temps écoulé depuis la mort, et enfoncement actuel dans le sol (m). */
   deadTime = -1;
   sink = 0;
+  /** Brique Tireur : temps avant le prochain lancer (s), et lancer en cours (le geste d'attaque lâche la bouteille). */
+  throwTimer = 0;
+  throwing = false;
   /** Sortie de terre en cours (s restantes) : il émerge du sol, immobile, sans frapper. */
   rise = 0;
   /** Vrai quand le corps a fini de s'enfoncer : la horde le retire. */
@@ -66,10 +69,12 @@ export class Zombie {
 
   constructor(readonly kind: ZombieTimings, readonly enemy: EnemyId) {
     this.hp = ENEMIES[enemy].hp;
+    const T = (ENEMIES[enemy] as EnemyDef).thrower;
+    if (T) this.throwTimer = Math.random() * T.firstDelay;
   }
 
-  /** Fiche de l'ennemi (PV, vitesse, dégâts, XP). */
-  get def() { return ENEMIES[this.enemy]; }
+  /** Fiche de l'ennemi (PV, vitesse, dégâts, XP, briques). */
+  get def(): EnemyDef { return ENEMIES[this.enemy]; }
   /** Modèle 3D affiché. */
   get model() { return ENEMIES[this.enemy].model; }
 
@@ -137,6 +142,7 @@ export class Zombie {
     this.stateTime += dt;
     this.flash = Math.max(0, this.flash - dt / H.flashTime);
     this.stagger = Math.max(0, this.stagger - dt);
+    this.throwTimer = Math.max(0, this.throwTimer - dt);
     if (this.rise > 0 && !this.dead) {
       this.rise = Math.max(0, this.rise - dt);
       this.sink = (this.rise / SPAWN.riseTime) ** 2 * SPAWN.riseDepth;

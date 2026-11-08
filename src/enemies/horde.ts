@@ -59,6 +59,26 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
       if (z.state !== 'attack' || z.attackDone) z.play('idle');
       return;
     }
+    // Brique Tireur : à portée de lancer (mais pas au contact), il s'arrête et lance
+    const T = z.def.thrower;
+    if (T) {
+      if (z.throwing) {
+        if (!z.attackDone) { z.walkSpeed = 0; return; } // le geste va au bout
+        z.throwing = false;
+        z.play('idle');
+      }
+      if (dist > V.attackRange + V.attackExit && dist <= T.range) {
+        z.walkSpeed = 0;
+        if (z.state !== 'idle') z.play('idle');
+        // Il lance une fois tourné vers le joueur
+        if (z.throwTimer <= 0 && z.facing.dot(tmp.copy(want).normalize()) > 0.9) {
+          z.play('attack', true);
+          z.throwing = true;
+          z.throwTimer = T.cooldown;
+        }
+        return;
+      }
+    }
     // Un coup commencé va au bout ; il enchaîne tant que le joueur reste un peu au-delà de la portée
     if (z.state === 'attack' && (!z.attackDone || dist < V.attackRange + V.attackExit)) {
       z.attackDone = z.attackDone && dist >= V.attackRange + V.attackExit;
@@ -153,6 +173,8 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
         decor?.resolve(z.pos, M.radius);
         snap(z.pos);
         z.update(dt);
+        // Lancer : la bouteille part au moment du geste où le bras se détend
+        if (z.throwing && z.hitNow && !z.dead && !passive) { api.onThrow?.(z); continue; }
         // Le coup porte si le joueur est encore à portée au moment où le bras arrive
         if (!passive && !z.dead && z.hitNow && z.pos.distanceTo(player.pos) < ZOMBIE_ATTACK.reach) {
           up.copy(player.pos).normalize();
@@ -169,6 +191,8 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
     alive() { return zombies.filter((z) => !z.dead); },
     /** Appelé quand un zombie touche le joueur, avec la direction du coup (du zombie vers le joueur). */
     onHit: undefined as ((z: Zombie, dir: THREE.Vector3) => void) | undefined,
+    /** Appelé quand un tireur lâche son projectile. */
+    onThrow: undefined as ((z: Zombie) => void) | undefined,
     /** Appelé à chaque apparition de zombie. */
     onSpawn: undefined as ((z: Zombie) => void) | undefined,
   };

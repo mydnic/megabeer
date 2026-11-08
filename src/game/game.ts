@@ -9,6 +9,8 @@ import type { InputState } from '../core/input';
 import { createHorde } from '../enemies/horde';
 import type { Zombie, ZombieTimings } from '../enemies/zombie';
 import { createXpDrops } from '../pickups/xpDrops';
+import { createEnemyShots, type EnemyShot } from '../enemies/enemyShots';
+import { PLANET_RADIUS } from '../config/world';
 import { PlayerController } from '../player/controller';
 import { Health } from '../player/health';
 import { Progression } from '../player/progression';
@@ -47,6 +49,10 @@ export type GameEvents = {
   runEnded: { reason: RunEnd; survived: number; kills: number };
   /** Retour à l'accueil : tout est remis à zéro. */
   home: Record<string, never>;
+  /** Un ennemi tireur lâche un projectile (son point d'impact au sol est `shot.to`). */
+  enemyThrow: { shot: EnemyShot };
+  /** Un projectile ennemi touche le sol ; `hit` : le joueur était dans la zone. */
+  enemyShotLanded: { shot: EnemyShot; hit: boolean };
   /** Abbaye : les cloches commencent à sonner, débarquement dans `inSeconds` s. */
   bellsRinging: { inSeconds: number };
   /** Un coup de cloche d'alerte. */
@@ -89,6 +95,8 @@ export class Game {
   readonly stats = new PlayerStats();
   readonly horde: ReturnType<typeof createHorde>;
   readonly xp: ReturnType<typeof createXpDrops>;
+  /** Projectiles des ennemis tireurs en vol. */
+  readonly shots = createEnemyShots();
   readonly loadout: Loadout;
   /** Arrivée des zombies et montée en difficulté au fil de la run. */
   readonly director: SpawnDirector;
@@ -115,6 +123,7 @@ export class Game {
   devTimeScale = 1;
 
   private acc = 0;
+  private readonly groundAt: (p: THREE.Vector3) => number;
   private readonly weaponCtx: WeaponContext;
   private readonly tmp = new THREE.Vector3();
   private readonly chest = new THREE.Vector3();
@@ -124,8 +133,10 @@ export class Game {
     player.decor = deps.collider;
     this.player = player;
     const groundAt = (p: THREE.Vector3) => player.supportAt(p, p.length());
+    this.groundAt = groundAt;
     this.horde = createHorde(deps.zombieKinds, player, deps.collider);
-    this.horde.onHit = (z, dir) => this.hurtPlayer(z, dir);
+    this.horde.onHit = (z, dir) => this.hurtPlayer(z, dir, z.def.damage);
+    this.horde.onThrow = (z) => this.throwFrom(z);
     this.horde.onSpawn = (zombie) => this.events.emit('zombieSpawned', { zombie });
     this.xp = createXpDrops(groundAt);
     this.director = new SpawnDirector({
@@ -226,6 +237,7 @@ export class Game {
     if (this.arriving && p.onGround) this.land();
 
     this.horde.update(dt);
+    this.shots.update(dt, (s) => this.shotLanded(s));
     this.health.update(dt);
     if (this.phase === 'run' && this.health.dead) this.die();
     if (this.phase === 'run' && !this.arriving) {
@@ -287,13 +299,39 @@ export class Game {
     this.addXp(amount);
   }
 
-  private hurtPlayer(z: Zombie, dir: THREE.Vector3) {
-    const damage = z.def.damage * this.mods.damage;
+  /** Le joueur encaisse un coup de `z` (au contact ou à distance), venant de la direction `dir`. */
+  private hurtPlayer(z: Zombie, dir: THREE.Vector3, baseDamage: number) {
+    const damage = baseDamage * this.mods.damage;
     // Invulnérable juste après un coup : ni dégâts ni recul (pas d'enchaînement de coups)
     const took = !this.cheats.god && this.health.damage(damage);
     this.events.emit('playerHurt', { zombie: z, dir, damage, hp: this.health.hp, blocked: !took });
     if (!took) return;
     this.player.knock(dir, ZOMBIE_ATTACK.knockSpeed, ZOMBIE_ATTACK.knockLift, ZOMBIE_ATTACK.knockDecay);
+  }
+
+  /** Un tireur lâche son projectile vers l'endroit où se trouve le joueur (au sol). */
+  private throwFrom(z: Zombie) {
+    const T = z.def.thrower!;
+    const up = this.tmp.copy(z.pos).normalize();
+    const from = z.pos.clone().addScaledVector(up, 1.7).addScaledVector(z.facing, 0.3);
+    const to = this.player.pos.clone().normalize();
+    to.multiplyScalar(this.groundAt(to.clone().multiplyScalar(PLANET_RADIUS + 60)));
+    const shot = this.shots.launch(z, from, to, T, T.damage);
+    this.events.emit('enemyThrow', { shot });
+  }
+
+  /** Impact d'un projectile ennemi : le joueur dans la zone encaisse, repoussé hors du point d'impact. */
+  private shotLanded(s: EnemyShot) {
+    const p = this.player.pos;
+    const hit = this.phase === 'run' && p.angleTo(s.to) * PLANET_RADIUS < s.radius;
+    if (hit) {
+      const dir = p.clone().sub(s.to);
+      const up = this.tmp.copy(p).normalize();
+      dir.addScaledVector(up, -dir.dot(up));
+      if (dir.lengthSq() < 1e-6) dir.copy(this.player.facing).negate();
+      this.hurtPlayer(s.source, dir.normalize(), s.damage);
+    }
+    this.events.emit('enemyShotLanded', { shot: s, hit });
   }
 
   private offerCards(first: boolean) {
@@ -344,6 +382,7 @@ export class Game {
     this.director.reset();
     this.mechanic?.reset();
     this.xp.clear();
+    this.shots.clear();
   }
 }
 
