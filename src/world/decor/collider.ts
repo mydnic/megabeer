@@ -41,7 +41,14 @@ export class DecorCollider {
   private seen = new Set<DecorBody>();
   private found: DecorBody[] = [];
 
-  constructor(readonly bodies: DecorBody[], readonly step: number, readonly clearance: number) {
+  constructor(public bodies: DecorBody[], readonly step: number, readonly clearance: number) {
+    this.reset(bodies);
+  }
+
+  /** Remplace tout le décor (nouvelle planète) ; les joueurs et la horde gardent la même référence. */
+  reset(bodies: DecorBody[]) {
+    this.bodies = bodies;
+    this.buckets.clear();
     for (const b of bodies) {
       const r = b.shape.radius;
       const lo = this.tmp.copy(b.pos).subScalar(r).divideScalar(CELL).floor();

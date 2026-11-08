@@ -73,7 +73,6 @@ export const LIGHT_SOURCES: Partial<Record<DecorModelId, number>> = {
 export const ABBEY_DIR = [0.545, 0.743, 0.354] as const;
 
 export const DECOR_LAYOUT = {
-  seed: 20261106,
   /** Rayon de l'enclos de l'abbaye (terrain aplani, pas de décor aléatoire). */
   abbeyRadius: 34,
   abbeyBlend: 18,

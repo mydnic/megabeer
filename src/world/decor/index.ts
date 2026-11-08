@@ -67,69 +67,102 @@ function bendToSphere(geo: THREE.BufferGeometry, b: Bend): THREE.BufferGeometry 
   return g;
 }
 
+
 /**
- * Décor de la planète : charge les modèles, les pose (instanciés : un appel de rendu par modèle),
- * construit les collisions et gère les lumières des lanternes la nuit.
+ * Décor de la planète : charge les modèles une fois, puis `generate(seed)` pose le décor de cette
+ * planète (instancié : un appel de rendu par modèle), reconstruit les collisions (même objet
+ * `collider`, gardé par le joueur et la horde) et les flammes des lanternes. Les lumières des
+ * lanternes (la nuit, sur les plus proches) sont créées une seule fois.
+ * Le relief doit déjà correspondre à la seed (setTerrainSeed).
  */
 export async function createDecor(scene: THREE.Scene) {
   const lib = await loadDecorLibrary();
-  const { placements, spawn } = layoutAbbeyPlanet();
-
-  // --- Rendu instancié
-  const byModel = new Map<DecorModelId, THREE.Matrix4[]>();
-  for (const p of placements) {
-    if (!byModel.has(p.id)) byModel.set(p.id, []);
-    byModel.get(p.id)!.push(p.matrix);
-  }
-  const bends = new Map<THREE.Matrix4, Bend>();
-  for (const [id, mats] of byModel) {
-    const model = lib.get(id)!;
-    if (BENT.has(id)) {
-      // Grand modèle : courbé sur la sphère (sinon ses bords flottent au-dessus du sol)
-      for (const m of mats) {
-        const bend = bendFrame(m);
-        bends.set(m, bend);
-        const mesh = new THREE.Mesh(bendToSphere(model.geometry, bend), model.material);
-        mesh.castShadow = mesh.receiveShadow = true;
-        mesh.layers.set(LAYER_CHARACTER); // contouré comme le perso
-        mesh.name = `decor:${id}`;
-        scene.add(mesh);
-      }
-      continue;
-    }
-    const mesh = new THREE.InstancedMesh(model.geometry, model.material, mats.length);
-    mats.forEach((m, i) => mesh.setMatrixAt(i, m));
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    mesh.frustumCulled = false; // l'ensemble couvre toute la planète
-    mesh.layers.set(LAYER_CHARACTER); // contouré comme le perso
-    mesh.name = `decor:${id}`;
-    scene.add(mesh);
-  }
-
-  // --- Collisions
-  const bodies: DecorBody[] = placements.map((p) => {
-    const pos = new THREE.Vector3(), rot = new THREE.Quaternion(), s = new THREE.Vector3();
-    p.matrix.decompose(pos, rot, s);
-    return { pos, rot, inv: p.matrix.clone().invert(), shape: lib.get(p.id)!.shape, bend: bends.get(p.matrix) };
-  });
-  const collider = new DecorCollider(bodies, PLAYER_PHYSICS.stepHeight, PLAYER_PHYSICS.headClearance);
-
-  // --- Lanternes : flammes (toujours) et vraies lumières (la nuit, sur les plus proches)
-  const flames: THREE.Vector3[] = [];
-  for (const p of placements) {
-    const h = LIGHT_SOURCES[p.id];
-    if (h === undefined) continue;
-    flames.push(new THREE.Vector3(0, h, 0).applyMatrix4(p.matrix));
-  }
+  const collider = new DecorCollider([], PLAYER_PHYSICS.stepHeight, PLAYER_PHYSICS.headClearance);
   const flameMat = new THREE.MeshBasicMaterial({ fog: false });
   flameMat.color.setRGB(5, 2.6, 0.9); // au-delà de 1 : déclenche le halo
-  const flameMesh = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.09, 1), flameMat, Math.max(1, flames.length));
-  flames.forEach((f, i) => flameMesh.setMatrixAt(i, new THREE.Matrix4().makeTranslation(f.x, f.y, f.z)));
-  flameMesh.count = flames.length;
-  flameMesh.frustumCulled = false;
-  scene.add(flameMesh);
+  const flameGeo = new THREE.IcosahedronGeometry(0.09, 1);
 
+  let group: THREE.Group | null = null;
+  let flames: THREE.Vector3[] = [];
+  let spawn = { dir: new THREE.Vector3(0, 1, 0), facing: new THREE.Vector3(1, 0, 0) };
+
+  /** Retire le décor de la planète précédente (les géométries des modèles sont partagées : gardées). */
+  function clear() {
+    if (!group) return;
+    scene.remove(group);
+    group.traverse((o) => {
+      if ((o as THREE.InstancedMesh).isInstancedMesh) (o as THREE.InstancedMesh).dispose();
+      else if (o.userData.ownGeometry) (o as THREE.Mesh).geometry.dispose();
+    });
+    group = null;
+  }
+
+  function generate(seed: number) {
+    clear();
+    const { placements, spawn: s } = layoutAbbeyPlanet(seed);
+    spawn = s;
+    const g = new THREE.Group();
+    g.name = 'decor';
+
+    // --- Rendu instancié
+    const byModel = new Map<DecorModelId, THREE.Matrix4[]>();
+    for (const p of placements) {
+      if (!byModel.has(p.id)) byModel.set(p.id, []);
+      byModel.get(p.id)!.push(p.matrix);
+    }
+    const bends = new Map<THREE.Matrix4, Bend>();
+    for (const [id, mats] of byModel) {
+      const model = lib.get(id)!;
+      if (BENT.has(id)) {
+        // Grand modèle : courbé sur la sphère (sinon ses bords flottent au-dessus du sol)
+        for (const m of mats) {
+          const bend = bendFrame(m);
+          bends.set(m, bend);
+          const mesh = new THREE.Mesh(bendToSphere(model.geometry, bend), model.material);
+          mesh.castShadow = mesh.receiveShadow = true;
+          mesh.layers.set(LAYER_CHARACTER); // contouré comme le perso
+          mesh.name = `decor:${id}`;
+          mesh.userData.ownGeometry = true;
+          g.add(mesh);
+        }
+        continue;
+      }
+      const mesh = new THREE.InstancedMesh(model.geometry, model.material, mats.length);
+      mats.forEach((m, i) => mesh.setMatrixAt(i, m));
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      mesh.frustumCulled = false; // l'ensemble couvre toute la planète
+      mesh.layers.set(LAYER_CHARACTER); // contouré comme le perso
+      mesh.name = `decor:${id}`;
+      g.add(mesh);
+    }
+
+    // --- Collisions
+    collider.reset(placements.map((p) => {
+      const pos = new THREE.Vector3(), rot = new THREE.Quaternion(), sc = new THREE.Vector3();
+      p.matrix.decompose(pos, rot, sc);
+      return { pos, rot, inv: p.matrix.clone().invert(), shape: lib.get(p.id)!.shape, bend: bends.get(p.matrix) } as DecorBody;
+    }));
+
+    // --- Lanternes : flammes (toujours)
+    flames = [];
+    for (const p of placements) {
+      const h = LIGHT_SOURCES[p.id];
+      if (h === undefined) continue;
+      flames.push(new THREE.Vector3(0, h, 0).applyMatrix4(p.matrix));
+    }
+    const flameMesh = new THREE.InstancedMesh(flameGeo, flameMat, Math.max(1, flames.length));
+    flames.forEach((f, i) => flameMesh.setMatrixAt(i, new THREE.Matrix4().makeTranslation(f.x, f.y, f.z)));
+    flameMesh.count = flames.length;
+    flameMesh.frustumCulled = false;
+    g.add(flameMesh);
+
+    scene.add(g);
+    group = g;
+    refresh = 0;
+  }
+
+  // Vraies lumières des lanternes, la nuit, sur les plus proches
   const lights = Array.from({ length: LI.count }, () => {
     const l = new THREE.PointLight(LI.color, 0, LI.distance, 2);
     scene.add(l);
@@ -141,7 +174,9 @@ export async function createDecor(scene: THREE.Scene) {
   const spawnTmp = new THREE.Vector3();
   return {
     collider,
-    spawn,
+    generate,
+    /** Point de départ de repli : le parvis de l'abbaye principale. */
+    get spawn() { return spawn; },
     /** Départ de run au hasard sur la planète, loin de tout élément du décor (repli : le parvis). */
     randomSpawn() {
       return randomSpawn((dir) => collider.near(spawnTmp.copy(dir).multiplyScalar(PLANET_RADIUS + heightAt(dir)), DECOR_LAYOUT.spawnClearance).length === 0) ?? spawn;

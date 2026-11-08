@@ -73,8 +73,8 @@ export function randomSpawn(isClear: (dir: THREE.Vector3) => boolean) {
   return null;
 }
 
-export function layoutAbbeyPlanet(): { placements: Placement[]; spawn: { dir: THREE.Vector3; facing: THREE.Vector3 } } {
-  const r = rng(D.seed);
+export function layoutAbbeyPlanet(seed: number): { placements: Placement[]; spawn: { dir: THREE.Vector3; facing: THREE.Vector3 } } {
+  const r = rng(seed);
   const out: Placement[] = [];
   const add = (id: DecorModelId, m: THREE.Matrix4) => out.push({ id, matrix: m });
 
@@ -105,6 +105,7 @@ export function layoutAbbeyPlanet(): { placements: Placement[]; spawn: { dir: TH
 
   // ---------------------------------------------------------------- amas : ruines et cimetières
   const noise = new ImprovedNoise();
+  const nOff = r() * 256; // forêts placées différemment selon la seed
   const centers: THREE.Vector3[] = [];
   const awayFromAbbey = (d: THREE.Vector3, m: number) => abbeySites.every((s) => d.angleTo(s.dir) * R > D.abbeyRadius + D.abbeyBlend + m);
   const freeFrom = (d: THREE.Vector3, m: number) => centers.every((c) => c.angleTo(d) * R > m);
@@ -141,7 +142,7 @@ export function layoutAbbeyPlanet(): { placements: Placement[]; spawn: { dir: TH
   for (let i = 0; i < D.scatterCandidates; i++) {
     const d = randomDir();
     if (!awayFromAbbey(d, 4) || !freeFrom(d, 16) || !suitable(d)) continue;
-    const forest = noise.noise(d.x * 3.2 + 9, d.y * 3.2, d.z * 3.2 - 4) > 0.08;
+    const forest = noise.noise(d.x * 3.2 + 9 + nOff, d.y * 3.2, d.z * 3.2 - 4) > 0.08;
     const roll = r();
     let id: DecorModelId | null = null;
     if (forest) {

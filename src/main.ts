@@ -32,7 +32,8 @@ import { PlayerController } from './player/controller';
 import { Pipeline } from './render/pipeline';
 import { createSky } from './world/sky';
 import { createClouds } from './world/clouds';
-import { buildTerrain, heightAt } from './world/terrain';
+import { buildTerrain, heightAt, setTerrainSeed } from './world/terrain';
+import { createLoadingScreen } from './ui/loadingScreen';
 import { createDecor } from './world/decor';
 import { AudioEngine } from './audio/audio';
 import { createAmbience } from './audio/ambience';
@@ -66,16 +67,41 @@ addEventListener('resize', () => {
   pipeline.setSize(innerWidth, innerHeight);
 });
 
-// --- Monde
-const terrain = buildTerrain();
+// --- Monde : une nouvelle planète à chaque run (relief, abbayes et décor tirés d'une seed)
+const newSeed = () => Math.floor(Math.random() * 0x7fffffff);
+let mapSeed = newSeed();
+setTerrainSeed(mapSeed);
+let terrain = buildTerrain();
 scene.add(terrain);
 const sky = createSky(scene);
 
 const clouds = createClouds(scene);
 
-// --- Joueur
-// Décor de l'Abbaye (modèles, collisions, lanternes) ; le joueur part du parvis, face à la porte
+// Décor de l'Abbaye (modèles, collisions, lanternes)
 const decor = await createDecor(scene);
+decor.generate(mapSeed);
+/** La planète générée n'a pas encore servi (la première run la prend telle quelle). */
+let mapFresh = true;
+const loading = createLoadingScreen();
+/** Génère une nouvelle planète, par étapes pour laisser la barre de chargement avancer. */
+async function newPlanet(progress: (k: number) => void) {
+  const yieldFrame = () => new Promise<void>((r) => requestAnimationFrame(() => setTimeout(r, 0)));
+  mapSeed = newSeed();
+  progress(0.05); await yieldFrame();
+  setTerrainSeed(mapSeed);
+  progress(0.3); await yieldFrame();
+  const t = buildTerrain();
+  scene.remove(terrain);
+  terrain.geometry.dispose();
+  (terrain.material as THREE.Material).dispose();
+  terrain = t;
+  scene.add(terrain);
+  progress(0.6); await yieldFrame();
+  decor.generate(mapSeed);
+  progress(1); await yieldFrame();
+}
+
+// --- Joueur
 const player = new PlayerController(decor.spawn.dir);
 player.decor = decor.collider;
 player.facing.copy(decor.spawn.facing);
@@ -333,9 +359,19 @@ healthHud.setVisible(false);
 alcoholHud.setVisible(false);
 home.show();
 
-/** Nouvelle run depuis l'accueil. */
-function startRun() {
-  if (phase !== 'home') return;
+/** Nouvelle run depuis l'accueil : nouvelle planète (sauf la toute première, déjà prête), puis départ. */
+let starting = false;
+async function startRun() {
+  if (phase !== 'home' || starting) return;
+  if (!mapFresh) {
+    starting = true;
+    home.hide();
+    loading.show();
+    await newPlanet(loading.progress);
+    loading.hide();
+    starting = false;
+  }
+  mapFresh = false;
   phase = 'run';
   runTime = 0;
   runKills = 0;
@@ -349,7 +385,7 @@ function startRun() {
   player.reset(start.dir, start.facing);
   rig.setFocus(null);
   runLog.start({
-    character: 'buveur', map: 'abbaye', difficulty: 'sobre',
+    character: 'buveur', map: 'abbaye', seed: mapSeed, difficulty: 'sobre',
     stats: { ...playerStats, maxHp: health.max }, weapons: { blonde: WEAPONS.blonde }, zombie: ZOMBIE_STATS,
   });
   spawnStartZombies();
@@ -545,7 +581,7 @@ if (import.meta.env.DEV) {
     status() {
       let alive = 0;
       for (const z of horde.zombies) if (!z.dead) alive++;
-      return `${phase} | ${alive} zombies | niv ${progression.level} | ${Math.round(health.hp)} PV${cheats.god ? ' | GOD' : ''}`;
+      return `${phase} | seed ${mapSeed} | ${alive} zombies | niv ${progression.level} | ${Math.round(health.hp)} PV${cheats.god ? ' | GOD' : ''}`;
     },
   });
 }

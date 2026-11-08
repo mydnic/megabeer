@@ -949,7 +949,7 @@ Aujourd'hui : flash rouge sur l'ennemi touché, sons d'impact, de mort et de ram
 
 L'écran d'accueil se passe **dans l'espace** : on voit de loin la ou les planètes (une par map). On y **choisit son perso et sa map**, puis la caméra **plonge sur la planète choisie** jusqu'au perso pour lancer la run. À la fin d'une run, retour dans l'espace.
 
-Aujourd'hui : accueil provisoire, écran séparé du jeu (logo, Jouer, Options, sur fond uni ; le monde n'est pas rendu), qui sera remplacé. La run commence avec Jouer : le Buveur arrive à un endroit **tiré au hasard sur la planète** (terrain praticable, loin du décor), pas forcément devant l'abbaye [DÉCIDÉ le 2026-11-08].
+Aujourd'hui : accueil provisoire, écran séparé du jeu (logo, Jouer, Options, sur fond uni ; le monde n'est pas rendu), qui sera remplacé. La run commence avec Jouer : le Buveur arrive à un endroit **tiré au hasard sur la planète** (terrain praticable, loin du décor), pas forcément devant l'abbaye [DÉCIDÉ le 2026-11-08]. **Chaque run est une nouvelle planète** : une seed tirée au hasard fixe le relief, les abbayes et tout le décor (petite barre de chargement d'environ 2 s entre Jouer et l'arrivée) ; la seed est notée dans le journal de run, pour pouvoir rejouer une planète.
 
 ### Menu qui se dévoile [DÉCIDÉ]
 

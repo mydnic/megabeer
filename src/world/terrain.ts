@@ -7,7 +7,10 @@ import { TERRAIN_PALETTE } from '../config/visual';
 import { ABBEY_DIR, DECOR_LAYOUT } from '../config/decor';
 
 const R = PLANET_RADIUS;
-const noise = new ImprovedNoise();
+const perlin = new ImprovedNoise();
+/** Décalage du bruit propre à la seed de la planète : un autre décalage = un autre relief. */
+const off = new THREE.Vector3();
+const noise = { noise: (x: number, y: number, z: number) => perlin.noise(x + off.x, y + off.y, z + off.z) };
 const { relief } = PLANET;
 
 /**
@@ -22,14 +25,34 @@ export function meadowAt(d: THREE.Vector3): number {
 
 const FLAT_IN = DECOR_LAYOUT.abbeyRadius / R, FLAT_OUT = (DECOR_LAYOUT.abbeyRadius + DECOR_LAYOUT.abbeyBlend) / R;
 
+/** Petit générateur pseudo-aléatoire reproductible. */
+export function seededRandom(seed: number) {
+  let s = seed >>> 0;
+  return () => ((s = (Math.imul(s ^ (s >>> 15), 2246822507) + 0x9e3779b9) >>> 0) / 4294967296);
+}
+
+/** Sites des abbayes de la planète en cours (le premier est l'abbaye principale). */
+export const abbeySites: { dir: THREE.Vector3; height: number }[] = [];
+
 /**
- * Sites des abbayes : la principale (départ), puis les autres choisies sur des terrains bas et plats,
- * le plus loin possible les unes des autres. Calcul déterministe (même planète à chaque partie).
+ * Change de planète : relief décalé selon la seed, puis sites des abbayes recalculés. À appeler
+ * avant buildTerrain et la génération du décor. Même seed = même planète.
  */
-export const abbeySites: { dir: THREE.Vector3; height: number }[] = (() => {
+export function setTerrainSeed(seed: number) {
+  const r = seededRandom(seed ^ 0x5eed);
+  // ImprovedNoise se répète tous les 256 : un décalage dans [0, 256) donne un relief différent
+  off.set(r() * 256, r() * 256, r() * 256);
+  abbeySites.length = 0;
+  abbeySites.push(...computeAbbeySites(r));
+}
+
+/**
+ * Sites des abbayes : la principale tirée au hasard parmi les terrains bas et plats, puis les autres
+ * le plus loin possible les unes des autres.
+ */
+function computeAbbeySites(r: () => number): { dir: THREE.Vector3; height: number }[] {
   const L = DECOR_LAYOUT;
-  const main = new THREE.Vector3(...ABBEY_DIR).normalize();
-  const sites = [main];
+  const sites: THREE.Vector3[] = [];
   // Candidats régulièrement répartis (spirale de Fibonacci), notés sur la platitude de l'enclos
   const cands: THREE.Vector3[] = [];
   const N = 1500, ga = Math.PI * (3 - Math.sqrt(5));
@@ -53,6 +76,8 @@ export const abbeySites: { dir: THREE.Vector3; height: number }[] = (() => {
     }
     if (flat) cands.push(d);
   }
+  // Abbaye principale : un site plat au hasard (repli : la direction par défaut)
+  sites.push(cands.length ? cands[Math.floor(r() * cands.length)] : new THREE.Vector3(...ABBEY_DIR).normalize());
   // Le plus loin possible des sites déjà retenus
   while (sites.length < L.abbeyCount) {
     let best: THREE.Vector3 | null = null, bestGap = (L.abbeyMinGap / R);
@@ -64,7 +89,7 @@ export const abbeySites: { dir: THREE.Vector3; height: number }[] = (() => {
     sites.push(best);
   }
   return sites.map((dir) => ({ dir, height: rawHeight(dir) }));
-})();
+}
 const COS_OUT = Math.cos(FLAT_OUT);
 
 /** Hauteur du relief (au-dessus du rayon de base) pour une direction unitaire. */
