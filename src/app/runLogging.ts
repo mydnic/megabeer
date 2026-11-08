@@ -41,6 +41,6 @@ export function wireRunLog(game: Game, runLog: ReturnType<typeof createRunLog>, 
       if (d < 10) near10++;
     }
     const s = game.stats;
-    return { hp: game.health.hp, level: game.progression.level, xp: Math.round(game.progression.xp), alive, near5, near10, kills: game.kills, target: game.director.target, fps: Math.round(meta().fps), atkSpd: s.attackSpeed, proj: s.extraProjectiles };
+    return { hp: game.health.hp, level: game.progression.level, xp: Math.round(game.progression.xp), alive, near5, near10, kills: game.kills, spawnRate: +game.director.rate.toFixed(2), fps: Math.round(meta().fps), atkSpd: s.attackSpeed, proj: s.extraProjectiles };
   }));
 }

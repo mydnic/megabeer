@@ -8,7 +8,7 @@ import type { DecorCollider } from '../world/decor/collider';
 import { heightAt } from '../world/terrain';
 
 /** État de la courbe de difficulté à un instant de la run. */
-export type SpawnPoint = { alive: number; perSecond: number; hpMul: number };
+export type SpawnPoint = { perSecond: number; hpMul: number };
 
 /** Courbe de la run (config) à l'instant `t` (s) : interpolée entre deux points, bloquée après le dernier. */
 export function spawnCurveAt(t: number): SpawnPoint {
@@ -18,7 +18,7 @@ export function spawnCurveAt(t: number): SpawnPoint {
     if (t > c[i].t) continue;
     const a = c[i - 1], b = c[i], k = (t - a.t) / (b.t - a.t);
     const lerp = (x: number, y: number) => x + (y - x) * k;
-    return { alive: lerp(a.alive, b.alive), perSecond: lerp(a.perSecond, b.perSecond), hpMul: lerp(a.hpMul, b.hpMul) };
+    return { perSecond: lerp(a.perSecond, b.perSecond), hpMul: lerp(a.hpMul, b.hpMul) };
   }
   return { ...c[c.length - 1] };
 }
@@ -34,15 +34,15 @@ export type SpawnDirectorDeps = {
 const MODELS = Object.keys(ZOMBIE_MODELS) as ZombieModel[];
 
 /**
- * Le directeur de vagues : maintient autour du joueur une horde dont la taille suit la courbe de la
- * run (config `SPAWN_CURVE`). Les zombies sortent de terre sur un anneau hors de portée, plutôt
+ * Le directeur de vagues : les zombies arrivent en continu, à un rythme qui accélère avec la run
+ * (config `SPAWN_CURVE`), qu'on les tue ou non : il n'y en a jamais trop. Ils sortent de terre sur un anneau hors de portée, plutôt
  * devant le joueur quand il court ; ceux qu'il distance trop ressortent devant lui.
  */
 export class SpawnDirector {
   /** Arrêté : plus aucune arrivée (outils de dev, scénarios de test isolés). */
   enabled = true;
-  /** Zombies debout visés en ce moment (pour le HUD de dev et le journal). */
-  target = 0;
+  /** Arrivées par seconde en ce moment (pour le panneau DEV et le journal). */
+  rate = 0;
   private budget = 0;
   private readonly up = new THREE.Vector3();
   private readonly fwd = new THREE.Vector3();
@@ -55,29 +55,27 @@ export class SpawnDirector {
 
   /** Début de run : la première horde est là d'un coup. */
   start(countMul: number) {
-    this.budget = spawnCurveAt(0).alive * countMul;
+    this.budget = SPAWN.startCount * countMul;
   }
 
-  reset() { this.budget = 0; this.target = 0; }
+  reset() { this.budget = 0; this.rate = 0; }
 
   /** Avance de `dt` secondes de jeu, au temps de run `runTime`. */
   update(dt: number, runTime: number, countMul: number) {
-    const curve = spawnCurveAt(runTime);
-    this.target = Math.round(curve.alive * countMul);
+    this.rate = spawnCurveAt(runTime).perSecond * countMul;
     this.recycle();
     if (!this.enabled) return;
-    const rate = curve.perSecond * countMul;
-    // Le budget ne s'accumule pas sans fin quand la horde est au complet
-    this.budget = Math.min(Math.max(this.budget, 0) + rate * dt, Math.max(this.budget, rate * 2));
+    this.budget += this.rate * dt;
+    // Plafond technique (fps) : au-delà, les arrivées attendent qu'il y ait de la place, sans s'accumuler
     let alive = 0;
     for (const z of this.d.zombies()) if (!z.dead) alive++;
-    while (this.budget >= 1 && alive < this.target) {
+    while (this.budget >= 1 && alive < SPAWN.maxAlive) {
       if (!this.place(this.at) || !this.spawnAt(this.at)) break;
       this.budget--;
       alive++;
     }
+    this.budget = Math.min(this.budget, Math.max(1, this.rate));
   }
-
   /**
    * Fait sortir de terre `count` zombies de type `model` tout autour du joueur, entre `minDist` et
    * `maxDist` m (événements de map). Renvoie le nombre réellement placé.
@@ -97,7 +95,7 @@ export class SpawnDirector {
 
   private spawnAt(dir: THREE.Vector3, model = MODELS[Math.floor(Math.random() * MODELS.length)]) {
     const facing = this.d.player.pos.clone().sub(dir.clone().multiplyScalar(PLANET_RADIUS));
-    return this.d.spawn(model, dir, facing) !== undefined;
+    return this.d.spawn(model, dir, facing);
   }
 
   /** Zombies distancés : ils ressortent de terre sur l'anneau, devant le joueur. */

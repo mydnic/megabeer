@@ -3,24 +3,31 @@
 
 /**
  * Courbe de la run, point par point (entre deux points : interpolation linéaire, après le
- * dernier : on reste dessus).
- * - `alive` : zombies debout visés autour du joueur ; dès qu'il en manque, il en arrive.
- * - `perSecond` : arrivées maxi par seconde (une horde décimée se reforme à ce rythme).
+ * dernier : on reste dessus). Les zombies arrivent en continu, qu'on les tue ou non : il n'y en a
+ * jamais trop, le joueur meurt submergé s'il ne tue pas assez vite.
+ * - `perSecond` : arrivées par seconde.
  * - `hpMul` : PV d'un zombie qui apparaît à ce moment, en multiple de ses PV de base.
  */
 export const SPAWN_CURVE = [
-  { t: 0, alive: 6, perSecond: 1.5, hpMul: 1 },
-  { t: 60, alive: 18, perSecond: 2, hpMul: 1.2 },
-  { t: 180, alive: 45, perSecond: 3, hpMul: 1.6 },
-  { t: 300, alive: 80, perSecond: 4.5, hpMul: 2.3 },
-  { t: 480, alive: 140, perSecond: 6, hpMul: 3.4 },
-  { t: 600, alive: 200, perSecond: 8, hpMul: 4.5 },
+  { t: 0, perSecond: 0.8, hpMul: 1 },
+  { t: 60, perSecond: 1.2, hpMul: 1.2 },
+  { t: 180, perSecond: 2, hpMul: 1.6 },
+  { t: 300, perSecond: 3, hpMul: 2.3 },
+  { t: 480, perSecond: 4.5, hpMul: 3.4 },
+  { t: 600, perSecond: 6, hpMul: 4.5 },
   // Après la fermeture (10:00) : la pression continue de monter, en attendant les videurs
-  { t: 900, alive: 320, perSecond: 12, hpMul: 8 },
+  { t: 900, perSecond: 10, hpMul: 8 },
 ] as const;
 
 /** Où et comment ils arrivent. */
 export const SPAWN = {
+  /** Première horde, d'un coup, à l'atterrissage. */
+  startCount: 6,
+  /**
+   * Plafond technique de zombies debout (tenue des 60 images/s), pas une règle de jeu : atteint, les
+   * arrivées attendent qu'il y ait de la place. Le test de perf a validé 500 à 60 images/s.
+   */
+  maxAlive: 700,
   /** Anneau d'apparition autour du joueur (m, distance au sol). L'arme porte à 18 m. */
   minDist: 30,
   maxDist: 38,

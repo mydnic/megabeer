@@ -1154,10 +1154,10 @@ L'ordre après l'étape 7 est indicatif : il se rediscute à chaque feature vali
 
 | Sujet | Décision |
 |---|---|
-| Arrivée des ennemis | Un directeur de vagues garde autour du joueur une horde dont la taille suit une courbe sur la run (config `SPAWN_CURVE` : zombies visés, arrivées par seconde, PV). Une horde décimée se reforme |
+| Arrivée des ennemis | Flot continu à un rythme qui accélère avec la run (config `SPAWN_CURVE` : arrivées par seconde et PV), qu'on les tue ou non : il n'y a jamais trop d'ennemis, on meurt submergé. Seule limite : un plafond technique de 700 debout pour tenir les fps. Corrigé le 2026-11-08 : une première version maintenait une horde cible et cessait d'envoyer des zombies quand elle était pleine |
 | Où ils arrivent | Anneau à 30-38 m (hors de portée de l'arme), plutôt devant le joueur quand il court ; ils sortent de terre (environ 1 s, immobiles) au lieu d'apparaître d'un coup |
 | Zombies distancés | Au-delà de 60 m, ils ressortent de terre devant le joueur : on ne sème pas la horde en courant |
-| Montée en difficulté | Valeurs de départ : 6 zombies à 0:00, 80 à 5:00, 200 à 10:00 ; PV x2,3 à 5:00, x4,5 à 10:00. Après 10:00 la pression continue de monter, en attendant les videurs. À caler avec le journal de run |
+| Montée en difficulté | Valeurs de départ : 6 zombies à l'atterrissage, puis 0,8 arrivée/s à 0:00, 3/s à 5:00, 6/s à 10:00 ; PV x2,3 à 5:00, x4,5 à 10:00. Après 10:00 ça continue de monter, en attendant les videurs. À caler avec le journal de run |
 | Difficultés | Multiplicateurs Sobre / Pompette / Bourré en config et branchés (PV, nombre, dégâts). Seule Sobre est jouable, le choix est dans le panneau DEV |
 | Cloches de l'Abbaye | Toutes les 2 min (2:00, 4:00...) : 3 coups d'alerte sur 4,5 s avec un bandeau, puis le débarquement : pendant 30 s, un seul type d'ennemi (tiré au hasard) sort de terre en continu et en masse tout autour du joueur, à 18-26 m (8 par seconde, soit 240, x difficulté). Cloche synthétisée, pas de changement de musique |
 | Mécaniques de map | Une interface `MapMechanic` et un registre par map (`src/game/mechanics/`) : la Brasserie et la Fête de village s'y ajoutent sans toucher au noyau |

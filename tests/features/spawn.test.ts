@@ -29,7 +29,7 @@ describe('Les zombies arrivent', () => {
     expect(t.game.horde.zombies).toHaveLength(0);
     t.playUntil(() => !t.game.arriving, 10);
     t.play(1 / 60);
-    expect(standing(t).length).toBe(SPAWN_CURVE[0].alive);
+    expect(standing(t).length).toBe(SPAWN.startCount);
   });
 
   it("apparaissent hors de portée, sur un anneau autour du joueur, et sortent de terre avant d'avancer", () => {
@@ -50,25 +50,40 @@ describe('Les zombies arrivent', () => {
     expect(z.pos.distanceTo(p)).toBeLessThan(at.distanceTo(p) - 0.5);
   });
 
-  it('la horde se reforme quand on la décime', () => {
+  it("arrivent en continu, même si personne n'est tué : il n'y en a jamais trop", () => {
     const t = observe();
-    t.play(1 / 60);
-    for (const z of standing(t)) t.game.hitZombie(z, z.hp + 1, false, z.pos, t.game.player.facing.clone());
-    expect(standing(t)).toHaveLength(0);
-    t.play(SPAWN_CURVE[0].alive / SPAWN_CURVE[0].perSecond + 1);
-    expect(standing(t).length).toBe(Math.round(spawnCurveAt(t.game.runTime).alive));
+    t.play(15);
+    const mid = standing(t).length;
+    t.play(15);
+    const end = standing(t).length;
+    // À 0:30, au moins les arrivées prévues par la courbe (moyenne basse : la courbe ne fait que monter)
+    const expected = SPAWN.startCount + SPAWN_CURVE[0].perSecond * t.game.runTime;
+    expect(end).toBeGreaterThan(expected * 0.9);
+    expect(end).toBeGreaterThan(mid + 5);
   });
 
-  it('plus la run avance, plus ils sont nombreux', () => {
+  it('plus la run avance, plus ils arrivent vite', () => {
     const t = observe();
+    const arrivals = (seconds: number) => {
+      const before = t.events('zombieSpawned').length;
+      t.play(seconds);
+      return t.events('zombieSpawned').length - before;
+    };
     t.play(1);
-    const early = standing(t).length;
+    const early = arrivals(10);
     t.game.runTime = 300; // on saute à 5:00
-    t.play(20);
-    expect(standing(t).length).toBe(Math.round(spawnCurveAt(t.game.runTime).alive));
-    expect(standing(t).length).toBeGreaterThan(early * 5);
+    const late = arrivals(10);
+    expect(late).toBeGreaterThan(early * (spawnCurveAt(300).perSecond / SPAWN_CURVE[0].perSecond) * 0.8);
   });
 
+  it("ne s'arrêtent qu'au plafond technique de zombies debout (tenue des images par seconde)", () => {
+    const t = observe();
+    t.game.runTime = 900;
+    const models = ['basic', 'chubby', 'arm', 'ribcage'] as const;
+    for (let i = 0; standing(t).length < SPAWN.maxAlive - 5; i++) t.game.spawnZombie(models[i % 4], t.inFront(40 + (i % 20), (i / 20) % 30), t.game.player.facing.clone());
+    t.play(3);
+    expect(standing(t).length).toBe(SPAWN.maxAlive);
+  });
   it('plus la run avance, plus ils sont coriaces', () => {
     const t = observe();
     t.play(1 / 60);
@@ -122,7 +137,7 @@ describe('La difficulté', () => {
     t.startRunAndLand();
     t.game.loadout.weapons[0].mods.range = 0;
     t.play(1 / 60);
-    expect(standing(t).length).toBe(Math.round(SPAWN_CURVE[0].alive * B.count));
+    expect(standing(t).length).toBe(Math.round(SPAWN.startCount * B.count));
     expect(standing(t)[0].hp).toBe(Math.round(ZOMBIE_STATS.hp * B.hp));
     t.noSpawns();
     t.game.spawnZombie('basic', t.inFront(1.2), t.game.player.facing.clone().negate());

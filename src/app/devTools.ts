@@ -74,7 +74,7 @@ export async function wireDevTools(game: Game, d: {
     status() {
       let alive = 0;
       for (const z of game.horde.zombies) if (!z.dead) alive++;
-      return `${game.phase} | seed ${d.seed()} | ${alive}/${game.director.target} zombies | ${DIFFICULTIES[game.difficulty].label} | niv ${game.progression.level} | ${Math.round(game.health.hp)} PV${game.cheats.god ? ' | GOD' : ''}`;
+      return `${game.phase} | seed ${d.seed()} | ${alive} zombies (+${game.director.rate.toFixed(1)}/s) | ${DIFFICULTIES[game.difficulty].label} | niv ${game.progression.level} | ${Math.round(game.health.hp)} PV${game.cheats.god ? ' | GOD' : ''}`;
     },
   });
 }

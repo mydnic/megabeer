@@ -76,6 +76,21 @@ describe("Les cloches de l'Abbaye", () => {
     expect(new Set(surge.map((s) => s.quarter)).size).toBe(4);
   });
 
+  it('les arrivées normales continuent pendant et après le débarquement, même avec sa horde debout', () => {
+    const t = beforeBells();
+    const normal: number[] = [];
+    t.game.events.on('zombieSpawned', ({ zombie }) => {
+      if (groundDist(zombie.pos, t.game.player.pos) > BELLS.maxDist * 1.05) normal.push(t.game.runTime);
+    });
+    t.playUntil(() => t.events('bellsLanding').length > 0, 10);
+    const start = t.game.runTime;
+    t.play(BELLS.duration + 15);
+    const rate = t.game.director.rate;
+    const during = normal.filter((at) => at > start && at < start + BELLS.duration).length;
+    const after = normal.filter((at) => at > start + BELLS.duration).length;
+    expect(during).toBeGreaterThan(rate * BELLS.duration * 0.7);
+    expect(after).toBeGreaterThan(rate * 15 * 0.7);
+  });
   it('reviennent toutes les 2 minutes', () => {
     const t = beforeBells();
     t.play(BELLS.warn + 2);
