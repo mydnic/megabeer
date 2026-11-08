@@ -23,11 +23,6 @@ export const SPAWN_CURVE = [
 export const SPAWN = {
   /** Première horde, d'un coup, à l'atterrissage. */
   startCount: 6,
-  /**
-   * Plafond technique de zombies debout (tenue des 60 images/s), pas une règle de jeu : atteint, les
-   * arrivées attendent qu'il y ait de la place. Le test de perf a validé 500 à 60 images/s.
-   */
-  maxAlive: 700,
   /** Anneau d'apparition autour du joueur (m, distance au sol). L'arme porte à 18 m. */
   minDist: 30,
   maxDist: 38,

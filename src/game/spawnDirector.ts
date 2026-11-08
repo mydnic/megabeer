@@ -66,15 +66,11 @@ export class SpawnDirector {
     this.recycle();
     if (!this.enabled) return;
     this.budget += this.rate * dt;
-    // Plafond technique (fps) : au-delà, les arrivées attendent qu'il y ait de la place, sans s'accumuler
-    let alive = 0;
-    for (const z of this.d.zombies()) if (!z.dead) alive++;
-    while (this.budget >= 1 && alive < SPAWN.maxAlive) {
-      if (!this.place(this.at) || !this.spawnAt(this.at)) break;
+    while (this.budget >= 1) {
+      // Aucun point libre cette image (décor) : on réessaie à la suivante, sans accumuler de retard
+      if (!this.place(this.at) || !this.spawnAt(this.at)) { this.budget = Math.min(this.budget, 1); break; }
       this.budget--;
-      alive++;
     }
-    this.budget = Math.min(this.budget, Math.max(1, this.rate));
   }
   /**
    * Fait sortir de terre `count` zombies de type `model` tout autour du joueur, entre `minDist` et

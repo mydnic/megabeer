@@ -76,13 +76,13 @@ describe('Les zombies arrivent', () => {
     expect(late).toBeGreaterThan(early * (spawnCurveAt(300).perSecond / SPAWN_CURVE[0].perSecond) * 0.8);
   });
 
-  it("ne s'arrêtent qu'au plafond technique de zombies debout (tenue des images par seconde)", () => {
+  it("n'ont aucune limite de nombre : avec 700 zombies debout, d'autres arrivent encore", () => {
     const t = observe();
-    t.game.runTime = 900;
-    const models = ['basic', 'chubby', 'arm', 'ribcage'] as const;
-    for (let i = 0; standing(t).length < SPAWN.maxAlive - 5; i++) t.game.spawnZombie(models[i % 4], t.inFront(40 + (i % 20), (i / 20) % 30), t.game.player.facing.clone());
+    for (let i = 0; i < 700; i++) t.game.spawnZombie('basic', t.inFront(40 + (i % 20), (i / 20) % 30), t.game.player.facing.clone());
+    expect(t.game.horde.zombies.filter((z) => z.model === 'basic').length).toBeGreaterThanOrEqual(700);
+    const before = standing(t).length;
     t.play(3);
-    expect(standing(t).length).toBe(SPAWN.maxAlive);
+    expect(standing(t).length).toBeGreaterThan(before);
   });
   it('plus la run avance, plus ils sont coriaces', () => {
     const t = observe();

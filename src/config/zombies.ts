@@ -1,4 +1,4 @@
-﻿// Zombies (GDD section 11). Modèles CC0 Quaternius, passés en cel-shading comme le Buveur.
+// Zombies (GDD section 11). Modèles CC0 Quaternius, passés en cel-shading comme le Buveur.
 
 /** Les 4 variantes de zombie de base : fichier glTF et taille en jeu (mètres). */
 export const ZOMBIE_MODELS = {
@@ -77,8 +77,8 @@ export const HIT_FEEDBACK = {
 } as const;
 
 export const ZOMBIE_VISUAL = {
-  /** Nombre maximum de zombies par modèle (4 modèles). */
-  maxPerModel: 600,
+  /** Place réservée au départ sur la carte graphique par modèle (elle double quand elle est pleine). */
+  initialPerModel: 600,
   /** Images par seconde des animations pré-calculées pour la carte graphique. */
   bakeFps: 60,
   /** Clips du glTF utilisés pour chaque état (premier trouvé dans la liste). */

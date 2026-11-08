@@ -27,7 +27,6 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
 
   /** Pose un zombie sur le sol, à la direction donnée, regardant vers `facing`. */
   function spawn(model: ZombieModel, dir: THREE.Vector3, facing: THREE.Vector3) {
-    if (zombies.filter((z) => z.model === model).length >= V.maxPerModel) return undefined;
     const z = new Zombie(kinds[model], model);
     // Sonde un peu au-dessus du relief : trouve aussi le dessus du décor (dalles, marches)
     z.pos.copy(dir).normalize();
