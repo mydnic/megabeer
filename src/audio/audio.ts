@@ -114,6 +114,69 @@ export class AudioEngine {
     src.start();
   }
 
+  /**
+   * Coup de cloche d'église synthétisé : partiels d'une cloche (bourdon, fondamentale, tierce mineure,
+   * quinte, nominale...) qui s'éteignent plus ou moins vite, un choc métallique à l'attaque, et une
+   * réverbération de nef. `pitch` : fondamentale (Hz).
+   */
+  bell(volume: number, pitch: number, reverb: number) {
+    const ctx = this.ctx;
+    if (!ctx || !this.noise || !this.sfx) return;
+    const t = ctx.currentTime;
+    const out = ctx.createGain();
+    out.gain.value = volume;
+    // Réverbération : réponse impulsionnelle de bruit qui décroît (calculée une fois)
+    if (!this.nave || this.nave.duration !== reverb) {
+      const len = Math.floor(ctx.sampleRate * reverb);
+      const ir = ctx.createBuffer(2, len, ctx.sampleRate);
+      for (let c = 0; c < 2; c++) {
+        const d = ir.getChannelData(c);
+        for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
+      }
+      this.nave = ir;
+    }
+    const conv = ctx.createConvolver();
+    conv.buffer = this.nave;
+    const wet = ctx.createGain();
+    wet.gain.value = 0.35;
+    out.connect(this.sfx);
+    out.connect(conv).connect(wet).connect(this.sfx);
+    // Partiels : rapport à la fondamentale, amplitude, durée d'extinction (s)
+    const partials: [number, number, number][] = [
+      [0.5, 0.5, 6], [1, 0.45, 4.5], [1.19, 0.35, 3.5], [1.5, 0.18, 2.5], [2, 0.35, 3],
+      [2.51, 0.15, 1.8], [2.66, 0.12, 1.5], [3.01, 0.1, 1.2], [4.07, 0.06, 0.8],
+    ];
+    for (const [ratio, amp, decay] of partials) {
+      // Deux oscillateurs à peine désaccordés : le battement qui fait « vivre » la cloche
+      for (const detune of [-1.5, 1.5]) {
+        const o = ctx.createOscillator();
+        o.frequency.value = pitch * ratio;
+        o.detune.value = detune;
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(amp * 0.5, t + 0.004);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + decay);
+        o.connect(g).connect(out);
+        o.start(t);
+        o.stop(t + decay + 0.05);
+      }
+    }
+    // Choc du battant
+    const src = ctx.createBufferSource();
+    src.buffer = this.noise;
+    const f = ctx.createBiquadFilter();
+    f.type = 'bandpass';
+    f.frequency.value = pitch * 6;
+    f.Q.value = 2;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.4, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+    src.connect(f).connect(g).connect(out);
+    src.start(t, Math.random(), 0.1);
+  }
+
+  private nave?: AudioBuffer;
+
   /** Petit souffle d'impulsion au saut. */
   whoosh(volume: number) {
     const ctx = this.ctx;

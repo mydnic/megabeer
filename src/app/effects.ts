@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { BELLS } from '../config/abbey';
 import { ARRIVAL, DEATH_BANNER } from '../config/player';
 import { DEATH } from '../config/buveur';
 import { HIT_FEEDBACK } from '../config/zombies';
@@ -58,6 +59,9 @@ export function wireEffects(game: Game, d: Deps) {
     rig.shake(ARRIVAL.shake.amount, ARRIVAL.shake.amplitude, ARRIVAL.shake.decay);
     buveur.splashAt(pos, ARRIVAL.splash);
   });
+
+  // Débarquement des cloches : la terre tremble
+  game.events.on('bellsLanding', () => rig.shake(BELLS.shake.amount, BELLS.shake.amplitude, BELLS.shake.decay));
 
   // Mort : la pinte s'échappe, la caméra plonge sur le corps
   let pintFirstImpact = true;

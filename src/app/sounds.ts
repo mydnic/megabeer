@@ -1,3 +1,4 @@
+import { BELL_SOUND } from '../config/abbey';
 import { AUDIO } from '../config/audio';
 import { DEATH_BANNER } from '../config/player';
 import type { AudioEngine } from '../audio/audio';
@@ -10,7 +11,7 @@ export const jitter = (j: number) => 1 + (Math.random() * 2 - 1) * j;
 
 /**
  * Sons du jeu, branchés sur les événements du noyau et de l'animation du Buveur : pas, saut,
- * réception, ramassage d'XP, level-up et choix de carte.
+ * réception, ramassage d'XP, level-up, choix de carte, cloches.
  */
 export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual) {
   // Pas, saut, réception : déclenchés par l'animation (le pied touche le sol)
@@ -44,6 +45,9 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
   game.events.on('levelUpOffered', ({ first }) => {
     if (first) audio.play(AUDIO.levelUp.sample, AUDIO.levelUp.volume, 1, 0, 'ui');
   });
+  // Cloches de l'Abbaye : coups d'alerte, puis un coup plus grave au débarquement
+  game.events.on('bellToll', () => audio.bell(BELL_SOUND.tollVolume, BELL_SOUND.pitch, BELL_SOUND.reverb));
+  game.events.on('bellsLanding', () => audio.bell(BELL_SOUND.landingVolume, BELL_SOUND.pitch * BELL_SOUND.landingPitch, BELL_SOUND.reverb));
   game.events.on('cardPicked', () => audio.play(AUDIO.cards.pick, AUDIO.cards.pickVolume, jitter(0.03), 0, 'ui'));
 }
 

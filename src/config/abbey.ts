@@ -11,6 +11,8 @@ export const BELLS = {
   /** Cercle autour du joueur où ils sortent de terre (m, distance au sol) : un mur qui se resserre. */
   minDist: 18,
   maxDist: 26,
+  /** Tremblement de caméra au débarquement (0 à 1), amplitude (m), amortissement. */
+  shake: { amount: 0.5, amplitude: 0.25, decay: 1.6 },
 } as const;
 
 /** Son de cloche (synthétisé) : hauteur du coup (Hz), volumes des coups d'alerte et du dernier coup. */

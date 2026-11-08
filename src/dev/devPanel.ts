@@ -13,6 +13,8 @@ export interface DevApi {
   setAutoSpawn(v: boolean): void;
   /** Avance le chrono de la run (la courbe de difficulté suit). */
   skipTime(seconds: number): void;
+  /** Déclenche l'événement de la map tout de suite (Abbaye : les cloches). */
+  triggerMapEvent(): void;
   difficulties: readonly { id: string; label: string }[];
   setDifficulty(id: string): void;
   giveXp(amount: number): void;
@@ -41,6 +43,7 @@ export function createDevPanel(api: DevApi) {
       <br><button data-a="killXp">Tuer tout (+XP)</button> <button data-a="clear">Effacer tout</button>
       <br><label><input data-k="passive" type="checkbox"> passifs</label> <label><input data-k="auto" type="checkbox" checked> vagues</label>
       <br>chrono <button data-a="skip60">+1 min</button> <button data-a="skip300">+5 min</button>
+      <br><button data-a="bells">Cloches maintenant</button>
     </fieldset>
     <fieldset data-run><legend>Joueur</legend>
       <label><input data-k="god" type="checkbox"> godmode</label>
@@ -66,6 +69,7 @@ export function createDevPanel(api: DevApi) {
     die: () => api.die(),
     skip60: () => api.skipTime(60),
     skip300: () => api.skipTime(300),
+    bells: () => api.triggerMapEvent(),
     music: (b) => { b.textContent = `Musique : ${api.toggleCombatMusic()}`; },
   };
   for (const b of el.querySelectorAll<HTMLButtonElement>('button')) {

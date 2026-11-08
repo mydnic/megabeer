@@ -46,6 +46,7 @@ export async function wireDevTools(game: Game, d: {
     clearZombies() { if (inRun()) { game.horde.clear(); runLog.event('dev', 'clear'); } },
     setAutoSpawn(v) { game.director.enabled = v; runLog.event('dev', 'autoSpawn', v ? 1 : 0); },
     skipTime(s) { if (inRun()) { game.runTime += s; runLog.event('dev', 'skipTime', s); } },
+    triggerMapEvent() { if (inRun()) { game.mechanic.trigger(); runLog.event('dev', 'mapEvent'); } },
     difficulties: (Object.keys(DIFFICULTIES) as DifficultyId[]).map((id) => ({ id, label: DIFFICULTIES[id].label })),
     setDifficulty(id) { game.difficulty = id as DifficultyId; },
     setPassive(v) { if (inRun()) { game.horde.setPassive(v); runLog.event('dev', 'passive', v ? 1 : 0); } },

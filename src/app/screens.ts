@@ -5,6 +5,7 @@ import { loadSettings, saveSettings } from '../core/settings';
 import type { Game } from '../game/game';
 import { createAlcoholHud } from '../ui/alcoholHud';
 import { createDeathBanner } from '../ui/deathBanner';
+import { createEventBanner } from '../ui/eventBanner';
 import { createHealthHud } from '../ui/healthHud';
 import { createHomeScreen } from '../ui/homeScreen';
 import { weaponIcon } from '../ui/icons';
@@ -37,6 +38,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   const healthHud = createHealthHud(game.health);
   const alcoholHud = createAlcoholHud(game.progression);
   const runHud = createRunHud();
+  const banner = createEventBanner();
   const weaponHud = createWeaponHud();
   const setHud = (v: boolean) => {
     healthHud.setVisible(v);
@@ -79,6 +81,12 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   const home = createHomeScreen(() => void play(), () => options.show(() => home.focus()));
 
   game.events.on('runStarted', () => { setHud(true); lockCursor(); });
+  // Cloches de l'Abbaye : le bandeau tremble à chaque coup, puis annonce le débarquement
+  game.events.on('bellsRinging', () => banner.show('Les cloches sonnent !', 'Une horde va sortir de terre...'));
+  game.events.on('bellToll', () => banner.pulse());
+  game.events.on('bellsLanding', ({ count }) => { banner.pulse(); banner.hideAfter(2, `Débarquement : ${count} zombies !`); });
+  game.events.on('died', () => banner.clear());
+  game.events.on('home', () => banner.clear());
   game.events.on('levelUpOffered', ({ level, cards }) => levelUp.show(level, cards));
   game.events.on('cardPicked', () => { if (game.progression.pending === 0) lockCursor(); });
   game.events.on('playerHurt', ({ blocked }) => { if (!blocked) healthHud.hit(); });
