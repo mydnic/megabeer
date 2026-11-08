@@ -28,7 +28,8 @@ export function wireRunLog(game: Game, runLog: ReturnType<typeof createRunLog>, 
   game.events.on('levelGained', ({ level }) => runLog.levelUp(level));
   game.events.on('levelUpOffered', ({ cards }) => runLog.event('cardsOffered', ...cards.map((c) => `${c.weapon.id}:${c.upgrade.id}:${RARITIES[c.tier].id}`)));
   game.events.on('cardPicked', ({ card }) => runLog.event('cardPicked', `${card.weapon.id}:${card.upgrade.id}`, RARITIES[card.tier].id, card.weapon.mods.level));
-  game.events.on('bellsLanding', ({ count }) => runLog.event('bells', count));
+  game.events.on('bellsLanding', ({ model }) => runLog.event('bells', model));
+  game.events.on('bellsSurgeEnded', ({ count }) => runLog.event('bellsEnd', count));
   game.events.on('runEnded', ({ reason, survived, kills }) => runLog.end(reason, { survived, kills }));
   game.events.on('tick', ({ dt }) => runLog.tick(dt, () => {
     let alive = 0, near5 = 0, near10 = 0;

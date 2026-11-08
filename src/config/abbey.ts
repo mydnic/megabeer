@@ -6,9 +6,13 @@ export const BELLS = {
   /** Les cloches sonnent `warn` secondes avant le débarquement, en `tolls` coups réguliers. */
   warn: 4.5,
   tolls: 3,
-  /** Zombies du débarquement (multiplié par la difficulté). */
-  count: 100,
-  /** Cercle autour du joueur où ils sortent de terre (m, distance au sol) : un mur qui se resserre. */
+  /**
+   * Débarquement : pendant `duration` s, un seul type d'ennemi sort de terre en continu et en masse
+   * tout autour du joueur, `perSecond` par seconde (multiplié par la difficulté).
+   */
+  duration: 30,
+  perSecond: 8,
+  /** Anneau autour du joueur où ils sortent de terre (m, distance au sol). */
   minDist: 18,
   maxDist: 26,
   /** Tremblement de caméra au débarquement (0 à 1), amplitude (m), amortissement. */

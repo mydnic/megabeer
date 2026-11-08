@@ -1,27 +1,49 @@
 import { BELLS as B } from '../../config/abbey';
+import { ZOMBIE_MODELS, type ZombieModel } from '../../config/zombies';
 import type { Game } from '../game';
 import type { MapMechanic } from './mechanic';
 
+const MODELS = Object.keys(ZOMBIE_MODELS) as ZombieModel[];
+
 /**
- * Les cloches de l'Abbaye : toutes les 2 min, elles sonnent quelques coups d'alerte, puis une horde
- * sort de terre en cercle autour du joueur (le débarquement). Coupées avec les arrivées automatiques.
+ * Les cloches de l'Abbaye : toutes les 2 min, elles sonnent quelques coups d'alerte, puis c'est le
+ * débarquement : pendant 30 s, un seul type d'ennemi sort de terre en continu et en masse tout autour
+ * du joueur. Coupées avec les arrivées automatiques.
  */
 export function createAbbeyBells(game: Game): MapMechanic {
   /** Temps de run du prochain débarquement ; début de la sonnerie en cours et coups déjà sonnés (-1 : silence). */
   let next: number = B.every, ringStart = 0, tolled = -1;
+  /** Débarquement en cours : temps restant (s, 0 : aucun), type d'ennemi, arrivées en attente et total. */
+  let surge = 0, model: ZombieModel = MODELS[0], budget = 0, landed = 0;
 
-  const land = () => {
-    const placed = game.director.surround(Math.round(B.count * game.mods.count), B.minDist, B.maxDist);
-    game.events.emit('bellsLanding', { count: placed });
+  const startSurge = () => {
     tolled = -1;
     next = (Math.floor(game.runTime / B.every) + 1) * B.every;
+    surge = B.duration;
+    model = MODELS[Math.floor(Math.random() * MODELS.length)];
+    budget = 1;
+    landed = 0;
+    game.events.emit('bellsLanding', { duration: B.duration, model });
+  };
+
+  const updateSurge = (dt: number) => {
+    const step = Math.min(dt, surge);
+    surge -= step;
+    budget += B.perSecond * game.mods.count * step;
+    const n = Math.floor(budget);
+    if (n > 0) {
+      budget -= n;
+      landed += game.director.spawnAround(n, B.minDist, B.maxDist, model);
+    }
+    if (surge <= 0) game.events.emit('bellsSurgeEnded', { count: landed });
   };
 
   return {
-    reset() { next = B.every; tolled = -1; },
+    reset() { next = B.every; tolled = -1; surge = 0; },
     trigger() { next = game.runTime + B.warn; tolled = -1; },
-    update() {
+    update(dt) {
       if (!game.director.enabled) return;
+      if (surge > 0) updateSurge(dt);
       const t = game.runTime;
       // Chrono avancé d'un coup (outils de dev) : on ne rattrape pas les sonneries sautées
       if (tolled < 0 && t > next) next = (Math.floor(t / B.every) + 1) * B.every;
@@ -33,7 +55,7 @@ export function createAbbeyBells(game: Game): MapMechanic {
       if (tolled < 0) return;
       const gap = B.warn / B.tolls;
       while (tolled < B.tolls && t >= ringStart + tolled * gap) game.events.emit('bellToll', { index: tolled++ });
-      if (t >= next) land();
+      if (t >= next) startSurge();
     },
   };
 }

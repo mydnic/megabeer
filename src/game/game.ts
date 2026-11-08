@@ -51,8 +51,10 @@ export type GameEvents = {
   bellsRinging: { inSeconds: number };
   /** Un coup de cloche d'alerte. */
   bellToll: { index: number };
-  /** Débarquement : `count` zombies sortent de terre en cercle autour du joueur. */
-  bellsLanding: { count: number };
+  /** Débarquement : pendant `duration` s, des zombies de type `model` sortent de terre en masse autour du joueur. */
+  bellsLanding: { duration: number; model: ZombieModel };
+  /** Fin du débarquement, `count` zombies sont sortis de terre. */
+  bellsSurgeEnded: { count: number };
   /** Fin d'un pas de jeu en run (le joueur a atterri), avec la durée de jeu écoulée. */
   tick: { dt: number };
 };

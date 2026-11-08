@@ -79,27 +79,23 @@ export class SpawnDirector {
   }
 
   /**
-   * Fait sortir de terre `count` zombies en cercle autour du joueur, entre `minDist` et `maxDist` m
-   * (débarquements des événements de map). Renvoie le nombre réellement placé.
+   * Fait sortir de terre `count` zombies de type `model` tout autour du joueur, entre `minDist` et
+   * `maxDist` m (événements de map). Renvoie le nombre réellement placé.
    */
-  surround(count: number, minDist: number, maxDist: number) {
+  spawnAround(count: number, minDist: number, maxDist: number, model: ZombieModel) {
     this.frame();
-    const base = Math.random() * Math.PI * 2;
     let placed = 0;
     for (let i = 0; i < count; i++) {
-      const angle = base + (i / count) * Math.PI * 2;
       for (let k = 0; k < SPAWN.tries; k++) {
-        const jitter = (Math.random() - 0.5) * (Math.PI * 2 / count) * (1 + k);
-        if (!this.tryPoint(this.at, angle + jitter, minDist + Math.random() * (maxDist - minDist))) continue;
-        if (this.spawnAt(this.at)) placed++;
+        if (!this.tryPoint(this.at, Math.random() * Math.PI * 2, minDist + Math.random() * (maxDist - minDist))) continue;
+        if (this.spawnAt(this.at, model)) placed++;
         break;
       }
     }
     return placed;
   }
 
-  private spawnAt(dir: THREE.Vector3) {
-    const model = MODELS[Math.floor(Math.random() * MODELS.length)];
+  private spawnAt(dir: THREE.Vector3, model = MODELS[Math.floor(Math.random() * MODELS.length)]) {
     const facing = this.d.player.pos.clone().sub(dir.clone().multiplyScalar(PLANET_RADIUS));
     return this.d.spawn(model, dir, facing) !== undefined;
   }
