@@ -1,5 +1,8 @@
 // HUD de run (GDD section 16) : chrono, kills, armes. Les PV sont dans player.ts (HEALTH_HUD).
 
+/** Chargement d'une nouvelle planète : temps de calcul par image (ms) avant de rafraîchir la barre. */
+export const LOADING = { frameBudgetMs: 25 } as const;
+
 /** Emplacements d'armes : 4 armes maximum (GDD section 6). */
 export const WEAPON_HUD = { slots: 4 } as const;
 

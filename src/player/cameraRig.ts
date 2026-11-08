@@ -42,8 +42,20 @@ export class CameraRig {
 
   constructor(readonly camera: THREE.PerspectiveCamera) {}
 
+  /** Point fixe cadré à la place du joueur (arrivée en run : le perso tombe dans le cadre). null = suit le joueur. */
+  private anchor: THREE.Vector3 | null = null;
+  private anchorPos = new THREE.Vector3();
+  setAnchor(p: THREE.Vector3 | null) { this.anchor = p ? this.anchorPos.copy(p) : null; }
+
+  /** Place la caméra directement au bon endroit à la prochaine image (téléportation, nouvelle run). */
+  snap() {
+    this.initialized = false;
+    this.blockedDist = this.distance;
+  }
+
   update(dt: number, input: InputState, player: PlayerController) {
-    const up = this.up.copy(player.renderPos).normalize();
+    const base = this.anchor ?? player.renderPos;
+    const up = this.up.copy(base).normalize();
     // Lacet : rotation de la direction avant autour de la verticale locale
     const yaw = -input.mouseDX * C.mouseSensitivity - input.lookX * C.stickSensitivity * dt;
     player.camFwd.applyAxisAngle(up, yaw);
@@ -59,7 +71,7 @@ export class CameraRig {
     this.distance += (this.distTarget - this.distance) * (1 - Math.exp(-dt * 10));
 
     // Cible lissée (amortit les petites secousses du relief), position calculée autour d'elle
-    const goal = this.tmp.copy(player.renderPos).addScaledVector(up, C.targetHeight);
+    const goal = this.tmp.copy(base).addScaledVector(up, C.targetHeight);
     if (!this.initialized) { this.target.copy(goal); this.initialized = true; }
     this.target.lerp(goal, 1 - Math.exp(-dt * C.followSharpness));
 

@@ -94,6 +94,15 @@ export class PlayerController {
     this.interpolate(1);
   }
 
+  /** Arrivée de run : place le joueur `height` m au-dessus de sa position, en chute à `speed` m/s. */
+  drop(height: number, speed: number) {
+    this.pos.addScaledVector(this.tmp.copy(this.pos).normalize(), height);
+    this.vr = -speed;
+    this.onGround = false;
+    this.prevPos.copy(this.pos);
+    this.interpolate(1);
+  }
+
   /** Recul : projeté dans la direction `dir` (tangente), avec un petit saut. */
   knock(dir: THREE.Vector3, speed: number, lift: number, decay: number) {
     this.knockVel.copy(dir).multiplyScalar(speed);

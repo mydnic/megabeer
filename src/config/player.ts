@@ -1,4 +1,4 @@
-﻿// Statistiques du joueur (GDD section 4). Valeurs du Buveur, perso de référence.
+// Statistiques du joueur (GDD section 4). Valeurs du Buveur, perso de référence.
 
 export const PLAYER_STATS = {
   /** Points de vie max. */
@@ -40,4 +40,17 @@ export const DEATH_BANNER = {
   colorFade: 1.6,
   /** Musique baissée à cette fraction de son volume. */
   musicDuck: 0.3,
+} as const;
+
+/**
+ * Arrivée en run : le Buveur tombe du ciel dans le cadre, la caméra déjà posée sur le point
+ * d'atterrissage. Hauteur de départ (m) et vitesse de chute initiale (m/s) ; à l'impact :
+ * tremblement (force, amplitude, amortissement) et gerbe de bière (nombre de gouttes).
+ * Les zombies de départ apparaissent à l'atterrissage.
+ */
+export const ARRIVAL = {
+  height: 26,
+  speed: 6,
+  shake: { amount: 0.8, amplitude: 0.45, decay: 1.6 },
+  splash: 46,
 } as const;

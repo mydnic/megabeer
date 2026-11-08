@@ -97,9 +97,11 @@ export async function createDecor(scene: THREE.Scene) {
     group = null;
   }
 
-  function generate(seed: number) {
+  /** Génère le décor par morceaux : chaque yield donne l'avancement (0 à 1). */
+  function* generateSteps(seed: number): Generator<number, void> {
     clear();
     const { placements, spawn: s } = layoutAbbeyPlanet(seed);
+    yield 0.15;
     spawn = s;
     const g = new THREE.Group();
     g.name = 'decor';
@@ -124,6 +126,7 @@ export async function createDecor(scene: THREE.Scene) {
           mesh.name = `decor:${id}`;
           mesh.userData.ownGeometry = true;
           g.add(mesh);
+          yield 0.15 + 0.6 * (bends.size / Math.max(1, mats.length));
         }
         continue;
       }
@@ -137,6 +140,7 @@ export async function createDecor(scene: THREE.Scene) {
       g.add(mesh);
     }
 
+    yield 0.8;
     // --- Collisions
     collider.reset(placements.map((p) => {
       const pos = new THREE.Vector3(), rot = new THREE.Quaternion(), sc = new THREE.Vector3();
@@ -162,6 +166,10 @@ export async function createDecor(scene: THREE.Scene) {
     refresh = 0;
   }
 
+  function generate(seed: number) {
+    for (const _ of generateSteps(seed)) { /* tout d'un coup */ }
+  }
+
   // Vraies lumières des lanternes, la nuit, sur les plus proches
   const lights = Array.from({ length: LI.count }, () => {
     const l = new THREE.PointLight(LI.color, 0, LI.distance, 2);
@@ -175,6 +183,7 @@ export async function createDecor(scene: THREE.Scene) {
   return {
     collider,
     generate,
+    generateSteps,
     /** Point de départ de repli : le parvis de l'abbaye principale. */
     get spawn() { return spawn; },
     /** Départ de run au hasard sur la planète, loin de tout élément du décor (repli : le parvis). */

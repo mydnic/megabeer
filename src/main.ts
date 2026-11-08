@@ -21,7 +21,7 @@ import { applyCard, rollCards } from './game/levelUpCards';
 import { LEVEL_UP_SCREEN, RARITIES } from './config/upgrades';
 import { WEAPONS } from './config/weapons';
 import { ZOMBIE_STATS } from './config/zombies';
-import { DEATH_BANNER, PLAYER_STATS } from './config/player';
+import { ARRIVAL, DEATH_BANNER, PLAYER_STATS } from './config/player';
 import { DEATH } from './config/buveur';
 import type { InputState } from './core/input';
 import { createHealthHud } from './ui/healthHud';
@@ -32,7 +32,8 @@ import { PlayerController } from './player/controller';
 import { Pipeline } from './render/pipeline';
 import { createSky } from './world/sky';
 import { createClouds } from './world/clouds';
-import { buildTerrain, heightAt, setTerrainSeed } from './world/terrain';
+import { buildTerrain, buildTerrainSteps, heightAt, setTerrainSeed } from './world/terrain';
+import { LOADING } from './config/hud';
 import { createLoadingScreen } from './ui/loadingScreen';
 import { createDecor } from './world/decor';
 import { AudioEngine } from './audio/audio';
@@ -83,22 +84,36 @@ decor.generate(mapSeed);
 /** La planète générée n'a pas encore servi (la première run la prend telle quelle). */
 let mapFresh = true;
 const loading = createLoadingScreen();
-/** Génère une nouvelle planète, par étapes pour laisser la barre de chargement avancer. */
+/**
+ * Génère une nouvelle planète par petits morceaux : quelques dizaines de ms de calcul par image,
+ * puis la main est rendue à l'écran pour que la barre de chargement avance vraiment.
+ */
 async function newPlanet(progress: (k: number) => void) {
-  const yieldFrame = () => new Promise<void>((r) => requestAnimationFrame(() => setTimeout(r, 0)));
+  const nextFrame = () => new Promise<void>((r) => requestAnimationFrame(() => r()));
+  /** Fait tourner un générateur d'étapes ; son avancement (0 à 1) est ramené dans [from, to]. */
+  async function run<T>(steps: Generator<number, T>, from: number, to: number): Promise<T> {
+    let t0 = performance.now();
+    for (;;) {
+      const r = steps.next();
+      if (r.done) return r.value;
+      if (performance.now() - t0 > LOADING.frameBudgetMs) {
+        progress(from + (to - from) * r.value);
+        await nextFrame();
+        t0 = performance.now();
+      }
+    }
+  }
   mapSeed = newSeed();
-  progress(0.05); await yieldFrame();
+  progress(0); await nextFrame();
   setTerrainSeed(mapSeed);
-  progress(0.3); await yieldFrame();
-  const t = buildTerrain();
+  const t = await run(buildTerrainSteps(), 0.02, 0.72);
   scene.remove(terrain);
   terrain.geometry.dispose();
   (terrain.material as THREE.Material).dispose();
   terrain = t;
   scene.add(terrain);
-  progress(0.6); await yieldFrame();
-  decor.generate(mapSeed);
-  progress(1); await yieldFrame();
+  await run(decor.generateSteps(mapSeed), 0.72, 1);
+  progress(1); await nextFrame();
 }
 
 // --- Joueur
@@ -345,6 +360,8 @@ function goHome() {
   alcoholHud.setVisible(false);
   playerStats.extraProjectiles = PLAYER_STATS.extraProjectiles;
   pipeline.fade.amount = 0;
+  arriving = false;
+  rig.setAnchor(null);
   healthHud.setVisible(false);
   runHud.setVisible(false);
   weaponHud.setVisible(false);
@@ -358,6 +375,19 @@ function goHome() {
 healthHud.setVisible(false);
 alcoholHud.setVisible(false);
 home.show();
+
+/** Le Buveur tombe du ciel au début de la run : ni contrôle, ni tirs, ni chrono tant qu'il n'a pas atterri. */
+let arriving = false;
+/** Atterrissage : impact (tremblement, gerbe de bière), la caméra reprend le joueur, les zombies arrivent. */
+function land() {
+  arriving = false;
+  rig.setAnchor(null);
+  const A = ARRIVAL;
+  rig.shake(A.shake.amount, A.shake.amplitude, A.shake.decay);
+  buveur.splashAt(player.pos, A.splash);
+  runLog.event('landed');
+  spawnStartZombies();
+}
 
 /** Nouvelle run depuis l'accueil : nouvelle planète (sauf la toute première, déjà prête), puis départ. */
 let starting = false;
@@ -383,12 +413,16 @@ async function startRun() {
   // Le Buveur arrive à un endroit tiré au hasard sur la planète
   const start = decor.randomSpawn();
   player.reset(start.dir, start.facing);
+  // Arrivée : la caméra est déjà posée sur le point d'atterrissage, le Buveur tombe du ciel dedans
   rig.setFocus(null);
+  rig.setAnchor(player.pos);
+  rig.snap();
+  player.drop(ARRIVAL.height, ARRIVAL.speed);
+  arriving = true;
   runLog.start({
     character: 'buveur', map: 'abbaye', seed: mapSeed, difficulty: 'sobre',
     stats: { ...playerStats, maxHp: health.max }, weapons: { blonde: WEAPONS.blonde }, zombie: ZOMBIE_STATS,
   });
-  spawnStartZombies();
   music.startRun('abbaye');
   renderer.domElement.requestPointerLock?.()?.catch?.(() => {});
 }
@@ -444,17 +478,17 @@ function frame(now: number) {
   const dt = paused ? 0 : realDt * timeScale() * devTimeScale;
   const input = readInput();
   // Accueil et mort : le joueur ne contrôle pas le Buveur (la caméra reste libre en jeu)
-  const moveInput = phase === 'run' && !paused ? input : NO_MOVE;
+  const moveInput = phase === 'run' && !paused && !arriving ? input : NO_MOVE;
   levelUp.input(input.moveX, input.jumpPressed);
   if (phase === 'run' && !paused && progression.pending > 0) {
     audio.play(AUDIO.levelUp.sample, AUDIO.levelUp.volume, 1, 0, 'ui');
     openLevelUp();
   }
-  // Accueil : la caméra tourne lentement autour du Buveur
   player.feed(moveInput);
   acc += dt;
   while (acc >= STEP) { player.step(STEP, moveInput); acc -= STEP; }
   player.interpolate(acc / STEP);
+  if (arriving && player.onGround) land();
 
   const up = player.upDir;
   buveur.update(dt, player);
@@ -462,7 +496,7 @@ function frame(now: number) {
   health.update(dt);
   healthHud.update(realDt);
   if (phase === 'run' && health.dead) onDeath();
-  if (phase === 'run') {
+  if (phase === 'run' && !arriving) {
     runTime += dt;
     blonde.update(dt);
     runLog.tick(dt, () => {

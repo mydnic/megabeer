@@ -130,11 +130,23 @@ export function slopeGradient(up: THREE.Vector3, ax: THREE.Vector3, ay: THREE.Ve
 
 // Palette du sol (DA : couleurs franches et chaudes, lisibles sous le cel-shading)
 
-export function buildTerrain(): THREE.Mesh {
-  let geo: THREE.BufferGeometry = new THREE.IcosahedronGeometry(1, PLANET.detail);
-  geo.deleteAttribute('normal');
-  geo.deleteAttribute('uv');
-  geo = mergeVertices(geo); // sommets partagés : normales lisses pour le cel-shading
+/** Icosphère unité aux sommets partagés, calculée une fois et recopiée à chaque planète. */
+let unitSphere: THREE.BufferGeometry | null = null;
+
+/**
+ * Construit le maillage de la planète en cours (relief + couleurs), par petits morceaux : chaque
+ * `yield` donne l'avancement (0 à 1) et laisse l'appelant rendre la main à l'écran (barre de
+ * chargement). buildTerrain() fait tout d'un coup.
+ */
+export function* buildTerrainSteps(): Generator<number, THREE.Mesh> {
+  if (!unitSphere) {
+    let g: THREE.BufferGeometry = new THREE.IcosahedronGeometry(1, PLANET.detail);
+    g.deleteAttribute('normal');
+    g.deleteAttribute('uv');
+    unitSphere = mergeVertices(g); // sommets partagés : normales lisses pour le cel-shading
+    yield 0.05;
+  }
+  const geo = unitSphere.clone();
   const pos = geo.attributes.position as THREE.BufferAttribute;
   const heights = new Float32Array(pos.count);
   const v = new THREE.Vector3();
@@ -144,8 +156,10 @@ export function buildTerrain(): THREE.Mesh {
     heights[i] = h;
     v.multiplyScalar(R + h);
     pos.setXYZ(i, v.x, v.y, v.z);
+    if ((i & 4095) === 4095) yield 0.05 + 0.5 * (i / pos.count);
   }
   geo.computeVertexNormals();
+  yield 0.6;
 
   geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(pos.count * 3), 3));
   geo.userData.heights = heights;
@@ -154,8 +168,16 @@ export function buildTerrain(): THREE.Mesh {
   mesh.receiveShadow = true;
   mesh.castShadow = true;
   mesh.name = 'terrain';
-  colorTerrain(mesh, TERRAIN_PALETTE);
+  for (const k of colorTerrainSteps(mesh, TERRAIN_PALETTE)) yield 0.6 + 0.4 * k;
   return mesh;
+}
+
+export function buildTerrain(): THREE.Mesh {
+  const g = buildTerrainSteps();
+  for (;;) {
+    const r = g.next();
+    if (r.done) return r.value;
+  }
 }
 
 type TerrainPalette = { grassLow: number; grassHigh: number; dirt: number; path: number; rock: number; snow: number; variation: number };
@@ -165,6 +187,11 @@ type TerrainPalette = { grassLow: number; grassHigh: number; dirt: number; path:
  * (herbe plus claire / plus sombre, un peu plus jaune) pour casser l'aplat.
  */
 export function colorTerrain(mesh: THREE.Mesh, p: TerrainPalette) {
+  for (const _ of colorTerrainSteps(mesh, p)) { /* tout d'un coup */ }
+}
+
+/** colorTerrain par morceaux : chaque `yield` donne l'avancement (0 à 1). */
+function* colorTerrainSteps(mesh: THREE.Mesh, p: TerrainPalette): Generator<number, void> {
   const geo = mesh.geometry;
   const pos = geo.attributes.position as THREE.BufferAttribute;
   const nrm = geo.attributes.normal as THREE.BufferAttribute;
@@ -175,11 +202,11 @@ export function colorTerrain(mesh: THREE.Mesh, p: TerrainPalette) {
     rock: new THREE.Color(p.rock), snow: new THREE.Color(p.snow), dry: new THREE.Color(p.grassHigh).lerp(new THREE.Color(0xd8c060), 0.5),
     path: new THREE.Color(p.path),
   };
-  const c = new THREE.Color(), n = new THREE.Vector3(), v = new THREE.Vector3();
+  const c = new THREE.Color(), n = new THREE.Vector3(), v = new THREE.Vector3(), vn = new THREE.Vector3();
   for (let i = 0; i < pos.count; i++) {
     v.fromBufferAttribute(pos, i);
     n.fromBufferAttribute(nrm, i);
-    const vn = v.clone().normalize();
+    vn.copy(v).normalize();
     const steep = 1 - n.dot(vn); // 0 = plat
     const h = heights[i];
     c.copy(pal.grassLow).lerp(pal.grassHigh, THREE.MathUtils.smoothstep(h, -8, 10));
@@ -196,6 +223,7 @@ export function colorTerrain(mesh: THREE.Mesh, p: TerrainPalette) {
     c.lerp(pal.rock, THREE.MathUtils.smoothstep(h, 14, 18));
     c.lerp(pal.snow, THREE.MathUtils.smoothstep(h, 24, 26) * (1 - THREE.MathUtils.smoothstep(steep, 0.35, 0.5)));
     col.setXYZ(i, c.r, c.g, c.b);
+    if ((i & 4095) === 4095) yield i / pos.count;
   }
   col.needsUpdate = true;
 }
