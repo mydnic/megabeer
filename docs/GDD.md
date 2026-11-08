@@ -1150,6 +1150,17 @@ L'ordre après l'étape 7 est indicatif : il se rediscute à chaque feature vali
 | Modèles 3D | Packs gratuits retravaillés et/ou modèles faits par IA |
 | Méthode de dev | Agile : une feature à la fois, livrée 100% finie et validée avant la suivante (section 20) |
 
+### Tranché le 2026-11-08 (feature 7)
+
+| Sujet | Décision |
+|---|---|
+| Arrivée des ennemis | Un directeur de vagues garde autour du joueur une horde dont la taille suit une courbe sur la run (config `SPAWN_CURVE` : zombies visés, arrivées par seconde, PV). Une horde décimée se reforme |
+| Où ils arrivent | Anneau à 30-38 m (hors de portée de l'arme), plutôt devant le joueur quand il court ; ils sortent de terre (environ 1 s, immobiles) au lieu d'apparaître d'un coup |
+| Zombies distancés | Au-delà de 60 m, ils ressortent de terre devant le joueur : on ne sème pas la horde en courant |
+| Montée en difficulté | Valeurs de départ : 6 zombies à 0:00, 80 à 5:00, 200 à 10:00 ; PV x2,3 à 5:00, x4,5 à 10:00. Après 10:00 la pression continue de monter, en attendant les videurs. À caler avec le journal de run |
+| Difficultés | Multiplicateurs Sobre / Pompette / Bourré en config et branchés (PV, nombre, dégâts). Seule Sobre est jouable, le choix est dans le panneau DEV |
+| Plus tard | Les cloches de l'Abbaye (débarquement de 100 toutes les 2 min), les nouveaux types d'ennemis par minute et les videurs arrivent avec leurs features |
+
 ### Encore ouvert
 
 Aucune question de design ouverte au 2026-11-06. Les valeurs chiffrées sont des points de départ en config, calées en jouant. Prochaine étape : test technique de la planète sphérique (section 20).

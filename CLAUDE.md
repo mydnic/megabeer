@@ -64,7 +64,8 @@ recopie son état à chaque image. Ne jamais remettre de logique de jeu dans `ma
 
 - `game/` : `game.ts` (**le jeu** : phases accueil / run / mort, arrivée, combat, XP, level-up,
   pause ; `step(dt, input)` ; événements `GameEvents`), `playerStats.ts`, `loadout.ts` (armes
-  équipées, 4 max), `levelUpCards.ts` (tirage sur les armes équipées), `emitter.ts`.
+  équipées, 4 max), `levelUpCards.ts` (tirage sur les armes équipées), `spawnDirector.ts` (arrivée des zombies et
+  montée en difficulté, courbe dans `config/spawn.ts`), `emitter.ts`.
 - `weapons/` : `weapon.ts` (**interface `Weapon`** et `WeaponContext`), `registry.ts`, une arme
   par fichier (`blonde.ts`, simulation et projectiles), son rendu à part (`bottleView.ts`).
   **Ajouter une arme** = un fichier qui implémente `Weapon`, une entrée dans le registre, sa config
