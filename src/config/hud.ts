@@ -1,4 +1,7 @@
-// HUD de run (GDD section 16) : chrono, kills. Les PV sont dans player.ts (HEALTH_HUD).
+// HUD de run (GDD section 16) : chrono, kills, armes. Les PV sont dans player.ts (HEALTH_HUD).
+
+/** Emplacements d'armes : 4 armes maximum (GDD section 6). */
+export const WEAPON_HUD = { slots: 4 } as const;
 
 export const RUN_HUD = {
   /** Fermeture du bar (GDD section 12) : passé ce temps (s), le chrono passe en rouge. */
