@@ -1162,6 +1162,8 @@ L'ordre après l'étape 7 est indicatif : il se rediscute à chaque feature vali
 | Cloches de l'Abbaye | Toutes les 2 min (2:00, 4:00...) : 3 coups d'alerte sur 4,5 s avec un bandeau, puis le débarquement : pendant 30 s, un seul type d'ennemi (tiré au hasard) sort de terre en continu et en masse tout autour du joueur, à 18-26 m (8 par seconde, soit 240, x difficulté). Cloche synthétisée, pas de changement de musique |
 | Mécaniques de map | Une interface `MapMechanic` et un registre par map (`src/game/mechanics/`) : la Brasserie et la Fête de village s'y ajoutent sans toucher au noyau |
 | Équilibrage | Reporté : impossible avec un seul type d'ennemi tué en un coup. Il se fera une fois les ennemis de l'Abbaye, les élites, les boss et les armes en place |
+| Modèles des ennemis | Les 4 zombies Quaternius deviennent 4 ennemis distincts du roster de l'Abbaye : Zombie = Basic (0:00), Novice = Ribcage (1:00, il court), Moine lanceur = Arm (2:00), Pèlerin gonflé = Chubby (3:00). Recherche de packs gratuits faite : aucun moine animé libre de droits ne colle, les suivants seront faits dans Blender (fantôme : modèle Kenney déjà présent ; squelettes du Prieur : KayKit Skeletons, CC0, à télécharger le moment venu) |
+| Fiches ennemis | Un registre `ENEMIES` (PV, vitesse, dégâts, XP, modèle) et un roster par map `ROSTERS` (minute d'arrivée, poids de tirage), dans `src/config/enemies.ts`. Le débarquement des cloches tire son type parmi ceux déjà arrivés |
 | Plus tard | Les nouveaux types d'ennemis par minute, les élites, les boss et les videurs arrivent avec leurs features |
 
 ### Encore ouvert

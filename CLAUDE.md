@@ -71,7 +71,8 @@ recopie son état à chaque image. Ne jamais remettre de logique de jeu dans `ma
   par fichier (`blonde.ts`, simulation et projectiles), son rendu à part (`bottleView.ts`).
   **Ajouter une arme** = un fichier qui implémente `Weapon`, une entrée dans le registre, sa config
   et ses cartes, son icône (`ui/icons.ts`), son rendu, et ses tests. Rien d'autre à toucher.
-- `enemies/` : `zombie.ts` et `horde.ts` (simulation), `hordeView.ts` et `zombieLibrary.ts`
+- `enemies/` : les ennemis sont des fiches (`config/enemies.ts` : `ENEMIES` et le roster de chaque map),
+  `zombie.ts` et `horde.ts` (simulation), `hordeView.ts` et `zombieLibrary.ts`
   (rendu, modèles et animations pré-calculées). `pickups/` : `xpDrops.ts` + `xpDropsView.ts`.
 - `app/` : l'application navigateur branchée sur le noyau, une responsabilité par fichier :
   `planet.ts` (seed, relief, décor, chargement), `screens.ts` (accueil, HUD, pause, level-up,
