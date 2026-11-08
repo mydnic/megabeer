@@ -7,7 +7,7 @@ import { createTestGame } from '../support/testGame';
 function arena() {
   const t = createTestGame();
   t.startRunAndLand();
-  t.clearZombies();
+  t.noSpawns();
   t.game.loadout.weapons[0].mods.range = 0;
   return t;
 }

@@ -70,6 +70,8 @@ export function createTestGame(seed = 1) {
     },
     /** Retire tous les zombies (pour isoler un scénario). */
     clearZombies() { game.horde.clear(); },
+    /** Arène calme : plus aucune arrivée de zombies, et ceux déjà là sont retirés. */
+    noSpawns() { game.director.enabled = false; game.horde.clear(); },
   };
   return api;
 }

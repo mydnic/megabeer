@@ -9,7 +9,7 @@ const W = WEAPONS.blonde;
 function arena() {
   const t = createTestGame();
   t.startRunAndLand();
-  t.clearZombies();
+  t.noSpawns();
   return t;
 }
 

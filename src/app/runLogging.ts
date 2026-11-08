@@ -11,7 +11,7 @@ import type { Game } from '../game/game';
  */
 export function wireRunLog(game: Game, runLog: ReturnType<typeof createRunLog>, meta: () => { seed: number; fps: number }) {
   game.events.on('runStarted', () => runLog.start({
-    character: 'buveur', map: 'abbaye', seed: meta().seed, difficulty: 'sobre',
+    character: 'buveur', map: 'abbaye', seed: meta().seed, difficulty: game.difficulty,
     stats: { ...game.stats, maxHp: game.health.max },
     weapons: Object.fromEntries(game.loadout.weapons.map((w) => [w.id, WEAPONS[w.id]])),
     zombie: ZOMBIE_STATS,
@@ -39,6 +39,6 @@ export function wireRunLog(game: Game, runLog: ReturnType<typeof createRunLog>, 
       if (d < 10) near10++;
     }
     const s = game.stats;
-    return { hp: game.health.hp, level: game.progression.level, xp: Math.round(game.progression.xp), alive, near5, near10, kills: game.kills, fps: Math.round(meta().fps), atkSpd: s.attackSpeed, proj: s.extraProjectiles };
+    return { hp: game.health.hp, level: game.progression.level, xp: Math.round(game.progression.xp), alive, near5, near10, kills: game.kills, target: game.director.target, fps: Math.round(meta().fps), atkSpd: s.attackSpeed, proj: s.extraProjectiles };
   }));
 }

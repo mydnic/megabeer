@@ -48,8 +48,8 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
       z.pos.addScaledVector(z.knockVel, dt);
       z.knockVel.multiplyScalar(Math.exp(-dt / H.knockDecay));
     }
-    // Mort ou sonné : ni marche ni coup
-    if (z.dead || z.stagger > 0) { z.walkSpeed = 0; return; }
+    // Mort, sonné ou en train de sortir de terre : ni marche ni coup
+    if (z.dead || z.stagger > 0 || z.rise > 0) { z.walkSpeed = 0; return; }
     want.subVectors(target, z.pos);
     want.addScaledVector(up, -want.dot(up));
     const dist = want.length();

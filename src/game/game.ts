@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { PLANET_RADIUS } from '../config/world';
-import { ZOMBIE_ATTACK, ZOMBIE_MODELS, type ZombieModel } from '../config/zombies';
+import { DIFFICULTIES, type DifficultyId } from '../config/spawn';
+import { ZOMBIE_ATTACK, ZOMBIE_STATS, type ZombieModel } from '../config/zombies';
 import { ARRIVAL } from '../config/player';
 import { DEATH } from '../config/buveur';
 import { XP_DROPS } from '../config/xp';
@@ -18,6 +18,7 @@ import { Emitter } from './emitter';
 import { applyCard, rollCards, type Card } from './levelUpCards';
 import { Loadout } from './loadout';
 import { PlayerStats } from './playerStats';
+import { SpawnDirector, spawnCurveAt } from './spawnDirector';
 
 export type Phase = 'home' | 'run' | 'dead';
 export type Spawn = { dir: THREE.Vector3; facing: THREE.Vector3 };
@@ -78,10 +79,14 @@ export class Game {
   readonly horde: ReturnType<typeof createHorde>;
   readonly xp: ReturnType<typeof createXpDrops>;
   readonly loadout: Loadout;
+  /** Arrivée des zombies et montée en difficulté au fil de la run. */
+  readonly director: SpawnDirector;
   /** Triches des outils de dev (toujours faux en jeu normal). */
   readonly cheats = { god: false };
 
   phase: Phase = 'home';
+  /** Difficulté de la run (Sobre / Pompette / Bourré). */
+  difficulty: DifficultyId = 'sobre';
   /** Chute d'arrivée en cours : ni contrôle, ni tirs, ni chrono. */
   arriving = false;
   /** Menu pause ouvert. */
@@ -110,6 +115,14 @@ export class Game {
     this.horde.onHit = (z, dir) => this.hurtPlayer(z, dir);
     this.horde.onSpawn = (zombie) => this.events.emit('zombieSpawned', { zombie });
     this.xp = createXpDrops(groundAt);
+    this.director = new SpawnDirector({
+      player, collider: deps.collider, zombies: () => this.horde.zombies,
+      spawn: (model, at, facing) => {
+        const z = this.spawnZombie(model, at, facing);
+        z?.emerge();
+        return z;
+      },
+    });
     const self = this;
     this.weaponCtx = {
       zombies: () => this.horde.zombies,
@@ -202,6 +215,7 @@ export class Game {
     if (this.phase === 'run' && this.health.dead) this.die();
     if (this.phase === 'run' && !this.arriving) {
       this.runTime += dt;
+      this.director.update(dt, this.runTime, this.mods.count);
       this.loadout.update(dt);
       this.events.emit('tick', { dt });
     }
@@ -213,9 +227,17 @@ export class Game {
 
   // ------------------------------------------------------------------ combat et XP
 
-  /** Fait apparaître un zombie au sol à la direction `at`, tourné vers `facing`. */
+  /** Multiplicateurs de la difficulté choisie. */
+  get mods() { return DIFFICULTIES[this.difficulty]; }
+
+  /**
+   * Fait apparaître un zombie au sol à la direction `at`, tourné vers `facing`. Plus la run avance,
+   * plus il a de PV (courbe de la run et difficulté).
+   */
   spawnZombie(model: ZombieModel, at: THREE.Vector3, facing: THREE.Vector3) {
-    return this.horde.spawn(model, at, facing);
+    const z = this.horde.spawn(model, at, facing);
+    if (z) z.hp = Math.round(ZOMBIE_STATS.hp * spawnCurveAt(this.runTime).hpMul * this.mods.hp);
+    return z;
   }
 
   /**
@@ -248,7 +270,7 @@ export class Game {
   }
 
   private hurtPlayer(z: Zombie, dir: THREE.Vector3) {
-    const damage = ZOMBIE_ATTACK.damage;
+    const damage = ZOMBIE_ATTACK.damage * this.mods.damage;
     // Invulnérable juste après un coup : ni dégâts ni recul (pas d'enchaînement de coups)
     const took = !this.cheats.god && this.health.damage(damage);
     this.events.emit('playerHurt', { zombie: z, dir, damage, hp: this.health.hp, blocked: !took });
@@ -264,23 +286,11 @@ export class Game {
     this.events.emit('levelUpOffered', { level, cards, first });
   }
 
-  /** Atterrissage : les zombies de départ arrivent (provisoire, en attendant le spawn des vagues). */
+  /** Atterrissage : la première horde sort de terre autour du joueur. */
   private land() {
     this.arriving = false;
-    this.spawnStartZombies();
+    this.director.start(this.mods.count);
     this.events.emit('landed', { pos: this.player.pos.clone() });
-  }
-
-  private spawnStartZombies() {
-    const p = this.player;
-    const up = p.pos.clone().normalize();
-    const fwd = p.facing.clone();
-    const right = new THREE.Vector3().crossVectors(fwd, up).normalize();
-    const models = Object.keys(ZOMBIE_MODELS) as ZombieModel[];
-    models.forEach((m, i) => {
-      const at = up.clone().multiplyScalar(PLANET_RADIUS).addScaledVector(fwd, 7 + (i % 2) * 1.5).addScaledVector(right, (i - 1.5) * 1.6);
-      this.spawnZombie(m, at, fwd.clone().negate());
-    });
   }
 
   private die() {
@@ -313,6 +323,7 @@ export class Game {
     this.loadout.reset();
     this.horde.clear();
     this.horde.setPassive(false);
+    this.director.reset();
     this.xp.clear();
   }
 }

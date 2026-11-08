@@ -85,7 +85,7 @@ describe('Le Buveur', () => {
   it('avance quand je pousse le stick ou les touches', () => {
     const t = createTestGame();
     t.startRunAndLand();
-    t.clearZombies();
+    t.noSpawns();
     const start = t.game.player.pos.clone();
     t.play(1, { moveY: 1 });
     expect(t.game.player.pos.distanceTo(start)).toBeGreaterThan(3);
@@ -94,7 +94,7 @@ describe('Le Buveur', () => {
   it('saute et retombe', () => {
     const t = createTestGame();
     t.startRunAndLand();
-    t.clearZombies();
+    t.noSpawns();
     t.play(0.2);
     t.play(1 / 60, { jumpPressed: true, jump: true });
     t.play(0.1);

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { SPAWN } from '../config/spawn';
 import { ZOMBIE_ATTACK, ZOMBIE_HURT as H, ZOMBIE_MOVE, ZOMBIE_STATS, ZOMBIE_VISUAL as V, type ZombieModel } from '../config/zombies';
 
 export type ZombieState = 'idle' | 'walk' | 'attack' | 'hit' | 'death';
@@ -48,6 +49,8 @@ export class Zombie {
   /** Mort : temps écoulé depuis la mort, et enfoncement actuel dans le sol (m). */
   deadTime = -1;
   sink = 0;
+  /** Sortie de terre en cours (s restantes) : il émerge du sol, immobile, sans frapper. */
+  rise = 0;
   /** Vrai quand le corps a fini de s'enfoncer : la horde le retire. */
   gone = false;
   get dead() { return this.deadTime >= 0; }
@@ -72,6 +75,13 @@ export class Zombie {
     this.time = 0;
     this.stateTime = 0;
     if (state === 'attack') this.attackDone = false;
+  }
+
+  /** Sort de terre à sa position actuelle (apparition d'une vague). */
+  emerge() {
+    this.rise = SPAWN.riseTime;
+    this.sink = SPAWN.riseDepth;
+    this.play('idle', true);
   }
 
   /**
@@ -118,6 +128,10 @@ export class Zombie {
     this.stateTime += dt;
     this.flash = Math.max(0, this.flash - dt / H.flashTime);
     this.stagger = Math.max(0, this.stagger - dt);
+    if (this.rise > 0 && !this.dead) {
+      this.rise = Math.max(0, this.rise - dt);
+      this.sink = (this.rise / SPAWN.riseTime) ** 2 * SPAWN.riseDepth;
+    }
     // Mort : couché le temps de l'animation et un peu plus, puis il s'enfonce dans le sol
     if (this.dead) {
       this.deadTime += dt;
