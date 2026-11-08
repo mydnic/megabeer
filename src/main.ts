@@ -1,4 +1,4 @@
-﻿import * as THREE from 'three';
+import * as THREE from 'three';
 import { CAMERA, PLANET_RADIUS } from './config/world';
 import { loadZombieLibrary } from './enemies/zombie';
 import { createHorde } from './enemies/horde';
@@ -39,7 +39,8 @@ import { createAmbience } from './audio/ambience';
 import { createMusic } from './audio/music';
 import { loadSettings, saveSettings } from './core/settings';
 import { createOptionsPanel } from './ui/optionsPanel';
-import { createPauseMenu, type StatGroup } from './ui/pauseMenu';
+import { createPauseMenu, type PauseStats, type StatGroup } from './ui/pauseMenu';
+import { WEAPON_HUD } from './config/hud';
 import { createRunHud } from './ui/runHud';
 import { createWeaponHud, type WeaponSlot } from './ui/weaponHud';
 import { blondeIcon } from './ui/icons';
@@ -245,31 +246,32 @@ const pause = createPauseMenu({
   stats: () => statGroups(),
 });
 /** Stats affichées dans la pause : valeur effective et bonus gagné pendant la run. */
-function statGroups(): StatGroup[] {
+function statGroups(): PauseStats {
   const f = (n: number, dec = 1) => n.toLocaleString('fr', { maximumFractionDigits: dec });
   const pct = (k: number) => (Math.abs(k) < 0.005 ? '' : `${k > 0 ? '+' : ''}${Math.round(k * 100)} %`);
   const plus = (n: number, dec = 2) => (n ? `+${f(n, dec)}` : '');
   const s = playerStats, m = blonde.mods, W = WEAPONS.blonde;
-  return [
-    { title: 'Le Buveur', rows: [
-      ['PV', `${Math.ceil(health.hp)} / ${health.max}`, ''],
-      ["Vitesse d'attaque", `x${f(s.attackSpeed, 2)}`, pct(s.attackSpeed - 1)],
-      ['Projectiles en plus', String(s.extraProjectiles), plus(s.extraProjectiles)],
-      ['Ramassage', `${f(s.pickupRange)} m`, pct(s.pickupRange / XP_DROPS.pickupRange - 1)],
-      ["Gain d'XP", `x${f(s.xpGain, 2)}`, pct(s.xpGain - 1)],
-      ['Chance', String(s.luck), plus(s.luck)],
-    ] },
-    { title: 'Blonde', icon: blondeIcon(''), level: m.level, rows: [
-      ['Dégâts', f(W.damage * m.damage), pct(m.damage - 1)],
-      ["Vitesse d'attaque", `${f(s.attackSpeed * m.rate / W.cooldown, 2)} / s`, pct(m.rate - 1)],
-      ['Projectiles', String(1 + s.extraProjectiles + m.projectiles), plus(m.projectiles)],
-      ['Vitesse des projectiles', `${f(W.speed * m.speed)} m/s`, pct(m.speed - 1)],
-      ['Portée', `${f(W.range * m.range)} m`, pct(m.range - 1)],
-      ['Chances de critique', `${f((W.critChance + m.critChance) * 100)} %`, pct(m.critChance)],
-      ['Multiplicateur critique', `x${f(W.critMult + m.critMult, 2)}`, plus(m.critMult)],
-      ['Taille', `${f(m.size * 100, 0)} %`, pct(m.size - 1)],
-    ] },
-  ];
+  const player: StatGroup = { title: 'Le Buveur', rows: [
+    ['PV', `${Math.ceil(health.hp)} / ${health.max}`, ''],
+    ["Vitesse d'attaque", `x${f(s.attackSpeed, 2)}`, pct(s.attackSpeed - 1)],
+    ['Projectiles en plus', String(s.extraProjectiles), plus(s.extraProjectiles)],
+    ['Ramassage', `${f(s.pickupRange)} m`, pct(s.pickupRange / XP_DROPS.pickupRange - 1)],
+    ["Gain d'XP", `x${f(s.xpGain, 2)}`, pct(s.xpGain - 1)],
+    ['Chance', String(s.luck), plus(s.luck)],
+  ] };
+  const blondeStats: StatGroup = { title: 'Blonde', icon: blondeIcon(''), level: m.level, rows: [
+    ['Dégâts', f(W.damage * m.damage), pct(m.damage - 1)],
+    ["Vitesse d'attaque", `${f(s.attackSpeed * m.rate / W.cooldown, 2)} / s`, pct(m.rate - 1)],
+    ['Projectiles', String(1 + s.extraProjectiles + m.projectiles), plus(m.projectiles)],
+    ['Vitesse des projectiles', `${f(W.speed * m.speed)} m/s`, pct(m.speed - 1)],
+    ['Portée', `${f(W.range * m.range)} m`, pct(m.range - 1)],
+    ['Chances de critique', `${f((W.critChance + m.critChance) * 100)} %`, pct(m.critChance)],
+    ['Multiplicateur critique', `x${f(W.critMult + m.critMult, 2)}`, plus(m.critMult)],
+    ['Taille', `${f(m.size * 100, 0)} %`, pct(m.size - 1)],
+  ] };
+  const byId: Record<string, StatGroup> = { blonde: blondeStats };
+  const weapons = Array.from({ length: WEAPON_HUD.slots }, (_, i) => (equipped[i] ? byId[equipped[i].id] ?? null : null));
+  return { player, weapons };
 }
 let pausedAt = 0;
 function pauseRun() {
