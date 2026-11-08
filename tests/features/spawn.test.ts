@@ -42,12 +42,15 @@ describe('Les zombies arrivent', () => {
       expect(d).toBeLessThan(SPAWN.maxDist * 1.05);
       expect(z.rise).toBeGreaterThan(0);
     }
-    const z = standing(t)[0];
-    const at = z.pos.clone();
+    const horde = standing(t);
+    const at = horde.map((z) => z.pos.clone());
+    const meanDist = () => horde.reduce((sum, z) => sum + groundDist(z.pos, p), 0) / horde.length;
+    const before = meanDist();
     t.play(SPAWN.riseTime * 0.8);
-    expect(z.pos.distanceTo(at)).toBeLessThan(0.05);
+    horde.forEach((z, i) => expect(z.pos.distanceTo(at[i])).toBeLessThan(0.05));
+    // Une fois sortie de terre, la horde marche vers le joueur
     t.play(SPAWN.riseTime + 1);
-    expect(z.pos.distanceTo(p)).toBeLessThan(at.distanceTo(p) - 0.5);
+    expect(meanDist()).toBeLessThan(before - 1);
   });
 
   it("arrivent en continu, même si personne n'est tué : il n'y en a jamais trop", () => {

@@ -6,7 +6,7 @@ import { PLANET_RADIUS } from '../../src/config/world';
 import type { Zombie } from '../../src/enemies/zombie';
 import { createTestGame } from '../support/testGame';
 
-/** Une run au sol, Blonde désarmée et godmode, juste avant la première sonnerie. */
+/** Une run au sol, Blonde désarmée et godmode, 2 s avant la première sonnerie (2:00). */
 function beforeBells(difficulty: keyof typeof DIFFICULTIES = 'sobre') {
   const t = createTestGame();
   t.game.difficulty = difficulty;
@@ -14,7 +14,7 @@ function beforeBells(difficulty: keyof typeof DIFFICULTIES = 'sobre') {
   t.game.loadout.weapons[0].mods.range = 0;
   t.game.cheats.god = true;
   t.play(1 / 60);
-  t.game.runTime = BELLS.every - BELLS.warn - 1;
+  t.game.runTime = BELLS.every - 2;
   return t;
 }
 
@@ -39,17 +39,16 @@ function watchSurge(t: ReturnType<typeof createTestGame>) {
 }
 
 describe("Les cloches de l'Abbaye", () => {
-  it('sonnent à 2:00 et préviennent quelques secondes avant le débarquement', () => {
+  it("sonnent à 2:00 pile, sans alerte : le débarquement démarre au même instant, suivi de coups de volée", () => {
     const t = beforeBells();
-    t.play(1.5);
-    expect(t.events('bellsRinging')).toHaveLength(1);
-    expect(t.events('bellsLanding')).toHaveLength(0);
-    const ringAt = t.game.runTime;
-    t.playUntil(() => t.events('bellsLanding').length > 0, BELLS.warn + 1);
-    expect(t.game.runTime - ringAt).toBeGreaterThan(BELLS.warn - 1);
+    expect(t.playUntil(() => t.events('bellsLanding').length > 0, 5)).toBe(true);
+    // Le pas de jeu qui franchit 2:00 (à une image près)
+    expect(t.game.runTime).toBeGreaterThanOrEqual(BELLS.every);
+    expect(t.game.runTime).toBeLessThan(BELLS.every + 0.05);
+    expect(t.events('bellToll')).toHaveLength(0);
+    t.play(BELLS.tolls * BELLS.tollGap + 0.5);
     expect(t.events('bellToll')).toHaveLength(BELLS.tolls);
   });
-
   it("débarquement : un seul type d'ennemi sort de terre en continu tout autour du joueur, pendant 30 s", () => {
     const t = beforeBells();
     const surge = watchSurge(t);
@@ -93,10 +92,10 @@ describe("Les cloches de l'Abbaye", () => {
   });
   it('reviennent toutes les 2 minutes', () => {
     const t = beforeBells();
-    t.play(BELLS.warn + 2);
+    t.play(3);
     expect(t.events('bellsLanding')).toHaveLength(1);
-    t.game.runTime = BELLS.every * 2 - BELLS.warn - 1;
-    t.play(BELLS.warn + 2);
+    t.game.runTime = BELLS.every * 2 - 2;
+    t.play(3);
     expect(t.events('bellsLanding')).toHaveLength(2);
   });
 
@@ -104,8 +103,8 @@ describe("Les cloches de l'Abbaye", () => {
     const t = beforeBells();
     t.game.runTime = BELLS.every - 1; // l'heure de sonner est passée, mais le jeu est en pause
     t.game.pause();
-    t.play(BELLS.warn + 3);
-    expect(t.events('bellsRinging')).toHaveLength(0);
+    t.play(5);
+    expect(t.events('bellsLanding')).toHaveLength(0);
     t.game.resume();
     t.playUntil(() => t.events('bellsLanding').length > 0, 10);
     const surge = watchSurge(t);

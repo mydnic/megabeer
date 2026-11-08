@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { BELLS } from '../../src/config/abbey';
 import { ENEMIES, ROSTERS } from '../../src/config/enemies';
 import { createTestGame } from '../support/testGame';
 
@@ -41,7 +40,7 @@ describe("Le roster de l'Abbaye", () => {
     const t = observe();
     t.game.runTime = 10;
     t.game.mechanic.trigger();
-    t.playUntil(() => t.events('bellsLanding').length > 0, BELLS.warn + 1);
+    t.playUntil(() => t.events('bellsLanding').length > 0, 2);
     expect(t.events('bellsLanding')[0].enemy).toBe('zombie');
   });
 });

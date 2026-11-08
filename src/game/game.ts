@@ -53,11 +53,9 @@ export type GameEvents = {
   enemyThrow: { shot: EnemyShot };
   /** Un projectile ennemi touche le sol ; `hit` : le joueur était dans la zone. */
   enemyShotLanded: { shot: EnemyShot; hit: boolean };
-  /** Abbaye : les cloches commencent à sonner, débarquement dans `inSeconds` s. */
-  bellsRinging: { inSeconds: number };
-  /** Un coup de cloche d'alerte. */
+  /** Abbaye : un coup de cloche de volée, après le grand coup du débarquement. */
   bellToll: { index: number };
-  /** Débarquement : pendant `duration` s, des zombies de type `model` sortent de terre en masse autour du joueur. */
+  /** Abbaye, toutes les 2 min : les cloches sonnent et, pendant `duration` s, des zombies de type `model` sortent de terre en masse autour du joueur. */
   bellsLanding: { duration: number; enemy: EnemyId };
   /** Fin du débarquement, `count` zombies sont sortis de terre. */
   bellsSurgeEnded: { count: number };

@@ -81,10 +81,9 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   const home = createHomeScreen(() => void play(), () => options.show(() => home.focus()));
 
   game.events.on('runStarted', () => { setHud(true); lockCursor(); });
-  // Cloches de l'Abbaye : le bandeau tremble à chaque coup, puis reste affiché pendant le débarquement
-  game.events.on('bellsRinging', () => banner.show('Les cloches sonnent !', 'Une horde va sortir de terre...'));
+  // Cloches de l'Abbaye : le bandeau reste affiché pendant le débarquement et tremble à chaque coup
   game.events.on('bellToll', () => banner.pulse());
-  game.events.on('bellsLanding', ({ duration }) => { banner.show('Débarquement !', `Tiens ${duration} secondes`); banner.pulse(); });
+  game.events.on('bellsLanding', ({ duration }) => { banner.show('Les cloches sonnent !', `Débarquement : tiens ${duration} secondes`); banner.pulse(); });
   game.events.on('bellsSurgeEnded', () => banner.hideAfter(2.5, 'Ils ont fini de sortir de terre'));
   game.events.on('died', () => banner.clear());
   game.events.on('home', () => banner.clear());

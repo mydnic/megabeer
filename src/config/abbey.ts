@@ -1,11 +1,11 @@
 // Mécanique propre à l'Abbaye (GDD section 13) : les cloches et le débarquement (30 s d'arrivées en masse).
 
 export const BELLS = {
-  /** Une sonnerie toutes les `every` secondes de run (la première à 2:00). */
+  /** Toutes les `every` secondes de run (la première à 2:00 pile), les cloches sonnent et le débarquement démarre aussitôt. */
   every: 120,
-  /** Les cloches sonnent `warn` secondes avant le débarquement, en `tolls` coups réguliers. */
-  warn: 4.5,
-  tolls: 3,
+  /** Après le grand coup du débarquement, `tolls` coups de volée tous les `tollGap` s. */
+  tolls: 2,
+  tollGap: 1.5,
   /**
    * Débarquement : pendant `duration` s, un seul type d'ennemi sort de terre en continu et en masse
    * tout autour du joueur, `perSecond` par seconde (multiplié par la difficulté).
@@ -19,12 +19,12 @@ export const BELLS = {
   shake: { amount: 0.5, amplitude: 0.25, decay: 1.6 },
 } as const;
 
-/** Son de cloche (synthétisé) : hauteur du coup (Hz), volumes des coups d'alerte et du dernier coup. */
+/** Son de cloche (synthétisé) : hauteur du coup (Hz), volumes du grand coup et des coups de volée. */
 export const BELL_SOUND = {
   pitch: 196,
   tollVolume: 0.5,
   landingVolume: 0.75,
-  /** Le dernier coup (débarquement) est plus grave : multiplicateur de hauteur. */
+  /** Le grand coup (débarquement) est plus grave : multiplicateur de hauteur. */
   landingPitch: 0.75,
   /** Durée de la réverbération d'église (s). */
   reverb: 3.2,

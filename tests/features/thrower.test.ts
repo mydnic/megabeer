@@ -29,7 +29,7 @@ describe('Le Moine lanceur', () => {
   it("s'approche, puis s'arrête à distance pour lancer des bouteilles vers le joueur", () => {
     const { t, monk } = duel(T.range + 8);
     expect(t.playUntil(() => t.events('enemyThrow').length > 0, 10)).toBe(true);
-    const d = monk.pos.distanceTo(t.game.player.pos);
+    const d = monk.pos.angleTo(t.game.player.pos) * PLANET_RADIUS; // distance au sol
     expect(d).toBeLessThan(T.range + 0.5);
     expect(d).toBeGreaterThan(T.range - 3);
     // Il reste planté là pendant qu'il lance
