@@ -3,31 +3,30 @@ import type { AudioEngine } from './audio';
 
 const urls = import.meta.glob('../assets/music/**/*.{mp3,ogg}', { query: '?url', import: 'default', eager: true }) as Record<string, string>;
 const urlOf = (file: string) => Object.entries(urls).find(([p]) => p.endsWith('/' + file))?.[1];
-/** Morceaux du dossier d'une map (src/assets/music/<map>/) : il suffit d'y déposer un fichier. */
-const mapTracks = (map: string) => Object.entries(urls).filter(([p]) => p.includes(`/music/${map}/`)).map(([, u]) => u);
-
-export type MusicMode = 'explore' | 'combat';
+/** Morceaux d'un dossier de src/assets/music/ (ex. "abbaye", "boss/abbe") : il suffit d'y déposer un fichier. */
+const tracksIn = (folder: string) => Object.entries(urls).filter(([p]) => p.includes(`/music/${folder}/`)).map(([, u]) => u);
+const randomOf = (list: string[]) => (list.length ? list[Math.floor(Math.random() * list.length)] : undefined);
 
 /**
  * Musique avec fondu enchaîné entre morceaux. Lecture en streaming (éléments <audio> branchés sur le
- * bus musique), pour ne pas décoder des fichiers de plusieurs minutes.
- * - Menu (accueil) : le morceau du menu, en boucle.
- * - Run : UN morceau tiré au hasard dans le dossier de la map au début de la run, joué en boucle
- *   jusqu'à la fin de la run.
- * - Combat (vague d'ennemis, boss) : la liste combat, par-dessus le reste.
+ * bus musique), pour ne pas décoder des fichiers de plusieurs minutes. Chaque morceau tourne en boucle.
+ * - Menu (accueil) : le morceau du menu.
+ * - Run : UN morceau tiré au hasard dans music/<map>/ au début de la run, jusqu'à la fin de la run.
+ * - Boss (ou élite spécial) : à son apparition, un morceau tiré au hasard dans music/boss/<id>/
+ *   (music/boss/default/ si ce dossier n'existe pas ou est vide), par-dessus la run ; à sa mort, la
+ *   musique de la run reprend.
  */
 export function createMusic(audio: AudioEngine) {
   const M = A.music;
-  let mode: MusicMode = 'explore';
-  let lastCombat = -1;
   let runTrack: string | undefined; // url du morceau de la run en cours
+  let bossTrack: string | undefined; // url du morceau du boss en cours
   let current: { el: HTMLAudioElement; gain: GainNode } | undefined;
 
-  function play(url: string | undefined, loop = false) {
+  function play(url: string | undefined) {
     const ctx = audio.ctx!;
     if (!url) return;
     const el = new Audio(url);
-    el.loop = loop;
+    el.loop = true;
     const gain = ctx.createGain();
     gain.gain.value = 0;
     ctx.createMediaElementSource(el).connect(gain).connect(audio.music!);
@@ -44,50 +43,39 @@ export function createMusic(audio: AudioEngine) {
     current = { el, gain };
   }
 
-  /** Indice au hasard dans une liste, jamais le même que le précédent. */
-  function pick(n: number, last: number) {
-    let i = Math.floor(Math.random() * n);
-    if (n > 1 && i === last) i = (i + 1 + Math.floor(Math.random() * (n - 1))) % n;
-    return i;
+  /** Joue ce qui doit l'être maintenant : boss, sinon run, sinon menu. */
+  function refresh() {
+    if (audio.ctx) play(bossTrack ?? runTrack ?? urlOf(M.menu));
   }
 
-  function next() {
-    if (mode === 'combat') {
-      lastCombat = pick(M.combat.length, lastCombat);
-      play(urlOf(M.combat[lastCombat]));
-    } else {
-      play(runTrack ?? urlOf(M.menu), true);
-    }
-  }
-
-  audio.onStart(() => next());
+  audio.onStart(() => refresh());
 
   return {
-    get mode() { return mode; },
-    /** Passe en combat (vague, boss) ou revient à l'exploration ; sans effet si le mode ne change pas. */
-    setMode(m: MusicMode) {
-      if (m === mode) return;
-      mode = m;
-      if (audio.ctx) next();
-    },
+    /** Un boss est-il en cours (musique de boss) ? */
+    get boss() { return bossTrack !== undefined; },
     /** Début de run : tire un morceau du dossier de la map (sinon garde la musique du menu). */
     startRun(map: string) {
-      const list = mapTracks(map);
-      runTrack = list.length ? list[Math.floor(Math.random() * list.length)] : undefined;
-      mode = 'explore';
-      if (audio.ctx && runTrack) next();
+      runTrack = randomOf(tracksIn(map));
+      bossTrack = undefined;
+      refresh();
     },
     /** Fin de run (retour à l'accueil) : retour à la musique du menu. */
     endRun() {
-      if (!runTrack) return;
       runTrack = undefined;
-      mode = 'explore';
-      if (audio.ctx) next();
+      bossTrack = undefined;
+      refresh();
     },
-    update() {
-      const el = current?.el;
-      // Fondu vers le morceau suivant un peu avant la fin (sauf morceau en boucle)
-      if (el && !el.loop && el.duration && el.currentTime > el.duration - M.fade) next();
+    /** Apparition d'un boss ou élite spécial : un morceau de son dossier, au hasard. */
+    startBoss(id: string) {
+      const own = tracksIn(`boss/${id}`);
+      bossTrack = randomOf(own.length ? own : tracksIn('boss/default'));
+      if (bossTrack) refresh();
+    },
+    /** Mort du boss : la musique de la run reprend. */
+    endBoss() {
+      if (!bossTrack) return;
+      bossTrack = undefined;
+      refresh();
     },
   };
 }

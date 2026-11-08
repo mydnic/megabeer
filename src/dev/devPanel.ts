@@ -40,7 +40,7 @@ export function createDevPanel(api: DevApi) {
     </fieldset>
     <fieldset><legend>Monde</legend>
       vitesse <select data-k="time"><option>0.1</option><option>0.25</option><option>0.5</option><option selected>1</option><option>2</option><option>4</option></select>
-      <br><button data-a="music">Musique : exploration</button>
+      <br><button data-a="music">Musique : run</button>
     </fieldset>`;
   document.body.appendChild(el);
 

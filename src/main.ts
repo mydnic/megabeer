@@ -477,7 +477,6 @@ function frame(now: number) {
   clouds.update(dt);
   decor.update(dt, player.renderPos, 1 - sky.day);
   ambience.update(sky.day);
-  music.update();
   // Mise au point de la profondeur de champ sur le perso
   pipeline.focusDistance = camera.position.distanceTo(focusPoint.copy(player.renderPos).addScaledVector(player.upDir, 1.1));
   pipeline.render();
@@ -535,8 +534,9 @@ if (import.meta.env.DEV) {
     heal() { health.reset(); runLog.event('dev', 'heal'); },
     die() { if (phase === 'run') { health.invuln = 0; health.damage(health.hp); runLog.event('dev', 'die'); } },
     toggleCombatMusic() {
-      music.setMode(music.mode === 'combat' ? 'explore' : 'combat');
-      return music.mode === 'combat' ? 'combat' : 'exploration';
+      if (music.boss) music.endBoss();
+      else music.startBoss('test');
+      return music.boss ? 'boss' : 'run';
     },
     setTimeScale(k) { devTimeScale = k; },
     status() {
