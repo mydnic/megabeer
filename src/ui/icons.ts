@@ -21,7 +21,7 @@ export const canetteIcon = (cls: string) => `<svg viewBox="0 0 40 90" class="${c
 
 /**
  * Bouteille de Stout calquée sur la Duvel 33cl, en verre brun stout : capsule, col qui s'élargit,
- * longues épaules arrondies, corps droit, grande étiquette blanche (« Duvel » rouge, « STOUT »).
+ * longues épaules arrondies, corps droit, grande étiquette blanche marquée « Stout » en rouge.
  */
 export const stoutIcon = (cls: string) => `<svg viewBox="0 0 40 90" class="${cls}"><path d="M15 8h10v8c0 2 .6 3 .6 5c0 4 10.4 9 10.4 25v35c0 2-2 4-4 4H8c-2 0-4-2-4-4V46c0-16 10.4-21 10.4-25c0-2 .6-3 .6-5z"
  fill="#4a2c1a" stroke="#1a120c" stroke-width="3" stroke-linejoin="round"/>
@@ -29,8 +29,7 @@ export const stoutIcon = (cls: string) => `<svg viewBox="0 0 40 90" class="${cls
 <rect x="13.5" y="3" width="13" height="6" rx="1.5" fill="#cfc4a6" stroke="#1a120c" stroke-width="2.5"/>
 <rect x="5.5" y="49" width="29" height="30" fill="#f4f2ee"/><path d="M5.5 49h29M5.5 79h29" stroke="#1a120c" stroke-width="1.2"/>
 <path d="M18.4 52.4h3.2l-.4 1.8c-.2.8-.8 1.2-1.2 1.2s-1-.4-1.2-1.2z M20 55.4v1.4M18.8 57h2.4" stroke="#b08a3a" stroke-width=".7" fill="#e8c76a"/>
-<text x="20" y="67.5" text-anchor="middle" textLength="26" lengthAdjust="spacingAndGlyphs" font-family="Georgia, 'Times New Roman', serif" font-weight="900" font-size="10" fill="#c8102e">Duvel</text>
-<text x="20" y="74" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="4.2" letter-spacing=".7" fill="#1a120c">STOUT</text>
+<text x="20" y="70" text-anchor="middle" textLength="26" lengthAdjust="spacingAndGlyphs" font-family="Georgia, 'Times New Roman', serif" font-weight="900" font-size="10" fill="#c8102e">Stout</text>
 <path d="M9 44c1.5-5 4-9 6.5-11.5" stroke="#fff3" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`;
 
 /** Icône de chaque arme (ajouter une arme = ajouter son icône ici). */
