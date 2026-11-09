@@ -7,7 +7,9 @@
  */
 export const ZOMBIE_MODELS = {
   basic: { file: 'Zombie_Basic.gltf', height: 1.5 },
-  chubby: { file: 'Zombie_Chubby.gltf', height: 1.55 },
+  // Le Frère cellérier (gros ventre, un tank) et les moinillons qui sortent de lui à sa mort : le même en petit
+  chubby: { file: 'Zombie_Chubby.gltf', height: 2.1, walkAnimAt: 1.6 },
+  chubby_petit: { file: 'Zombie_Chubby.gltf', height: 0.9, walkAnimAt: 1.6 },
   // Les moines : le Moine de Čestmír Dammer (kelgar.org), préparé par tools/blender/monk.py
   // Sa marche d'origine est lente (0,56 m/s à cette taille) : jouée deux fois plus vite, la bure cache le glissement
   moine: { file: 'moine.glb', height: 2.0, walkAnimAt: 1.2 },

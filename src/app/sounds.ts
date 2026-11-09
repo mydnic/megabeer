@@ -61,6 +61,11 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
     audio.play('impactWood_heavy', K.woodVolume * k, jitter(0.08));
     audio.play('impactSoft_heavy', K.splashVolume * k, 0.8 * jitter(0.08));
   });
+  // Frère cellérier tué : il éclate (ses moinillons en sortent)
+  game.events.on('enemySplit', ({ zombie }) => {
+    const S = AUDIO.split, k = near(zombie.pos, S.hearDist);
+    if (k > 0) audio.play(S.sample, S.volume * k, S.pitch * jitter(0.08));
+  });
   // Prieur : l'encensoir tinte quand il commence son geste, la terre craque quand les squelettes sortent
   game.events.on('summonCast', ({ zombie }) => {
     const S = AUDIO.summon, k = near(zombie.pos, S.hearDist);

@@ -53,6 +53,8 @@ export const AUDIO = {
   enemyShot: { throwVolume: 0.12, breakVolume: 0.5, hearDist: 30 },
   /** Pèlerin gonflé qui explose : tonneau qui éclate et gerbe de vin. */
   kamikaze: { woodVolume: 0.7, splashVolume: 0.6, hearDist: 35 },
+  /** Frère cellérier tué : il éclate, ses moinillons en sortent. */
+  split: { sample: 'impactSoft_heavy', volume: 0.8, pitch: 0.7, hearDist: 35 },
   /** Prieur : tintement de cloche d'encensoir au début du geste, craquement de terre quand les squelettes sortent. */
   summon: { castSample: 'impactBell_heavy', castVolume: 0.35, castPitch: 1.6, earthSample: 'impactMining', earthVolume: 0.7, earthPitch: 0.6, hearDist: 35 },
   /** Ambiances synthétisées : vent permanent, oiseaux le jour, chouette la nuit. */

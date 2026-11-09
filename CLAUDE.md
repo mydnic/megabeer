@@ -78,7 +78,7 @@ recopie son état à chaque image. Ne jamais remettre de logique de jeu dans `ma
   **Ajouter une arme** = un fichier qui implémente `Weapon`, une entrée dans le registre, sa config
   et ses cartes, son icône (`ui/icons.ts`), son rendu, et ses tests. Rien d'autre à toucher.
 - `enemies/` : les ennemis sont des fiches (`config/enemies.ts` : `ENEMIES` et le roster de chaque map),
-  `zombie.ts` et `horde.ts` (simulation, briques Tireur, Kamikaze, Fantôme, Protecteur et Invocateur ; les armes visent
+  `zombie.ts` et `horde.ts` (simulation, briques Tireur, Kamikaze, Fantôme, Protecteur, Invocateur et Diviseur ; les armes visent
   `z.targetable`), `hordeView.ts` et `zombieLibrary.ts`
   (rendu, modèles et animations pré-calculées ; accepte aussi les personnages Kenney à pièces animées
   sans squelette, et les modèles translucides), `enemyShotsView.ts` et `kamikazeView.ts` (marques au sol `fx/groundMarks.ts`, qui

@@ -61,6 +61,8 @@ export type GameEvents = {
   summonCast: { zombie: Zombie };
   /** Les invoqués de `zombie` sortent de terre autour de lui. */
   summoned: { zombie: Zombie; skeletons: Zombie[] };
+  /** Un diviseur tué se sépare : `children` sortent de son corps. */
+  enemySplit: { zombie: Zombie; children: Zombie[] };
   /** Abbaye : un coup de cloche de volée, après le grand coup du débarquement. */
   bellToll: { index: number };
   /** Abbaye, toutes les 2 min : les cloches sonnent et, pendant `duration` s, des zombies de type `model` sortent de terre en masse autour du joueur. */
@@ -321,7 +323,25 @@ export class Game {
     this.events.emit('zombieHit', { weapon, zombie: z, damage, crit, killed, hpAfter: z.hp, impact: impact.clone(), dir, shielded: shield > 0 });
     // Un kamikaze tué explose sur place
     if (killed && z.def.kamikaze) this.explode(z, true);
+    // Un diviseur tué se sépare en petits
+    if (killed && z.def.splitter) this.split(z);
     return killed;
+  }
+
+  /** Brique Diviseur : les petits sortent du corps, en cercle, tournés vers l'extérieur. */
+  private split(z: Zombie) {
+    const D = z.def.splitter!;
+    const up = z.pos.clone().normalize();
+    const side = new THREE.Vector3().crossVectors(up, z.facing).normalize();
+    const children: Zombie[] = [];
+    const start = Math.random() * Math.PI * 2;
+    for (let i = 0; i < D.count; i++) {
+      const a = start + (i / D.count) * Math.PI * 2;
+      const out = z.facing.clone().multiplyScalar(Math.cos(a)).addScaledVector(side, Math.sin(a));
+      const c = this.spawnZombie(D.enemy as EnemyId, z.pos.clone().addScaledVector(out, D.radius), out);
+      if (c) children.push(c);
+    }
+    this.events.emit('enemySplit', { zombie: z, children });
   }
 
   /** Ajoute de l'XP (déjà multipliée par le gain) : les degrés gagnés ouvrent le level-up. */

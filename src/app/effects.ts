@@ -67,6 +67,11 @@ export function wireEffects(game: Game, d: Deps) {
     const k = 1 - at.distanceTo(game.player.pos) / L.shakeDist;
     if (k > 0) rig.shake(L.shake * k, L.shakeAmplitude, L.shakeDecay);
   });
+  // Frère cellérier tué : il éclate en gerbe de vin, ses moinillons en sortent
+  game.events.on('enemySplit', ({ zombie }) => {
+    up.copy(zombie.pos).normalize();
+    wine.burst(numPos.copy(zombie.pos).addScaledVector(up, KAMIKAZE_LOOK.burstHeight), still);
+  });
   // Squelettes du Prieur : la terre gicle à leurs pieds quand ils sortent
   game.events.on('summoned', ({ skeletons }) => {
     for (const s of skeletons) earth.burst(numPos.copy(s.pos).setLength(s.pos.length() + 0.1), still);

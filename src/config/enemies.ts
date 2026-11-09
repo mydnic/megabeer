@@ -26,6 +26,20 @@ export type EnemyDef = {
   protector?: ProtectorDef;
   /** Brique Invocateur : à portée, il s'arrête et fait sortir d'autres ennemis de terre autour de lui. */
   summoner?: SummonerDef;
+  /** Brique Diviseur : tué, il se sépare en plusieurs petits ennemis. */
+  splitter?: SplitterDef;
+};
+
+/**
+ * Brique Diviseur (GDD section 11) : quand le joueur le tue, d'autres ennemis (plus petits) sortent
+ * de son corps et repartent à l'attaque. Les petits ne se divisent pas à leur tour.
+ */
+export type SplitterDef = {
+  /** Ennemi qui sort de son corps (identifiant de ENEMIES) et nombre. */
+  enemy: string;
+  count: number;
+  /** Rayon du cercle où ils apparaissent, autour du corps (m). */
+  radius: number;
 };
 
 /**
@@ -132,6 +146,13 @@ export const ENEMIES = {
   },
   /** Invoqué par le Prieur (hors roster) : fragile, rapide, rapporte peu (pas de bière à farmer). */
   squelette: { name: 'Squelette', model: 'squelette', hp: 5, speed: 3.4, damage: 5, xp: 1 },
+  /** Tank + diviseur : lent, beaucoup de PV ; tué, il se divise en 3 moinillons. */
+  cellerier: {
+    name: 'Frère cellérier', model: 'chubby', hp: 60, speed: 1.8, damage: 14, xp: 10,
+    splitter: { enemy: 'moinillon', count: 3, radius: 1.2 },
+  },
+  /** Sorti du Frère cellérier à sa mort (hors roster) : petit, rapide, fragile. */
+  moinillon: { name: 'Moinillon', model: 'chubby_petit', hp: 6, speed: 3.8, damage: 4, xp: 1 },
 } as const satisfies Record<string, EnemyDef>;
 
 export type EnemyId = keyof typeof ENEMIES;
@@ -199,5 +220,6 @@ export const ROSTERS = {
     { enemy: 'reliques', from: 360, weight: 1 },
     { enemy: 'gargouille', from: 420, weight: 1 },
     { enemy: 'prieur', from: 480, weight: 1 },
+    { enemy: 'cellerier', from: 540, weight: 1 },
   ],
 } as const satisfies Record<string, readonly RosterEntry[]>;

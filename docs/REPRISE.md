@@ -35,11 +35,11 @@ Fait et validé dans la feature 7 :
 | 6 | Moine porte-reliques | Protecteur (voisins à -50 % de dégâts) | Rogue encapuchonné KayKit (`kaykit.py`) | validé |
 | 7 | Gargouille | Marcheur (contact, coup de tête) | Dragon Animated Monsters en pierre (`monsters.py`) | validé |
 | 8 | Prieur | Invocateur (3 squelettes KayKit sortent de terre toutes les 8 s) | Eye Summoner (Polygonal Mind) sur le squelette UAL (`summoner.py`) | validé |
-| 9 | Frère cellérier | Tank + diviseur | à choisir | à faire |
+| 9 | Frère cellérier | Tank + diviseur (60 PV ; tué, 3 moinillons sortent de son corps) | Quaternius Zombie Chubby (moinillons : le même en petit) | **à faire valider en jeu** |
 
 **Prochaine étape :**
-1. Le **Frère cellérier** (9:00) : « Se divise en 3 moinillons à sa mort ». Tank + diviseur.
-   Look à demander (2-3 options). Le Moine kelgar porte déjà 3 ennemis : il faut un autre corps.
+1. Faire valider le **Frère cellérier** (9:00) : Zombie Chubby tel quel, brique Diviseur (`splitter`,
+   `split` dans `game.ts`, événement `enemySplit`, gerbe de vin et son mou). Le roster de l'Abbaye est alors complet.
 2. Ensuite, discuter avec l'utilisateur de la suite (section 20 du GDD : armes une par une, objets,
    élites, boss...). L'équilibrage de la difficulté est reporté : il faut d'abord les armes.
 
