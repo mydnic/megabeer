@@ -42,7 +42,17 @@ export const AUDIO = {
    * hauteur (petit effet de série) ; un écart minimum évite la bouillie quand on en avale des dizaines.
    */
   /** Cartes de level-up (générés avec ElevenLabs, validés à l'écoute) : survol et choix. */
-  cards: { hover: 'card_hover', hoverVolume: 0.5, pick: 'card_pick', pickVolume: 0.7 },
+  /**
+   * Cartes de level-up : survol, et choix = « tchin » (deux verres qui trinquent : deux tintements
+   * rapprochés, le second plus aigu ; délai en s).
+   */
+  cards: {
+    hover: 'card_hover', hoverVolume: 0.5,
+    pick: [
+      { sample: 'impactGlass_light', volume: 0.75, rate: 1.25, delay: 0 },
+      { sample: 'impactGlass_light', volume: 0.6, rate: 1.45, delay: 0.07 },
+    ],
+  },
   /** Level-up : gorgée et "aaah" satisfait (ElevenLabs), à l'ouverture de l'écran des cartes. */
   levelUp: { sample: 'levelup', volume: 0.7 },
   pickup: { sample: 'bubble', volume: 0.4, minGap: 0.045, pitchStep: 0.05, pitchMax: 1.7, comboReset: 0.5 },

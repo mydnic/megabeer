@@ -101,7 +101,10 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
   // Cloches de l'Abbaye : coups d'alerte, puis un coup plus grave au débarquement
   game.events.on('bellToll', () => audio.bell(BELL_SOUND.tollVolume, BELL_SOUND.pitch, BELL_SOUND.reverb));
   game.events.on('bellsLanding', () => audio.bell(BELL_SOUND.landingVolume, BELL_SOUND.pitch * BELL_SOUND.landingPitch, BELL_SOUND.reverb));
-  game.events.on('cardPicked', () => audio.play(AUDIO.cards.pick, AUDIO.cards.pickVolume, jitter(0.03), 0, 'ui'));
+  // Carte choisie : « tchin », deux verres qui trinquent
+  game.events.on('cardPicked', () => {
+    for (const c of AUDIO.cards.pick) window.setTimeout(() => audio.play(c.sample, c.volume, c.rate * jitter(0.03), 0, 'ui'), c.delay * 1000);
+  });
 }
 
 /** Musique : celle de la map pendant la run, en retrait pendant l'écran de mort, celle du menu à l'accueil. */
