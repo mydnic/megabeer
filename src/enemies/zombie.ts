@@ -55,6 +55,8 @@ export class Zombie {
   throwing = false;
   /** Brique Kamikaze : mèche allumée (s restantes, -1 : éteinte). */
   fuse = -1;
+  /** Brique Fantôme : horloge de son cycle (s), décalée au hasard pour qu'ils ne clignotent pas ensemble. */
+  ghostClock = 0;
   /** Sortie de terre en cours (s restantes) : il émerge du sol, immobile, sans frapper. */
   rise = 0;
   /** Vrai quand le corps a fini de s'enfoncer : la horde le retire. */
@@ -73,6 +75,8 @@ export class Zombie {
     this.hp = ENEMIES[enemy].hp;
     const T = (ENEMIES[enemy] as EnemyDef).thrower;
     if (T) this.throwTimer = Math.random() * T.firstDelay;
+    const G = (ENEMIES[enemy] as EnemyDef).ghost;
+    if (G) this.ghostClock = Math.random() * G.every;
   }
 
   /** Disparaît d'un coup, sans animation de mort ni corps (un kamikaze qui explose). */
@@ -81,6 +85,14 @@ export class Zombie {
     this.fuse = -1;
     this.gone = true;
   }
+
+  /** Brique Fantôme : intouchable en ce moment (les coups le traversent). */
+  get intangible() {
+    const G = this.def.ghost;
+    return !!G && !this.dead && this.ghostClock % G.every < G.intangible;
+  }
+  /** Peut être visé et touché par les armes. */
+  get targetable() { return !this.dead && !this.intangible; }
 
   /** Fiche de l'ennemi (PV, vitesse, dégâts, XP, briques). */
   get def(): EnemyDef { return ENEMIES[this.enemy]; }

@@ -26,6 +26,16 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
     p.setLength(player.supportAt(p, p.length()));
   }
 
+  /**
+   * Recolle un zombie au sol après un déplacement : poussé hors du décor puis posé dessus ; un
+   * fantôme traverse le décor et reste au niveau du relief.
+   */
+  function settle(z: Zombie) {
+    if (z.def.ghost) { z.pos.setLength(PLANET_RADIUS + heightAt(tmp.copy(z.pos).normalize())); return; }
+    decor?.resolve(z.pos, M.radius);
+    snap(z.pos);
+  }
+
   /** Pose un zombie sur le sol, à la direction donnée, regardant vers `facing`. */
   function spawn(enemy: EnemyId, dir: THREE.Vector3, facing: THREE.Vector3) {
     const z = new Zombie(kinds[ENEMIES[enemy].model], enemy);
@@ -111,8 +121,7 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
     }
     before.copy(z.pos);
     z.pos.addScaledVector(want, speed * dt);
-    decor?.resolve(z.pos, M.radius);
-    snap(z.pos);
+    settle(z);
     // Mesure de l'avancée réelle : presque rien = bloqué, on lance un contournement
     const moved = tmp.subVectors(z.pos, before).length();
     if (speed > 0.5 && moved < speed * dt * M.stuckRatio && z.detour <= 0) {
@@ -183,8 +192,8 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
       for (const z of zombies) step(z, dt, player.pos);
       separate();
       for (const z of zombies) {
-        decor?.resolve(z.pos, M.radius);
-        snap(z.pos);
+        settle(z);
+        if (z.def.ghost) z.ghostClock += dt;
         z.update(dt);
         // Mèche du kamikaze : à zéro, il explose (même sonné)
         if (z.fuse >= 0 && !z.dead && !passive) {

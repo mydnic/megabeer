@@ -279,9 +279,11 @@ export class Game {
 
   /**
    * Un zombie encaisse un coup (venant de la vitesse `vel`, ramenée dans le plan du sol : il recule
-   * dans ce sens). Mort : +1 kill et une goutte de bière. Renvoie true s'il meurt.
+   * dans ce sens). Mort : +1 kill et une goutte de bière. Renvoie true s'il meurt. Un fantôme
+   * intouchable n'encaisse rien.
    */
   hitZombie(z: Zombie, damage: number, crit: boolean, impact: THREE.Vector3, vel: THREE.Vector3, weapon: Weapon | null = null) {
+    if (z.intangible) return false; // un fantôme intouchable : le coup le traverse
     const up = this.tmp.copy(z.pos).normalize();
     const dir = vel.clone().addScaledVector(up, -vel.dot(up)).normalize();
     const killed = z.damage(damage, dir);

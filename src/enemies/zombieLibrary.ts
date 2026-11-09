@@ -2,27 +2,36 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { ZOMBIE_HURT as H, ZOMBIE_MODELS, ZOMBIE_VISUAL as V, type ZombieModel } from '../config/zombies';
+import kenneyColormap from '../assets/kenney-graveyard-kit/Models/GLB format/Textures/colormap.png?url';
 import { characterMaterial } from '../render/materials';
 import { patchVat, vatUniforms } from '../render/vat';
 import { ZOMBIE_STATES as STATES, type BakedClip, type ZombieState, type ZombieTimings } from './zombie';
 
-// Zombies Quaternius d'origine, et le Moine préparé par tools/blender/monk.py
-const urls = import.meta.glob(['../assets/quaternius-zombies/*.gltf', '../assets/models/moine*.glb'], { query: '?url', import: 'default', eager: true }) as Record<string, string>;
+// Zombies Quaternius d'origine, le Moine préparé par tools/blender/monk.py, personnages Kenney du cimetière
+const urls = import.meta.glob([
+  '../assets/quaternius-zombies/*.gltf', '../assets/models/moine*.glb',
+  '../assets/kenney-graveyard-kit/Models/GLB format/character-*.glb',
+], { query: '?url', import: 'default', eager: true }) as Record<string, string>;
 
 /** Un modèle de zombie prêt pour la foule : géométrie fusionnée, matériaux, animations pré-calculées. */
 export type ZombieKind = ZombieTimings & {
   geometry: THREE.BufferGeometry;
   material: THREE.Material;
   depthMaterial: THREE.Material;
+  /** Translucide (fantôme) : chaque instance a sa propre opacité (attribut aFade). */
+  fade: boolean;
 };
 /**
  * Charge les modèles et pré-calcule leurs animations dans une seule texture (voir render/vat.ts) :
  * pour chaque image, la matrice de chaque os (os animé x inverse de liaison), dans le repère du modèle.
  */
-type ModelDef = { clips?: Partial<Record<ZombieState, readonly string[]>> };
+type ModelDef = { clips?: Partial<Record<ZombieState, readonly string[]>>; translucent?: { opacity: number } };
 
 export async function loadZombieLibrary() {
-  const loader = new GLTFLoader();
+  // Les modèles Kenney vont chercher leur texture à côté d'eux : on leur donne la bonne adresse
+  const manager = new THREE.LoadingManager();
+  manager.setURLModifier((u) => (u.endsWith('colormap.png') ? kenneyColormap : u));
+  const loader = new GLTFLoader(manager);
   const ids = Object.keys(ZOMBIE_MODELS) as ZombieModel[];
   const fps = V.bakeFps;
   const baked = await Promise.all(ids.map(async (id) => {
@@ -39,10 +48,28 @@ export async function loadZombieLibrary() {
     const slots: { bone: THREE.Bone; inverse: THREE.Matrix4 }[] = [];
     const geos: THREE.BufferGeometry[] = [];
     let srcMat: THREE.MeshStandardMaterial | undefined;
+    const rootInvRest = root.matrixWorld.clone().invert();
     root.traverse((o) => {
       const mesh = o as THREE.SkinnedMesh;
-      if (!mesh.isSkinnedMesh) return;
+      if (!mesh.isMesh) return;
       srcMat ??= mesh.material as THREE.MeshStandardMaterial;
+      if (!mesh.isSkinnedMesh) {
+        // Pièce rigide animée (personnages Kenney) : elle sert d'os à elle seule
+        const s = slots.length;
+        slots.push({ bone: mesh as unknown as THREE.Bone, inverse: mesh.matrixWorld.clone().invert().multiply(root.matrixWorld) });
+        const g = mesh.geometry.clone();
+        g.applyMatrix4(rootInvRest.clone().multiply(mesh.matrixWorld));
+        const n = g.getAttribute('position').count;
+        const out = new THREE.BufferGeometry();
+        out.setAttribute('position', g.getAttribute('position'));
+        out.setAttribute('normal', g.getAttribute('normal'));
+        out.setAttribute('uv', g.getAttribute('uv'));
+        out.setAttribute('aSkinIndex', new THREE.Float32BufferAttribute(Array.from({ length: n * 4 }, (_, j) => (j % 4 === 0 ? s : 0)), 4));
+        out.setAttribute('aSkinWeight', new THREE.Float32BufferAttribute(Array.from({ length: n * 4 }, (_, j) => (j % 4 === 0 ? 1 : 0)), 4));
+        if (g.index) out.setIndex(g.index);
+        geos.push(out);
+        return;
+      }
       const sk = mesh.skeleton;
       const map = sk.bones.map((bone, i) => {
         const inv = sk.boneInverses[i];
@@ -113,11 +140,15 @@ export async function loadZombieLibrary() {
       clips[s] = { start: y, frames: c.rows.length, duration: c.duration };
       for (const row of c.rows) { data.set(row, y * width * 4); y++; }
     }
-    const material = characterMaterial({ map: b.srcMat.map, color: b.srcMat.color, side: b.srcMat.side });
-    patchVat(material, 'zombie', H.flashIntensity);
+    const translucent = (ZOMBIE_MODELS[b.id] as ModelDef).translucent;
+    const material = characterMaterial({
+      map: b.srcMat.map, color: b.srcMat.color, side: b.srcMat.side,
+      ...(translucent ? { transparent: true, opacity: translucent.opacity, depthWrite: false } : {}),
+    });
+    patchVat(material, translucent ? 'zombie-fade' : 'zombie', H.flashIntensity, !!translucent);
     const depthMaterial = new THREE.MeshDepthMaterial();
     patchVat(depthMaterial, 'zombie-depth');
-    lib[b.id] = { geometry: b.geometry, material, depthMaterial, scale: b.scale, clips };
+    lib[b.id] = { geometry: b.geometry, material, depthMaterial, scale: b.scale, clips, fade: !!translucent };
   }
   const tex = new THREE.DataTexture(data, width, height, THREE.RGBAFormat, THREE.FloatType);
   tex.minFilter = tex.magFilter = THREE.NearestFilter;

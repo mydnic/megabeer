@@ -20,6 +20,19 @@ export type EnemyDef = {
   thrower?: ThrowerDef;
   /** Brique Kamikaze : il fonce, allume sa mèche au contact et explose ; tué, il explose sur place. */
   kamikaze?: KamikazeDef;
+  /** Brique Fantôme : il traverse le décor, et devient intouchable par moments. */
+  ghost?: GhostDef;
+};
+
+/**
+ * Brique Fantôme (GDD section 11) : il passe à travers les murs et le décor, et il est intouchable
+ * une partie du temps (les coups le traversent), à intervalles réguliers propres à chacun. Il peut
+ * frapper même intouchable.
+ */
+export type GhostDef = {
+  /** Période (s) et durée intouchable dans chaque période (s). */
+  every: number;
+  intangible: number;
 };
 
 /**
@@ -72,6 +85,8 @@ export const ENEMIES = {
   },
   /** Marcheur lourd : il pousse devant lui un gros tonneau qui roule (c'est son modèle), coups au contact. */
   tonnelier: { name: 'Frère tonnelier', model: 'moine_tonnelier', hp: 22, speed: 2.2, damage: 10, xp: 5 },
+  /** Fantôme : traverse les murs, intouchable 1 s sur 3. */
+  fantome: { name: 'Fantôme du cloître', model: 'fantome', hp: 12, speed: 3, damage: 8, xp: 5, ghost: { every: 3, intangible: 1 } },
 } as const satisfies Record<string, EnemyDef>;
 
 export type EnemyId = keyof typeof ENEMIES;
@@ -115,5 +130,6 @@ export const ROSTERS = {
     { enemy: 'lanceur', from: 120, weight: 1 },
     { enemy: 'pelerin', from: 180, weight: 1 },
     { enemy: 'tonnelier', from: 240, weight: 1 },
+    { enemy: 'fantome', from: 300, weight: 1 },
   ],
 } as const satisfies Record<string, readonly RosterEntry[]>;

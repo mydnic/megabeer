@@ -15,6 +15,15 @@ export const ZOMBIE_MODELS = {
   moine_pelerin: { file: 'moine_pelerin.glb', height: 2.0, clips: { walk: ['Run'] }, walkAnimAt: 1.8 },
   // Le Frère tonnelier : bure ardoise, il pousse devant lui un gros tonneau qui roule sans fin (monk.py --variant tonnelier)
   moine_tonnelier: { file: 'moine_tonnelier.glb', height: 2.0, walkAnimAt: 1.2 },
+  // Le Fantôme du cloître : fantôme du kit Kenney cimetière (pièces animées, sans squelette), translucide, il flotte
+  fantome: {
+    file: 'character-ghost.glb', height: 1.2, walkAnimAt: 2.5,
+    clips: { idle: ['idle'], walk: ['walk'], attack: ['attack-melee-right'], hit: ['emote-no'], death: ['die'] },
+    /** Au-dessus du sol (m), et ondulation (m, par seconde). */
+    hover: 0.25, bob: 0.1, bobSpeed: 2.2,
+    /** Opacité normale, et quand il est intouchable. */
+    translucent: { opacity: 0.8, intangible: 0.15 },
+  },
   // Le Novice : il court (et bondit pour frapper, il n'a pas d'attaque)
   ribcage: { file: 'Zombie_Ribcage.gltf', height: 1.4, clips: { walk: ['Run'] }, walkAnimAt: 3.7 },
 } as const;

@@ -5,8 +5,9 @@ import { ZOMBIE_MODELS, type ZombieModel } from '../../src/config/zombies';
 import type { InputState } from '../../src/core/input';
 import type { ZombieTimings } from '../../src/enemies/zombie';
 import { DecorCollider } from '../../src/world/decor/collider';
+import { computeGridShape } from '../../src/world/decor/gridShape';
 import { randomSpawn } from '../../src/world/decor/layout';
-import { setTerrainSeed } from '../../src/world/terrain';
+import { heightAt, setTerrainSeed } from '../../src/world/terrain';
 import { NO_INPUT } from '../../src/game/game';
 
 /** Durées d'animation des zombies dans les tests (les vraies viennent des modèles 3D). */
@@ -67,6 +68,23 @@ export function createTestGame(seed = 1) {
       const up = p.pos.clone().normalize();
       const right = new THREE.Vector3().crossVectors(p.facing, up).normalize();
       return up.clone().multiplyScalar(PLANET_RADIUS).addScaledVector(p.facing, dist).addScaledVector(right, side);
+    },
+    /**
+     * Un mur droit en travers, à `dist` m devant le joueur : `width` m de large, 3 m de haut
+     * (il bloque les corps, comme le décor de la planète).
+     */
+    wall(dist: number, width: number) {
+      const p = game.player;
+      const up = p.pos.clone().normalize();
+      const right = new THREE.Vector3().crossVectors(up, p.facing).normalize();
+      const at = api.inFront(dist);
+      at.setLength(PLANET_RADIUS + heightAt(at));
+      const geo = new THREE.BoxGeometry(width, 3, 0.6).translate(0, 1.5, 0);
+      const world = new THREE.Matrix4().makeBasis(right, up, p.facing.clone()).setPosition(at);
+      collider.reset([{
+        pos: at, inv: world.clone().invert(), rot: new THREE.Quaternion().setFromRotationMatrix(world),
+        shape: computeGridShape(geo, 0.25),
+      }]);
     },
     /** Retire tous les zombies (pour isoler un scénario). */
     clearZombies() { game.horde.clear(); },

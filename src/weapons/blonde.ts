@@ -41,7 +41,7 @@ export function createBlonde(ctx: WeaponContext): Weapon {
   function nearest(from: THREE.Vector3, n: number) {
     const list: { z: Zombie; d: number }[] = [];
     for (const z of ctx.zombies()) {
-      if (z.dead) continue;
+      if (!z.targetable) continue;
       const dist = z.pos.distanceTo(from);
       if (dist < W.range * mods.range) list.push({ z, d: dist });
     }
@@ -106,7 +106,7 @@ export function createBlonde(ctx: WeaponContext): Weapon {
   /** Un pas de vol : écrasement sur le premier zombie touché, ou éclat au sol. Renvoie false si la bouteille disparaît. */
   function fly(b: Projectile) {
     for (const z of ctx.zombies()) {
-      if (z.dead || z.pos.distanceToSquared(b.pos) > 9) continue;
+      if (!z.targetable || z.pos.distanceToSquared(b.pos) > 9) continue;
       if (segToZombie(prev, b.pos, z) < W.radius * mods.size + W.zombieRadius) {
         const crit = Math.random() < W.critChance + mods.critChance;
         const dmg = W.damage * mods.damage * (crit ? W.critMult + mods.critMult : 1);
