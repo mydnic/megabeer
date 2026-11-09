@@ -1,5 +1,6 @@
 import { LEVEL_UP_SCREEN as L, RARITIES } from '../config/upgrades';
 import { cardText, type Card } from '../game/levelUpCards';
+import { WEAPON_INFO } from '../config/weapons';
 import { weaponIcon } from './icons';
 
 const CSS = `
@@ -32,6 +33,8 @@ const CSS = `
   background: linear-gradient(115deg, transparent 30%, rgba(255,240,180,.35) 45%, transparent 60%) -200% 0 / 300% 100%;
   animation: lu-shine 1.8s linear infinite; }
 @keyframes lu-shine { to { background-position: 200% 0; } }
+.lu-card.new { background: linear-gradient(#5a2a12, #2e1408); }
+.lu-card.new .lu-eff { font-size: 16px; color: #f3e6cf; }
 .lu-hint { color: #cdbfa6; font-size: 15px; letter-spacing: .04em; }
 `;
 
@@ -82,12 +85,22 @@ export function createLevelUpScreen(onPick: (card: Card) => void, onHover: () =>
       title.textContent = `${level}° atteint !`;
       row.innerHTML = '';
       list.forEach((c, i) => {
-        const r = RARITIES[c.tier];
         const d = document.createElement('div');
-        d.className = `lu-card t${c.tier}${i === 0 ? ' sel' : ''}`;
-        d.style.setProperty('--c', r.color);
-        d.innerHTML = `<div class="lu-key">${i + 1}</div><div class="lu-tier">${r.name}</div>${weaponIcon(c.weapon.id, 'lu-bottle')}
-          <div class="lu-name">${c.weapon.name}</div><div class="lu-eff">${cardText(c)}</div>`;
+        const key = `<div class="lu-key">${i + 1}</div>`;
+        if (c.kind === 'weapon') {
+          // Nouvelle arme : cadre à part, sa présentation à la place d'un effet chiffré
+          const info = WEAPON_INFO[c.weaponId];
+          d.className = `lu-card new${i === 0 ? ' sel' : ''}`;
+          d.style.setProperty('--c', L.newWeaponColor);
+          d.innerHTML = `${key}<div class="lu-tier">Nouvelle arme</div>${weaponIcon(c.weaponId, 'lu-bottle')}
+            <div class="lu-name">${info.name}</div><div class="lu-eff">${info.pitch}</div>`;
+        } else {
+          const r = RARITIES[c.tier];
+          d.className = `lu-card t${c.tier}${i === 0 ? ' sel' : ''}`;
+          d.style.setProperty('--c', r.color);
+          d.innerHTML = `${key}<div class="lu-tier">${r.name}</div>${weaponIcon(c.weapon.id, 'lu-bottle')}
+            <div class="lu-name">${c.weapon.name}</div><div class="lu-eff">${cardText(c)}</div>`;
+        }
         d.addEventListener('mouseenter', () => select(i));
         d.addEventListener('click', (e) => { e.stopPropagation(); pick(i); });
         row.appendChild(d);

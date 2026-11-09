@@ -72,8 +72,8 @@ describe('La Stout', () => {
 
   it('une fois équipée, ses améliorations sortent aux level-ups', () => {
     const { t } = arena(true);
-    const cards = rollCards(50, 0, t.game.loadout.weapons);
-    expect(cards.some((c) => c.weapon.id === 'stout')).toBe(true);
-    expect(cards.some((c) => c.weapon.id === 'canette')).toBe(true);
+    const cards = rollCards(3, 0, t.game.loadout.weapons, []);
+    expect(cards.some((c) => c.kind === 'upgrade' && c.weapon.id === 'stout')).toBe(true);
+    expect(cards.some((c) => c.kind === 'upgrade' && c.weapon.id === 'canette')).toBe(true);
   });
 });

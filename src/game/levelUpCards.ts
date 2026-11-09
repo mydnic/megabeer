@@ -1,8 +1,12 @@
 import { LUCK, RARITIES, type UpgradeDef } from '../config/upgrades';
-import type { Weapon } from '../weapons/weapon';
+import type { Weapon, WeaponId } from '../weapons/weapon';
 
-/** Une carte de level-up : une amélioration d'une arme équipée, avec sa rareté. */
-export type Card = { weapon: Weapon; upgrade: UpgradeDef; tier: number };
+/** Amélioration d'une arme équipée, avec sa rareté. */
+export type UpgradeCard = { kind: 'upgrade'; weapon: Weapon; upgrade: UpgradeDef; tier: number };
+/** Nouvelle arme à équiper (une place libre dans l'arsenal). */
+export type NewWeaponCard = { kind: 'weapon'; weaponId: WeaponId };
+/** Une carte de level-up. */
+export type Card = UpgradeCard | NewWeaponCard;
 
 /** Tire un tier de rareté selon la LUCK (les tiers hauts gagnent du poids, plafonné). */
 export function rollTier(luck: number) {
@@ -13,37 +17,53 @@ export function rollTier(luck: number) {
   return 0;
 }
 
-/** Tire `n` cartes différentes parmi les améliorations des armes équipées, chacune avec sa rareté. */
-export function rollCards(n: number, luck: number, weapons: readonly Weapon[]): Card[] {
+const pickOne = <T>(list: readonly T[]) => list[Math.floor(Math.random() * list.length)];
+
+/** Une amélioration au hasard pour cette arme, à une rareté qui la permet. */
+function upgradeCard(weapon: Weapon, luck: number): UpgradeCard | null {
+  const tier = rollTier(luck);
+  const ok = weapon.upgrades.filter((u) => (u.minTier ?? 0) <= tier);
+  return ok.length ? { kind: 'upgrade', weapon, upgrade: pickOne(ok), tier } : null;
+}
+
+/**
+ * Tire jusqu'à `n` cartes, chacune pour une arme différente (GDD section 8) : une amélioration au
+ * hasard d'une arme équipée, ou une nouvelle arme parmi `available` (débloquées, pas encore
+ * équipées ; vide quand l'arsenal est plein). Tant qu'il y a moins de `guaranteeBelow` armes
+ * équipées, une des cartes est toujours une nouvelle arme. Moins de choix possibles = moins de cartes.
+ */
+export function rollCards(n: number, luck: number, equipped: readonly Weapon[], available: readonly WeaponId[], guaranteeBelow = 3): Card[] {
   const cards: Card[] = [];
-  const used = new Set<string>();
-  const all = weapons.flatMap((weapon) => weapon.upgrades.map((upgrade) => ({ weapon, upgrade })));
-  for (let i = 0; i < n; i++) {
-    const tier = rollTier(luck);
-    const pool = all.filter((c) => !used.has(`${c.weapon.id}:${c.upgrade.id}`) && (c.upgrade.minTier ?? 0) <= tier);
-    if (!pool.length) break;
-    const pick = pool[Math.floor(Math.random() * pool.length)];
-    used.add(`${pick.weapon.id}:${pick.upgrade.id}`);
-    cards.push({ ...pick, tier });
+  const news = [...available];
+  const take = (id: WeaponId) => { news.splice(news.indexOf(id), 1); cards.push({ kind: 'weapon', weaponId: id }); };
+  if (equipped.length < guaranteeBelow && news.length && n > 0) take(pickOne(news));
+  // Le reste : armes équipées et autres nouvelles armes, mélangées, une carte par arme
+  const pool: (Weapon | WeaponId)[] = [...equipped, ...news];
+  while (cards.length < n && pool.length) {
+    const c = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+    if (typeof c === 'string') take(c);
+    else { const card = upgradeCard(c, luck); if (card) cards.push(card); }
   }
+  // La nouvelle arme garantie n'est pas toujours la première carte
+  for (let i = cards.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [cards[i], cards[j]] = [cards[j], cards[i]]; }
   return cards;
 }
 
-/** Valeur de l'effet d'une carte (multipliée par son tier, sauf effets fixes). */
-export function cardValue(c: Card) {
+/** Valeur de l'effet d'une amélioration (multipliée par son tier, sauf effets fixes). */
+export function cardValue(c: UpgradeCard) {
   return c.upgrade.fixed ? c.upgrade.value : c.upgrade.value * RARITIES[c.tier].mult;
 }
 
 /** Texte de l'effet, ex. "+30 % dégâts", "+1 projectile en plus", "+0,3 multiplicateur critique". */
-export function cardText(c: Card) {
+export function cardText(c: UpgradeCard) {
   const v = cardValue(c);
   const k = c.upgrade.kind;
   if (k === 'percent' || k === 'points') return `+${Math.round(v * 100)} % ${c.upgrade.label}`;
   return `+${String(Math.round(v * 100) / 100).replace('.', ',')} ${c.upgrade.label}`;
 }
 
-/** Applique une carte à son arme (améliorations additives, l'arme monte d'un niveau). */
-export function applyCard(c: Card) {
+/** Applique une amélioration à son arme (améliorations additives, l'arme monte d'un niveau). */
+export function applyCard(c: UpgradeCard) {
   c.weapon.mods.level++;
   c.weapon.mods[c.upgrade.id] = (c.weapon.mods[c.upgrade.id] ?? 0) + cardValue(c);
 }

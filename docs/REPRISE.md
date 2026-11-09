@@ -41,11 +41,14 @@ Fait et validé dans la feature 7 :
 1. **Feature en cours : les armes, en commençant par la Stout** (choisie le 2026-11-09). Le roster de
    l'Abbaye est complet et validé ; la tension sur 10 min (fin de feature 7) attend d'avoir des armes.
    Checkpoints de la Stout, validés un par un en jeu :
-   - a) **l'arme elle-même : faite, à faire valider** (DEV : choisir « stout » puis « Donner l'arme »).
+   - a) **l'arme elle-même : faite** (modèle 3D, icônes validés ; à rejouer avec la carte) (DEV : choisir « stout » puis « Donner l'arme »).
      Brique commune `weapons/bottleWeapon.ts` (Canette et Stout = deux réglages de `config/weapons.ts`),
      recul (`knock`) et perçage (`pierce`), bouteille `tools/blender/props.py --variant stout`, icône,
      gerbe `STOUT_SPLASH`, son `STOUT_IMPACT`, cartes `STOUT_UPGRADES`.
-   - b) la carte « nouvelle arme » au level-up (les armes ne s'obtiennent que par les cartes, 4 max).
+   - b) **la carte « nouvelle arme » : faite, à faire valider.** Nouvelle règle de tirage (GDD section 9,
+     « Pool de cartes ») : une carte par arme, une seule amélioration par arme, nouvelle arme garantie
+     sous 3 armes (`LEVEL_UP_SCREEN.newWeaponBelow`). `game/levelUpCards.ts` (cartes `upgrade` et
+     `weapon`), noms et présentations des armes dans `WEAPON_INFO` (`config/weapons.ts`).
    - c) la synergie Black and Tan (Canette + Stout : chaque tir lance aussi une Stout).
    L'évolution (Imperial Stout) attend l'objet « Bière plus forte » (feature objets).
    Fait aussi le 2026-11-09 : la Blonde est devenue la **Canette** (canette de bière en métal,

@@ -18,6 +18,7 @@ import type { DecorCollider } from '../world/decor/collider';
 import type { ThrowRig, Weapon, WeaponContext, WeaponId } from '../weapons/weapon';
 import { Emitter } from './emitter';
 import { applyCard, rollCards, type Card } from './levelUpCards';
+import { WEAPON_FACTORIES } from '../weapons/registry';
 import { Loadout } from './loadout';
 import { PlayerStats } from './playerStats';
 import { SpawnDirector, spawnCurveAt } from './spawnDirector';
@@ -227,7 +228,8 @@ export class Game {
   /** Choisit une des cartes proposées ; la suivante s'enchaîne s'il reste des degrés à choisir. */
   pickCard(card: Card) {
     if (!this.offer?.includes(card)) return;
-    applyCard(card);
+    if (card.kind === 'weapon') this.loadout.add(card.weaponId);
+    else applyCard(card);
     this.progression.pending--;
     this.offer = null;
     this.events.emit('cardPicked', { card });
@@ -413,7 +415,9 @@ export class Game {
   }
 
   private offerCards(first: boolean) {
-    const cards = rollCards(LEVEL_UP_SCREEN.cards, this.stats.luck, this.loadout.weapons);
+    // Armes débloquées pas encore équipées (toutes débloquées tant que la boutique TUNAS n'existe pas)
+    const available = this.loadout.full ? [] : (Object.keys(WEAPON_FACTORIES) as WeaponId[]).filter((id) => !this.loadout.has(id));
+    const cards = rollCards(LEVEL_UP_SCREEN.cards, this.stats.luck, this.loadout.weapons, available, LEVEL_UP_SCREEN.newWeaponBelow);
     if (!cards.length) { this.progression.pending = 0; return; }
     this.offer = cards;
     const level = this.progression.level - this.progression.pending + 1;

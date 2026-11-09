@@ -78,6 +78,12 @@ export const STOUT_IMPACT = {
   pitch: 0.8,
 } as const;
 
+/** Nom de chaque arme, et sa présentation sur la carte « Nouvelle arme » du level-up. */
+export const WEAPON_INFO = {
+  canette: { name: 'Canette', pitch: 'Canette lancée sur le zombie le plus proche' },
+  stout: { name: 'Stout', pitch: 'Lourde et lente : gros dégâts, gros recul, traverse un zombie' },
+} as const satisfies Record<BottleWeaponId, { name: string; pitch: string }>;
+
 /** Apparence de la Canette (canette de soda Kenney, découpée par tools/blender/props.py). */
 export const CANETTE_LOOK = {
   file: 'canette.glb',

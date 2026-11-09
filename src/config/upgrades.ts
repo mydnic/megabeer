@@ -63,6 +63,10 @@ export const STOUT_UPGRADES: readonly UpgradeDef[] = [
 /** Écran de level-up. */
 export const LEVEL_UP_SCREEN = {
   cards: 3,
+  /** Tant que le joueur a moins de ce nombre d'armes, une des cartes est toujours une nouvelle arme. */
+  newWeaponBelow: 3,
+  /** Couleur du cadre de la carte « Nouvelle arme » (les autres ont la couleur de leur rareté). */
+  newWeaponColor: '#ff8a3a',
   /** Délai avant que les cartes acceptent un choix (s, évite un clic involontaire). */
   inputDelay: 0.35,
 } as const;

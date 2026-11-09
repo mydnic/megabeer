@@ -437,10 +437,13 @@ Mécaniquement c'est de l'XP classique, mais tout est présenté comme de l'alco
 
 ### Pool de cartes [DÉCIDÉ]
 
-Les cartes de level-up ne proposent **que des armes** :
-- Moins de 4 armes : nouvelle arme (si débloquée en boutique) ou amélioration d'une arme équipée.
-- 4 armes : uniquement des améliorations d'armes équipées.
-- Chaque carte a une rareté (section 8).
+Les cartes de level-up ne proposent **que des armes** [DÉCIDÉ le 2026-11-09, comme dans les jeux du genre] :
+- **Une carte par arme, jamais deux pour la même** : une arme équipée ne propose qu'une seule amélioration (tirée au hasard, avec sa rareté).
+- **Moins de 3 armes équipées** : une des cartes est toujours une **nouvelle arme**, tirée au hasard parmi les armes débloquées pas encore équipées. Remplir l'arsenal vite est voulu.
+- **3 armes** : une nouvelle arme peut encore sortir (une place libre), sans être garantie. **4 armes** : uniquement des améliorations.
+- Moins de choix possibles que de cartes = moins de cartes (avec 1 arme équipée et 1 seule autre arme débloquée : 2 cartes).
+- La carte « Nouvelle arme » a son propre cadre (orange) et présente l'arme ; les améliorations ont une rareté (section 8).
+- Tant que la boutique TUNAS n'existe pas, toutes les armes du jeu comptent comme débloquées.
 
 ### Relancer / Bannir / Passer [DÉCIDÉ]
 
