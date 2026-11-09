@@ -9,7 +9,8 @@ import type { BuveurVisual } from '../player/buveurVisual';
 import type { CameraRig } from '../player/cameraRig';
 import type { PintProp } from '../player/pintProp';
 import type { Pipeline } from '../render/pipeline';
-import type { createGlassShards } from '../fx/glassShards';
+import { KAMIKAZE_LOOK } from '../config/enemies';
+import type { createShards } from '../fx/shards';
 import type { createDamageNumbers } from '../ui/damageNumbers';
 import { jitter } from './sounds';
 
@@ -19,7 +20,10 @@ type Deps = {
   pint: PintProp;
   pipeline: Pipeline;
   audio: AudioEngine;
-  shards: ReturnType<typeof createGlassShards>;
+  shards: ReturnType<typeof createShards>;
+  /** Explosion d'un kamikaze : gouttes de vin et éclats de tonneau. */
+  wine: ReturnType<typeof createShards>;
+  wood: ReturnType<typeof createShards>;
   damageNumbers: ReturnType<typeof createDamageNumbers>;
 };
 
@@ -29,7 +33,7 @@ type Deps = {
  * séquence de mort (pinte qui s'échappe, plongée de la caméra, image qui se désature).
  */
 export function wireEffects(game: Game, d: Deps) {
-  const { buveur, rig, pint, pipeline, shards, damageNumbers } = d;
+  const { buveur, rig, pint, pipeline, shards, wine, wood, damageNumbers } = d;
   const up = new THREE.Vector3(), numPos = new THREE.Vector3(), soft = new THREE.Vector3();
 
   game.events.on('zombieHit', ({ zombie, impact, dir, damage, crit }) => {
@@ -46,6 +50,17 @@ export function wireEffects(game: Game, d: Deps) {
   game.events.on('enemyShotLanded', ({ shot }) => {
     up.copy(shot.to).normalize();
     shards.burst(numPos.copy(shot.to).addScaledVector(up, 0.25), soft.copy(shot.vel).normalize().multiplyScalar(0.3));
+  });
+  // Pèlerin gonflé qui explose : gerbe de vin et éclats du tonneau, la caméra tremble s'il est près
+  const still = new THREE.Vector3();
+  game.events.on('enemyExploded', ({ at }) => {
+    const L = KAMIKAZE_LOOK;
+    up.copy(at).normalize();
+    numPos.copy(at).addScaledVector(up, L.burstHeight);
+    wine.burst(numPos, still);
+    wood.burst(numPos, still);
+    const k = 1 - at.distanceTo(game.player.pos) / L.shakeDist;
+    if (k > 0) rig.shake(L.shake * k, L.shakeAmplitude, L.shakeDecay);
   });
   game.events.on('playerHurt', ({ blocked }) => {
     if (blocked) return;
@@ -95,6 +110,8 @@ export function wireEffects(game: Game, d: Deps) {
     buveur.revive();
     pint.hide();
     shards.clear();
+    wine.clear();
+    wood.clear();
     damageNumbers.clear();
     rig.setAnchor(null);
     pipeline.fade.amount = 0;

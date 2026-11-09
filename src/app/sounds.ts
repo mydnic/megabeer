@@ -47,11 +47,19 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
     if (first) audio.play(AUDIO.levelUp.sample, AUDIO.levelUp.volume, 1, 0, 'ui');
   });
   // Bouteilles des moines : plus fort quand ça tombe près du joueur
-  const near = (p: THREE.Vector3) => Math.max(0, 1 - p.distanceTo(game.player.pos) / AUDIO.enemyShot.hearDist);
+  const near = (p: THREE.Vector3, dist: number = AUDIO.enemyShot.hearDist) => Math.max(0, 1 - p.distanceTo(game.player.pos) / dist);
   game.events.on('enemyThrow', ({ shot }) => { const k = near(shot.from); if (k > 0) audio.whoosh(AUDIO.enemyShot.throwVolume * k); });
   game.events.on('enemyShotLanded', ({ shot, hit }) => {
     const k = hit ? 1 : near(shot.to);
     if (k > 0) audio.play('impactGlass_heavy', AUDIO.enemyShot.breakVolume * k, jitter(0.08));
+  });
+  // Pèlerin gonflé : le tonneau éclate dans une gerbe de vin
+  game.events.on('enemyExploded', ({ at, hit }) => {
+    const K = AUDIO.kamikaze;
+    const k = hit ? 1 : near(at, K.hearDist);
+    if (k <= 0) return;
+    audio.play('impactWood_heavy', K.woodVolume * k, jitter(0.08));
+    audio.play('impactSoft_heavy', K.splashVolume * k, 0.8 * jitter(0.08));
   });
   // Cloches de l'Abbaye : coups d'alerte, puis un coup plus grave au débarquement
   game.events.on('bellToll', () => audio.bell(BELL_SOUND.tollVolume, BELL_SOUND.pitch, BELL_SOUND.reverb));

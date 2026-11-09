@@ -1,13 +1,13 @@
 import * as THREE from 'three';
-import { GLASS_SHARDS as G } from '../config/fx';
+import { GLASS_SHARDS, type ShardLook } from '../config/fx';
 import { PLAYER_PHYSICS } from '../config/world';
 
 /**
- * Éclats de verre d'une bouteille qui se brise : petits morceaux ambrés projetés en gerbe, qui
- * rebondissent sur le sol de la planète puis rapetissent et disparaissent. Un seul dessin pour tous.
+ * Gerbes de petits morceaux projetés (éclats de verre par défaut, gouttes de vin, éclats de bois...),
+ * qui rebondissent sur le sol de la planète puis rapetissent et disparaissent. Un seul dessin pour tous.
  */
-export function createGlassShards(scene: THREE.Scene, groundAt: (p: THREE.Vector3) => number) {
-  const geo = new THREE.TetrahedronGeometry(1, 0).scale(1, 0.35, 0.7);
+export function createShards(scene: THREE.Scene, groundAt: (p: THREE.Vector3) => number, G: ShardLook = GLASS_SHARDS) {
+  const geo = G.shape === 'drop' ? new THREE.IcosahedronGeometry(1, 0) : new THREE.TetrahedronGeometry(1, 0).scale(1, 0.35, 0.7);
   const mat = new THREE.MeshToonMaterial({ color: G.color, emissive: G.color, emissiveIntensity: G.glow });
   const mesh = new THREE.InstancedMesh(geo, mat, G.max);
   mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
@@ -20,7 +20,7 @@ export function createGlassShards(scene: THREE.Scene, groundAt: (p: THREE.Vector
   const up = new THREE.Vector3(), tmp = new THREE.Vector3(), q = new THREE.Quaternion(), m = new THREE.Matrix4(), s = new THREE.Vector3();
 
   return {
-    /** Gerbe d'éclats au point d'impact ; `dir` = direction de la bouteille (les éclats partent surtout vers l'avant). */
+    /** Gerbe au point d'impact ; `dir` = direction du coup (les morceaux partent surtout vers l'avant). */
     burst(pos: THREE.Vector3, dir: THREE.Vector3) {
       up.copy(pos).normalize();
       for (let i = 0; i < G.perBurst; i++) {

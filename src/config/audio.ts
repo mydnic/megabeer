@@ -51,6 +51,8 @@ export const AUDIO = {
   clink: { volume: 0.12, chance: 0.6 },
   /** Bouteilles lancées par les moines : souffle au lancer, verre brisé à l'impact (atténué avec la distance, m). */
   enemyShot: { throwVolume: 0.12, breakVolume: 0.5, hearDist: 30 },
+  /** Pèlerin gonflé qui explose : tonneau qui éclate et gerbe de vin. */
+  kamikaze: { woodVolume: 0.7, splashVolume: 0.6, hearDist: 35 },
   /** Ambiances synthétisées : vent permanent, oiseaux le jour, chouette la nuit. */
   wind: { volume: 0.22 },
   birds: { volume: 0.05, everyMin: 0.8, everyMax: 3.5 },

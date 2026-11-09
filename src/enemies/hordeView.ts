@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { kamikazeSwell } from './kamikazeView';
 import { ZOMBIE_VISUAL as V, type ZombieModel } from '../config/zombies';
 import { LAYER_CHARACTER } from '../render/materials';
 import type { Zombie } from './zombie';
@@ -59,12 +60,13 @@ export function createHordeView(scene: THREE.Scene, lib: ZombieLibrary) {
       fit(zombies);
       for (const c of crowds) c.mesh.count = 0;
       for (const z of zombies) {
+        if (z.gone) continue; // un kamikaze qui vient d'exploser
         const c = byModel.get(z.model)!;
         const i = c.mesh.count++;
         up.copy(z.pos).normalize();
         right.crossVectors(up, z.facing).normalize();
         tmp.copy(z.pos).addScaledVector(up, -z.sink);
-        basis.makeBasis(right, up, z.facing).scale(scaleV.setScalar(z.kind.scale)).setPosition(tmp);
+        basis.makeBasis(right, up, z.facing).scale(scaleV.setScalar(z.kind.scale * kamikazeSwell(z))).setPosition(tmp);
         c.mesh.setMatrixAt(i, basis);
         z.animRows(c.anim.array as Float32Array, i * 4);
       }

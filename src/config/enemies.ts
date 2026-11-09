@@ -18,6 +18,23 @@ export type EnemyDef = {
   xp: number;
   /** Brique Tireur : il s'arrête à distance et lance des projectiles en cloche (au contact, il frappe). */
   thrower?: ThrowerDef;
+  /** Brique Kamikaze : il fonce, allume sa mèche au contact et explose ; tué, il explose sur place. */
+  kamikaze?: KamikazeDef;
+};
+
+/**
+ * Brique Kamikaze (GDD section 11) : explose au contact ou à sa mort. Au contact, la mèche laisse au
+ * joueur le temps de sortir de la zone, marquée au sol. Il ne frappe pas : ses seuls dégâts sont
+ * l'explosion. Mort par la mèche, il disparaît sans lâcher de bière ; tué, il explose aussitôt.
+ */
+export type KamikazeDef = {
+  /** Distance au joueur (m) à laquelle il s'arrête et allume la mèche. */
+  trigger: number;
+  /** Durée de la mèche (s) : le temps qu'a le joueur pour sortir de la zone. */
+  fuse: number;
+  /** Rayon de l'explosion (m) et PV retirés au joueur dedans. */
+  radius: number;
+  damage: number;
 };
 
 /**
@@ -48,8 +65,11 @@ export const ENEMIES = {
     name: 'Moine lanceur', model: 'moine', hp: 14, speed: 2.4, damage: 5, xp: 4,
     thrower: { range: 15, cooldown: 3.2, firstDelay: 1.5, flightTime: 1.3, arc: 5, radius: 1.6, damage: 10 },
   },
-  /** Kamikaze (pas encore dans le roster : son explosion en gerbe de vin arrive au checkpoint suivant). */
-  pelerin: { name: 'Pèlerin gonflé', model: 'moine_pelerin', hp: 10, speed: 3.6, damage: 12, xp: 4 },
+  /** Kamikaze : fonce, et explose en gerbe de vin (son tonneau). */
+  pelerin: {
+    name: 'Pèlerin gonflé', model: 'moine_pelerin', hp: 10, speed: 3.6, damage: 0, xp: 4,
+    kamikaze: { trigger: 2.2, fuse: 0.9, radius: 3.2, damage: 22 },
+  },
 } as const satisfies Record<string, EnemyDef>;
 
 export type EnemyId = keyof typeof ENEMIES;
@@ -65,6 +85,23 @@ export const THROWN_BOTTLE_LOOK = {
   markRing: 0.14,
 } as const;
 
+/** Pèlerin gonflé (brique Kamikaze) : marque de la zone pendant la mèche, gonflement, explosion. */
+export const KAMIKAZE_LOOK = {
+  /** Marque au sol (même langage que les bouteilles : rouge = danger). */
+  markColor: 0xff3a1e,
+  markOpacity: 0.55,
+  markRing: 0.1,
+  /** Gonflement du corps à la fin de la mèche (part de sa taille). */
+  swell: 0.3,
+  /** Hauteur de la gerbe au-dessus du sol (m, le tonneau). */
+  burstHeight: 1.0,
+  /** Secousse de caméra quand ça explose près du joueur (s'atténue avec la distance, nulle à `shakeDist` m). */
+  shake: 0.5,
+  shakeAmplitude: 0.35,
+  shakeDecay: 2.2,
+  shakeDist: 14,
+} as const;
+
 /** Une entrée de roster : l'ennemi arrive à partir de `from` s de run, avec un poids de tirage. */
 export type RosterEntry = { enemy: EnemyId; from: number; weight: number };
 
@@ -74,5 +111,6 @@ export const ROSTERS = {
     { enemy: 'zombie', from: 0, weight: 1 },
     { enemy: 'novice', from: 60, weight: 1 },
     { enemy: 'lanceur', from: 120, weight: 1 },
+    { enemy: 'pelerin', from: 180, weight: 1 },
   ],
 } as const satisfies Record<string, readonly RosterEntry[]>;

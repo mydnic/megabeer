@@ -53,6 +53,8 @@ export class Zombie {
   /** Brique Tireur : temps avant le prochain lancer (s), et lancer en cours (le geste d'attaque lâche la bouteille). */
   throwTimer = 0;
   throwing = false;
+  /** Brique Kamikaze : mèche allumée (s restantes, -1 : éteinte). */
+  fuse = -1;
   /** Sortie de terre en cours (s restantes) : il émerge du sol, immobile, sans frapper. */
   rise = 0;
   /** Vrai quand le corps a fini de s'enfoncer : la horde le retire. */
@@ -71,6 +73,13 @@ export class Zombie {
     this.hp = ENEMIES[enemy].hp;
     const T = (ENEMIES[enemy] as EnemyDef).thrower;
     if (T) this.throwTimer = Math.random() * T.firstDelay;
+  }
+
+  /** Disparaît d'un coup, sans animation de mort ni corps (un kamikaze qui explose). */
+  vanish() {
+    if (this.deadTime < 0) this.deadTime = 0;
+    this.fuse = -1;
+    this.gone = true;
   }
 
   /** Fiche de l'ennemi (PV, vitesse, dégâts, XP, briques). */

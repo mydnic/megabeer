@@ -53,6 +53,10 @@ export type GameEvents = {
   enemyThrow: { shot: EnemyShot };
   /** Un projectile ennemi touche le sol ; `hit` : le joueur était dans la zone. */
   enemyShotLanded: { shot: EnemyShot; hit: boolean };
+  /** Un kamikaze allume sa mèche : il explosera dans `fuse` s, dans un rayon `radius` autour de `at`. */
+  kamikazeArmed: { zombie: Zombie; at: THREE.Vector3; radius: number; fuse: number };
+  /** Un kamikaze explose à `at` ; `killed` : tué par le joueur (sinon, au bout de sa mèche) ; `hit` : le joueur était dans la zone. */
+  enemyExploded: { zombie: Zombie; at: THREE.Vector3; radius: number; killed: boolean; hit: boolean };
   /** Abbaye : un coup de cloche de volée, après le grand coup du débarquement. */
   bellToll: { index: number };
   /** Abbaye, toutes les 2 min : les cloches sonnent et, pendant `duration` s, des zombies de type `model` sortent de terre en masse autour du joueur. */
@@ -135,6 +139,11 @@ export class Game {
     this.horde = createHorde(deps.zombieKinds, player, deps.collider);
     this.horde.onHit = (z, dir) => this.hurtPlayer(z, dir, z.def.damage);
     this.horde.onThrow = (z) => this.throwFrom(z);
+    this.horde.onArm = (z) => {
+      const K = z.def.kamikaze!;
+      this.events.emit('kamikazeArmed', { zombie: z, at: z.pos.clone(), radius: K.radius, fuse: K.fuse });
+    };
+    this.horde.onExplode = (z) => this.explode(z, false);
     this.horde.onSpawn = (zombie) => this.events.emit('zombieSpawned', { zombie });
     this.xp = createXpDrops(groundAt);
     this.director = new SpawnDirector({
@@ -281,6 +290,8 @@ export class Game {
       this.xp.drop(z.pos, z.def.xp);
     }
     this.events.emit('zombieHit', { weapon, zombie: z, damage, crit, killed, hpAfter: z.hp, impact: impact.clone(), dir });
+    // Un kamikaze tué explose sur place
+    if (killed && z.def.kamikaze) this.explode(z, true);
     return killed;
   }
 
@@ -305,6 +316,26 @@ export class Game {
     this.events.emit('playerHurt', { zombie: z, dir, damage, hp: this.health.hp, blocked: !took });
     if (!took) return;
     this.player.knock(dir, ZOMBIE_ATTACK.knockSpeed, ZOMBIE_ATTACK.knockLift, ZOMBIE_ATTACK.knockDecay);
+  }
+
+  /**
+   * Un kamikaze explose là où il est : le joueur dans la zone encaisse, repoussé hors du centre. Il
+   * disparaît (pas de corps) ; `killed` : tué par le joueur, sinon sa mèche est arrivée au bout.
+   */
+  private explode(z: Zombie, killed: boolean) {
+    const K = z.def.kamikaze!;
+    const at = z.pos.clone();
+    const p = this.player.pos;
+    const hit = this.phase === 'run' && p.angleTo(at) * PLANET_RADIUS < K.radius;
+    if (hit) {
+      const dir = p.clone().sub(at);
+      const up = this.tmp.copy(p).normalize();
+      dir.addScaledVector(up, -dir.dot(up));
+      if (dir.lengthSq() < 1e-6) dir.copy(this.player.facing).negate();
+      this.hurtPlayer(z, dir.normalize(), K.damage);
+    }
+    z.vanish();
+    this.events.emit('enemyExploded', { zombie: z, at, radius: K.radius, killed, hit });
   }
 
   /** Un tireur lâche son projectile vers l'endroit où se trouve le joueur (au sol). */

@@ -59,6 +59,19 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
       if (z.state !== 'attack' || z.attackDone) z.play('idle');
       return;
     }
+    // Brique Kamikaze : tout près du joueur, il s'arrête et allume la mèche (il ne frappe jamais)
+    const K = z.def.kamikaze;
+    if (K) {
+      if (z.fuse < 0 && dist <= K.trigger) {
+        z.fuse = K.fuse;
+        api.onArm?.(z);
+      }
+      if (z.fuse >= 0) {
+        z.walkSpeed = 0;
+        if (z.state !== 'hit') z.play('hit');
+        return;
+      }
+    }
     // Brique Tireur : à portée de lancer (mais pas au contact), il s'arrête et lance
     const T = z.def.thrower;
     if (T) {
@@ -84,7 +97,7 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
       z.attackDone = z.attackDone && dist >= V.attackRange + V.attackExit;
       return;
     }
-    if (dist < V.attackRange) { z.play('attack'); return; }
+    if (dist < V.attackRange && !K) { z.play('attack'); return; }
     // Avance dans la direction du regard (il tourne, il ne glisse pas de côté)
     want.normalize();
     const align = Math.max(0, z.facing.dot(want));
@@ -173,6 +186,11 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
         decor?.resolve(z.pos, M.radius);
         snap(z.pos);
         z.update(dt);
+        // Mèche du kamikaze : à zéro, il explose (même sonné)
+        if (z.fuse >= 0 && !z.dead && !passive) {
+          z.fuse -= dt;
+          if (z.fuse <= 0) { api.onExplode?.(z); continue; }
+        }
         // Lancer : la bouteille part au moment du geste où le bras se détend
         if (z.throwing && z.hitNow && !z.dead && !passive) { api.onThrow?.(z); continue; }
         // Le coup porte si le joueur est encore à portée au moment où le bras arrive
@@ -193,6 +211,10 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
     onHit: undefined as ((z: Zombie, dir: THREE.Vector3) => void) | undefined,
     /** Appelé quand un tireur lâche son projectile. */
     onThrow: undefined as ((z: Zombie) => void) | undefined,
+    /** Appelé quand un kamikaze allume sa mèche. */
+    onArm: undefined as ((z: Zombie) => void) | undefined,
+    /** Appelé quand la mèche d'un kamikaze arrive au bout. */
+    onExplode: undefined as ((z: Zombie) => void) | undefined,
     /** Appelé à chaque apparition de zombie. */
     onSpawn: undefined as ((z: Zombie) => void) | undefined,
   };
