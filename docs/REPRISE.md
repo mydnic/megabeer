@@ -38,28 +38,23 @@ Fait et validé dans la feature 7 :
 | 9 | Frère cellérier | Tank + diviseur (60 PV ; tué, 3 moinillons sortent de son corps) | Quaternius Zombie Chubby (moinillons : le même en petit) | validé |
 
 **Prochaine étape :**
-1. **Feature en cours : les armes, en commençant par la Stout** (choisie le 2026-11-09). Le roster de
-   l'Abbaye est complet et validé ; la tension sur 10 min (fin de feature 7) attend d'avoir des armes.
-   Checkpoints de la Stout, validés un par un en jeu :
-   - a) **l'arme elle-même : faite** (modèle 3D, icônes validés ; à rejouer avec la carte) (DEV : choisir « stout » puis « Donner l'arme »).
-     Brique commune `weapons/bottleWeapon.ts` (Canette et Stout = deux réglages de `config/weapons.ts`),
-     recul (`knock`) et perçage (`pierce`), bouteille `tools/blender/props.py --variant stout`, icône,
-     gerbe `STOUT_SPLASH`, son `STOUT_IMPACT`, cartes `STOUT_UPGRADES`.
-   - b) **la carte « nouvelle arme » : faite, à faire valider.** Nouvelle règle de tirage (GDD section 9,
-     « Pool de cartes ») : une carte par arme, une seule amélioration par arme, nouvelle arme garantie
-     sous 3 armes (`LEVEL_UP_SCREEN.newWeaponBelow`). `game/levelUpCards.ts` (cartes `upgrade` et
-     `weapon`), noms et présentations des armes dans `WEAPON_INFO` (`config/weapons.ts`).
-   - c) **la synergie Black and Tan : validée**, avec son affichage (badge sur la carte, bandeau à
-     l'activation, liseré et maillon dans le HUD, carte et pastilles dans la pause : `game/synergies.ts`, événement `synergyActivated`, à faire valider). Combo choisi par l'utilisateur : la Stout
-     sonne le zombie 2 s (`z.dazed`, vue `enemies/dazedView.ts`), les canettes lui font x2 (`SYNERGIES`
-     dans `config/weapons.ts`, appliqué dans `game.hitZombie`, événement `zombieHit.combo`).
-   L'évolution (Imperial Stout) attend l'objet « Bière plus forte » (feature objets).
-   Fait aussi le 2026-11-09 : la Blonde est devenue la **Canette** (canette de bière en métal,
-   `props.py --variant canette`, impact sans verre avec tintement de fer-blanc, identifiant `canette`).
-   Icônes refaites : Canette, Stout façon Duvel. La Pils tiède est retirée du roster : l'arme n° 10
-   est à inventer avec l'utilisateur.
-2. Pistes : discuter avec l'utilisateur de la suite (section 20 du GDD : armes une par une, objets,
-   élites, boss...). L'équilibrage de la difficulté est reporté : il faut d'abord les armes.
+1. **La Stout est terminée et validée** (2026-11-09) : l'arme, la carte « nouvelle arme » au level-up et
+   la synergie Black and Tan avec son affichage partout. Son évolution (Imperial Stout) attend l'objet
+   « Bière plus forte » (feature objets). **Choisir avec l'utilisateur l'arme suivante** (roster GDD
+   section 6) ou une autre feature (section 20).
+   Ce qui sert pour toute nouvelle arme :
+   - armes à bouteille : brique `weapons/bottleWeapon.ts`, une arme = un réglage dans `WEAPONS`,
+     son nom et sa présentation dans `WEAPON_INFO`, ses cartes dans `config/upgrades.ts`, son modèle
+     (`tools/blender/props.py` découpe les objets KayKit / Kenney en matériaux nommés), son icône
+     (`ui/icons.ts`), sa vue (une `createBottleView` par arme dans `main.ts`), ses tests ;
+   - level-up (règle de l'utilisateur) : une carte par arme, une seule amélioration par arme, nouvelle
+     arme garantie sous 3 armes (`game/levelUpCards.ts`) ;
+   - synergies : une ligne dans `SYNERGIES` (`config/weapons.ts`) avec nom, effet, détails et couleur ;
+     l'affichage (carte, bandeau, HUD, pause) suit tout seul (`game/synergies.ts`).
+   Fait aussi le 2026-11-09 : la Blonde est devenue la **Canette** (canette de bière en métal, icône
+   façon Jupiler 33cl), icône de la Stout façon Duvel marquée « Stout ». La Pils tiède est retirée du
+   roster : l'arme n° 10 est à inventer avec l'utilisateur.
+2. L'équilibrage de la difficulté sur 10 min (fin de feature 7) attend d'avoir plusieurs armes.
 
 Idées notées pour plus tard (GDD section 14) : nœud « Dégâts collatéraux » du skill tree (les
 attaques de zone des ennemis blesseraient aussi les autres ennemis).
