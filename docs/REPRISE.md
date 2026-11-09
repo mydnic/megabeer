@@ -64,7 +64,16 @@ Fait et validé dans la feature 7 :
    Fait aussi le 2026-11-09 : la Blonde est devenue la **Canette** (canette de bière en métal, icône
    façon Jupiler 33cl), icône de la Stout façon Duvel marquée « Stout ». La Pils tiède est retirée du
    roster : l'arme n° 10 est à inventer avec l'utilisateur.
-2. L'équilibrage de la difficulté sur 10 min (fin de feature 7) attend d'avoir plusieurs armes.
+2. **En cours : caler la run de 10 min** (fin de feature 7), à partir des journaux de run de
+   l'utilisateur (`logs/runs/`). Ses premières parties (2026-11-09) n'ont pas été enregistrées : le
+   serveur de dev était arrêté (le journal part vers `/__runlog` du serveur ; la page déjà chargée
+   continue de tourner sans lui). Toujours vérifier que `corepack yarn dev` tourne avant qu'il joue.
+   Ses retours de ces parties : rien n'incite à explorer (on tourne en rond dans la même zone),
+   peut-être trop d'XP, la 2e cloche lui a semblé plus petite (mesuré : chaque cloche fait sortir
+   environ 240 ennemis, mais d'un seul type tiré au hasard ; lanceurs ou pèlerins pressent moins).
+   Corrigé : carrés noirs (bulles des sonnés hors de `LAYER_SKY`), ambiance coupée sur l'accueil,
+   son de choix de carte (« tchin »). À faire : XP et cloches selon ses journaux.
+   Piège : ne pas accélérer le temps (`setTimeScale`) jusqu'à 10 min, la page sature et plante.
 
 Idées notées pour plus tard (GDD section 14) : nœud « Dégâts collatéraux » du skill tree (les
 attaques de zone des ennemis blesseraient aussi les autres ennemis).
