@@ -33,18 +33,21 @@ Fait et validé dans la feature 7 :
 | 4 | Frère tonnelier | Marcheur lourd, pousse un tonneau qui roule | Moine, bure ardoise | validé |
 | 5 | Fantôme du cloître | Fantôme (traverse le décor, intouchable 1 s sur 3) | Fantôme Kenney cimetière | validé |
 | 6 | Moine porte-reliques | Protecteur (voisins à -50 % de dégâts) | Rogue encapuchonné KayKit (`kaykit.py`) | validé |
-| 7 | Gargouille | Marcheur (contact, coup de tête) | Dragon Animated Monsters en pierre (`monsters.py`) | **à faire valider en jeu** |
+| 7 | Gargouille | Marcheur (contact, coup de tête) | Dragon Animated Monsters en pierre (`monsters.py`) | validé |
 | 8 | Prieur | Invocateur | à choisir | à faire |
 | 9 | Frère cellérier | Tank + diviseur | à choisir | à faire |
 
 **Prochaine étape :**
-1. Faire valider la Gargouille simplifiée (dernier commit : coup de tête au lieu de la toupie).
-2. Le **Prieur** (8:00) : « Fait sortir des squelettes de terre ». Idée de départ : les squelettes
-   KayKit Skeletons (Minion, Warrior...) ont une animation `Spawn_Ground` qui colle parfaitement, et
-   passent par `tools/blender/kaykit.py`. Le Prieur lui-même doit avoir un corps neuf (règle des 3
-   corps max, voir plus bas). Demander le look à l'utilisateur avant de coder.
-3. Le **Frère cellérier** (9:00) : « Se divise en 3 moinillons à sa mort ».
-4. Ensuite, discuter avec l'utilisateur de la suite (section 20 du GDD : armes une par une, objets,
+1. Le **Prieur** (8:00) : « Fait sortir des squelettes de terre ». **Question posée à l'utilisateur,
+   en attente** : corps à corps simple, ou avec les squelettes ? (il a dit, à propos de la
+   gargouille, que « quasi tous » les ennemis seraient au contact sans mécanique ; mais toute
+   l'identité du Prieur est l'invocation). Si squelettes : les KayKit Skeletons (Minion, Warrior...)
+   ont une animation `Spawn_Ground` qui colle parfaitement, et passent par `tools/blender/kaykit.py`.
+   Le Prieur lui-même doit avoir un corps neuf (règle des 3 corps max) : piste proposée, le Hooded
+   Adventurer (poly.pizza, proportions réalistes comme le Moine, animé) en bure noire à capuche,
+   liseré doré. Demander le look avant de coder.
+2. Le **Frère cellérier** (9:00) : « Se divise en 3 moinillons à sa mort ».
+3. Ensuite, discuter avec l'utilisateur de la suite (section 20 du GDD : armes une par une, objets,
    élites, boss...). L'équilibrage de la difficulté est reporté : il faut d'abord les armes.
 
 Idées notées pour plus tard (GDD section 14) : nœud « Dégâts collatéraux » du skill tree (les
@@ -118,6 +121,14 @@ de `src/enemies/zombieLibrary.ts`), sa brique éventuelle dans `src/enemies/hord
 sa vue dans `src/enemies/`, ses tests dans `tests/features/`.
 
 ## Pièges déjà rencontrés
+
+- **`yarn` tout court plante** sur cette machine (il cherche un `.yarn/releases/yarn-1.22.22.cjs`
+  absent) : toujours passer par `corepack yarn ...`.
+- Un ancien serveur de dev peut rester ouvert sur 5173 après une session : le nouveau part alors sur
+  5174, et l'utilisateur risque de regarder le mauvais onglet. Fermer l'ancien.
+- Animations des packs : vérifier le geste avant de le brancher (`Dragon_Attack` du pack Animated
+  Monsters est une toupie qui fait faire un tour complet au corps). `monsters.py` sait couper un
+  clip (`crops`) pour que le coup tombe vers `ZOMBIE_ATTACK.hitAt` (45 % du clip).
 
 - `heightAt(d)` (`src/world/terrain.ts`) attend une **direction unitaire** : lui passer une position
   donne une hauteur fausse (fantômes enterrés, mur de test en l'air). Toujours `p.clone().normalize()`.
