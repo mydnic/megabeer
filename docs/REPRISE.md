@@ -129,6 +129,10 @@ sa vue dans `src/enemies/`, ses tests dans `tests/features/`.
   absent) : toujours passer par `corepack yarn ...`.
 - Un ancien serveur de dev peut rester ouvert sur 5173 après une session : le nouveau part alors sur
   5174, et l'utilisateur risque de regarder le mauvais onglet. Fermer l'ancien.
+- **Animations figées à l'export (T-pose en jeu)** alors qu'elles bougent dans les rendus Blender :
+  l'import glTF du mannequin UAL pose une piste NLA par animation ; il faut les retirer avant
+  d'exporter (`summoner.py`). `tests/features/models.test.ts` ouvre chaque GLB généré et échoue si
+  Idle, Walk ou l'attaque ne font bouger aucun os.
 - Modèles d'avatars (Polygonal Mind...) : ils ont des **shape keys**, qui figent les sommets ; les
   supprimer avant de les modifier. Les poids automatiques de Blender accrochent les accessoires
   (coiffe, encensoirs) aux mains : sur un modèle fait de blocs, mieux vaut l'os le plus proche.

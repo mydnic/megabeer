@@ -185,21 +185,18 @@ for v in body.data.vertices:
     if w2 > 0:
         groups[n2].add([v.index], w2, 'ADD')
 
-# Animations : seules celles du jeu, renommées ; une piste NLA par animation
+# Animations : seules celles du jeu, renommées. L'import du mannequin a posé ses propres pistes NLA
+# (une par animation) : retirées, sinon l'export les mélange et sort des animations figées.
+arm.animation_data_create()
+for track in list(arm.animation_data.nla_tracks):
+    arm.animation_data.nla_tracks.remove(track)
 for a in list(bpy.data.actions):
     name = variant['clips'].get(a.name)
     if not name:
         bpy.data.actions.remove(a)
         continue
     a.name = name
-arm.animation_data_create()
-for a in bpy.data.actions:
-    track = arm.animation_data.nla_tracks.new()
-    track.name = a.name
-    strip = track.strips.new(a.name, int(a.frame_range[0]), a)
-    if len(getattr(a, 'slots', ())):
-        strip.action_slot = a.slots[0]
-    track.mute = True
+    a.use_fake_user = True
 
 if args.render:
     # Vues de contrôle : de face au repos, puis une image de chaque animation, de 3/4
@@ -237,7 +234,7 @@ if args.render:
 
 select([body], body)
 bpy.ops.export_scene.gltf(
-    filepath=args.out, export_format='GLB', export_animations=True, export_animation_mode='NLA_TRACKS',
+    filepath=args.out, export_format='GLB', export_animations=True, export_animation_mode='ACTIONS',
     export_apply=False, export_cameras=False, export_lights=False,
 )
 print('Personnage exporté :', args.variant, args.out, '| animations :', sorted(a.name for a in bpy.data.actions))
