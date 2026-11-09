@@ -19,10 +19,19 @@ export const canetteIcon = (cls: string) => `<svg viewBox="0 0 40 90" class="${c
 <path d="M8 9.5c0-1 1-2 2-2h20c1 0 2 1 2 2V14H8z" fill="#c8ccd2" stroke="#1a120c" stroke-width="2.5" stroke-linejoin="round"/>
 <path d="M5.5 76h29c0 1.5-1 3-2.5 3H8c-1.5 0-2.5-1.5-2.5-3z" fill="#c8ccd2"/></svg>`;
 
-/** Bouteille de Stout, façon Duvel : col court, ventre bombé, fond resserré, verre brun stout, étiquette ovale. */
-export const stoutIcon = (cls: string) => `<svg viewBox="0 0 40 90" class="${cls}"><path d="M15 9h10v11c0 5 13 12 13 32c0 14-3 26-7 32c-1 2-3 3-5 3H14c-2 0-4-1-5-3c-4-6-7-18-7-32c0-20 13-27 13-32z"
- fill="#4a2c1a" stroke="#1a120c" stroke-width="3" stroke-linejoin="round"/><rect x="13" y="3" width="14" height="8" rx="2" fill="#c9a24a" stroke="#1a120c" stroke-width="3"/>
-<ellipse cx="20" cy="57" rx="12.5" ry="10" fill="#eadcbc" stroke="#1a120c" stroke-width="2.5"/><path d="M9 38c2-5 5-9 8-11" stroke="#fff3" stroke-width="4" fill="none" stroke-linecap="round"/></svg>`;
+/**
+ * Bouteille de Stout calquée sur la Duvel 33cl, en verre brun stout : capsule, col qui s'élargit,
+ * longues épaules arrondies, corps droit, grande étiquette blanche (« Duvel » rouge, « STOUT »).
+ */
+export const stoutIcon = (cls: string) => `<svg viewBox="0 0 40 90" class="${cls}"><path d="M15 8h10v8c0 2 .6 3 .6 5c0 4 10.4 9 10.4 25v35c0 2-2 4-4 4H8c-2 0-4-2-4-4V46c0-16 10.4-21 10.4-25c0-2 .6-3 .6-5z"
+ fill="#4a2c1a" stroke="#1a120c" stroke-width="3" stroke-linejoin="round"/>
+<path d="M15.6 17.5h8.8" stroke="#2e1b10" stroke-width="1.2"/>
+<rect x="13.5" y="3" width="13" height="6" rx="1.5" fill="#cfc4a6" stroke="#1a120c" stroke-width="2.5"/>
+<rect x="5.5" y="49" width="29" height="30" fill="#f4f2ee"/><path d="M5.5 49h29M5.5 79h29" stroke="#1a120c" stroke-width="1.2"/>
+<path d="M18.4 52.4h3.2l-.4 1.8c-.2.8-.8 1.2-1.2 1.2s-1-.4-1.2-1.2z M20 55.4v1.4M18.8 57h2.4" stroke="#b08a3a" stroke-width=".7" fill="#e8c76a"/>
+<text x="20" y="67.5" text-anchor="middle" textLength="26" lengthAdjust="spacingAndGlyphs" font-family="Georgia, 'Times New Roman', serif" font-weight="900" font-size="10" fill="#c8102e">Duvel</text>
+<text x="20" y="74" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="4.2" letter-spacing=".7" fill="#1a120c">STOUT</text>
+<path d="M9 44c1.5-5 4-9 6.5-11.5" stroke="#fff3" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`;
 
 /** Icône de chaque arme (ajouter une arme = ajouter son icône ici). */
 const WEAPON_ICONS: Record<WeaponId, (cls: string) => string> = {
