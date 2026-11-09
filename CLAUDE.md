@@ -75,8 +75,9 @@ recopie son état à chaque image. Ne jamais remettre de logique de jeu dans `ma
   `zombie.ts` et `horde.ts` (simulation, briques Tireur, Kamikaze, Fantôme et Protecteur ; les armes visent
   `z.targetable`), `hordeView.ts` et `zombieLibrary.ts`
   (rendu, modèles et animations pré-calculées ; accepte aussi les personnages Kenney à pièces animées
-  sans squelette, et les modèles translucides), `enemyShotsView.ts`, `kamikazeView.ts` et `protectorView.ts` (marques au sol
-  `fx/groundMarks.ts`, qui épousent le relief). `fx/shards.ts` : gerbes de morceaux (verre, vin, bois). `pickups/` : `xpDrops.ts` + `xpDropsView.ts`.
+  sans squelette, et les modèles translucides), `enemyShotsView.ts` et `kamikazeView.ts` (marques au sol `fx/groundMarks.ts`, qui
+  épousent le relief, réservées aux dangers pour le joueur), `protectorView.ts` (lueur au-dessus du
+  protecteur ; le corps des protégés luit via l'attribut `aGlow` de la foule : règle de tous les buffs entre ennemis). `fx/shards.ts` : gerbes de morceaux (verre, vin, bois). `pickups/` : `xpDrops.ts` + `xpDropsView.ts`.
 - `app/` : l'application navigateur branchée sur le noyau, une responsabilité par fichier :
   `planet.ts` (seed, relief, décor, chargement), `screens.ts` (accueil, HUD, pause, level-up,
   mort), `effects.ts` (impacts, caméra, séquence de mort), `sounds.ts` (sons et musique),

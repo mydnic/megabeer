@@ -38,8 +38,9 @@ mat4 vatSkin(float row) {
  * Ajoute l'animation de foule à un matériau (les objets sans `aAnim` ne sont pas touchés).
  * `flash` : le matériau éclaire l'instance en blanc selon -aAnim.w (zombie touché).
  * `fade` : chaque instance multiplie son opacité par l'attribut `aFade` (matériau transparent).
+ * `glow` : chaque instance luit de cette couleur selon l'attribut `aGlow` (ennemi qui reçoit un buff).
  */
-export function patchVat(material: THREE.Material, key: string, flash = 0, fade = false) {
+export function patchVat(material: THREE.Material, key: string, flash = 0, fade = false, glow?: THREE.Color) {
   const prev = material.onBeforeCompile;
   material.onBeforeCompile = (shader, renderer) => {
     prev?.call(material, shader, renderer);
@@ -57,6 +58,14 @@ export function patchVat(material: THREE.Material, key: string, flash = 0, fade 
       shader.fragmentShader = shader.fragmentShader
         .replace('#include <common>', '#include <common>\nvarying float vVatFlash;')
         .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>\n  totalEmissiveRadiance += vec3(vVatFlash * ${flash.toFixed(3)});`);
+    }
+    if (glow) {
+      const c = `vec3(${glow.r.toFixed(3)}, ${glow.g.toFixed(3)}, ${glow.b.toFixed(3)})`;
+      vs = vs.replace('#include <common>', '#include <common>\nattribute float aGlow;\nvarying float vVatGlow;');
+      vs = vs.replace('#include <begin_vertex>', '#include <begin_vertex>\n  vVatGlow = aGlow;');
+      shader.fragmentShader = shader.fragmentShader
+        .replace('#include <common>', '#include <common>\nvarying float vVatGlow;')
+        .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>\n  totalEmissiveRadiance += ${c} * vVatGlow;`);
     }
     if (fade) {
       vs = vs.replace('#include <common>', '#include <common>\nattribute float aFade;\nvarying float vVatFade;');

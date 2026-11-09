@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { kamikazeSwell } from './kamikazeView';
+import { PROTECTOR_LOOK as PL } from '../config/enemies';
+import { PLANET_RADIUS } from '../config/world';
 import { ZOMBIE_MODELS, ZOMBIE_VISUAL as V, type ZombieModel } from '../config/zombies';
 import { LAYER_CHARACTER } from '../render/materials';
 import type { Zombie } from './zombie';
@@ -18,6 +20,10 @@ export function createHordeView(scene: THREE.Scene, lib: ZombieLibrary) {
     const anim = new THREE.InstancedBufferAttribute(new Float32Array(capacity * 4), 4);
     anim.setUsage(THREE.DynamicDrawUsage);
     k.geometry.setAttribute('aAnim', anim);
+    // Lueur propre à chaque instance (ennemi qui reçoit un buff)
+    const glow = new THREE.InstancedBufferAttribute(new Float32Array(capacity), 1);
+    glow.setUsage(THREE.DynamicDrawUsage);
+    k.geometry.setAttribute('aGlow', glow);
     // Opacité propre à chaque instance (fantômes)
     const fade = k.fade ? new THREE.InstancedBufferAttribute(new Float32Array(capacity).fill(1), 1) : null;
     if (fade) { fade.setUsage(THREE.DynamicDrawUsage); k.geometry.setAttribute('aFade', fade); }
@@ -29,7 +35,7 @@ export function createHordeView(scene: THREE.Scene, lib: ZombieLibrary) {
     mesh.layers.set(LAYER_CHARACTER);
     mesh.count = 0;
     scene.add(mesh);
-    return { model, mesh, anim, fade, capacity };
+    return { model, mesh, anim, glow, fade, capacity };
   };
   const crowds = (Object.keys(lib) as ZombieModel[]).map((model) => makeCrowd(model, V.initialPerModel));
   const byModel = new Map(crowds.map((c) => [c.model, c]));
@@ -70,6 +76,22 @@ export function createHordeView(scene: THREE.Scene, lib: ZombieLibrary) {
     return f;
   }
 
+  /** Ennemis dans le halo d'un protecteur (autre qu'eux-mêmes) : leur corps luit. */
+  const shielded = new Set<Zombie>();
+  const protectors: Zombie[] = [];
+  function findShielded(zombies: readonly Zombie[]) {
+    shielded.clear();
+    protectors.length = 0;
+    for (const z of zombies) if (z.def.protector && !z.dead) protectors.push(z);
+    if (!protectors.length) return;
+    for (const z of zombies) {
+      if (z.dead) continue;
+      for (const p of protectors) {
+        if (p !== z && p.pos.angleTo(z.pos) * PLANET_RADIUS < p.def.protector!.radius) { shielded.add(z); break; }
+      }
+    }
+  }
+
   const basis = new THREE.Matrix4();
   const right = new THREE.Vector3();
   const up = new THREE.Vector3();
@@ -80,6 +102,8 @@ export function createHordeView(scene: THREE.Scene, lib: ZombieLibrary) {
     /** Instances : matrice (repère local, taille du modèle) et lignes d'animation de chaque zombie. */
     sync(zombies: readonly Zombie[]) {
       fit(zombies);
+      findShielded(zombies);
+      const pulse = 1 + PL.bodyPulseAmount * Math.sin(clock.getElapsedTime() * PL.bodyPulse * Math.PI * 2);
       for (const c of crowds) c.mesh.count = 0;
       for (const z of zombies) {
         if (z.gone) continue; // un kamikaze qui vient d'exploser
@@ -92,6 +116,7 @@ export function createHordeView(scene: THREE.Scene, lib: ZombieLibrary) {
         c.mesh.setMatrixAt(i, basis);
         z.animRows(c.anim.array as Float32Array, i * 4);
         if (c.fade) c.fade.setX(i, fadeOf(z));
+        c.glow.setX(i, shielded.has(z) ? PL.bodyGlow * pulse : 0);
       }
       for (const c of crowds) {
         c.mesh.instanceMatrix.clearUpdateRanges();
@@ -101,6 +126,9 @@ export function createHordeView(scene: THREE.Scene, lib: ZombieLibrary) {
         c.anim.addUpdateRange(0, c.mesh.count * 4);
         c.anim.needsUpdate = true;
         if (c.fade) { c.fade.clearUpdateRanges(); c.fade.addUpdateRange(0, c.mesh.count); c.fade.needsUpdate = true; }
+        c.glow.clearUpdateRanges();
+        c.glow.addUpdateRange(0, c.mesh.count);
+        c.glow.needsUpdate = true;
       }
     },
   };

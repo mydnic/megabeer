@@ -133,11 +133,23 @@ export const KAMIKAZE_LOOK = {
   shakeDist: 14,
 } as const;
 
-/** Moine porte-reliques (brique Protecteur) : son halo au sol, et les étincelles des coups amortis. */
+/**
+ * Buffs entre ennemis (règle de lisibilité, pas de zone au sol : illisible dans une horde) : celui qui
+ * donne le buff a une lueur qui brille au-dessus de sa tête, ceux qui le reçoivent ont le corps qui luit.
+ * Ici, le halo du Moine porte-reliques (brique Protecteur).
+ */
 export const PROTECTOR_LOOK = {
-  markColor: 0xffc94a,
-  markOpacity: 0.35,
-  markRing: 0.06,
+  /** Couleur de la lueur (au-dessus de la tête et sur le corps des protégés). */
+  color: 0xffc94a,
+  /** Lueur au-dessus de la tête : hauteur au-dessus des pieds (m), taille (m), battement (par s, part de la taille). */
+  haloHeight: 1.9,
+  haloSize: 0.9,
+  haloPulse: 2.5,
+  haloPulseAmount: 0.15,
+  /** Corps des protégés : intensité de la lueur, battement (par s, part de l'intensité). */
+  bodyGlow: 0.35,
+  bodyPulse: 3,
+  bodyPulseAmount: 0.3,
 } as const;
 
 /** Une entrée de roster : l'ennemi arrive à partir de `from` s de run, avec un poids de tirage. */

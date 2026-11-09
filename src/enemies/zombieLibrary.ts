@@ -3,6 +3,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { ZOMBIE_HURT as H, ZOMBIE_MODELS, ZOMBIE_VISUAL as V, type ZombieModel } from '../config/zombies';
 import kenneyColormap from '../assets/kenney-graveyard-kit/Models/GLB format/Textures/colormap.png?url';
+import { PROTECTOR_LOOK } from '../config/enemies';
 import { characterMaterial } from '../render/materials';
 import { patchVat, vatUniforms } from '../render/vat';
 import { ZOMBIE_STATES as STATES, type BakedClip, type ZombieState, type ZombieTimings } from './zombie';
@@ -145,7 +146,7 @@ export async function loadZombieLibrary() {
       map: b.srcMat.map, color: b.srcMat.color, side: b.srcMat.side,
       ...(translucent ? { transparent: true, opacity: translucent.opacity, depthWrite: false } : {}),
     });
-    patchVat(material, translucent ? 'zombie-fade' : 'zombie', H.flashIntensity, !!translucent);
+    patchVat(material, translucent ? 'zombie-fade-glow' : 'zombie-glow', H.flashIntensity, !!translucent, new THREE.Color(PROTECTOR_LOOK.color));
     const depthMaterial = new THREE.MeshDepthMaterial();
     patchVat(depthMaterial, 'zombie-depth');
     lib[b.id] = { geometry: b.geometry, material, depthMaterial, scale: b.scale, clips, fade: !!translucent };
