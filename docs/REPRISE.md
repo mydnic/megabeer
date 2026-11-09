@@ -34,23 +34,13 @@ Fait et validé dans la feature 7 :
 | 5 | Fantôme du cloître | Fantôme (traverse le décor, intouchable 1 s sur 3) | Fantôme Kenney cimetière | validé |
 | 6 | Moine porte-reliques | Protecteur (voisins à -50 % de dégâts) | Rogue encapuchonné KayKit (`kaykit.py`) | validé |
 | 7 | Gargouille | Marcheur (contact, coup de tête) | Dragon Animated Monsters en pierre (`monsters.py`) | validé |
-| 8 | Prieur | Invocateur (3 squelettes KayKit sortent de terre toutes les 8 s) | Eye Summoner (Polygonal Mind) sur le squelette UAL (`summoner.py`) | **à faire valider en jeu** |
+| 8 | Prieur | Invocateur (3 squelettes KayKit sortent de terre toutes les 8 s) | Eye Summoner (Polygonal Mind) sur le squelette UAL (`summoner.py`) | validé |
 | 9 | Frère cellérier | Tank + diviseur | à choisir | à faire |
 
 **Prochaine étape :**
-1. Le **Prieur** (8:00) : « Fait sortir des squelettes de terre ». Décidé : **avec les squelettes**
-   (« certains ennemis auront des mécaniques, mais très peu, on validera ensemble à chaque fois »).
-   Corps choisi par l'utilisateur : l'Eye Summoner (Polygonal Mind, ajouté à MODELS), sans squelette
-   d'origine, habillé par `tools/blender/summoner.py` du squelette UAL ajusté à son corps, poids au
-   plus proche os. Clips : Idle, Walk (Walk_Formal), Punch, HitReact, Death, et **Cast**
-   (Spell_Simple_Shoot) pour le geste d'invocation. **Fait, à faire valider en jeu** : la brique
-   Invocateur (`summoner` dans `config/enemies.ts`, état `cast` des zombies, `summonAround` dans
-   `game.ts`, événements `summonCast` / `summoned`). À moins de 14 m, il s'arrête, geste 0,9 s, puis
-   3 squelettes (Skeleton Minion, `kaykit.py --variant squelette`, 5 PV, 1 de bière) sortent de terre
-   autour de lui avec `emerge()`, toutes les 8 s. Sons : encensoir (`impactBell_heavy` aigu) et
-   terre (`impactMining` grave) ; mottes de terre (`EARTH_CLODS`). Réglages à caler avec l'utilisateur.
-2. Le **Frère cellérier** (9:00) : « Se divise en 3 moinillons à sa mort ».
-3. Ensuite, discuter avec l'utilisateur de la suite (section 20 du GDD : armes une par une, objets,
+1. Le **Frère cellérier** (9:00) : « Se divise en 3 moinillons à sa mort ». Tank + diviseur.
+   Look à demander (2-3 options). Le Moine kelgar porte déjà 3 ennemis : il faut un autre corps.
+2. Ensuite, discuter avec l'utilisateur de la suite (section 20 du GDD : armes une par une, objets,
    élites, boss...). L'équilibrage de la difficulté est reporté : il faut d'abord les armes.
 
 Idées notées pour plus tard (GDD section 14) : nœud « Dégâts collatéraux » du skill tree (les
