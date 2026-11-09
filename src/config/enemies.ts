@@ -141,15 +141,16 @@ export const KAMIKAZE_LOOK = {
 export const PROTECTOR_LOOK = {
   /** Couleur de la lueur (au-dessus de la tête et sur le corps des protégés). */
   color: 0xffc94a,
-  /** Lueur au-dessus de la tête : hauteur au-dessus des pieds (m), taille (m), battement (par s, part de la taille). */
-  haloHeight: 1.9,
-  haloSize: 0.9,
-  haloPulse: 2.5,
-  haloPulseAmount: 0.15,
-  /** Corps des protégés : intensité de la lueur, battement (par s, part de l'intensité). */
-  bodyGlow: 0.35,
-  bodyPulse: 3,
-  bodyPulseAmount: 0.3,
+  /** Étoile au-dessus de la tête : hauteur au-dessus des pieds (m), taille (m), rotation (rad/s), scintillement (part de la taille). */
+  haloHeight: 2.25,
+  haloSize: 1.1,
+  spin: 0.6,
+  twinkleSize: 0.25,
+  /** Corps des protégés : liseré de lumière sur les contours (intensité, finesse), battement (par s, part de l'intensité). */
+  bodyGlow: 0.9,
+  rimPower: 2.5,
+  bodyPulse: 1.5,
+  bodyPulseAmount: 0.25,
 } as const;
 
 /** Une entrée de roster : l'ennemi arrive à partir de `from` s de run, avec un poids de tirage. */

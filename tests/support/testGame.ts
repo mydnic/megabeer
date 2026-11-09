@@ -78,7 +78,7 @@ export function createTestGame(seed = 1) {
       const up = p.pos.clone().normalize();
       const right = new THREE.Vector3().crossVectors(up, p.facing).normalize();
       const at = api.inFront(dist);
-      at.setLength(PLANET_RADIUS + heightAt(at));
+      at.setLength(PLANET_RADIUS + heightAt(at.clone().normalize()));
       const geo = new THREE.BoxGeometry(width, 3, 0.6).translate(0, 1.5, 0);
       const world = new THREE.Matrix4().makeBasis(right, up, p.facing.clone()).setPosition(at);
       collider.reset([{

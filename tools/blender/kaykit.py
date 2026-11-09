@@ -8,8 +8,8 @@ le demande la foule (enemies/zombieLibrary.ts). Les animations utiles sont renom
 des zombies Quaternius (Idle, Walk, Run, Punch, HitReact, Death).
 
 Variantes (--variant) :
-- porte_reliques : le Rogue encapuchonné sans son masque, en bure crème, qui tient un coffret doré
-  (le coffre en or du KayKit Dungeon, réduit) : le Moine porte-reliques.
+- porte_reliques : le Rogue encapuchonné sans son masque, en bure crème, qui tient à deux mains
+  devant lui un coffret doré (le coffre en or du KayKit Dungeon, réduit) : le Moine porte-reliques.
 
 Les fichiers source sont lus dans la bibliothèque d'assets (--lib, le dossier MODELS trié).
 
@@ -23,7 +23,7 @@ import sys
 
 import bpy
 import numpy as np
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from crowd_utils import pixels, recolor  # noqa: E402
@@ -56,15 +56,18 @@ VARIANTS = {
         'drop': ['Mask'],
         # Le vert (capuche, pèlerine, tunique) devient une bure crème
         'recolor': [{'mask': {'hue': (0.22, 0.5), 'sat': (0.15, 1.0)}, 'to': {'hue': 0.11, 'sat': 0.3, 'val': 1.7}}],
-        # Le reliquaire dans la main droite : taille (m, plus grande dimension), décalage depuis l'os
+        # Le reliquaire tenu devant la poitrine : os qui le porte, taille (m, plus grande dimension), position
+        # (repère du personnage : face vers -Y, pieds en Z = 0)
         'prop': {
-            'file': 'decor/kaykit_dungeon/gltf/chest_gold.gltf', 'bone': 'handslot.r', 'size': 0.55, 'offset': (0, 0, 0),
+            'file': 'decor/kaykit_dungeon/gltf/chest_gold.gltf', 'bone': 'chest', 'size': 0.56, 'at': (0, -0.5, 0.97),
             # Bois brun et ferrures grises passés à l'or
             'recolor': [
                 {'mask': {'hue': (0.0, 0.1), 'sat': (0.2, 1.0)}, 'to': {'hue': 0.12, 'sat': 1.3, 'val': 1.9}},
                 {'mask': {'hue': (0.0, 1.0), 'sat': (0.0, 0.2), 'val': (0.15, 0.9)}, 'to': {'hue': 0.13, 'sat': 4.0, 'val': 1.4}},
             ],
         },
+        # Les deux mains posées de chaque côté du reliquaire (poignet gauche ; le droit en miroir), dans ces animations
+        'hold': {'wrist': (0.33, -0.46, 0.97), 'actions': ['Idle', 'Walk', 'Run', 'HitReact']},
     },
 }
 variant = VARIANTS[args.variant]
@@ -112,8 +115,68 @@ for a in list(bpy.data.actions):
         a.name = CLIPS[a.name]
     else:
         bpy.data.actions.remove(a)
-# Rattachées au squelette du personnage, une piste NLA par animation (exportées piste par piste)
 arm.animation_data_create()
+
+
+def use_action(action):
+    arm.animation_data.action = action
+    if len(getattr(action, 'slots', ())):
+        arm.animation_data.action_slot = action.slots[0]
+
+
+def hold_with_both_hands(cfg):
+    """
+    Bras posés sur l'objet tenu devant lui : des IK temporaires (cibles portées par la poitrine)
+    placent les bras à chaque image ; la pose obtenue est relevée, puis inscrite dans l'animation.
+    """
+    scene = bpy.context.scene
+    arm.data.pose_position = 'REST'
+    bpy.context.view_layer.update()
+    targets = []
+    for side, sx in (('l', 1), ('r', -1)):
+        e = bpy.data.objects.new('cible_' + side, None)
+        scene.collection.objects.link(e)
+        e.parent = arm
+        e.parent_type = 'BONE'
+        e.parent_bone = 'chest'
+        bpy.context.view_layer.update()
+        e.matrix_world = Matrix.Translation(Vector((cfg['wrist'][0] * sx, cfg['wrist'][1], cfg['wrist'][2])))
+        c = arm.pose.bones['lowerarm.' + side].constraints.new('IK')
+        c.target = e
+        c.chain_count = 2
+        targets.append(e)
+    arm.data.pose_position = 'POSE'
+    bones = ['upperarm.l', 'lowerarm.l', 'upperarm.r', 'lowerarm.r']
+    poses = {}
+    for name in cfg['actions']:
+        action = bpy.data.actions[name]
+        use_action(action)
+        for f in range(int(action.frame_range[0]), int(action.frame_range[1]) + 1):
+            scene.frame_set(f)
+            poses[(name, f)] = {b: arm.pose.bones[b].matrix.copy() for b in bones}
+    for b in ('lowerarm.l', 'lowerarm.r'):
+        pb = arm.pose.bones[b]
+        for c in list(pb.constraints):
+            pb.constraints.remove(c)
+    for e in targets:
+        bpy.data.objects.remove(e)
+    for name in cfg['actions']:
+        action = bpy.data.actions[name]
+        use_action(action)
+        for f in range(int(action.frame_range[0]), int(action.frame_range[1]) + 1):
+            scene.frame_set(f)
+            for b in bones:  # le bras avant l'avant-bras : chaque os se pose sur son parent déjà placé
+                pb = arm.pose.bones[b]
+                pb.matrix = poses[(name, f)][b]
+                bpy.context.view_layer.update()
+                pb.keyframe_insert('rotation_quaternion', frame=f)
+    arm.animation_data.action = None
+
+
+if 'hold' in variant:
+    hold_with_both_hands(variant['hold'])
+
+# Rattachées au squelette du personnage, une piste NLA par animation (exportées piste par piste)
 for a in bpy.data.actions:
     track = arm.animation_data.nla_tracks.new()
     track.name = a.name
@@ -137,7 +200,10 @@ if prop_cfg:
     lo = Vector([min(v[i] for v in vs) for i in range(3)])
     hi = Vector([max(v[i] for v in vs) for i in range(3)])
     k = prop_cfg['size'] / max(hi - lo)
-    at = arm.matrix_world @ arm.data.bones[prop_cfg['bone']].head_local + Vector(prop_cfg['offset'])
+    if 'at' in prop_cfg:
+        at = Vector(prop_cfg['at'])
+    else:
+        at = arm.matrix_world @ arm.data.bones[prop_cfg['bone']].head_local + Vector(prop_cfg.get('offset', (0, 0, 0)))
     center = (lo + hi) / 2
     for v in prop.data.vertices:
         v.co = (v.co - center) * k + at
