@@ -8,6 +8,7 @@ le demande la foule (enemies/zombieLibrary.ts). Les animations utiles sont renom
 des zombies Quaternius (Idle, Walk, Run, Punch, HitReact, Death).
 
 Variantes (--variant) :
+- squelette : le Skeleton Minion, que le Prieur fait sortir de terre.
 - porte_reliques : le Rogue encapuchonné sans son masque, en bure crème, qui tient à deux mains
   devant lui un coffret doré (le coffre en or du KayKit Dungeon, réduit) : le Moine porte-reliques.
 
@@ -69,6 +70,12 @@ VARIANTS = {
         # Les deux mains posées de chaque côté du reliquaire (poignet gauche ; le droit en miroir), dans ces animations
         'hold': {'wrist': (0.33, -0.46, 0.97), 'actions': ['Idle', 'Walk', 'Run', 'HitReact']},
     },
+    # Le squelette que le Prieur fait sortir de terre : le Skeleton Minion tel quel
+    'squelette': {
+        'character': 'personnages/kaykit_skeletons/personnages/Skeleton_Minion.glb',
+        # L'Icosphere est la forme d'affichage des os du fichier, pas une pièce du corps
+        'drop': ['Icosphere'],
+    },
 }
 variant = VARIANTS[args.variant]
 lib = lambda p: os.path.join(args.lib, p)  # noqa: E731
@@ -82,16 +89,24 @@ def import_new(path):
 
 
 def select(objs, active):
-    for o in bpy.context.view_layer.objects:
-        o.select_set(False)
+    bpy.ops.object.select_all(action='DESELECT')
     for o in objs:
         o.select_set(True)
     bpy.context.view_layer.objects.active = active
 
 
 def base_image(material):
-    """Image de couleur d'un matériau importé."""
-    return next(n.image for n in material.node_tree.nodes if n.type == 'TEX_IMAGE' and n.image)
+    """Image de couleur d'un matériau importé (None s'il n'a qu'une couleur unie)."""
+    return next((n.image for n in material.node_tree.nodes if n.type == 'TEX_IMAGE' and n.image), None)
+
+
+def cell_pixels(material):
+    """Pixels de sa case dans l'atlas : sa texture, ou sa couleur unie (les yeux du squelette)."""
+    img = base_image(material)
+    if img:
+        return pixels(img, CELL)
+    bsdf = next(n for n in material.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
+    return np.tile(np.array(bsdf.inputs['Base Color'].default_value, dtype=np.float32), (CELL, CELL, 1))
 
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -220,7 +235,7 @@ body.data.validate()
 mats = list(body.data.materials)
 atlas = np.zeros((CELL, CELL * len(mats), 4), dtype=np.float32)
 for i, m in enumerate(mats):
-    px = pixels(base_image(m), CELL)
+    px = cell_pixels(m)
     # Case 0 : le personnage ; les suivantes : l'objet tenu
     rules = variant.get('recolor', []) if i == 0 else (prop_cfg or {}).get('recolor', [])
     for rule in rules:

@@ -66,6 +66,20 @@ export const BARREL_SHARDS = {
   glow: 0,
 } as const satisfies ShardLook;
 
+/** Mottes de terre projetées quand un squelette du Prieur sort du sol. */
+export const EARTH_CLODS = {
+  max: 300,
+  perBurst: 10,
+  size: 0.12,
+  speed: 3,
+  forward: 0,
+  upward: 4.5,
+  spin: 12,
+  life: 0.9,
+  color: 0x4a3524,
+  glow: 0,
+} as const satisfies ShardLook;
+
 /** Chiffres de dégâts flottants. */
 export const DAMAGE_NUMBERS = {
   enabled: true,

@@ -26,6 +26,8 @@ type Deps = {
   wood: ReturnType<typeof createShards>;
   /** Coup amorti par le halo d'un porte-reliques : étincelles dorées. */
   sparks: ReturnType<typeof createShards>;
+  /** Squelette du Prieur qui sort de terre : mottes de terre. */
+  earth: ReturnType<typeof createShards>;
   damageNumbers: ReturnType<typeof createDamageNumbers>;
 };
 
@@ -35,7 +37,7 @@ type Deps = {
  * séquence de mort (pinte qui s'échappe, plongée de la caméra, image qui se désature).
  */
 export function wireEffects(game: Game, d: Deps) {
-  const { buveur, rig, pint, pipeline, shards, wine, wood, sparks, damageNumbers } = d;
+  const { buveur, rig, pint, pipeline, shards, wine, wood, sparks, earth, damageNumbers } = d;
   const up = new THREE.Vector3(), numPos = new THREE.Vector3(), soft = new THREE.Vector3();
 
   game.events.on('zombieHit', ({ zombie, impact, dir, damage, crit, shielded }) => {
@@ -64,6 +66,10 @@ export function wireEffects(game: Game, d: Deps) {
     wood.burst(numPos, still);
     const k = 1 - at.distanceTo(game.player.pos) / L.shakeDist;
     if (k > 0) rig.shake(L.shake * k, L.shakeAmplitude, L.shakeDecay);
+  });
+  // Squelettes du Prieur : la terre gicle à leurs pieds quand ils sortent
+  game.events.on('summoned', ({ skeletons }) => {
+    for (const s of skeletons) earth.burst(numPos.copy(s.pos).setLength(s.pos.length() + 0.1), still);
   });
   game.events.on('playerHurt', ({ blocked }) => {
     if (blocked) return;
@@ -115,6 +121,7 @@ export function wireEffects(game: Game, d: Deps) {
     shards.clear();
     wine.clear();
     sparks.clear();
+    earth.clear();
     wood.clear();
     damageNumbers.clear();
     rig.setAnchor(null);

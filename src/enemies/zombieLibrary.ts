@@ -10,7 +10,7 @@ import { ZOMBIE_STATES as STATES, type BakedClip, type ZombieState, type ZombieT
 
 // Zombies Quaternius d'origine, le Moine préparé par tools/blender/monk.py, personnages Kenney du cimetière
 const urls = import.meta.glob([
-  '../assets/quaternius-zombies/*.gltf', '../assets/models/moine*.glb', '../assets/models/porte_reliques.glb', '../assets/models/gargouille.glb', '../assets/models/prieur.glb',
+  '../assets/quaternius-zombies/*.gltf', '../assets/models/moine*.glb', '../assets/models/porte_reliques.glb', '../assets/models/gargouille.glb', '../assets/models/prieur.glb', '../assets/models/squelette.glb',
   '../assets/kenney-graveyard-kit/Models/GLB format/character-*.glb',
 ], { query: '?url', import: 'default', eager: true }) as Record<string, string>;
 
@@ -103,7 +103,9 @@ export async function loadZombieLibrary() {
     for (const state of STATES) {
       // Clips propres au modèle (ex. le Novice court au lieu de marcher), sinon ceux de tous les zombies
       const names: readonly string[] = (def as ModelDef).clips?.[state] ?? V.clips[state];
-      const clip = names.map((n) => gltf.animations.find((c) => c.name === n)).find(Boolean);
+      const find = (list: readonly string[]) => list.map((n) => gltf.animations.find((c) => c.name === n)).find(Boolean);
+      // Le geste d'invocation est facultatif : sans lui, le modèle reprend son attaque
+      const clip = find(names) ?? (state === 'cast' ? find((def as ModelDef).clips?.attack ?? V.clips.attack) : undefined);
       if (!clip) throw new Error(`Animation ${state} manquante pour le zombie ${id}`);
       const action = mixer.clipAction(clip);
       action.play();

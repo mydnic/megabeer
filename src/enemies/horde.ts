@@ -69,6 +69,23 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
       if (z.state !== 'attack' || z.attackDone) z.play('idle');
       return;
     }
+    // Brique Invocateur : à portée, il s'arrête et fait son geste ; les invoqués sortent à la fin (update)
+    const S = z.def.summoner;
+    if (S) {
+      if (z.casting > 0) {
+        z.walkSpeed = 0;
+        if (z.state !== 'cast') z.play('cast'); // repris après un coup reçu
+        return;
+      }
+      if (z.summonTimer <= 0 && !passive && dist <= S.range) {
+        z.casting = S.cast;
+        z.summonTimer = S.cast + S.cooldown;
+        z.walkSpeed = 0;
+        z.play('cast', true);
+        api.onCast?.(z);
+        return;
+      }
+    }
     // Brique Kamikaze : tout près du joueur, il s'arrête et allume la mèche (il ne frappe jamais)
     const K = z.def.kamikaze;
     if (K) {
@@ -200,6 +217,14 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
           z.fuse -= dt;
           if (z.fuse <= 0) { api.onExplode?.(z); continue; }
         }
+        // Invocation : le geste va au bout même sous les coups ; mort avant, rien ne sort
+        if (z.casting > 0 && !z.dead) {
+          z.casting = Math.max(0, z.casting - dt);
+          if (z.casting === 0) {
+            z.play('idle');
+            if (!passive) api.onSummon?.(z);
+          }
+        }
         // Lancer : la bouteille part au moment du geste où le bras se détend
         if (z.throwing && z.hitNow && !z.dead && !passive) { api.onThrow?.(z); continue; }
         // Le coup porte si le joueur est encore à portée au moment où le bras arrive
@@ -233,6 +258,10 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
     onHit: undefined as ((z: Zombie, dir: THREE.Vector3) => void) | undefined,
     /** Appelé quand un tireur lâche son projectile. */
     onThrow: undefined as ((z: Zombie) => void) | undefined,
+    /** Appelé quand un invocateur commence son geste. */
+    onCast: undefined as ((z: Zombie) => void) | undefined,
+    /** Appelé à la fin du geste d'un invocateur : les invoqués doivent sortir de terre. */
+    onSummon: undefined as ((z: Zombie) => void) | undefined,
     /** Appelé quand un kamikaze allume sa mèche. */
     onArm: undefined as ((z: Zombie) => void) | undefined,
     /** Appelé quand la mèche d'un kamikaze arrive au bout. */

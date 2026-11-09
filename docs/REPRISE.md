@@ -34,7 +34,7 @@ Fait et validé dans la feature 7 :
 | 5 | Fantôme du cloître | Fantôme (traverse le décor, intouchable 1 s sur 3) | Fantôme Kenney cimetière | validé |
 | 6 | Moine porte-reliques | Protecteur (voisins à -50 % de dégâts) | Rogue encapuchonné KayKit (`kaykit.py`) | validé |
 | 7 | Gargouille | Marcheur (contact, coup de tête) | Dragon Animated Monsters en pierre (`monsters.py`) | validé |
-| 8 | Prieur | Invocateur (squelettes, à faire) | Eye Summoner (Polygonal Mind) sur le squelette UAL (`summoner.py`) | en jeu comme marcheur, **look à faire valider** |
+| 8 | Prieur | Invocateur (3 squelettes KayKit sortent de terre toutes les 8 s) | Eye Summoner (Polygonal Mind) sur le squelette UAL (`summoner.py`) | **à faire valider en jeu** |
 | 9 | Frère cellérier | Tank + diviseur | à choisir | à faire |
 
 **Prochaine étape :**
@@ -43,10 +43,12 @@ Fait et validé dans la feature 7 :
    Corps choisi par l'utilisateur : l'Eye Summoner (Polygonal Mind, ajouté à MODELS), sans squelette
    d'origine, habillé par `tools/blender/summoner.py` du squelette UAL ajusté à son corps, poids au
    plus proche os. Clips : Idle, Walk (Walk_Formal), Punch, HitReact, Death, et **Cast**
-   (Spell_Simple_Shoot) pour le geste d'invocation. Checkpoint en cours : il est en jeu comme simple
-   marcheur (28 PV, 2,4 m/s, 2,2 m), look et taille à faire valider. Ensuite : la brique Invocateur
-   (il s'arrête, fait le geste Cast, 2-3 squelettes KayKit sortent de terre avec `Spawn_Ground`, via
-   `tools/blender/kaykit.py`), réglages à valider en jeu.
+   (Spell_Simple_Shoot) pour le geste d'invocation. **Fait, à faire valider en jeu** : la brique
+   Invocateur (`summoner` dans `config/enemies.ts`, état `cast` des zombies, `summonAround` dans
+   `game.ts`, événements `summonCast` / `summoned`). À moins de 14 m, il s'arrête, geste 0,9 s, puis
+   3 squelettes (Skeleton Minion, `kaykit.py --variant squelette`, 5 PV, 1 de bière) sortent de terre
+   autour de lui avec `emerge()`, toutes les 8 s. Sons : encensoir (`impactBell_heavy` aigu) et
+   terre (`impactMining` grave) ; mottes de terre (`EARTH_CLODS`). Réglages à caler avec l'utilisateur.
 2. Le **Frère cellérier** (9:00) : « Se divise en 3 moinillons à sa mort ».
 3. Ensuite, discuter avec l'utilisateur de la suite (section 20 du GDD : armes une par une, objets,
    élites, boss...). L'équilibrage de la difficulté est reporté : il faut d'abord les armes.
@@ -107,8 +109,9 @@ L=C:/Users/mydnic/Desktop/MODELS
 "$B" -b --factory-startup --disable-autoexec -P tools/blender/monk.py -- --src $L/personnages/kelgar_monk/MONK.blend --variant lanceur --out src/assets/models/moine.glb
 "$B" -b --factory-startup --disable-autoexec -P tools/blender/monk.py -- --src $L/personnages/kelgar_monk/MONK.blend --variant pelerin --barrel $L/decor/quaternius_fantasy_props/glTF/Barrel.gltf --out src/assets/models/moine_pelerin.glb
 "$B" -b --factory-startup --disable-autoexec -P tools/blender/monk.py -- --src $L/personnages/kelgar_monk/MONK.blend --variant tonnelier --barrel $L/decor/quaternius_fantasy_props/glTF/Barrel.gltf --out src/assets/models/moine_tonnelier.glb
-# Personnages KayKit (porte_reliques)
+# Personnages KayKit (porte_reliques, squelette du Prieur)
 "$B" -b --factory-startup --disable-autoexec -P tools/blender/kaykit.py -- --lib $L --variant porte_reliques --out src/assets/models/porte_reliques.glb
+"$B" -b --factory-startup --disable-autoexec -P tools/blender/kaykit.py -- --lib $L --variant squelette --out src/assets/models/squelette.glb
 # Personnage statique habillé du squelette UAL (prieur)
 "$B" -b --factory-startup --disable-autoexec -P tools/blender/summoner.py -- --lib $L --variant prieur --out src/assets/models/prieur.glb [--render DOSSIER]
 # Monstres Animated Monsters (gargouille)

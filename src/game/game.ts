@@ -57,6 +57,10 @@ export type GameEvents = {
   kamikazeArmed: { zombie: Zombie; at: THREE.Vector3; radius: number; fuse: number };
   /** Un kamikaze explose à `at` ; `killed` : tué par le joueur (sinon, au bout de sa mèche) ; `hit` : le joueur était dans la zone. */
   enemyExploded: { zombie: Zombie; at: THREE.Vector3; radius: number; killed: boolean; hit: boolean };
+  /** Un invocateur commence son geste : ses invoqués sortiront de terre à la fin. */
+  summonCast: { zombie: Zombie };
+  /** Les invoqués de `zombie` sortent de terre autour de lui. */
+  summoned: { zombie: Zombie; skeletons: Zombie[] };
   /** Abbaye : un coup de cloche de volée, après le grand coup du débarquement. */
   bellToll: { index: number };
   /** Abbaye, toutes les 2 min : les cloches sonnent et, pendant `duration` s, des zombies de type `model` sortent de terre en masse autour du joueur. */
@@ -144,6 +148,8 @@ export class Game {
       this.events.emit('kamikazeArmed', { zombie: z, at: z.pos.clone(), radius: K.radius, fuse: K.fuse });
     };
     this.horde.onExplode = (z) => this.explode(z, false);
+    this.horde.onCast = (zombie) => this.events.emit('summonCast', { zombie });
+    this.horde.onSummon = (z) => this.summonAround(z);
     this.horde.onSpawn = (zombie) => this.events.emit('zombieSpawned', { zombie });
     this.xp = createXpDrops(groundAt);
     this.director = new SpawnDirector({
@@ -271,6 +277,24 @@ export class Game {
    * Fait apparaître un zombie au sol à la direction `at`, tourné vers `facing`. Plus la run avance,
    * plus il a de PV (courbe de la run et difficulté).
    */
+  /** Fin du geste d'un invocateur : ses invoqués sortent de terre en cercle autour de lui, tournés vers l'extérieur. */
+  private summonAround(z: Zombie) {
+    const S = z.def.summoner!;
+    const up = z.pos.clone().normalize();
+    const side = new THREE.Vector3().crossVectors(up, z.facing).normalize();
+    const skeletons: Zombie[] = [];
+    const start = Math.random() * Math.PI * 2;
+    for (let i = 0; i < S.count; i++) {
+      const a = start + (i / S.count) * Math.PI * 2;
+      const out = z.facing.clone().multiplyScalar(Math.cos(a)).addScaledVector(side, Math.sin(a));
+      const s = this.spawnZombie(S.enemy as EnemyId, z.pos.clone().addScaledVector(out, S.radius), out);
+      if (!s) continue;
+      s.emerge();
+      skeletons.push(s);
+    }
+    this.events.emit('summoned', { zombie: z, skeletons });
+  }
+
   spawnZombie(enemy: EnemyId, at: THREE.Vector3, facing: THREE.Vector3) {
     const z = this.horde.spawn(enemy, at, facing);
     if (z) z.hp = Math.round(ENEMIES[enemy].hp * spawnCurveAt(this.runTime).hpMul * this.mods.hp);

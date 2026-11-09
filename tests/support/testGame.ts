@@ -14,7 +14,7 @@ import { NO_INPUT } from '../../src/game/game';
 const clip = (duration: number) => ({ start: 0, frames: 1, duration });
 export const TEST_ZOMBIE_TIMINGS: ZombieTimings = {
   scale: 1,
-  clips: { idle: clip(2), walk: clip(1), attack: clip(1.2), hit: clip(0.4), death: clip(1.5) },
+  clips: { idle: clip(2), walk: clip(1), attack: clip(1.2), hit: clip(0.4), death: clip(1.5), cast: clip(0.5) },
 };
 
 /** Images par seconde de la simulation dans les tests. */
@@ -32,7 +32,7 @@ export function createTestGame(seed = 1) {
 
   /** Tous les événements reçus, dans l'ordre. */
   const log: { type: keyof GameEvents; payload: unknown }[] = [];
-  const types: (keyof GameEvents)[] = ['runStarted', 'landed', 'zombieSpawned', 'playerHurt', 'zombieHit', 'projectileHitGround', 'xpCollected', 'levelGained', 'levelUpOffered', 'cardPicked', 'paused', 'resumed', 'died', 'runEnded', 'home', 'bellToll', 'bellsLanding', 'bellsSurgeEnded', 'enemyThrow', 'enemyShotLanded', 'kamikazeArmed', 'enemyExploded'];
+  const types: (keyof GameEvents)[] = ['runStarted', 'landed', 'zombieSpawned', 'playerHurt', 'zombieHit', 'projectileHitGround', 'xpCollected', 'levelGained', 'levelUpOffered', 'cardPicked', 'paused', 'resumed', 'died', 'runEnded', 'home', 'bellToll', 'bellsLanding', 'bellsSurgeEnded', 'enemyThrow', 'enemyShotLanded', 'kamikazeArmed', 'enemyExploded', 'summonCast', 'summoned'];
   for (const t of types) game.events.on(t, (payload) => log.push({ type: t, payload }));
 
   const api = {

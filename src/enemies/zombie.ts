@@ -3,10 +3,10 @@ import { SPAWN } from '../config/spawn';
 import { ENEMIES, type EnemyDef, type EnemyId } from '../config/enemies';
 import { ZOMBIE_ATTACK, ZOMBIE_HURT as H, ZOMBIE_MODELS, ZOMBIE_MOVE, ZOMBIE_VISUAL as V } from '../config/zombies';
 
-export type ZombieState = 'idle' | 'walk' | 'attack' | 'hit' | 'death';
+export type ZombieState = 'idle' | 'walk' | 'attack' | 'hit' | 'death' | 'cast';
 export const ZOMBIE_STATES = Object.keys(V.clips) as ZombieState[];
-/** Animations jouées une seule fois (elles restent sur leur dernière image). */
-const ONCE: ZombieState[] = ['hit', 'death'];
+/** Animations jouées une seule fois (elles restent sur leur dernière image : le bras reste tendu). */
+const ONCE: ZombieState[] = ['hit', 'death', 'cast'];
 
 /** Une animation pré-calculée : première ligne dans la texture, nombre d'images, durée (s). */
 export type BakedClip = { start: number; frames: number; duration: number };
@@ -57,6 +57,9 @@ export class Zombie {
   fuse = -1;
   /** Brique Fantôme : horloge de son cycle (s), décalée au hasard pour qu'ils ne clignotent pas ensemble. */
   ghostClock = 0;
+  /** Brique Invocateur : temps avant la prochaine invocation (s), et temps restant du geste en cours (s). */
+  summonTimer = 0;
+  casting = 0;
   /** Sortie de terre en cours (s restantes) : il émerge du sol, immobile, sans frapper. */
   rise = 0;
   /** Vrai quand le corps a fini de s'enfoncer : la horde le retire. */
@@ -77,6 +80,8 @@ export class Zombie {
     if (T) this.throwTimer = Math.random() * T.firstDelay;
     const G = (ENEMIES[enemy] as EnemyDef).ghost;
     if (G) this.ghostClock = Math.random() * G.every;
+    const S = (ENEMIES[enemy] as EnemyDef).summoner;
+    if (S) this.summonTimer = S.firstDelay;
   }
 
   /** Disparaît d'un coup, sans animation de mort ni corps (un kamikaze qui explose). */
@@ -164,6 +169,7 @@ export class Zombie {
     this.flash = Math.max(0, this.flash - dt / H.flashTime);
     this.stagger = Math.max(0, this.stagger - dt);
     this.throwTimer = Math.max(0, this.throwTimer - dt);
+    this.summonTimer = Math.max(0, this.summonTimer - dt);
     if (this.rise > 0 && !this.dead) {
       this.rise = Math.max(0, this.rise - dt);
       this.sink = (this.rise / SPAWN.riseTime) ** 2 * SPAWN.riseDepth;

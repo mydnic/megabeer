@@ -12,7 +12,7 @@ import { createXpDropsView } from './pickups/xpDropsView';
 import { createBottleView } from './weapons/bottleView';
 import { createEnemyShotsView } from './enemies/enemyShotsView';
 import { createShards } from './fx/shards';
-import { BARREL_SHARDS, SHIELD_SPARKS, WINE_BURST } from './config/fx';
+import { BARREL_SHARDS, EARTH_CLODS, SHIELD_SPARKS, WINE_BURST } from './config/fx';
 import { createKamikazeView } from './enemies/kamikazeView';
 import { createProtectorView } from './enemies/protectorView';
 import { createDamageNumbers } from './ui/damageNumbers';
@@ -78,6 +78,7 @@ const wood = createShards(scene, groundAt, BARREL_SHARDS);
 const kamikazeView = createKamikazeView(scene);
 const protectorView = createProtectorView(scene);
 const sparks = createShards(scene, groundAt, SHIELD_SPARKS);
+const earth = createShards(scene, groundAt, EARTH_CLODS);
 const damageNumbers = createDamageNumbers(camera);
 const pint = new PintProp(scene, { verre: new THREE.Color(), biere: new THREE.Color(), mousse: new THREE.Color() }, (p, r) => game.player.supportAt(p, r));
 const rig = new CameraRig(camera);
@@ -91,7 +92,7 @@ wireSounds(game, audio, buveur);
 wireMusic(game, audio, music, 'abbaye');
 
 // --- Effets, interface, journal de run
-const effects = wireEffects(game, { buveur, rig, pint, pipeline, audio, shards, wine, wood, sparks, damageNumbers });
+const effects = wireEffects(game, { buveur, rig, pint, pipeline, audio, shards, wine, wood, sparks, earth, damageNumbers });
 const screens = wireScreens(game, { planet, canvas: renderer.domElement, audio });
 const runLog = createRunLog();
 let fps = 0;
@@ -128,6 +129,7 @@ function frame(now: number) {
   wine.update(dt);
   wood.update(dt);
   sparks.update(dt);
+  earth.update(dt);
   damageNumbers.update(realDt);
   pint.update(dt);
   effects.update();

@@ -21,6 +21,8 @@ export const ZOMBIE_MODELS = {
   gargouille: { file: 'gargouille.glb', height: 1.8, walkAnimAt: 2.8 },
   // Le Prieur : l'Eye Summoner de Polygonal Mind habillé du squelette UAL (tools/blender/summoner.py), marche solennelle
   prieur: { file: 'prieur.glb', height: 2.2, walkAnimAt: 1.3 },
+  // Le squelette que le Prieur fait sortir de terre : Skeleton Minion KayKit (tools/blender/kaykit.py --variant squelette)
+  squelette: { file: 'squelette.glb', height: 1.3, walkAnimAt: 2.0 },
   // Le Fantôme du cloître : fantôme du kit Kenney cimetière (pièces animées, sans squelette), translucide, il flotte
   fantome: {
     file: 'character-ghost.glb', height: 1.2, walkAnimAt: 2.5,
@@ -107,6 +109,8 @@ export const ZOMBIE_VISUAL = {
     attack: ['Idle_Attack', 'Punch', 'Jump'],
     hit: ['HitReact'],
     death: ['Death'],
+    // Geste d'invocation (le Prieur) ; un modèle qui n'en a pas reprend son attaque
+    cast: ['Cast'],
   },
   /** Cadence maxi de l'animation de marche (fois la normale) : une course rapide ne la fait pas s'emballer. */
   maxWalkRate: 3,

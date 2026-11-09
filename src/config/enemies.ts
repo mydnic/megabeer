@@ -24,6 +24,28 @@ export type EnemyDef = {
   ghost?: GhostDef;
   /** Brique Protecteur : les ennemis autour de lui prennent moins de dégâts. */
   protector?: ProtectorDef;
+  /** Brique Invocateur : à portée, il s'arrête et fait sortir d'autres ennemis de terre autour de lui. */
+  summoner?: SummonerDef;
+};
+
+/**
+ * Brique Invocateur (GDD section 11) : quand le joueur est à portée, il s'arrête, fait son geste
+ * (sans bouger, sans frapper), puis des ennemis sortent de terre en cercle autour de lui. Il
+ * recommence après un délai. Au contact, il frappe comme les autres.
+ */
+export type SummonerDef = {
+  /** Ennemi invoqué (identifiant de ENEMIES) et nombre par invocation. */
+  enemy: string;
+  count: number;
+  /** Distance au joueur (m) sous laquelle il invoque. */
+  range: number;
+  /** Délai avant la première invocation (s), puis entre deux invocations (s). */
+  firstDelay: number;
+  cooldown: number;
+  /** Durée du geste (s) avant que les invoqués sortent de terre. */
+  cast: number;
+  /** Rayon du cercle où ils sortent, autour de lui (m). */
+  radius: number;
 };
 
 /**
@@ -103,8 +125,13 @@ export const ENEMIES = {
   reliques: { name: 'Moine porte-reliques', model: 'porte_reliques', hp: 18, speed: 2.6, damage: 6, xp: 6, protector: { radius: 6, reduction: 0.5 } },
   /** Marcheur : s'approche et frappe au corps à corps. */
   gargouille: { name: 'Gargouille', model: 'gargouille', hp: 20, speed: 2.8, damage: 8, xp: 6 },
-  /** Invocateur : fait sortir des squelettes de terre (brique à venir). */
-  prieur: { name: 'Prieur', model: 'prieur', hp: 28, speed: 2.4, damage: 8, xp: 8 },
+  /** Invocateur : fait sortir des squelettes de terre autour de lui. */
+  prieur: {
+    name: 'Prieur', model: 'prieur', hp: 28, speed: 2.4, damage: 8, xp: 8,
+    summoner: { enemy: 'squelette', count: 3, range: 14, firstDelay: 3, cooldown: 8, cast: 0.9, radius: 2 },
+  },
+  /** Invoqué par le Prieur (hors roster) : fragile, rapide, rapporte peu (pas de bière à farmer). */
+  squelette: { name: 'Squelette', model: 'squelette', hp: 5, speed: 3.4, damage: 5, xp: 1 },
 } as const satisfies Record<string, EnemyDef>;
 
 export type EnemyId = keyof typeof ENEMIES;

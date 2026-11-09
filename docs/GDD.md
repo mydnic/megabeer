@@ -645,7 +645,7 @@ Scaling actuel : PV des ennemis x(1 + temps/90 s). Spawn : intervalle de 1,1 s q
 | 5 | Fantôme du cloître | Fantôme | Traverse les murs, intouchable 1 s sur 3 |
 | 6 | Moine porte-reliques | Protecteur | Ses voisins prennent 50% de dégâts en moins |
 | 7 | Gargouille | Marcheur | Contact (bond retiré le 2026-11-09, voir section 21) |
-| 8 | Prieur | Invocateur | Fait sortir des squelettes de terre |
+| 8 | Prieur | Invocateur | Fait sortir 3 squelettes de terre autour de lui toutes les 8 s |
 | 9 | Frère cellérier | Tank + diviseur | Se divise en 3 moinillons à sa mort |
 
 ### Roster Brasserie industrielle [DÉCIDÉ]
@@ -1179,6 +1179,8 @@ L'ordre après l'étape 7 est indicatif : il se rediscute à chaque feature vali
 | Gargouille | Le Dragon du pack Animated Monsters (Quaternius) en pierre grise aux yeux rougeoyants, préparé par `tools/blender/monsters.py` (couleurs unies rangées dans une palette). 20 PV, 2,8 m/s, 8 PV au contact. Au roster de l'Abbaye à 7:00 |
 | Brique Sauteur | Essayée sur la Gargouille puis retirée le 2026-11-09 : l'utilisateur la veut simple, elle s'approche et frappe au corps à corps. L'implémentation (se ramasse, zone marquée au sol, bond en cloche, esquive par le saut, sonnée, délai, éclats de pierre) reste dans le commit f67a252, à reprendre pour un vrai sauteur (la Majorette) |
 | Mécaniques des ennemis | Règle (2026-11-09) : par défaut, un nouvel ennemi s'approche et frappe au corps à corps, sans animation ni mécanique d'activation (bond, charge, zone marquée...). Ce qui le distingue : son look, sa taille, ses stats. Une mécanique n'est ajoutée que si l'utilisateur la demande. Chaque ennemi est quand même validé ensemble en jeu, un par un |
+| Prieur | L'Eye Summoner de Polygonal Mind (100 Avatars, robe noire, coiffe à cornes avec un oeil, encensoirs), choisi par l'utilisateur le 2026-11-09. Sans squelette d'origine : `tools/blender/summoner.py` l'habille du squelette du mannequin UAL ajusté à son corps (poids à l'os le plus proche), avec la marche solennelle et le geste d'invocation (Spell_Simple). 28 PV, 2,4 m/s, 8 PV au contact, 2,2 m. Au roster de l'Abbaye à 8:00 |
+| Brique Invocateur | Gardée pour le Prieur (« certains ennemis auront des mécaniques, mais très peu, on validera ensemble à chaque fois »). À moins de 14 m du joueur, 3 s après son arrivée puis toutes les 8 s : il s'arrête, fait son geste 0,9 s (il le finit même sous les coups ; mort avant, rien ne sort), puis 3 squelettes sortent de terre en cercle à 2 m de lui (encensoir qui tinte, terre qui craque, mottes de terre). Squelettes : Skeleton Minion KayKit (`kaykit.py --variant squelette`), 5 PV, 3,4 m/s, 5 PV au contact, 1 de bière, hors roster |
 | Brique Tireur | Fiche `thrower` réutilisable par tout ennemi : il s'arrête à portée (15 m), lance en cloche vers l'endroit où est le joueur au lâcher (vol 1,3 s), impact marqué au sol par un anneau rouge qui se remplit, éclatement de 1,6 m (10 PV). Au contact il frappe comme les autres. Moine lanceur : 14 PV, 2,4 m/s, 4 de bière, arrive à 2:00 |
 | Plus tard | Les nouveaux types d'ennemis par minute, les élites, les boss et les videurs arrivent avec leurs features |
 
