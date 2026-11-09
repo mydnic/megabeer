@@ -48,7 +48,7 @@ export const futIcon = (cls: string) => `<svg viewBox="0 0 40 90" class="${cls}"
  */
 export const gueuzeIcon = (cls: string) => `<svg viewBox="0 0 40 90" class="${cls}"><path d="M16 4h8v20c0 5 9 9 9 17v39c0 3-2 5-5 5H12c-3 0-5-2-5-5V41c0-8 9-12 9-17z"
  fill="#3a0d12" stroke="#1a120c" stroke-width="3" stroke-linejoin="round"/>
-<path d="M14.6 3.5h10.8v20.5c0 3 2 5 4 6.5l-2 1.6l-1.6-1.4l-1.8 1.6l-1.8-1.6l-1.8 1.6l-1.8-1.6l-1.6 1.4l-2-1.6c2-1.5 4-3.5 4-6.5z"
+<path d="M14.6 3.5h10.8v20.5c0 3 2 5 4 6.5L27.1 32.1L24.7 30.7L22.4 32.2L20 30.7L17.6 32.2L15.3 30.7L12.9 32.1L10.6 30.5c2-1.5 4-3.5 4-6.5z"
  fill="#d0142c" stroke="#1a120c" stroke-width="2" stroke-linejoin="round"/>
 <path d="M17 8v14M21.5 7v15" stroke="#ff6a7a" stroke-width="1" opacity=".7"/>
 <rect x="8.5" y="48" width="23" height="27" rx="2" fill="#2a0a0e" stroke="#e9d9b6" stroke-width="1.6"/>
