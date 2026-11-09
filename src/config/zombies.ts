@@ -6,12 +6,13 @@
  * laquelle l'animation de déplacement joue à vitesse normale.
  */
 export const ZOMBIE_MODELS = {
-  basic: { file: 'Zombie_Basic.gltf', height: 1.85 },
-  chubby: { file: 'Zombie_Chubby.gltf', height: 1.9 },
+  basic: { file: 'Zombie_Basic.gltf', height: 1.5 },
+  chubby: { file: 'Zombie_Chubby.gltf', height: 1.55 },
   // Les moines : le Moine de Čestmír Dammer (kelgar.org), préparé par tools/blender/monk.py
-  moine: { file: 'moine.glb', height: 1.8 },
+  // Sa marche d'origine est lente (0,56 m/s à cette taille) : jouée deux fois plus vite, la bure cache le glissement
+  moine: { file: 'moine.glb', height: 2.0, walkAnimAt: 1.2 },
   // Le Novice : il court (et bondit pour frapper, il n'a pas d'attaque)
-  ribcage: { file: 'Zombie_Ribcage.gltf', height: 1.7, clips: { walk: ['Run'] }, walkAnimAt: 4.5 },
+  ribcage: { file: 'Zombie_Ribcage.gltf', height: 1.4, clips: { walk: ['Run'] }, walkAnimAt: 3.7 },
 } as const;
 
 export type ZombieModel = keyof typeof ZOMBIE_MODELS;
@@ -29,8 +30,8 @@ export const ZOMBIE_MOVE = {
   /** Contournement : durée (s) et part de déviation sur le côté. */
   detourTime: 0.8,
   detourBlend: 0.75,
-  /** Vitesse de marche (m/s) pour laquelle l'animation Walk joue à vitesse normale (pas de patinage). */
-  walkAnimAt: 2.2,
+  /** Vitesse de marche (m/s) pour laquelle l'animation Walk joue à vitesse normale (pas de patinage), zombies Quaternius de 1,5 m. */
+  walkAnimAt: 1.8,
 } as const;
 
 /** Le coup au contact (les dégâts arriveront avec les PV, feature 3). */
