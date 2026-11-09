@@ -42,7 +42,7 @@ Fait et validé dans la feature 7 :
    la synergie Black and Tan avec son affichage partout. Son évolution (Imperial Stout) attend l'objet
    « Bière plus forte » (feature objets). **Choisir avec l'utilisateur l'arme suivante** (roster GDD
    section 6) ou une autre feature (section 20).
-   **En cours : le Fût qui roule** (n° 12, choisi le 2026-11-09). Fait, à faire valider en jeu : l'arme
+   **Le Fût qui roule** (n° 12) est **validé** (2026-11-09) : l'arme
    (`weapons/fut.ts`, réglages `FUT`, modèle `props.py --variant fut`, icône, sons `FUT_SOUND`, cartes
    `FUT_UPGRADES`), DEV : « Donner l'arme » fut. Ensuite : ses synergies (aucune avec la Canette ni la Stout
    au GDD ; Pétanque et Flaque de bière plus tard).
