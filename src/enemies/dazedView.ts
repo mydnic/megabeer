@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { DAZED_LOOK as L } from '../config/weapons';
 import { ZOMBIE_MODELS } from '../config/zombies';
+import { LAYER_SKY } from '../render/materials';
 import type { Zombie } from './zombie';
 
 /** Bulle de mousse (texture faite au vol) : disque crème cerclé de brun stout, petit reflet. */
@@ -47,6 +48,8 @@ export function createDazedView(scene: THREE.Scene) {
           if (!s) {
             s = new THREE.Sprite(material);
             s.renderOrder = 3;
+            // Couche du ciel : hors de la passe d'occlusion ambiante, qui dessinerait le carré du sprite en noir
+            s.layers.set(LAYER_SKY);
             scene.add(s);
             sprites.push(s);
           }
