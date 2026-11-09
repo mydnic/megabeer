@@ -107,7 +107,7 @@ BD/aquarelle, Valheim, style anime, herbe dense.
 
 `tools/blender/buveur.py` (le Buveur, rig et clips), `tools/blender/abbaye.py` et `tools/blender/monk.py`
 (prépare le Moine de `MONK.blend` pour la foule : textures en un atlas, un seul matériau, animations
-renommées comme les zombies ; source dans `Desktop/MODELS/personnages/kelgar_monk`) génèrent les GLB
+renommées comme les zombies ; `--variant` : lanceur, ou pelerin avec bure rouge et tonneau `--barrel` ; source dans `Desktop/MODELS/personnages/kelgar_monk`) génèrent les GLB
 de `src/assets/models/`. Ne pas éditer les GLB à la main : modifier le script et relancer.
 
 ```

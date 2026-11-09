@@ -48,6 +48,8 @@ export const ENEMIES = {
     name: 'Moine lanceur', model: 'moine', hp: 14, speed: 2.4, damage: 5, xp: 4,
     thrower: { range: 15, cooldown: 3.2, firstDelay: 1.5, flightTime: 1.3, arc: 5, radius: 1.6, damage: 10 },
   },
+  /** Kamikaze (pas encore dans le roster : son explosion en gerbe de vin arrive au checkpoint suivant). */
+  pelerin: { name: 'Pèlerin gonflé', model: 'moine_pelerin', hp: 10, speed: 3.6, damage: 12, xp: 4 },
 } as const satisfies Record<string, EnemyDef>;
 
 export type EnemyId = keyof typeof ENEMIES;

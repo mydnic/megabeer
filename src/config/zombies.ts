@@ -11,6 +11,8 @@ export const ZOMBIE_MODELS = {
   // Les moines : le Moine de Čestmír Dammer (kelgar.org), préparé par tools/blender/monk.py
   // Sa marche d'origine est lente (0,56 m/s à cette taille) : jouée deux fois plus vite, la bure cache le glissement
   moine: { file: 'moine.glb', height: 2.0, walkAnimAt: 1.2 },
+  // Le Pèlerin gonflé : bure rouge vin et tonneau enfilé autour du ventre (monk.py --variant pelerin). Il court.
+  moine_pelerin: { file: 'moine_pelerin.glb', height: 2.0, clips: { walk: ['Run'] }, walkAnimAt: 1.8 },
   // Le Novice : il court (et bondit pour frapper, il n'a pas d'attaque)
   ribcage: { file: 'Zombie_Ribcage.gltf', height: 1.4, clips: { walk: ['Run'] }, walkAnimAt: 3.7 },
 } as const;

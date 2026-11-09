@@ -7,7 +7,7 @@ import { patchVat, vatUniforms } from '../render/vat';
 import { ZOMBIE_STATES as STATES, type BakedClip, type ZombieState, type ZombieTimings } from './zombie';
 
 // Zombies Quaternius d'origine, et le Moine préparé par tools/blender/monk.py
-const urls = import.meta.glob(['../assets/quaternius-zombies/*.gltf', '../assets/models/moine.glb'], { query: '?url', import: 'default', eager: true }) as Record<string, string>;
+const urls = import.meta.glob(['../assets/quaternius-zombies/*.gltf', '../assets/models/moine*.glb'], { query: '?url', import: 'default', eager: true }) as Record<string, string>;
 
 /** Un modèle de zombie prêt pour la foule : géométrie fusionnée, matériaux, animations pré-calculées. */
 export type ZombieKind = ZombieTimings & {
