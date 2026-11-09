@@ -42,14 +42,23 @@ export const futIcon = (cls: string) => `<svg viewBox="0 0 40 90" class="${cls}"
 <rect x="17.5" y="43" width="5" height="4" rx="1" fill="#3a2214"/>
 <path d="M10 36c0 6 0 12 1 18" stroke="#fff3" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`;
 
-/** Gueuze : bouteille fine en verre rose rouge framboise, épaules coniques, col à bague, bouchon de liège. */
-export const gueuzeIcon = (cls: string) => `<svg viewBox="0 0 40 90" class="${cls}"><path d="M16 12h8v6h1v6c0 4 8 8 8 16v40c0 3-2 5-5 5H12c-3 0-5-2-5-5V40c0-8 8-12 8-16v-6h1z"
- fill="#c8264f" stroke="#1a120c" stroke-width="3" stroke-linejoin="round"/>
-<rect x="14" y="17" width="12" height="5" rx="1.5" fill="#a81d41" stroke="#1a120c" stroke-width="2"/>
-<rect x="16" y="4" width="8" height="10" rx="2" fill="#b08a5a" stroke="#1a120c" stroke-width="2.5"/>
-<path d="M18 7h4M18 10h4" stroke="#7a5a34" stroke-width="1"/>
-<circle cx="16" cy="60" r="1.6" fill="#ffd0dc"/><circle cx="22" cy="68" r="1.2" fill="#ffd0dc"/><circle cx="25" cy="55" r="1" fill="#ffd0dc"/>
-<path d="M11 44c0 8 0 18 1 28" stroke="#fff4" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`;
+/**
+ * Gueuze, d'après une bouteille de kriek lambic 25 cl : verre sombre rouge cerise, col et épaules sous
+ * une feuille rouge brillante, étiquette foncée à double liseré crème, cerises, nom en crème.
+ */
+export const gueuzeIcon = (cls: string) => `<svg viewBox="0 0 40 90" class="${cls}"><path d="M16 4h8v20c0 5 9 9 9 17v39c0 3-2 5-5 5H12c-3 0-5-2-5-5V41c0-8 9-12 9-17z"
+ fill="#3a0d12" stroke="#1a120c" stroke-width="3" stroke-linejoin="round"/>
+<path d="M14.6 3.5h10.8v20.5c0 3 2 5 4 6.5l-2 1.6l-1.6-1.4l-1.8 1.6l-1.8-1.6l-1.8 1.6l-1.8-1.6l-1.6 1.4l-2-1.6c2-1.5 4-3.5 4-6.5z"
+ fill="#d0142c" stroke="#1a120c" stroke-width="2" stroke-linejoin="round"/>
+<path d="M17 8v14M21.5 7v15" stroke="#ff6a7a" stroke-width="1" opacity=".7"/>
+<rect x="8.5" y="48" width="23" height="27" rx="2" fill="#2a0a0e" stroke="#e9d9b6" stroke-width="1.6"/>
+<rect x="10.4" y="50" width="19.2" height="23" rx="1" fill="none" stroke="#e9d9b6" stroke-width=".6"/>
+<text x="20" y="57.5" text-anchor="middle" textLength="17" lengthAdjust="spacingAndGlyphs" font-family="Georgia, 'Times New Roman', serif" font-weight="900" font-size="6.2" fill="#f1e4c4">Gueuze</text>
+<path d="M18.4 61.4c.6-1.2 1.4-1.8 2.6-2.1M21 59.3c.4 1.2 1 2 2 2.4" stroke="#3f7a2a" stroke-width=".9" fill="none"/>
+<circle cx="18.2" cy="63.4" r="2.1" fill="#c8102e"/><circle cx="22.8" cy="63.6" r="2.1" fill="#c8102e"/>
+<circle cx="17.6" cy="62.7" r=".6" fill="#ff9aa6"/><circle cx="22.2" cy="62.9" r=".6" fill="#ff9aa6"/>
+<path d="M13 69h14" stroke="#e9d9b6" stroke-width=".7"/>
+<path d="M10.5 36c-.5 6-.5 8 0 10" stroke="#fff3" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>`;
 
 /** Icône de chaque arme (ajouter une arme = ajouter son icône ici). */
 const WEAPON_ICONS: Record<WeaponId, (cls: string) => string> = {
