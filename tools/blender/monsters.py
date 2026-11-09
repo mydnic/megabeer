@@ -39,10 +39,14 @@ VARIANTS = {
         # Animation du pack -> noms attendus par le jeu (une même animation peut servir deux fois)
         'clips': {
             'Dragon_Flying': ['Walk', 'Idle'],
-            'Dragon_Attack': ['Punch'],
+            # Dragon_Attack est une toupie (coup de queue en vrille) : on prend le coup de tête
+            'Dragon_Attack2': ['Punch'],
             'Dragon_Hit': ['HitReact'],
             'Dragon_Death': ['Death'],
         },
+        # Images gardées d'une animation : le coup de tête plonge à l'image 11, on coupe le retour
+        # au repos pour qu'il porte vers 45 % du clip (ZOMBIE_ATTACK.hitAt)
+        'crops': {'Dragon_Attack2': (1, 24)},
     },
 }
 variant = VARIANTS[args.variant]
@@ -116,6 +120,10 @@ for a in list(bpy.data.actions):
     if not targets:
         bpy.data.actions.remove(a)
         continue
+    crop = variant.get('crops', {}).get(short)
+    if crop:
+        a.use_frame_range = True
+        a.frame_start, a.frame_end = crop
     a.name = targets[0]
     for extra in targets[1:]:
         a.copy().name = extra
