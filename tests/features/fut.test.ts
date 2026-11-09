@@ -17,10 +17,11 @@ function arena() {
   return { t, fut };
 }
 
-/** Un zombie qui ne meurt pas, à `dist` m devant le joueur. */
+/** Un zombie immobile qui ne meurt pas, à `dist` m devant le joueur (passif, il viendrait contourner le mur). */
 function dummy(t: ReturnType<typeof createTestGame>, dist: number, side = 0) {
   const z = t.game.spawnZombie('zombie', t.inFront(dist, side), t.game.player.facing.clone().negate())!;
   z.hp = 1e6;
+  z.stagger = 1e6;
   return z;
 }
 

@@ -33,9 +33,25 @@ describe('La Gueuze', () => {
     expect(victims.has(alone)).toBe(false);
   });
 
-  it("n'explose qu'après son retard, une fois posée au sol", () => {
+  it('touche un zombie en vol : elle explose aussitôt, à l\'impact', () => {
     const { t, gueuze } = arena();
-    dummy(t, 9);
+    const z = dummy(t, 9);
+    let landed = false;
+    expect(t.playUntil(() => {
+      if (gueuze.projectiles.some((p) => p.active && p.vel.lengthSq() === 0)) landed = true;
+      return t.events('weaponExploded').length > 0;
+    }, 6)).toBe(true);
+    // Jamais posée au sol : pas de retard
+    expect(landed).toBe(false);
+    expect(t.events('weaponExploded')[0].pos.distanceTo(z.pos)).toBeLessThan(2.5);
+    expect(t.events('zombieHit').some((h) => h.zombie === z && h.weapon === gueuze)).toBe(true);
+  });
+
+  it("sans zombie touché, elle se pose au sol et n'explose qu'après son retard", () => {
+    const { t, gueuze } = arena();
+    // Deux zombies écartés : le centre du groupe tombe entre eux, la bouteille ne touche personne
+    dummy(t, 9, -1.4);
+    dummy(t, 9, 1.4);
     // Posée : elle ne vole plus (vitesse nulle)
     expect(t.playUntil(() => gueuze.projectiles.some((p) => p.active && p.vel.lengthSq() === 0), 6)).toBe(true);
     const landedAt = t.game.runTime;

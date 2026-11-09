@@ -115,6 +115,12 @@ export const GUEUZE = {
   restHeight: 0.12,
   fizzSpin: 2.5,
   fuse: 0.8,
+  /** En vol, elle explose à l'impact si elle entre dans un zombie : son corps (hauteur, rayon, m) et le rayon de la bouteille (m). */
+  zombieHeight: 1.8,
+  zombieRadius: 0.4,
+  hitRadius: 0.15,
+  /** Hauteur visée au-dessus du centre du groupe (m) : à hauteur de poitrine. */
+  aimHeight: 0.9,
   /** Rayon de l'explosion (m) et recul (fois le recul normal, vers l'extérieur). */
   radius: 3.2,
   knock: 2,

@@ -10,7 +10,8 @@ type Grenade = Projectile & { fuse: number; landed: boolean };
 
 /**
  * La Gueuze (GDD section 6, n° 8) : une grenade à retardement. Lancée en cloche sur le plus gros
- * groupe de zombies à portée, elle passe au-dessus d'eux, se pose au sol et tourne sur elle-même en
+ * groupe de zombies à portée. Si elle touche un zombie en vol, elle explose à l'impact ; sinon elle se pose au
+ * sol et tourne sur elle-même en
  * moussant le temps de son retard, puis explose : dégâts et recul à tous les zombies dans le rayon.
  * Elle ne blesse jamais le joueur.
  */
@@ -79,6 +80,20 @@ export function createGueuze(ctx: WeaponContext): Weapon {
     b.active = true;
   }
 
+  /** La bouteille est-elle dans le corps d'un zombie (cylindre debout sur ses pieds) ? */
+  function touchesZombie(p: THREE.Vector3) {
+    for (const z of ctx.zombies()) {
+      if (!z.targetable || z.pos.distanceToSquared(p) > 9) continue;
+      dlt.subVectors(p, z.pos);
+      up.copy(z.pos).normalize();
+      const h = dlt.dot(up);
+      if (h < 0 || h > G.zombieHeight) continue;
+      dlt.addScaledVector(up, -h);
+      if (dlt.length() < G.zombieRadius + G.hitRadius) return true;
+    }
+    return false;
+  }
+
   /** Explosion : dégâts et recul (vers l'extérieur) à tous les zombies dans le rayon. */
   function explode(b: Grenade) {
     const radius = G.radius * mods.radius;
@@ -106,7 +121,8 @@ export function createGueuze(ctx: WeaponContext): Weapon {
       if (!targets.length) return;
       timer = G.cooldown / (ctx.stats.attackSpeed * mods.rate);
       ctx.rig.gesture(1);
-      for (const to of targets) launch(to);
+      // Visée à hauteur de poitrine : sur un zombie, elle entre dans son corps au lieu de frôler ses pieds
+      for (const to of targets) launch(to.addScaledVector(up.copy(to).normalize(), G.aimHeight));
     },
     updateProjectiles(dt: number) {
       for (const b of projectiles) {
@@ -117,6 +133,8 @@ export function createGueuze(ctx: WeaponContext): Weapon {
           up.copy(b.pos).normalize();
           b.vel.addScaledVector(up, -b.gravity * dt);
           b.pos.addScaledVector(b.vel, dt);
+          // Elle touche un zombie en vol : explosion à l'impact, sans retard
+          if (touchesZombie(b.pos)) { b.active = false; explode(b); continue; }
           const g = ctx.groundAt(b.pos);
           if (b.pos.length() <= g + G.restHeight) {
             b.pos.setLength(g + G.restHeight);
