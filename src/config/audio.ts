@@ -57,6 +57,8 @@ export const AUDIO = {
   split: { sample: 'impactSoft_heavy', volume: 0.8, pitch: 0.7, hearDist: 35 },
   /** Prieur : tintement de cloche d'encensoir au début du geste, craquement de terre quand les squelettes sortent. */
   summon: { castSample: 'impactBell_heavy', castVolume: 0.35, castPitch: 1.6, earthSample: 'impactMining', earthVolume: 0.7, earthPitch: 0.6, hearDist: 35 },
+  /** Fondu de l'ambiance quand une partie commence ou finit (constante de temps, s). */
+  ambienceFade: 0.6,
   /** Ambiances synthétisées : vent permanent, oiseaux le jour, chouette la nuit. */
   wind: { volume: 0.22 },
   birds: { volume: 0.05, everyMin: 0.8, everyMax: 3.5 },

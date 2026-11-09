@@ -3,16 +3,22 @@ import type { AudioEngine } from './audio';
 
 /**
  * Ambiances synthétisées (aucun fichier) : vent permanent qui souffle par rafales, oiseaux le jour,
- * chouette la nuit. Le mélange suit le facteur jour/nuit sous le joueur.
+ * chouette la nuit. Le mélange suit le facteur jour/nuit sous le joueur. Seulement pendant une partie :
+ * sur l'écran d'accueil, la planète n'est pas chargée, l'ambiance est coupée (fondu).
  */
 export function createAmbience(audio: AudioEngine) {
   let day = 1;
   let started = false;
-  let dayBus: GainNode | undefined, nightBus: GainNode | undefined;
+  let dayBus: GainNode | undefined, nightBus: GainNode | undefined, bus: GainNode | undefined;
   let nextBird = 0, nextOwl = 0;
 
   audio.onStart((a) => {
-    const ctx = a.ctx!, out = a.ambience!;
+    const ctx = a.ctx!;
+    // Bus de l'ambiance : coupé hors partie, en fondu
+    bus = ctx.createGain();
+    bus.gain.value = 0;
+    bus.connect(a.ambience!);
+    const out = bus;
     // --- Vent : bruit blanc filtré, rafales lentes
     const wind = ctx.createBufferSource();
     wind.buffer = a.noiseBuffer!;
@@ -92,11 +98,13 @@ export function createAmbience(audio: AudioEngine) {
   }
 
   return {
-    /** dayFactor : 1 en plein jour, 0 en pleine nuit. */
-    update(dayFactor: number) {
+    /** dayFactor : 1 en plein jour, 0 en pleine nuit ; inGame : une partie est en cours (sinon silence). */
+    update(dayFactor: number, inGame: boolean) {
       day = dayFactor;
       if (!started || !audio.ctx) return;
       const t = audio.ctx.currentTime;
+      bus!.gain.setTargetAtTime(inGame ? 1 : 0, t, A.ambienceFade);
+      if (!inGame) return;
       dayBus!.gain.setTargetAtTime(day, t, 0.5);
       nightBus!.gain.setTargetAtTime(1 - day, t, 0.5);
       if (t > nextBird) {

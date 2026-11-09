@@ -153,7 +153,7 @@ function frame(now: number) {
   sky.update(dt, player.renderPos, camera);
   clouds.update(dt);
   planet.decor.update(dt, player.renderPos, 1 - sky.day);
-  ambience.update(sky.day);
+  ambience.update(sky.day, game.phase !== 'home');
   // Mise au point de la profondeur de champ sur le perso
   pipeline.focusDistance = camera.position.distanceTo(focusPoint.copy(player.renderPos).addScaledVector(player.upDir, 1.1));
   // Accueil : écran séparé, le monde n'est pas rendu
