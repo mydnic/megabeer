@@ -8,8 +8,8 @@
 export const ZOMBIE_MODELS = {
   basic: { file: 'Zombie_Basic.gltf', height: 1.85 },
   chubby: { file: 'Zombie_Chubby.gltf', height: 1.9 },
-  // Le Moine lanceur : zombie manchot Quaternius en bure (tools/blender/moine.py --variant lanceur)
-  arm: { file: 'moine_lanceur.glb', height: 1.85 },
+  // Les moines : le Moine de Čestmír Dammer (kelgar.org), préparé par tools/blender/monk.py
+  moine: { file: 'moine.glb', height: 1.8 },
   // Le Novice : il court (et bondit pour frapper, il n'a pas d'attaque)
   ribcage: { file: 'Zombie_Ribcage.gltf', height: 1.7, clips: { walk: ['Run'] }, walkAnimAt: 4.5 },
 } as const;

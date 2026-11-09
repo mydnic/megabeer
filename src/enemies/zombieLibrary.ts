@@ -6,8 +6,8 @@ import { characterMaterial } from '../render/materials';
 import { patchVat, vatUniforms } from '../render/vat';
 import { ZOMBIE_STATES as STATES, type BakedClip, type ZombieState, type ZombieTimings } from './zombie';
 
-// Zombies Quaternius d'origine, et ceux habillés par tools/blender/moine.py (src/assets/models/moine_*.glb)
-const urls = import.meta.glob(['../assets/quaternius-zombies/*.gltf', '../assets/models/moine_*.glb'], { query: '?url', import: 'default', eager: true }) as Record<string, string>;
+// Zombies Quaternius d'origine, et le Moine préparé par tools/blender/monk.py
+const urls = import.meta.glob(['../assets/quaternius-zombies/*.gltf', '../assets/models/moine.glb'], { query: '?url', import: 'default', eager: true }) as Record<string, string>;
 
 /** Un modèle de zombie prêt pour la foule : géométrie fusionnée, matériaux, animations pré-calculées. */
 export type ZombieKind = ZombieTimings & {
@@ -16,7 +16,7 @@ export type ZombieKind = ZombieTimings & {
   depthMaterial: THREE.Material;
 };
 /**
- * Charge les 4 modèles et pré-calcule leurs animations dans une seule texture (voir render/vat.ts) :
+ * Charge les modèles et pré-calcule leurs animations dans une seule texture (voir render/vat.ts) :
  * pour chaque image, la matrice de chaque os (os animé x inverse de liaison), dans le repère du modèle.
  */
 type ModelDef = { clips?: Partial<Record<ZombieState, readonly string[]>> };

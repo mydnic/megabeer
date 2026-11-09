@@ -45,7 +45,7 @@ export const ENEMIES = {
   novice: { name: 'Novice zombie', model: 'ribcage', hp: 5, speed: 5.2, damage: 6, xp: 3 },
   /** Tireur : bouteilles vides lancées en cloche, impact marqué au sol. */
   lanceur: {
-    name: 'Moine lanceur', model: 'arm', hp: 14, speed: 2.4, damage: 5, xp: 4,
+    name: 'Moine lanceur', model: 'moine', hp: 14, speed: 2.4, damage: 5, xp: 4,
     thrower: { range: 15, cooldown: 3.2, firstDelay: 1.5, flightTime: 1.3, arc: 5, radius: 1.6, damage: 10 },
   },
 } as const satisfies Record<string, EnemyDef>;

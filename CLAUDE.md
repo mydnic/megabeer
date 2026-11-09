@@ -105,8 +105,9 @@ BD/aquarelle, Valheim, style anime, herbe dense.
 
 ## Modèles maison (Blender)
 
-`tools/blender/buveur.py` (le Buveur, rig et clips), `tools/blender/abbaye.py` et `tools/blender/moine.py`
-(habille un zombie Quaternius en moine : bure, manches, capuche, cordelière, animations gardées ; `--variant`) génèrent les GLB
+`tools/blender/buveur.py` (le Buveur, rig et clips), `tools/blender/abbaye.py` et `tools/blender/monk.py`
+(prépare le Moine de `MONK.blend` pour la foule : textures en un atlas, un seul matériau, animations
+renommées comme les zombies ; source dans `Desktop/MODELS/personnages/kelgar_monk`) génèrent les GLB
 de `src/assets/models/`. Ne pas éditer les GLB à la main : modifier le script et relancer.
 
 ```
