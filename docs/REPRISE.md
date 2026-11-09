@@ -44,8 +44,8 @@ Fait et validé dans la feature 7 :
    section 6) ou une autre feature (section 20).
    Visée de toutes les armes (demande de l'utilisateur) : `weapons/targeting.ts`, dégâts réservés par
    cible (`zombie.incoming`), hasard parmi les 3 plus proches encore vivants (`TARGETING.spread`).
-   **En cours : la Gueuze** (n° 8, choisie le 2026-11-09). Elle explose à l'impact si elle touche un zombie en vol. L'utilisateur
-   dit « geuze » ou « kriek » indifféremment : c'est la même arme, nom affiché « Gueuze ». Faite, à faire valider en jeu (`weapons/gueuze.ts`,
+   **La Gueuze** (n° 8) est **validée** (2026-11-09), visée comprise. Elle explose à l'impact si elle touche un zombie en vol. L'utilisateur
+   dit « geuze » ou « kriek » indifféremment : c'est la même arme, nom affiché « Gueuze ». Fichiers : `weapons/gueuze.ts`,
    réglages `GUEUZE`, modèle `props.py --variant gueuze`, icône, explosion `GUEUZE_BURST` / `GUEUZE_BLAST`,
    événement `weaponExploded`, cartes `GUEUZE_UPGRADES`). DEV : « Donner l'arme » gueuze.
    **Le Fût qui roule** (n° 12) est **validé** (2026-11-09) : l'arme
