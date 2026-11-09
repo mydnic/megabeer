@@ -4,6 +4,11 @@ Survivors-like 3D low-poly dans le navigateur, entre potes. Un buveur (pinte à 
 de petites planètes sphériques, en repoussant des zombies avec des armes à base de bière. Textes du
 jeu en français.
 
+**Reprise : lire d'abord [docs/REPRISE.md](docs/REPRISE.md)** : où en est le travail, la prochaine
+étape, ce qu'on a appris avec l'utilisateur, les commandes des modèles, les pièges connus. Quand
+l'utilisateur dit « reprends », c'est la « Prochaine étape » de ce fichier. Le tenir à jour à chaque
+étape terminée, puis commit et push.
+
 **Le document de référence est [docs/GDD.md](docs/GDD.md)** : vision, règles, roster, et surtout la
 section 20 (développement agile feature par feature) et la section 21 (journal des décisions). Le
 lire avant toute nouvelle feature.
@@ -15,8 +20,9 @@ Le jeu a été **refait de zéro** (three.js + TypeScript). L'ancien proto JS (s
 
 - **Feature par feature** : une feature n'est commencée que quand la précédente est 100 % finie et
   validée par l'utilisateur, découpée en checkpoints validés un par un en jeu.
-- **Commiter après chaque modification**, sans demander ni l'annoncer : on revient en arrière avec
-  git si besoin. Ne **jamais push** sans demande explicite.
+- **Commit et push après chaque modification**, sans demander ni l'annoncer (demandé par
+  l'utilisateur le 2026-11-09 : une autre session doit pouvoir reprendre au même endroit). `git pull`
+  avant de pousser, jamais de `--force`. On revient en arrière avec git si besoin.
 - **`git pull` en début de session** : d'autres personnes poussent sur ce repo.
 - **Aucune attribution IA dans les commits** (pas de Co-Authored-By Claude, pas de trailer).
 - Bugs et idées : GitHub Issues (`github.com/mydnic/megabeer`), pas de TODO dans le code.
