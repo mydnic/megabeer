@@ -42,11 +42,21 @@ export const futIcon = (cls: string) => `<svg viewBox="0 0 40 90" class="${cls}"
 <rect x="17.5" y="43" width="5" height="4" rx="1" fill="#3a2214"/>
 <path d="M10 36c0 6 0 12 1 18" stroke="#fff3" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`;
 
+/** Gueuze : bouteille fine en verre rose rouge framboise, épaules coniques, col à bague, bouchon de liège. */
+export const gueuzeIcon = (cls: string) => `<svg viewBox="0 0 40 90" class="${cls}"><path d="M16 12h8v6h1v6c0 4 8 8 8 16v40c0 3-2 5-5 5H12c-3 0-5-2-5-5V40c0-8 8-12 8-16v-6h1z"
+ fill="#c8264f" stroke="#1a120c" stroke-width="3" stroke-linejoin="round"/>
+<rect x="14" y="17" width="12" height="5" rx="1.5" fill="#a81d41" stroke="#1a120c" stroke-width="2"/>
+<rect x="16" y="4" width="8" height="10" rx="2" fill="#b08a5a" stroke="#1a120c" stroke-width="2.5"/>
+<path d="M18 7h4M18 10h4" stroke="#7a5a34" stroke-width="1"/>
+<circle cx="16" cy="60" r="1.6" fill="#ffd0dc"/><circle cx="22" cy="68" r="1.2" fill="#ffd0dc"/><circle cx="25" cy="55" r="1" fill="#ffd0dc"/>
+<path d="M11 44c0 8 0 18 1 28" stroke="#fff4" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`;
+
 /** Icône de chaque arme (ajouter une arme = ajouter son icône ici). */
 const WEAPON_ICONS: Record<WeaponId, (cls: string) => string> = {
   canette: canetteIcon,
   stout: stoutIcon,
   fut: futIcon,
+  gueuze: gueuzeIcon,
 };
 
 export const weaponIcon = (id: WeaponId, cls: string) => WEAPON_ICONS[id](cls);

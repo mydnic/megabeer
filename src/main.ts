@@ -12,8 +12,8 @@ import { createXpDropsView } from './pickups/xpDropsView';
 import { createBottleView } from './weapons/bottleView';
 import { createEnemyShotsView } from './enemies/enemyShotsView';
 import { createShards } from './fx/shards';
-import { BARREL_SHARDS, EARTH_CLODS, SHIELD_SPARKS, STOUT_SPLASH, WINE_BURST } from './config/fx';
-import { CANETTE_LOOK, FUT_LOOK, STOUT_LOOK } from './config/weapons';
+import { BARREL_SHARDS, EARTH_CLODS, GUEUZE_BURST, SHIELD_SPARKS, STOUT_SPLASH, WINE_BURST } from './config/fx';
+import { CANETTE_LOOK, FUT_LOOK, GUEUZE_LOOK, STOUT_LOOK } from './config/weapons';
 import type { WeaponId } from './weapons/weapon';
 import { createKamikazeView } from './enemies/kamikazeView';
 import { createProtectorView } from './enemies/protectorView';
@@ -77,6 +77,7 @@ const bottleViews: Record<WeaponId, Awaited<ReturnType<typeof createBottleView>>
   canette: await createBottleView(scene, CANETTE_LOOK),
   stout: await createBottleView(scene, STOUT_LOOK),
   fut: await createBottleView(scene, FUT_LOOK),
+  gueuze: await createBottleView(scene, GUEUZE_LOOK),
 };
 const enemyShotsView = await createEnemyShotsView(scene);
 const groundAt = (p: THREE.Vector3) => game.player.supportAt(p, p.length());
@@ -89,6 +90,7 @@ const dazedView = createDazedView(scene);
 const sparks = createShards(scene, groundAt, SHIELD_SPARKS);
 const earth = createShards(scene, groundAt, EARTH_CLODS);
 const stoutSplash = createShards(scene, groundAt, STOUT_SPLASH);
+const gueuzeBurst = createShards(scene, groundAt, GUEUZE_BURST);
 const damageNumbers = createDamageNumbers(camera);
 const pint = new PintProp(scene, { verre: new THREE.Color(), biere: new THREE.Color(), mousse: new THREE.Color() }, (p, r) => game.player.supportAt(p, r));
 const rig = new CameraRig(camera);
@@ -102,7 +104,7 @@ wireSounds(game, audio, buveur);
 wireMusic(game, audio, music, 'abbaye');
 
 // --- Effets, interface, journal de run
-const effects = wireEffects(game, { buveur, rig, pint, pipeline, audio, shards, wine, wood, sparks, earth, stoutSplash, damageNumbers });
+const effects = wireEffects(game, { buveur, rig, pint, pipeline, audio, shards, wine, wood, sparks, earth, stoutSplash, gueuzeBurst, damageNumbers });
 const screens = wireScreens(game, { planet, canvas: renderer.domElement, audio });
 const runLog = createRunLog();
 let fps = 0;
@@ -142,6 +144,7 @@ function frame(now: number) {
   sparks.update(dt);
   earth.update(dt);
   stoutSplash.update(dt);
+  gueuzeBurst.update(dt);
   damageNumbers.update(realDt);
   pint.update(dt);
   effects.update();

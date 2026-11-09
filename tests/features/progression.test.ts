@@ -53,9 +53,13 @@ describe("Les gouttes de bière (XP)", () => {
 describe('Le level-up', () => {
   /** Nombre de cartes attendu au premier level-up : une par arme équipée ou à équiper, dans la limite de l'écran. */
   const expectedCards = () => Math.min(LEVEL_UP_SCREEN.cards, Object.keys(WEAPON_FACTORIES).length);
-  /** La carte d'amélioration de l'arme de départ dans la proposition. */
-  const upgradeOf = (t: ReturnType<typeof arena>) =>
-    t.game.offer!.find((c): c is UpgradeCard => c.kind === 'upgrade' && c.weapon === t.game.loadout.weapons[0])!;
+  /** Une carte d'amélioration de la proposition. */
+  const anUpgrade = (t: ReturnType<typeof arena>) => t.game.offer!.find((c): c is UpgradeCard => c.kind === 'upgrade')!;
+  /** Arsenal plein (toutes les armes du jeu, dans la limite des emplacements) : plus que des améliorations. */
+  const fullArsenal = (t: ReturnType<typeof arena>) => {
+    for (const id of Object.keys(WEAPON_FACTORIES) as WeaponId[]) t.game.equip(id);
+    for (const w of t.game.loadout.weapons) w.mods.range = 0;
+  };
 
   it("se déclenche avec assez d'XP : le jeu se fige et propose une carte par arme possible", () => {
     const t = arena();
@@ -71,9 +75,10 @@ describe('Le level-up', () => {
 
   it("applique l'amélioration choisie à l'arme et fait repartir le jeu", () => {
     const t = arena();
+    fullArsenal(t);
     t.game.addXp(LEVELS.first);
     t.play(1 / 60);
-    const card = upgradeOf(t);
+    const card = anUpgrade(t);
     const before = card.weapon.mods[card.upgrade.id];
     t.game.pickCard(card);
     expect(card.weapon.mods[card.upgrade.id]).toBeGreaterThan(before);
@@ -97,17 +102,20 @@ describe('Le level-up', () => {
 
   it("enchaîne les écrans quand plusieurs degrés sont gagnés d'un coup", () => {
     const t = arena();
+    fullArsenal(t);
+    const levels = () => t.game.loadout.weapons.reduce((n, w) => n + w.mods.level, 0);
+    const before = levels();
     t.game.addXp(500);
     const gained = t.game.progression.pending;
     expect(gained).toBeGreaterThan(1);
     t.play(1 / 60);
     for (let i = 0; i < gained; i++) {
       expect(t.game.offer).not.toBeNull();
-      t.game.pickCard(upgradeOf(t));
+      t.game.pickCard(anUpgrade(t));
     }
     expect(t.game.offer).toBeNull();
     expect(t.events('levelUpOffered').map((e) => e.first)).toEqual([true, ...Array(gained - 1).fill(false)]);
-    expect(t.game.loadout.weapons[0].mods.level).toBe(1 + gained);
+    expect(levels()).toBe(before + gained);
   });
 
   it('refuse une carte qui ne fait pas partie de la proposition', () => {

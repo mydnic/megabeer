@@ -72,6 +72,16 @@ export const FUT_UPGRADES: readonly UpgradeDef[] = [
   { id: 'critMult', label: 'multiplicateur critique', value: 0.15, kind: 'mult' },
 ];
 
+/** Améliorations de la Gueuze : dégâts, cadence, rayon d'explosion, gueuzes en plus (sur d'autres groupes), critiques. */
+export const GUEUZE_UPGRADES: readonly UpgradeDef[] = [
+  { id: 'damage', label: 'dégâts', value: 0.15, kind: 'percent' },
+  { id: 'rate', label: "vitesse d'attaque", value: 0.10, kind: 'percent' },
+  { id: 'radius', label: "rayon d'explosion", value: 0.12, kind: 'percent' },
+  { id: 'projectiles', label: 'gueuze en plus', value: 1, kind: 'flat', fixed: true, minTier: 2 },
+  { id: 'critChance', label: 'chances de critique', value: 0.04, kind: 'points' },
+  { id: 'critMult', label: 'multiplicateur critique', value: 0.15, kind: 'mult' },
+];
+
 /** Écran de level-up. */
 export const LEVEL_UP_SCREEN = {
   cards: 3,

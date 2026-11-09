@@ -92,6 +92,52 @@ export const FUT = {
   spread: 0.35,
 } as const;
 
+/**
+ * Gueuze (GDD section 6, n° 8) : grenade à retardement lancée en cloche sur le plus gros groupe de
+ * zombies ; posée au sol, elle tourne en moussant le temps de son retard, puis explose en zone.
+ */
+export const GUEUZE = {
+  /** Temps entre deux lancers (s), délai avant le premier (s). */
+  cooldown: 3,
+  firstDelay: 1.5,
+  damage: 34,
+  critChance: 0.05,
+  critMult: 2,
+  /** Portée (m) et nombre de zombies les plus proches examinés pour trouver le plus gros groupe. */
+  range: 16,
+  candidates: 60,
+  /** Vol : vitesse horizontale (m/s), gravité propre (m/s²), rotation en vol (tours/s), durée maxi (s). */
+  speed: 12,
+  gravity: 16,
+  spinRate: 1.5,
+  life: 4,
+  /** Posée : hauteur de son axe au-dessus du sol (m), rotation en moussant (tours/s), retard avant l'explosion (s). */
+  restHeight: 0.12,
+  fizzSpin: 2.5,
+  fuse: 0.8,
+  /** Rayon de l'explosion (m) et recul (fois le recul normal, vers l'extérieur). */
+  radius: 3.2,
+  knock: 2,
+} as const;
+
+/** Apparence de la Gueuze (bouteille fine du Fantasy Props MegaKit, découpée par tools/blender/props.py). */
+export const GUEUZE_LOOK = {
+  file: 'bouteille_gueuze.glb',
+  length: 0.45,
+  /** Verre rose rouge framboise, bouchon de liège. */
+  colors: { Verre: 0xc8264f, Bouchon: 0xb08a5a } as Record<string, number>,
+} as const;
+
+/** Explosion de la Gueuze : gerbe de bière framboise, tremblement de caméra si c'est près, sons. */
+export const GUEUZE_BLAST = {
+  /** Secousse de caméra (nulle à `shakeDist` m). */
+  shake: 0.3,
+  shakeAmplitude: 0.22,
+  shakeDecay: 2.6,
+  shakeDist: 14,
+  sound: { glass: 'impactGlass_heavy', glassVolume: 0.55, boom: 'impactSoft_heavy', boomVolume: 0.7, boomPitch: 0.6, hearDist: 35 },
+} as const;
+
 /** Apparence du fût (grand tonneau KayKit Dungeon, découpé par tools/blender/props.py). */
 export const FUT_LOOK = {
   file: 'fut.glb',
@@ -155,6 +201,7 @@ export const WEAPON_INFO = {
   canette: { name: 'Canette', pitch: 'Canette lancée sur le zombie le plus proche' },
   stout: { name: 'Stout', pitch: 'Lourde et lente : gros dégâts, gros recul, traverse un zombie' },
   fut: { name: 'Fût qui roule', pitch: 'Un tonneau roule tout droit et écrase toute la ligne' },
+  gueuze: { name: 'Gueuze', pitch: 'Lancée sur le plus gros groupe, elle mousse puis explose' },
 } as const satisfies Record<string, { name: string; pitch: string }>;
 
 /** Apparence de la Canette (canette de soda Kenney, découpée par tools/blender/props.py). */

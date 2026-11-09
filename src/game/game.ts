@@ -65,6 +65,8 @@ export type GameEvents = {
   summonCast: { zombie: Zombie };
   /** Les invoqués de `zombie` sortent de terre autour de lui. */
   summoned: { zombie: Zombie; skeletons: Zombie[] };
+  /** Une arme du joueur explose en `pos` (la Gueuze) ; elle ne blesse jamais le joueur. */
+  weaponExploded: { weapon: Weapon; pos: THREE.Vector3; radius: number };
   /** Une synergie s'active : toutes ses armes sont maintenant équipées. */
   synergyActivated: { id: SynergyId };
   /** Un diviseur tué se sépare : `children` sortent de son corps. */
@@ -179,6 +181,7 @@ export class Game {
       hitZombie: (weapon, z, damage, crit, impact, vel, knock) => { self.hitZombie(z, damage, crit, impact, vel, weapon, knock); },
       hitGround: (weapon, pos, vel) => this.events.emit('projectileHitGround', { weapon, pos, vel }),
       blocked: (p, margin) => deps.collider.occupied(p, margin),
+      explode: (weapon, pos, radius) => this.events.emit('weaponExploded', { weapon, pos: pos.clone(), radius }),
     };
     this.loadout = new Loadout(this.weaponCtx, deps.startingWeapon ?? 'canette');
     this.mechanic = MAP_MECHANICS[deps.map ?? 'abbaye'](this);

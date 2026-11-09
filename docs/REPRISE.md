@@ -42,6 +42,9 @@ Fait et validé dans la feature 7 :
    la synergie Black and Tan avec son affichage partout. Son évolution (Imperial Stout) attend l'objet
    « Bière plus forte » (feature objets). **Choisir avec l'utilisateur l'arme suivante** (roster GDD
    section 6) ou une autre feature (section 20).
+   **En cours : la Gueuze** (n° 8, choisie le 2026-11-09). Faite, à faire valider en jeu (`weapons/gueuze.ts`,
+   réglages `GUEUZE`, modèle `props.py --variant gueuze`, icône, explosion `GUEUZE_BURST` / `GUEUZE_BLAST`,
+   événement `weaponExploded`, cartes `GUEUZE_UPGRADES`). DEV : « Donner l'arme » gueuze.
    **Le Fût qui roule** (n° 12) est **validé** (2026-11-09) : l'arme
    (`weapons/fut.ts`, réglages `FUT`, modèle `props.py --variant fut`, icône, sons `FUT_SOUND`, cartes
    `FUT_UPGRADES`), DEV : « Donner l'arme » fut. Ensuite : ses synergies (aucune avec la Canette ni la Stout
@@ -124,6 +127,7 @@ L=C:/Users/mydnic/Desktop/MODELS
 # Objets du décor découpés en matériaux nommés (bouteille de la Stout, Canette)
 "$B" -b --factory-startup --disable-autoexec -P tools/blender/props.py -- --lib $L --variant canette --out src/assets/models/canette.glb
 "$B" -b --factory-startup --disable-autoexec -P tools/blender/props.py -- --lib $L --variant fut --out src/assets/models/fut.glb
+"$B" -b --factory-startup --disable-autoexec -P tools/blender/props.py -- --lib $L --variant gueuze --out src/assets/models/bouteille_gueuze.glb
 "$B" -b --factory-startup --disable-autoexec -P tools/blender/props.py -- --lib $L --variant stout --out src/assets/models/bouteille_stout.glb
 # Monstres Animated Monsters (gargouille)
 "$B" -b --factory-startup --disable-autoexec -P tools/blender/monsters.py -- --lib $L --variant gargouille --out src/assets/models/gargouille.glb

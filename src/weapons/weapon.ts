@@ -4,7 +4,7 @@ import type { PlayerStats, StatLine } from '../game/playerStats';
 import type { UpgradeDef } from '../config/upgrades';
 
 /** Identifiant d'arme (une entrée de src/weapons/registry.ts). */
-export type WeaponId = 'canette' | 'stout' | 'fut';
+export type WeaponId = 'canette' | 'stout' | 'fut' | 'gueuze';
 
 /** Améliorations d'une arme gagnées en run : un champ par id de carte, plus son niveau. */
 export type WeaponMods = { level: number } & Record<string, number>;
@@ -33,6 +33,8 @@ export interface WeaponContext {
   hitZombie(weapon: Weapon, z: Zombie, damage: number, crit: boolean, impact: THREE.Vector3, vel: THREE.Vector3, knock?: number): void;
   /** Le décor (arbre, mur...) occupe-t-il ce point, à `margin` m près ? */
   blocked(p: THREE.Vector3, margin: number): boolean;
+  /** Une arme explose en `pos` dans un rayon `radius` (pour l'affichage et les sons ; elle applique ses dégâts elle-même). */
+  explode(weapon: Weapon, pos: THREE.Vector3, radius: number): void;
   /** Un projectile s'écrase au sol. */
   hitGround(weapon: Weapon, pos: THREE.Vector3, vel: THREE.Vector3): void;
 }

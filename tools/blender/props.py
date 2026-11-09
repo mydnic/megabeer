@@ -9,6 +9,7 @@ Variantes (--variant) :
 - stout : la bouteille trapue étiquetée du KayKit Dungeon (Verre, Etiquette, Bouchon), pour la Stout.
 - canette : la canette de soda du Kenney Food Kit (Metal, Corps), pour la Canette.
 - fut : le grand tonneau du KayKit Dungeon (Bois, Cerclage), pour le Fût qui roule.
+- gueuze : la bouteille fine du Fantasy Props MegaKit (Verre, Bouchon), pour la Gueuze.
 
 Usage (Blender 5.2) :
   blender -b --factory-startup --disable-autoexec -P tools/blender/props.py -- --lib C:/Users/mydnic/Desktop/MODELS
@@ -34,7 +35,7 @@ VARIANTS = {
         # mini (part de la hauteur de l'objet) ; le dernier matériau prend le reste
         'rules': [
             ('Etiquette', {'max_sat': 0.2}),
-            ('Bouchon', {'min_height': 0.9}),
+            ('Bouchon', {'min_height': 0.93}),
             ('Verre', {}),
         ],
     },
@@ -53,6 +54,14 @@ VARIANTS = {
         'rules': [
             ('Cerclage', {'max_sat': 0.3}),
             ('Bois', {}),
+        ],
+    },
+    'gueuze': {
+        'src': 'decor/quaternius_fantasy_props/glTF/Bottle_1.gltf',
+        # Une seule texture grise : le bouchon est le haut de la bouteille, le reste le verre
+        'rules': [
+            ('Bouchon', {'min_height': 0.93}),
+            ('Verre', {}),
         ],
     },
 }

@@ -1,4 +1,4 @@
-import { CANETTE_IMPACT, FUT_SOUND, STOUT_IMPACT } from '../config/weapons';
+import { CANETTE_IMPACT, FUT_SOUND, GUEUZE_BLAST, STOUT_IMPACT } from '../config/weapons';
 import type * as THREE from 'three';
 import { BELL_SOUND } from '../config/abbey';
 import { AUDIO } from '../config/audio';
@@ -72,6 +72,13 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
   });
   game.events.on('projectileHitGround', ({ weapon }) => {
     if (weapon.id === 'fut') audio.play(FUT_SOUND.burst.sample, FUT_SOUND.burst.volume, FUT_SOUND.burst.pitch * jitter(0.08));
+  });
+  // La Gueuze explose : verre qui éclate et souffle sourd
+  game.events.on('weaponExploded', ({ pos }) => {
+    const S = GUEUZE_BLAST.sound, k = near(pos, S.hearDist);
+    if (k <= 0) return;
+    audio.play(S.glass, S.glassVolume * k, jitter(0.08));
+    audio.play(S.boom, S.boomVolume * k, S.boomPitch * jitter(0.08));
   });
   // La Canette : tintement de fer-blanc sur un zombie ou par terre
   const tin = () => audio.play(CANETTE_IMPACT.sample, CANETTE_IMPACT.volume, CANETTE_IMPACT.pitch * jitter(0.1));

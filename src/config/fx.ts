@@ -67,6 +67,21 @@ export const STOUT_SPLASH = {
   shape: 'drop',
 } as const satisfies ShardLook;
 
+/** Explosion de la Gueuze : gerbe de bière framboise tout autour. */
+export const GUEUZE_BURST = {
+  max: 1500,
+  perBurst: 120,
+  size: 0.11,
+  speed: 9,
+  forward: 0,
+  upward: 7,
+  spin: 0,
+  life: 1.1,
+  color: 0xd6305e,
+  glow: 0.5,
+  shape: 'drop',
+} as const satisfies ShardLook;
+
 /** Éclats du tonneau qui vole en morceaux. */
 export const BARREL_SHARDS = {
   max: 300,

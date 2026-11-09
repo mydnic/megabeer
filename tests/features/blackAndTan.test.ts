@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { SYNERGIES, WEAPONS } from '../../src/config/weapons';
 import { LEVELS } from '../../src/config/xp';
+import type { Card } from '../../src/game/levelUpCards';
 import { createTestGame } from '../support/testGame';
 
 const BT = SYNERGIES.blackAndTan;
@@ -80,12 +81,17 @@ describe('La synergie Black and Tan (Canette + Stout)', () => {
   });
 
   it("la carte de la Stout annonce la synergie qu'elle complète, et la prendre l'active", () => {
-    const t = createTestGame();
-    t.startRunAndLand();
-    t.noSpawns();
-    t.game.addXp(LEVELS.first);
-    t.play(1 / 60);
-    const card = t.game.offer!.find((c) => c.kind === 'weapon' && c.weaponId === 'stout');
+    // La nouvelle arme proposée est tirée au hasard : on rejoue jusqu'à ce que ce soit la Stout
+    let t = createTestGame();
+    let card: Card | undefined;
+    for (let i = 0; i < 60 && !card; i++) {
+      t = createTestGame();
+      t.startRunAndLand();
+      t.noSpawns();
+      t.game.addXp(LEVELS.first);
+      t.play(1 / 60);
+      card = t.game.offer!.find((c) => c.kind === 'weapon' && c.weaponId === 'stout');
+    }
     expect(card).toBeDefined();
     if (card?.kind !== 'weapon') return;
     expect(card.synergies).toEqual(['blackAndTan']);

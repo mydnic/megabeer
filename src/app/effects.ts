@@ -10,6 +10,7 @@ import type { CameraRig } from '../player/cameraRig';
 import type { PintProp } from '../player/pintProp';
 import type { Pipeline } from '../render/pipeline';
 import { KAMIKAZE_LOOK } from '../config/enemies';
+import { GUEUZE_BLAST } from '../config/weapons';
 import type { createShards } from '../fx/shards';
 import type { createDamageNumbers } from '../ui/damageNumbers';
 import { jitter } from './sounds';
@@ -30,6 +31,8 @@ type Deps = {
   earth: ReturnType<typeof createShards>;
   /** Stout qui éclate sur un zombie : gerbe de bière brune. */
   stoutSplash: ReturnType<typeof createShards>;
+  /** Gueuze qui explose : gerbe de bière framboise. */
+  gueuzeBurst: ReturnType<typeof createShards>;
   damageNumbers: ReturnType<typeof createDamageNumbers>;
 };
 
@@ -39,15 +42,15 @@ type Deps = {
  * séquence de mort (pinte qui s'échappe, plongée de la caméra, image qui se désature).
  */
 export function wireEffects(game: Game, d: Deps) {
-  const { buveur, rig, pint, pipeline, shards, wine, wood, sparks, earth, stoutSplash, damageNumbers } = d;
+  const { buveur, rig, pint, pipeline, shards, wine, wood, sparks, earth, stoutSplash, gueuzeBurst, damageNumbers } = d;
   const up = new THREE.Vector3(), numPos = new THREE.Vector3(), soft = new THREE.Vector3();
 
   game.events.on('zombieHit', ({ weapon, zombie, impact, dir, damage, crit, shielded, combo }) => {
     // La Stout éclate en bière brune ; la Canette gicle en bière blonde, sans verre (elle est en métal) ;
-    // le fût écrase sans se briser (il éclate à la fin de sa course)
+    // le fût écrase sans se briser (il éclate à la fin de sa course) ; la Gueuze a sa propre explosion
     if (weapon?.id === 'stout') stoutSplash.burst(impact, dir);
-    else if (weapon?.id !== 'fut') buveur.splashAt(impact, 14);
-    if (weapon?.id !== 'canette' && weapon?.id !== 'fut') shards.burst(impact, dir);
+    else if (weapon?.id !== 'fut' && weapon?.id !== 'gueuze') buveur.splashAt(impact, 14);
+    if (weapon?.id !== 'canette' && weapon?.id !== 'fut' && weapon?.id !== 'gueuze') shards.burst(impact, dir);
     if (shielded) sparks.burst(impact, dir);
     up.copy(zombie.pos).normalize();
     // Un coup combo (synergie) s'affiche en gros, comme un critique
@@ -79,6 +82,15 @@ export function wireEffects(game: Game, d: Deps) {
   game.events.on('enemySplit', ({ zombie }) => {
     up.copy(zombie.pos).normalize();
     wine.burst(numPos.copy(zombie.pos).addScaledVector(up, KAMIKAZE_LOOK.burstHeight), still);
+  });
+  // Gueuze qui explose : gerbe de bière framboise, éclats de verre, la caméra tremble si c'est près
+  game.events.on('weaponExploded', ({ pos }) => {
+    up.copy(pos).normalize();
+    numPos.copy(pos).addScaledVector(up, 0.3);
+    gueuzeBurst.burst(numPos, still);
+    shards.burst(numPos, still);
+    const B = GUEUZE_BLAST, k = 1 - pos.distanceTo(game.player.pos) / B.shakeDist;
+    if (k > 0) rig.shake(B.shake * k, B.shakeAmplitude, B.shakeDecay);
   });
   // Squelettes du Prieur : la terre gicle à leurs pieds quand ils sortent
   game.events.on('summoned', ({ skeletons }) => {
@@ -136,6 +148,7 @@ export function wireEffects(game: Game, d: Deps) {
     sparks.clear();
     earth.clear();
     stoutSplash.clear();
+    gueuzeBurst.clear();
     wood.clear();
     damageNumbers.clear();
     rig.setAnchor(null);
