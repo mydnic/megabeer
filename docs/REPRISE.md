@@ -34,18 +34,19 @@ Fait et validé dans la feature 7 :
 | 5 | Fantôme du cloître | Fantôme (traverse le décor, intouchable 1 s sur 3) | Fantôme Kenney cimetière | validé |
 | 6 | Moine porte-reliques | Protecteur (voisins à -50 % de dégâts) | Rogue encapuchonné KayKit (`kaykit.py`) | validé |
 | 7 | Gargouille | Marcheur (contact, coup de tête) | Dragon Animated Monsters en pierre (`monsters.py`) | validé |
-| 8 | Prieur | Invocateur | à choisir | à faire |
+| 8 | Prieur | Invocateur (squelettes, à faire) | Eye Summoner (Polygonal Mind) sur le squelette UAL (`summoner.py`) | en jeu comme marcheur, **look à faire valider** |
 | 9 | Frère cellérier | Tank + diviseur | à choisir | à faire |
 
 **Prochaine étape :**
-1. Le **Prieur** (8:00) : « Fait sortir des squelettes de terre ». **Question posée à l'utilisateur,
-   en attente** : corps à corps simple, ou avec les squelettes ? (il a dit, à propos de la
-   gargouille, que « quasi tous » les ennemis seraient au contact sans mécanique ; mais toute
-   l'identité du Prieur est l'invocation). Si squelettes : les KayKit Skeletons (Minion, Warrior...)
-   ont une animation `Spawn_Ground` qui colle parfaitement, et passent par `tools/blender/kaykit.py`.
-   Le Prieur lui-même doit avoir un corps neuf (règle des 3 corps max) : piste proposée, le Hooded
-   Adventurer (poly.pizza, proportions réalistes comme le Moine, animé) en bure noire à capuche,
-   liseré doré. Demander le look avant de coder.
+1. Le **Prieur** (8:00) : « Fait sortir des squelettes de terre ». Décidé : **avec les squelettes**
+   (« certains ennemis auront des mécaniques, mais très peu, on validera ensemble à chaque fois »).
+   Corps choisi par l'utilisateur : l'Eye Summoner (Polygonal Mind, ajouté à MODELS), sans squelette
+   d'origine, habillé par `tools/blender/summoner.py` du squelette UAL ajusté à son corps, poids au
+   plus proche os. Clips : Idle, Walk (Walk_Formal), Punch, HitReact, Death, et **Cast**
+   (Spell_Simple_Shoot) pour le geste d'invocation. Checkpoint en cours : il est en jeu comme simple
+   marcheur (28 PV, 2,4 m/s, 2,2 m), look et taille à faire valider. Ensuite : la brique Invocateur
+   (il s'arrête, fait le geste Cast, 2-3 squelettes KayKit sortent de terre avec `Spawn_Ground`, via
+   `tools/blender/kaykit.py`), réglages à valider en jeu.
 2. Le **Frère cellérier** (9:00) : « Se divise en 3 moinillons à sa mort ».
 3. Ensuite, discuter avec l'utilisateur de la suite (section 20 du GDD : armes une par une, objets,
    élites, boss...). L'équilibrage de la difficulté est reporté : il faut d'abord les armes.
@@ -108,6 +109,8 @@ L=C:/Users/mydnic/Desktop/MODELS
 "$B" -b --factory-startup --disable-autoexec -P tools/blender/monk.py -- --src $L/personnages/kelgar_monk/MONK.blend --variant tonnelier --barrel $L/decor/quaternius_fantasy_props/glTF/Barrel.gltf --out src/assets/models/moine_tonnelier.glb
 # Personnages KayKit (porte_reliques)
 "$B" -b --factory-startup --disable-autoexec -P tools/blender/kaykit.py -- --lib $L --variant porte_reliques --out src/assets/models/porte_reliques.glb
+# Personnage statique habillé du squelette UAL (prieur)
+"$B" -b --factory-startup --disable-autoexec -P tools/blender/summoner.py -- --lib $L --variant prieur --out src/assets/models/prieur.glb [--render DOSSIER]
 # Monstres Animated Monsters (gargouille)
 "$B" -b --factory-startup --disable-autoexec -P tools/blender/monsters.py -- --lib $L --variant gargouille --out src/assets/models/gargouille.glb
 ```
@@ -126,6 +129,9 @@ sa vue dans `src/enemies/`, ses tests dans `tests/features/`.
   absent) : toujours passer par `corepack yarn ...`.
 - Un ancien serveur de dev peut rester ouvert sur 5173 après une session : le nouveau part alors sur
   5174, et l'utilisateur risque de regarder le mauvais onglet. Fermer l'ancien.
+- Modèles d'avatars (Polygonal Mind...) : ils ont des **shape keys**, qui figent les sommets ; les
+  supprimer avant de les modifier. Les poids automatiques de Blender accrochent les accessoires
+  (coiffe, encensoirs) aux mains : sur un modèle fait de blocs, mieux vaut l'os le plus proche.
 - Animations des packs : vérifier le geste avant de le brancher (`Dragon_Attack` du pack Animated
   Monsters est une toupie qui fait faire un tour complet au corps). `monsters.py` sait couper un
   clip (`crops`) pour que le coup tombe vers `ZOMBIE_ATTACK.hitAt` (45 % du clip).

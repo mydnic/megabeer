@@ -103,6 +103,8 @@ export const ENEMIES = {
   reliques: { name: 'Moine porte-reliques', model: 'porte_reliques', hp: 18, speed: 2.6, damage: 6, xp: 6, protector: { radius: 6, reduction: 0.5 } },
   /** Marcheur : s'approche et frappe au corps à corps. */
   gargouille: { name: 'Gargouille', model: 'gargouille', hp: 20, speed: 2.8, damage: 8, xp: 6 },
+  /** Invocateur : fait sortir des squelettes de terre (brique à venir). */
+  prieur: { name: 'Prieur', model: 'prieur', hp: 28, speed: 2.4, damage: 8, xp: 8 },
 } as const satisfies Record<string, EnemyDef>;
 
 export type EnemyId = keyof typeof ENEMIES;
@@ -169,5 +171,6 @@ export const ROSTERS = {
     { enemy: 'fantome', from: 300, weight: 1 },
     { enemy: 'reliques', from: 360, weight: 1 },
     { enemy: 'gargouille', from: 420, weight: 1 },
+    { enemy: 'prieur', from: 480, weight: 1 },
   ],
 } as const satisfies Record<string, readonly RosterEntry[]>;

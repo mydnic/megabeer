@@ -19,6 +19,8 @@ export const ZOMBIE_MODELS = {
   porte_reliques: { file: 'porte_reliques.glb', height: 1.85, walkAnimAt: 1.9 },
   // La Gargouille : le Dragon des Animated Monsters en pierre grise (tools/blender/monsters.py), qui vole bas
   gargouille: { file: 'gargouille.glb', height: 1.8, walkAnimAt: 2.8 },
+  // Le Prieur : l'Eye Summoner de Polygonal Mind habillé du squelette UAL (tools/blender/summoner.py), marche solennelle
+  prieur: { file: 'prieur.glb', height: 2.2, walkAnimAt: 1.3 },
   // Le Fantôme du cloître : fantôme du kit Kenney cimetière (pièces animées, sans squelette), translucide, il flotte
   fantome: {
     file: 'character-ghost.glb', height: 1.2, walkAnimAt: 2.5,
