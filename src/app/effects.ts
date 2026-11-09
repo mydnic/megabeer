@@ -42,14 +42,15 @@ export function wireEffects(game: Game, d: Deps) {
   const { buveur, rig, pint, pipeline, shards, wine, wood, sparks, earth, stoutSplash, damageNumbers } = d;
   const up = new THREE.Vector3(), numPos = new THREE.Vector3(), soft = new THREE.Vector3();
 
-  game.events.on('zombieHit', ({ weapon, zombie, impact, dir, damage, crit, shielded }) => {
+  game.events.on('zombieHit', ({ weapon, zombie, impact, dir, damage, crit, shielded, combo }) => {
     // La Stout éclate en bière brune ; la Canette gicle en bière blonde, sans verre (elle est en métal)
     if (weapon?.id === 'stout') stoutSplash.burst(impact, dir);
     else buveur.splashAt(impact, 14);
     if (weapon?.id !== 'canette') shards.burst(impact, dir);
     if (shielded) sparks.burst(impact, dir);
     up.copy(zombie.pos).normalize();
-    damageNumbers.spawn(numPos.copy(zombie.pos).addScaledVector(up, 2.0), damage, crit);
+    // Un coup combo (synergie) s'affiche en gros, comme un critique
+    damageNumbers.spawn(numPos.copy(zombie.pos).addScaledVector(up, 2.0), damage, crit || combo);
   });
   game.events.on('projectileHitGround', ({ weapon, pos, vel }) => {
     buveur.splashAt(pos, 10);

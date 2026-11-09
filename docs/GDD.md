@@ -278,7 +278,7 @@ Les armes de départ des persos font partie du roster (déblocage pour les autre
 | Bière de Noël + n° 10 (à inventer) | À redéfinir avec la nouvelle arme (l'ancienne : l'orbite fait pleuvoir des bouteilles) |
 | Vomi + Weizen | Nuage toxique (le poison cumulable s'applique en l'air) |
 | Fléchettes + Triple | Les fléchettes rebondissent |
-| Canette + Stout | "Black and Tan" : chaque tir lance aussi une Stout |
+| Canette + Stout | "Black and Tan" (combo, décidé le 2026-11-09) : un zombie touché par une Stout est sonné 2 s (bulles de mousse qui tournent au-dessus de sa tête, il continue d'avancer) ; pendant ce temps, les canettes lui font double dégâts (chiffre affiché en gros). L'ancienne version (chaque tir lance aussi une Stout) est écartée : simple bonus de dégâts, invisible |
 | Pétanque + Fût qui roule | Les boules suivent le fût et ricochent dessus |
 | Corne de brume + Rot sonique | Le rot sort par la corne : onde en cône à très longue portée, avec les dégâts du rot |
 | Odeur d'alcool + IPA | L'alcool est inflammable : l'aura brûle les ennemis |

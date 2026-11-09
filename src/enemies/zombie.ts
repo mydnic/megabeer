@@ -57,6 +57,8 @@ export class Zombie {
   fuse = -1;
   /** Brique Fantôme : horloge de son cycle (s), décalée au hasard pour qu'ils ne clignotent pas ensemble. */
   ghostClock = 0;
+  /** Sonné par une synergie (Black and Tan) : temps restant (s). Il ne l'arrête pas, c'est une marque. */
+  dazed = 0;
   /** Brique Invocateur : temps avant la prochaine invocation (s), et temps restant du geste en cours (s). */
   summonTimer = 0;
   casting = 0;
@@ -170,6 +172,7 @@ export class Zombie {
     this.stagger = Math.max(0, this.stagger - dt);
     this.throwTimer = Math.max(0, this.throwTimer - dt);
     this.summonTimer = Math.max(0, this.summonTimer - dt);
+    this.dazed = Math.max(0, this.dazed - dt);
     if (this.rise > 0 && !this.dead) {
       this.rise = Math.max(0, this.rise - dt);
       this.sink = (this.rise / SPAWN.riseTime) ** 2 * SPAWN.riseDepth;

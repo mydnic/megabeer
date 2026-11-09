@@ -78,6 +78,28 @@ export const STOUT_IMPACT = {
   pitch: 0.8,
 } as const;
 
+/**
+ * Synergies (GDD section 6) : actives quand toutes les armes de `weapons` sont équipées.
+ * Black and Tan : un zombie touché par la Stout (`marker`) est sonné `duration` s ; pendant ce temps,
+ * la Canette (`boosted`) lui fait `mult` fois ses dégâts. Sonné ne l'arrête pas : c'est une marque.
+ */
+export const SYNERGIES = {
+  blackAndTan: { name: 'Black and Tan', weapons: ['canette', 'stout'], marker: 'stout', boosted: 'canette', duration: 2, mult: 2 },
+} as const satisfies Record<string, { name: string; weapons: readonly BottleWeaponId[]; marker: BottleWeaponId; boosted: BottleWeaponId; duration: number; mult: number }>;
+
+/** Signe au-dessus d'un zombie sonné (Black and Tan) : bulles de mousse qui tournent autour de la tête. */
+export const DAZED_LOOK = {
+  /** Nombre de bulles, rayon du cercle (m), hauteur au-dessus de la tête (m), taille d'une bulle (m), tours par seconde. */
+  count: 3,
+  radius: 0.45,
+  aboveHead: 0.3,
+  size: 0.34,
+  spin: 1.2,
+  /** Mousse crème cerclée de brun stout. */
+  fill: '#f2e3c4',
+  stroke: '#3a2416',
+} as const;
+
 /** Nom de chaque arme, et sa présentation sur la carte « Nouvelle arme » du level-up. */
 export const WEAPON_INFO = {
   canette: { name: 'Canette', pitch: 'Canette lancée sur le zombie le plus proche' },

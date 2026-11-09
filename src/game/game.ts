@@ -19,6 +19,7 @@ import type { ThrowRig, Weapon, WeaponContext, WeaponId } from '../weapons/weapo
 import { Emitter } from './emitter';
 import { applyCard, rollCards, type Card } from './levelUpCards';
 import { WEAPON_FACTORIES } from '../weapons/registry';
+import { SYNERGIES } from '../config/weapons';
 import { Loadout } from './loadout';
 import { PlayerStats } from './playerStats';
 import { SpawnDirector, spawnCurveAt } from './spawnDirector';
@@ -37,7 +38,8 @@ export type GameEvents = {
   /** Un zombie frappe le joueur ; `blocked` : ignoré (invulnérabilité ou godmode). */
   playerHurt: { zombie: Zombie; dir: THREE.Vector3; damage: number; hp: number; blocked: boolean };
   /** Un zombie encaisse un coup (arme null : coup sans arme, ex. outils de dev). */
-  zombieHit: { weapon: Weapon | null; zombie: Zombie; damage: number; crit: boolean; killed: boolean; hpAfter: number; impact: THREE.Vector3; dir: THREE.Vector3; shielded: boolean };
+  /** `combo` : dégâts multipliés par une synergie (une canette sur un zombie sonné par la Stout). */
+  zombieHit: { weapon: Weapon | null; zombie: Zombie; damage: number; crit: boolean; killed: boolean; hpAfter: number; impact: THREE.Vector3; dir: THREE.Vector3; shielded: boolean; combo: boolean };
   projectileHitGround: { weapon: Weapon; pos: THREE.Vector3; vel: THREE.Vector3 };
   xpCollected: { amount: number };
   levelGained: { level: number };
@@ -312,6 +314,12 @@ export class Game {
    */
   hitZombie(z: Zombie, damage: number, crit: boolean, impact: THREE.Vector3, vel: THREE.Vector3, weapon: Weapon | null = null, knock = 1) {
     if (z.intangible) return false; // un fantôme intouchable : le coup le traverse
+    // Synergies actives : une arme marque le zombie (sonné), une autre lui fait plus de dégâts pendant ce temps
+    let combo = false;
+    for (const S of Object.values(SYNERGIES)) {
+      if (!weapon || !S.weapons.every((id) => this.loadout.has(id))) continue;
+      if (weapon.id === S.boosted && z.dazed > 0) { damage *= S.mult; combo = true; }
+    }
     // Dans le halo d'un porte-reliques : dégâts réduits
     const shield = this.horde.shieldOf(z);
     damage *= 1 - shield;
@@ -322,7 +330,10 @@ export class Game {
       this.kills++;
       this.xp.drop(z.pos, z.def.xp);
     }
-    this.events.emit('zombieHit', { weapon, zombie: z, damage, crit, killed, hpAfter: z.hp, impact: impact.clone(), dir, shielded: shield > 0 });
+    for (const S of Object.values(SYNERGIES)) {
+      if (!killed && weapon?.id === S.marker && S.weapons.every((id) => this.loadout.has(id))) z.dazed = S.duration;
+    }
+    this.events.emit('zombieHit', { weapon, zombie: z, damage, crit, killed, hpAfter: z.hp, impact: impact.clone(), dir, shielded: shield > 0, combo });
     // Un kamikaze tué explose sur place
     if (killed && z.def.kamikaze) this.explode(z, true);
     // Un diviseur tué se sépare en petits
