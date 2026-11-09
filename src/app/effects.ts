@@ -43,17 +43,17 @@ export function wireEffects(game: Game, d: Deps) {
   const up = new THREE.Vector3(), numPos = new THREE.Vector3(), soft = new THREE.Vector3();
 
   game.events.on('zombieHit', ({ weapon, zombie, impact, dir, damage, crit, shielded }) => {
-    // La Stout éclate en bière brune ; les autres en bière blonde
+    // La Stout éclate en bière brune ; la Canette gicle en bière blonde, sans verre (elle est en métal)
     if (weapon?.id === 'stout') stoutSplash.burst(impact, dir);
     else buveur.splashAt(impact, 14);
-    shards.burst(impact, dir);
+    if (weapon?.id !== 'canette') shards.burst(impact, dir);
     if (shielded) sparks.burst(impact, dir);
     up.copy(zombie.pos).normalize();
     damageNumbers.spawn(numPos.copy(zombie.pos).addScaledVector(up, 2.0), damage, crit);
   });
-  game.events.on('projectileHitGround', ({ pos, vel }) => {
+  game.events.on('projectileHitGround', ({ weapon, pos, vel }) => {
     buveur.splashAt(pos, 10);
-    shards.burst(pos, soft.copy(vel).normalize().multiplyScalar(0.3));
+    if (weapon.id !== 'canette') shards.burst(pos, soft.copy(vel).normalize().multiplyScalar(0.3));
   });
   // Bouteille d'un moine qui éclate au sol
   game.events.on('enemyShotLanded', ({ shot }) => {

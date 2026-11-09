@@ -4,7 +4,7 @@ import { createTestGame } from '../support/testGame';
 
 const P = ENEMIES.reliques.protector;
 
-/** Une arène calme, figée (personne ne bouge), Blonde désarmée. */
+/** Une arène calme, figée (personne ne bouge), Canette désarmée. */
 function arena() {
   const t = createTestGame();
   t.startRunAndLand();

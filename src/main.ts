@@ -13,7 +13,7 @@ import { createBottleView } from './weapons/bottleView';
 import { createEnemyShotsView } from './enemies/enemyShotsView';
 import { createShards } from './fx/shards';
 import { BARREL_SHARDS, EARTH_CLODS, SHIELD_SPARKS, STOUT_SPLASH, WINE_BURST } from './config/fx';
-import { BOTTLE_LOOK, STOUT_LOOK } from './config/weapons';
+import { CANETTE_LOOK, STOUT_LOOK } from './config/weapons';
 import type { WeaponId } from './weapons/weapon';
 import { createKamikazeView } from './enemies/kamikazeView';
 import { createProtectorView } from './enemies/protectorView';
@@ -73,7 +73,7 @@ const hordeView = createHordeView(scene, zombieLib);
 const xpView = createXpDropsView(scene);
 // Une vue de bouteilles par arme (chaque arme a sa bouteille)
 const bottleViews: Record<WeaponId, Awaited<ReturnType<typeof createBottleView>>> = {
-  blonde: await createBottleView(scene, BOTTLE_LOOK),
+  canette: await createBottleView(scene, CANETTE_LOOK),
   stout: await createBottleView(scene, STOUT_LOOK),
 };
 const enemyShotsView = await createEnemyShotsView(scene);
@@ -167,7 +167,7 @@ function frame(now: number) {
 requestAnimationFrame(frame);
 
 if (import.meta.env.DEV) {
-  Object.assign(window, { __game: { game, player: game.player, rig, camera, buveur, sky, heightAt, THREE, pipeline, renderer, planet, decor: planet.decor, scene, music, horde: game.horde, health: game.health, progression: game.progression, playerStats: game.stats, blonde: game.loadout.weapons[0], setTimeScale: (k: number) => { game.devTimeScale = k; } } });
+  Object.assign(window, { __game: { game, player: game.player, rig, camera, buveur, sky, heightAt, THREE, pipeline, renderer, planet, decor: planet.decor, scene, music, horde: game.horde, health: game.health, progression: game.progression, playerStats: game.stats, canette: game.loadout.weapons[0], setTimeScale: (k: number) => { game.devTimeScale = k; } } });
   const { wireDevTools } = await import('./app/devTools');
   await wireDevTools(game, { music, runLog, seed: () => planet.seed });
 }

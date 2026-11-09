@@ -7,7 +7,7 @@ import { createTestGame } from '../support/testGame';
 const FROM = ROSTERS.abbaye.find((e) => e.enemy === 'cellerier')!.from;
 const D = ENEMIES.cellerier.splitter;
 
-/** Une arène calme, Blonde désarmée, et un Frère cellérier face au joueur à `dist` m. */
+/** Une arène calme, Canette désarmée, et un Frère cellérier face au joueur à `dist` m. */
 function duel(dist: number) {
   const t = createTestGame();
   t.startRunAndLand();

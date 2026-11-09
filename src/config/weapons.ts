@@ -1,8 +1,8 @@
 ﻿// Armes (GDD section 6). Chaque arme est une entrée de config ; les chiffres se calent en jouant.
 
 export const WEAPONS = {
-  /** Blonde : bouteille lancée vers le zombie le plus proche (arme de départ du Buveur). */
-  blonde: {
+  /** Canette : canette de bière lancée vers le zombie le plus proche (arme de départ du Buveur). */
+  canette: {
     /** Temps entre deux lancers (s). */
     cooldown: 1.0,
     damage: 16,
@@ -78,11 +78,18 @@ export const STOUT_IMPACT = {
   pitch: 0.8,
 } as const;
 
-/** Apparence de la bouteille de Blonde (modèle Quaternius recoloré). */
-export const BOTTLE_LOOK = {
-  file: 'Bottle.glb',
-  /** Longueur de la bouteille en jeu (m). */
-  length: 0.42,
-  /** Couleurs : verre ambré, capsule, étiquette dorée de Blonde. */
-  colors: { DarkGreen: 0x8a4512, BottleCap: 0xd8b14a, LightBrown: 0xf2d27a } as Record<string, number>,
+/** Apparence de la Canette (canette de soda Kenney, découpée par tools/blender/props.py). */
+export const CANETTE_LOOK = {
+  file: 'canette.glb',
+  /** Hauteur de la canette en jeu (m, un peu exagérée pour se lire en vol). */
+  length: 0.3,
+  /** Couleurs : métal argenté, corps rouge comme l'icône. */
+  colors: { Metal: 0xc8ccd2, Corps: 0xc8102e } as Record<string, number>,
+} as const;
+
+/** Impact de la Canette : un tintement de fer-blanc (pas de verre). */
+export const CANETTE_IMPACT = {
+  sample: 'impactTin_medium',
+  volume: 0.4,
+  pitch: 1.1,
 } as const;

@@ -73,7 +73,7 @@ describe('Une run', () => {
     expect(g.health.hp).toBe(PLAYER_STATS.maxHp);
     expect(g.progression.level).toBe(1);
     expect(g.progression.pending).toBe(0);
-    expect(g.loadout.weapons.map((w) => w.id)).toEqual(['blonde']);
+    expect(g.loadout.weapons.map((w) => w.id)).toEqual(['canette']);
     expect(g.loadout.weapons[0].mods.level).toBe(1);
     expect(g.kills).toBe(0);
     expect(g.runTime).toBeLessThan(0.05); // le chrono démarre à l'atterrissage

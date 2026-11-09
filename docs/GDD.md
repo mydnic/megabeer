@@ -154,7 +154,7 @@ PV à 0 : fin de run (défaite), bilan, TUNAS gagnés conservés [EXISTE].
 
 | Perso | Arme de départ | Passif | Stats | Déblocage |
 |---|---|---|---|---|
-| Le Buveur | Blonde | +1% dégâts par niveau de joueur | Équilibré (référence) | Dès le départ |
+| Le Buveur | Canette | +1% dégâts par niveau de joueur | Équilibré (référence) | Dès le départ |
 | Père Noël | Bière de Noël | Un petit fût apparaît près de lui toutes les 2 min | +PV, -vitesse | TUNAS |
 | Le Crado | Flaque de vomi | Le poison s'empile 2 fois plus vite | -PV, +vitesse, +ramassage | TUNAS |
 | Le Barman | Tireuse | Le level-up propose 4 cartes au lieu de 3 | -dégâts | TUNAS |
@@ -222,7 +222,7 @@ Les armes de départ des persos font partie du roster (déblocage pour les autre
 
 | # | Arme | Brique | Rôle | Évolution (+ objet requis) |
 |---|---|---|---|---|
-| 1 | Blonde | Projectile simple | Base polyvalente | **Tournée générale** : bouteilles dans toutes les directions (+ Tournée rapide) |
+| 1 | Canette | Projectile simple | Base polyvalente : canette de bière en métal (ex-Blonde, renommée le 2026-11-09) | **Tournée générale** : canettes dans toutes les directions (+ Tournée rapide) |
 | 2 | Stout | Projectile lourd + recul | Gros dégâts, repousse | **Imperial Stout** : onde de choc à l'impact (+ Bière plus forte) |
 | 3 | Flaque de vomi | Lancer en cloche + zone + poison cumulable | Dégâts, vise le plus gros groupe | **Gastro** : les flaques se propagent d'elles-mêmes (+ Kebab de 4h) |
 | 4 | Kriek | Projectile + éclaboussure | Zone à l'impact, ralentit | **Kriek Cerise Bombe** : grosses explosions collantes (+ Pinte XXL) |
@@ -231,7 +231,7 @@ Les armes de départ des persos font partie du roster (déblocage pour les autre
 | 7 | Weizen | Nuage persistant | Zone en l'air | **Mousse infinie** : le nuage suit le joueur (+ Bière sans alcool) |
 | 8 | Gueuze | Grenade à retardement | Explosion en zone sur la cible | **Gueuze Lambic** : explosions en chaîne (+ Ventre à bière) |
 | 9 | Bière de Noël | Orbite | Défense rapprochée | **Couronne de Noël** : orbite double, sens inverse (+ Bonnet du Père Noël) |
-| 10 | Pils tiède | Frappe du ciel | Zone aléatoire proche | **Averse de Pils** : pluie continue autour du joueur (+ Trèfle de comptoir) |
+| 10 | *À inventer* | | | La Pils tiède a été retirée le 2026-11-09 (« on va en inventer une autre mieux ») ; son évolution passera par le Trèfle de comptoir |
 | 11 | Dessous de verre | Projectile perçant | Traverse les lignes | **Sous-bock tranchant** : revient vers le joueur (+ Aimant à capsules) |
 | 12 | Fût qui roule | Projectile roulant perçant | Écrase en ligne | **Rouleau compresseur** : fût géant, rebondit sur le décor (+ Godasses de bar) |
 | 13 | Flaque de bière | Traînée au sol derrière le joueur + glissade | Contrôle : les ennemis glissent et tombent | **Inondation** : traînée large, les ennemis tombés restent étourdis plus longtemps (+ Seau à glace) |
@@ -275,10 +275,10 @@ Les armes de départ des persos font partie du roster (déblocage pour les autre
 | Tireuse + IPA | Jet brûlant |
 | Plateau + Tabouret | Chaque coup bloqué déclenche un coup de tabouret |
 | Dessous de verre + Décapsuleur | Tous les projectiles reviennent vers le joueur |
-| Bière de Noël + Pils tiède | L'orbite fait pleuvoir des bouteilles |
+| Bière de Noël + n° 10 (à inventer) | À redéfinir avec la nouvelle arme (l'ancienne : l'orbite fait pleuvoir des bouteilles) |
 | Vomi + Weizen | Nuage toxique (le poison cumulable s'applique en l'air) |
 | Fléchettes + Triple | Les fléchettes rebondissent |
-| Blonde + Stout | "Black and Tan" : chaque tir lance aussi une Stout |
+| Canette + Stout | "Black and Tan" : chaque tir lance aussi une Stout |
 | Pétanque + Fût qui roule | Les boules suivent le fût et ricochent dessus |
 | Corne de brume + Rot sonique | Le rot sort par la corne : onde en cône à très longue portée, avec les dégâts du rot |
 | Odeur d'alcool + IPA | L'alcool est inflammable : l'aura brûle les ennemis |
@@ -322,7 +322,7 @@ Conséquence : trouver un objet d'évolution n'est jamais une carte morte, et il
 
 | Objet | Effet (Commun) | Fait évoluer |
 |---|---|---|
-| Tournée rapide | +8% vitesse d'attaque | Blonde |
+| Tournée rapide | +8% vitesse d'attaque | Canette |
 | Bière plus forte | +8% dégâts | Stout |
 | Kebab de 4h | +10% durée | Flaque de vomi |
 | Pinte XXL | +10% taille | Kriek |
@@ -331,7 +331,7 @@ Conséquence : trouver un objet d'évolution n'est jamais une carte morte, et il
 | Bière sans alcool | +0,5 PV/s régénération | Weizen |
 | Ventre à bière | +15 PV max | Gueuze |
 | Bonnet du Père Noël | Toutes les 90 s, un petit fût apparaît près du joueur | Bière de Noël |
-| Trèfle de comptoir | +5 LUCK | Pils tiède |
+| Trèfle de comptoir | +5 LUCK | n° 10 (à inventer) |
 | Aimant à capsules | +20% ramassage | Dessous de verre |
 | Godasses de bar | +6% vitesse | Fût qui roule |
 | Seau à glace | Les ennemis touchés sont ralentis de 10% | Flaque de bière |
@@ -858,7 +858,7 @@ Règles [DÉCIDÉ] :
 - Débloquer un perso ajoute **son arme de départ** au pool, pour tous les persos.
 - Les autres objets s'achètent un par un en boutique.
 - Les objets forts se débloquent **par succès** et non en boutique : Sang Saiyan, Seconde tournée, Trilogie LOTR.
-- Pool de départ : 6 armes (Blonde, Stout, Dessous de verre, Pils tiède, Fût qui roule, Gueuze), leurs 6 objets d'évolution, et 6 objets simples (Bretelles, Last order, Glaçons, Mousse épaisse, Pourboire, Plateau de fromages).
+- Pool de départ : 6 armes (Canette, Stout, Dessous de verre, n° 10 à inventer, Fût qui roule, Gueuze), leurs 6 objets d'évolution, et 6 objets simples (Bretelles, Last order, Glaçons, Mousse épaisse, Pourboire, Plateau de fromages).
 - Le coût des armes et objets entre dans la formule des 100 runs.
 
 ### Skill tree [DÉCIDÉ]
@@ -1184,6 +1184,8 @@ L'ordre après l'étape 7 est indicatif : il se rediscute à chaque feature vali
 | Frère cellérier | Le Zombie Chubby de Quaternius tel quel (gros ventre, déjà animé), choisi par l'utilisateur le 2026-11-09, à 2,1 m. Tank : 60 PV (le plus du roster), 1,8 m/s, 14 PV au contact, 10 de bière. Au roster de l'Abbaye à 9:00 |
 | Brique Diviseur | Tué par le joueur, le Frère cellérier éclate en gerbe de vin et 3 moinillons sortent de son corps en cercle (1,2 m) : le même modèle à 0,9 m, 6 PV, 3,8 m/s, 4 PV au contact, 1 de bière, hors roster. Ils ne se divisent pas à leur tour |
 | Stout | Feature des armes commencée le 2026-11-09 par la Stout (n° 2). Bouteille trapue étiquetée du KayKit Dungeon (choisie par l'utilisateur), découpée par `tools/blender/props.py` en verre noir, étiquette crème, bouchon de liège. Brique commune « bouteille lancée » (`weapons/bottleWeapon.ts`) partagée avec la Blonde. Réglages de départ : 1,3 s entre deux lancers, 30 dégâts (Blonde 16), 13 m/s (Blonde 17), portée 16 m, recul x3, traverse 1 zombie. Cartes : dégâts, cadence, recul, zombie traversé (Rare et plus), portée, critiques, taille. Impact : gerbe de bière brune et choc sourd. Découpage : 1) l'arme (DEV : Donner l'arme), 2) la carte « nouvelle arme » au level-up, 3) la synergie Black and Tan |
+| Canette | Le 2026-11-09, la Blonde devient la **Canette** : une canette de bière en métal (canette de soda du Kenney Food Kit, découpée par `tools/blender/props.py` en métal argenté et corps rouge), même comportement et mêmes chiffres. À l'impact : bière blonde et tintement de fer-blanc, plus d'éclats de verre. Icône de canette. Identifiant `canette` dans le code |
+| Pils tiède | Retirée du roster le 2026-11-09 à la demande de l'utilisateur (« on va en inventer une autre mieux ») : l'arme n° 10 est à inventer, avec son évolution par le Trèfle de comptoir et sa synergie avec la Bière de Noël |
 | Brique Tireur | Fiche `thrower` réutilisable par tout ennemi : il s'arrête à portée (15 m), lance en cloche vers l'endroit où est le joueur au lâcher (vol 1,3 s), impact marqué au sol par un anneau rouge qui se remplit, éclatement de 1,6 m (10 PV). Au contact il frappe comme les autres. Moine lanceur : 14 PV, 2,4 m/s, 4 de bière, arrive à 2:00 |
 | Plus tard | Les nouveaux types d'ennemis par minute, les élites, les boss et les videurs arrivent avec leurs features |
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ENEMIES, ROSTERS } from '../../src/config/enemies';
 import { createTestGame } from '../support/testGame';
 
-/** Une run au sol, Blonde désarmée et godmode : on observe qui arrive. */
+/** Une run au sol, Canette désarmée et godmode : on observe qui arrive. */
 function observe() {
   const t = createTestGame();
   t.startRunAndLand();

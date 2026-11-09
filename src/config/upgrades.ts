@@ -32,12 +32,12 @@ export type UpgradeDef = {
 };
 
 /**
- * Améliorations de la Blonde. `value` = effet en Commun (multiplié par le tier, sauf `fixed`).
+ * Améliorations de la Canette. `value` = effet en Commun (multiplié par le tier, sauf `fixed`).
  * `minTier` : rareté minimum pour que la carte existe (index dans RARITIES).
  * Affichage selon `kind` : percent et points -> « +15 % », flat -> « +1 », mult -> « +0,15 ».
  * (points : points de pourcentage ajoutés, ex. chances de critique 5 % -> 9 %).
  */
-export const BLONDE_UPGRADES: readonly UpgradeDef[] = [
+export const CANETTE_UPGRADES: readonly UpgradeDef[] = [
   { id: 'damage', label: 'dégâts', value: 0.15, kind: 'percent' },
   { id: 'rate', label: "vitesse d'attaque", value: 0.10, kind: 'percent' },
   { id: 'projectiles', label: 'projectile en plus', value: 1, kind: 'flat', fixed: true, minTier: 2 },
@@ -48,7 +48,7 @@ export const BLONDE_UPGRADES: readonly UpgradeDef[] = [
   { id: 'size', label: 'taille', value: 0.10, kind: 'percent' },
 ];
 
-/** Améliorations de la Stout : comme la Blonde, plus le recul et le perçage (pas de projectile en plus ni de vitesse). */
+/** Améliorations de la Stout : comme la Canette, plus le recul et le perçage (pas de projectile en plus ni de vitesse). */
 export const STOUT_UPGRADES: readonly UpgradeDef[] = [
   { id: 'damage', label: 'dégâts', value: 0.15, kind: 'percent' },
   { id: 'rate', label: "vitesse d'attaque", value: 0.10, kind: 'percent' },

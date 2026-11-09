@@ -1,10 +1,10 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { BOTTLE_LOOK } from '../config/weapons';
+import { CANETTE_LOOK } from '../config/weapons';
 import { characterMaterial, LAYER_CHARACTER } from '../render/materials';
 import type { Projectile } from './weapon';
 
-const urls = import.meta.glob(['../assets/quaternius-food-pack/*.glb', '../assets/models/bouteille_*.glb'], { query: '?url', import: 'default', eager: true }) as Record<string, string>;
+const urls = import.meta.glob(['../assets/quaternius-food-pack/*.glb', '../assets/models/bouteille_*.glb', '../assets/models/canette.glb'], { query: '?url', import: 'default', eager: true }) as Record<string, string>;
 
 /**
  * Rendu des bouteilles en vol : un modèle par projectile actif (réserve réutilisée), orienté selon
@@ -13,12 +13,12 @@ const urls = import.meta.glob(['../assets/quaternius-food-pack/*.glb', '../asset
 /** Apparence d'une bouteille : modèle, longueur en jeu (m), couleur par matériau du modèle. */
 export type BottleLook = { file: string; length: number; colors: Record<string, number> };
 
-export async function createBottleView(scene: THREE.Scene, L: BottleLook = BOTTLE_LOOK) {
+export async function createBottleView(scene: THREE.Scene, L: BottleLook = CANETTE_LOOK) {
   const url = Object.entries(urls).find(([p]) => p.endsWith('/' + L.file))?.[1];
   if (!url) throw new Error(`Modèle de bouteille introuvable : ${L.file}`);
   const gltf = await new GLTFLoader().loadAsync(url);
   const template = gltf.scene;
-  // Cel-shading et couleurs de la Blonde
+  // Cel-shading et couleurs de l'arme
   const mats = new Map<string, THREE.Material>();
   template.traverse((o) => {
     const mesh = o as THREE.Mesh;

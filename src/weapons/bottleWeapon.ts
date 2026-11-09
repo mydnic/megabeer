@@ -12,7 +12,7 @@ type Bottle = Projectile & { pierce: number; hits: Zombie[] };
 type Pending = { t: number; index: number };
 
 /**
- * Brique « bouteille lancée » (Blonde, Stout...) : bouteilles lancées en cloche vers les zombies les
+ * Brique « bouteille lancée » (Canette, Stout...) : bouteilles (ou canettes) lancées en cloche vers les zombies les
  * plus proches, qui s'écrasent sur le premier zombie touché, ou en traversent quelques-uns (perçage)
  * et les repoussent plus ou moins fort (recul). Tous les réglages viennent de WEAPONS[id].
  *

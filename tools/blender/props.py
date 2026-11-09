@@ -1,12 +1,13 @@
 """
-Prépare un objet du décor KayKit (texture atlas en dégradés) pour le jeu : ses faces sont rangées en
+Prépare un objet du décor (KayKit, Kenney : couleurs tirées d'une texture atlas) pour le jeu : ses faces sont rangées en
 quelques matériaux nommés, à couleur unie, que le jeu colore depuis sa config (bottleView.ts lit
-une couleur par nom de matériau, comme pour la bouteille de la Blonde).
+une couleur par nom de matériau, comme pour la bouteille de la Stout).
 
 Une face va dans un matériau selon la couleur de la texture sous elle (saturation) et sa hauteur.
 
 Variantes (--variant) :
 - stout : la bouteille trapue étiquetée du KayKit Dungeon (Verre, Etiquette, Bouchon), pour la Stout.
+- canette : la canette de soda du Kenney Food Kit (Metal, Corps), pour la Canette.
 
 Usage (Blender 5.2) :
   blender -b --factory-startup --disable-autoexec -P tools/blender/props.py -- --lib C:/Users/mydnic/Desktop/MODELS
@@ -34,6 +35,15 @@ VARIANTS = {
             ('Etiquette', {'max_sat': 0.2}),
             ('Bouchon', {'min_height': 0.9}),
             ('Verre', {}),
+        ],
+    },
+    'canette': {
+        'src': 'decor/kenney_food_kit/glb/soda-can.glb',
+        # Couvercle, fond et rebords gris (peu saturés) : le métal ; le reste, le corps peint (une seule
+        # bande de triangles : on ne peut pas la couper en deux couleurs sans motif en zigzag)
+        'rules': [
+            ('Metal', {'max_sat': 0.35}),
+            ('Corps', {}),
         ],
     },
 }

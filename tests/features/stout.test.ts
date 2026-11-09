@@ -5,14 +5,14 @@ import type { Zombie } from '../../src/enemies/zombie';
 import { createTestGame } from '../support/testGame';
 
 const S = WEAPONS.stout;
-const B = WEAPONS.blonde;
+const B = WEAPONS.canette;
 
-/** Une run au sol sans zombies, la Stout équipée ; la Blonde désarmée sauf demande. */
-function arena(keepBlonde = false) {
+/** Une run au sol sans zombies, la Stout équipée ; la Canette désarmée sauf demande. */
+function arena(keepCanette = false) {
   const t = createTestGame();
   t.startRunAndLand();
   t.noSpawns();
-  if (!keepBlonde) t.game.loadout.weapons[0].mods.range = 0;
+  if (!keepCanette) t.game.loadout.weapons[0].mods.range = 0;
   const stout = t.game.loadout.add('stout')!;
   stout.mods.critChance = -S.critChance; // aucun critique
   return { t, stout };
@@ -26,15 +26,15 @@ function dummy(t: ReturnType<typeof createTestGame>, dist: number, side = 0) {
 }
 
 describe('La Stout', () => {
-  it("s'équipe à côté de la Blonde et lance toute seule une bouteille sur le zombie le plus proche", () => {
+  it("s'équipe à côté de la Canette et lance toute seule une bouteille sur le zombie le plus proche", () => {
     const { t, stout } = arena();
-    expect(t.game.loadout.weapons.map((w) => w.id)).toEqual(['blonde', 'stout']);
+    expect(t.game.loadout.weapons.map((w) => w.id)).toEqual(['canette', 'stout']);
     t.game.spawnZombie('zombie', t.inFront(8), t.game.player.facing.clone().negate());
     expect(t.playUntil(() => t.events('zombieHit').length > 0, 3)).toBe(true);
     expect(t.events('zombieHit')[0].weapon).toBe(stout);
   });
 
-  it('elle tire moins vite que la Blonde, mais frappe bien plus fort', () => {
+  it('elle tire moins vite que la Canette, mais frappe bien plus fort', () => {
     expect(S.cooldown).toBeGreaterThan(B.cooldown);
     expect(S.speed).toBeLessThan(B.speed);
     expect(S.damage).toBeGreaterThanOrEqual(B.damage * 1.5);
@@ -45,10 +45,10 @@ describe('La Stout', () => {
     expect(t.events('zombieHit')[0].damage).toBeCloseTo(S.damage);
   });
 
-  it("un zombie touché recule bien plus loin qu'avec la Blonde", () => {
-    const knockOf = (weapon: 'blonde' | 'stout') => {
-      const { t } = arena(weapon === 'blonde');
-      if (weapon === 'blonde') t.game.loadout.weapons[1].mods.range = 0;
+  it("un zombie touché recule bien plus loin qu'avec la Canette", () => {
+    const knockOf = (weapon: 'canette' | 'stout') => {
+      const { t } = arena(weapon === 'canette');
+      if (weapon === 'canette') t.game.loadout.weapons[1].mods.range = 0;
       t.game.horde.setPassive(true);
       let knock = 0;
       t.game.events.on('zombieHit', ({ zombie }) => { knock ||= zombie.knockVel.length(); });
@@ -56,7 +56,7 @@ describe('La Stout', () => {
       t.playUntil(() => knock > 0, 3);
       return knock;
     };
-    expect(knockOf('stout')).toBeGreaterThan(knockOf('blonde') * 2);
+    expect(knockOf('stout')).toBeGreaterThan(knockOf('canette') * 2);
   });
 
   it('elle traverse le premier zombie et écrase celui de derrière', () => {
@@ -74,6 +74,6 @@ describe('La Stout', () => {
     const { t } = arena(true);
     const cards = rollCards(50, 0, t.game.loadout.weapons);
     expect(cards.some((c) => c.weapon.id === 'stout')).toBe(true);
-    expect(cards.some((c) => c.weapon.id === 'blonde')).toBe(true);
+    expect(cards.some((c) => c.weapon.id === 'canette')).toBe(true);
   });
 });

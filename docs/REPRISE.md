@@ -42,12 +42,16 @@ Fait et validé dans la feature 7 :
    l'Abbaye est complet et validé ; la tension sur 10 min (fin de feature 7) attend d'avoir des armes.
    Checkpoints de la Stout, validés un par un en jeu :
    - a) **l'arme elle-même : faite, à faire valider** (DEV : choisir « stout » puis « Donner l'arme »).
-     Brique commune `weapons/bottleWeapon.ts` (Blonde et Stout = deux réglages de `config/weapons.ts`),
+     Brique commune `weapons/bottleWeapon.ts` (Canette et Stout = deux réglages de `config/weapons.ts`),
      recul (`knock`) et perçage (`pierce`), bouteille `tools/blender/props.py --variant stout`, icône,
      gerbe `STOUT_SPLASH`, son `STOUT_IMPACT`, cartes `STOUT_UPGRADES`.
    - b) la carte « nouvelle arme » au level-up (les armes ne s'obtiennent que par les cartes, 4 max).
-   - c) la synergie Black and Tan (Blonde + Stout : chaque tir lance aussi une Stout).
+   - c) la synergie Black and Tan (Canette + Stout : chaque tir lance aussi une Stout).
    L'évolution (Imperial Stout) attend l'objet « Bière plus forte » (feature objets).
+   Fait aussi le 2026-11-09 : la Blonde est devenue la **Canette** (canette de bière en métal,
+   `props.py --variant canette`, impact sans verre avec tintement de fer-blanc, identifiant `canette`).
+   Icônes refaites : Canette, Stout façon Duvel. La Pils tiède est retirée du roster : l'arme n° 10
+   est à inventer avec l'utilisateur.
 2. Pistes : discuter avec l'utilisateur de la suite (section 20 du GDD : armes une par une, objets,
    élites, boss...). L'équilibrage de la difficulté est reporté : il faut d'abord les armes.
 
@@ -112,7 +116,8 @@ L=C:/Users/mydnic/Desktop/MODELS
 "$B" -b --factory-startup --disable-autoexec -P tools/blender/kaykit.py -- --lib $L --variant squelette --out src/assets/models/squelette.glb
 # Personnage statique habillé du squelette UAL (prieur)
 "$B" -b --factory-startup --disable-autoexec -P tools/blender/summoner.py -- --lib $L --variant prieur --out src/assets/models/prieur.glb [--render DOSSIER]
-# Objets du décor découpés en matériaux nommés (bouteille de la Stout)
+# Objets du décor découpés en matériaux nommés (bouteille de la Stout, Canette)
+"$B" -b --factory-startup --disable-autoexec -P tools/blender/props.py -- --lib $L --variant canette --out src/assets/models/canette.glb
 "$B" -b --factory-startup --disable-autoexec -P tools/blender/props.py -- --lib $L --variant stout --out src/assets/models/bouteille_stout.glb
 # Monstres Animated Monsters (gargouille)
 "$B" -b --factory-startup --disable-autoexec -P tools/blender/monsters.py -- --lib $L --variant gargouille --out src/assets/models/gargouille.glb

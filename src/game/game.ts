@@ -173,7 +173,7 @@ export class Game {
       hitZombie: (weapon, z, damage, crit, impact, vel, knock) => { self.hitZombie(z, damage, crit, impact, vel, weapon, knock); },
       hitGround: (weapon, pos, vel) => this.events.emit('projectileHitGround', { weapon, pos, vel }),
     };
-    this.loadout = new Loadout(this.weaponCtx, deps.startingWeapon ?? 'blonde');
+    this.loadout = new Loadout(this.weaponCtx, deps.startingWeapon ?? 'canette');
     this.mechanic = MAP_MECHANICS[deps.map ?? 'abbaye'](this);
   }
 

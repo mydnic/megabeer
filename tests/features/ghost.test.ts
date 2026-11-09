@@ -6,7 +6,7 @@ import { createTestGame } from '../support/testGame';
 
 const G = ENEMIES.fantome.ghost;
 
-/** Une arène calme, Blonde désarmée, et un Fantôme du cloître face au joueur à `dist` m. */
+/** Une arène calme, Canette désarmée, et un Fantôme du cloître face au joueur à `dist` m. */
 function duel(dist: number) {
   const t = createTestGame();
   t.startRunAndLand();

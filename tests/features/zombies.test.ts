@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { PLAYER_STATS } from '../../src/config/player';
 import { createTestGame } from '../support/testGame';
 
-/** Une run au sol, Blonde désarmée (portée nulle), sans les zombies de départ. */
+/** Une run au sol, Canette désarmée (portée nulle), sans les zombies de départ. */
 function arena() {
   const t = createTestGame();
   t.startRunAndLand();

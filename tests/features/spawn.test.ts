@@ -7,7 +7,7 @@ import { randomSpawn } from '../../src/world/decor/layout';
 import { spawnCurveAt } from '../../src/game/spawnDirector';
 import { createTestGame } from '../support/testGame';
 
-/** Une run au sol, Blonde désarmée et godmode : on observe la horde sans qu'elle meure ni nous tue. */
+/** Une run au sol, Canette désarmée et godmode : on observe la horde sans qu'elle meure ni nous tue. */
 function observe(seed = 1) {
   const t = createTestGame(seed);
   t.startRunAndLand();

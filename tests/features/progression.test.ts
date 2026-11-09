@@ -129,13 +129,13 @@ describe('Les cartes', () => {
   });
 
   it('disent clairement leur effet, multiplié par la rareté', () => {
-    const blonde = weapons()[0];
-    const dmg = blonde.upgrades.find((u) => u.id === 'damage')!;
-    expect(cardText({ weapon: blonde, upgrade: dmg, tier: 0 })).toBe(`+${Math.round(dmg.value * 100)} % dégâts`);
-    expect(cardText({ weapon: blonde, upgrade: dmg, tier: 2 })).toBe(`+${Math.round(dmg.value * RARITIES[2].mult * 100)} % dégâts`);
-    const rate = blonde.upgrades.find((u) => u.id === 'rate')!;
-    expect(cardText({ weapon: blonde, upgrade: rate, tier: 0 })).toContain("vitesse d'attaque");
-    const crit = blonde.upgrades.find((u) => u.id === 'critMult')!;
-    expect(cardText({ weapon: blonde, upgrade: crit, tier: 0 })).toBe('+0,15 multiplicateur critique');
+    const canette = weapons()[0];
+    const dmg = canette.upgrades.find((u) => u.id === 'damage')!;
+    expect(cardText({ weapon: canette, upgrade: dmg, tier: 0 })).toBe(`+${Math.round(dmg.value * 100)} % dégâts`);
+    expect(cardText({ weapon: canette, upgrade: dmg, tier: 2 })).toBe(`+${Math.round(dmg.value * RARITIES[2].mult * 100)} % dégâts`);
+    const rate = canette.upgrades.find((u) => u.id === 'rate')!;
+    expect(cardText({ weapon: canette, upgrade: rate, tier: 0 })).toContain("vitesse d'attaque");
+    const crit = canette.upgrades.find((u) => u.id === 'critMult')!;
+    expect(cardText({ weapon: canette, upgrade: crit, tier: 0 })).toBe('+0,15 multiplicateur critique');
   });
 });

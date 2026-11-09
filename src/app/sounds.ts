@@ -1,4 +1,4 @@
-import { STOUT_IMPACT } from '../config/weapons';
+import { CANETTE_IMPACT, STOUT_IMPACT } from '../config/weapons';
 import type * as THREE from 'three';
 import { BELL_SOUND } from '../config/abbey';
 import { AUDIO } from '../config/audio';
@@ -66,6 +66,10 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
   game.events.on('zombieHit', ({ weapon }) => {
     if (weapon?.id === 'stout') audio.play(STOUT_IMPACT.sample, STOUT_IMPACT.volume, STOUT_IMPACT.pitch * jitter(0.06));
   });
+  // La Canette : tintement de fer-blanc sur un zombie ou par terre
+  const tin = () => audio.play(CANETTE_IMPACT.sample, CANETTE_IMPACT.volume, CANETTE_IMPACT.pitch * jitter(0.1));
+  game.events.on('zombieHit', ({ weapon }) => { if (weapon?.id === 'canette') tin(); });
+  game.events.on('projectileHitGround', ({ weapon }) => { if (weapon.id === 'canette') tin(); });
   // Frère cellérier tué : il éclate (ses moinillons en sortent)
   game.events.on('enemySplit', ({ zombie }) => {
     const S = AUDIO.split, k = near(zombie.pos, S.hearDist);

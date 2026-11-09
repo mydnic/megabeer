@@ -5,7 +5,7 @@ import { createTestGame } from '../support/testGame';
 
 const T = ENEMIES.lanceur.thrower;
 
-/** Une arène calme, Blonde désarmée, et un Moine lanceur face au joueur à `dist` m. */
+/** Une arène calme, Canette désarmée, et un Moine lanceur face au joueur à `dist` m. */
 function duel(dist: number) {
   const t = createTestGame();
   t.startRunAndLand();

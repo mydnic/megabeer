@@ -6,7 +6,7 @@ import { PLANET_RADIUS } from '../../src/config/world';
 import type { Zombie } from '../../src/enemies/zombie';
 import { createTestGame } from '../support/testGame';
 
-/** Une run au sol, Blonde désarmée et godmode, 2 s avant la première sonnerie (2:00). */
+/** Une run au sol, Canette désarmée et godmode, 2 s avant la première sonnerie (2:00). */
 function beforeBells(difficulty: keyof typeof DIFFICULTIES = 'sobre') {
   const t = createTestGame();
   t.game.difficulty = difficulty;
