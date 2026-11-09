@@ -12,9 +12,9 @@ Variantes (--variant) :
 - lanceur : le moine tel quel ;
 - pelerin : bure rouge vin, et un tonneau sans fond enfilé autour du ventre (--barrel : un glTF de
   tonneau, son apparence est cuite dans une petite texture de l'atlas) ;
-- tonnelier : bure gris ardoise, et un tonneau fermé tenu couché devant lui comme un bélier (--barrel) ;
-- tonnelier_vide : le même, mains vides (pendant sa charge) ;
-- tonneau : le tonneau du tonnelier seul, qui roule pendant la charge (--barrel).
+- tonnelier : bure gris ardoise, et un gros tonneau couché au sol devant lui, qu'il pousse comme
+  Sisyphe son rocher (--barrel) : le tonneau a son propre os, qui le fait rouler en continu dans
+  chaque animation (sauf la mort), et les mains du moine sont posées dessus.
 
 Usage (Blender 5.2) :
   blender -b --factory-startup --disable-autoexec -P tools/blender/monk.py -- --src MONK.blend
@@ -28,6 +28,7 @@ import sys
 import bmesh
 import bpy
 import numpy as np
+from mathutils import Matrix, Vector
 
 ap = argparse.ArgumentParser()
 ap.add_argument('--src', required=True)
@@ -81,23 +82,19 @@ VARIANTS = {
     'tonnelier': {
         # Bure gris ardoise
         'robe': {'hue': 0.6, 'sat': 0.45, 'val': 1.15},
-        # Tonneau fermé, couché devant le ventre comme un bélier
+        # Gros tonneau couché en travers, au sol devant lui, qu'il pousse en marchant
         'barrel': {
-            'axis': 'forward',
-            'bulge': 0.27,
-            'height': 0.62,  # longueur
-            'center': (0.0, -0.52, 0.98),
-            'bone': 'Spine',
+            'axis': 'side',
+            'bulge': 0.55,
+            'height': 0.9,  # largeur (axe du tonneau)
+            'center': (0.0, -0.75, 0.55),
+            'bone': 'Tonneau',
             'bake': CELL // 2,
+            # Os qui le porte (créé, enfant de Root) et vitesse de roulement (m/s, à la surface)
+            'roll': {'parent': 'Root', 'speed': 1.2, 'still': ['Die']},
+            # Mains posées sur le haut du tonneau, côté moine (gauche ; la droite en miroir)
+            'hands': {'at': (0.25, -0.36, 0.94), 'actions': ['Idle', 'Walk', 'Flee', 'TortureFire']},
         },
-    },
-    # Le tonnelier pendant sa charge : mains vides, son tonneau roule devant lui
-    'tonnelier_vide': {
-        'robe': {'hue': 0.6, 'sat': 0.45, 'val': 1.15},
-    },
-    # Le tonneau seul (celui du tonnelier), qui roule pendant la charge : axe en Z, centré à l'origine
-    'tonneau': {
-        'prop': {'bulge': 0.27, 'height': 0.62, 'center': (0.0, 0.0, 0.0), 'bake': CELL // 2},
     },
 }
 variant = VARIANTS[args.variant]
@@ -118,9 +115,8 @@ def select_only(obj):
     bpy.context.view_layer.objects.active = obj
 
 
-def add_barrel(path, cfg, attach=True):
-    """Importe le tonneau, le vide de ses couvercles, le cuit dans sa texture et l'enfile au moine
-    (ou le renvoie seul, texturé, si `attach` est faux)."""
+def add_barrel(path, cfg):
+    """Importe le tonneau, le vide de ses couvercles au besoin, le cuit dans sa texture et le fusionne au moine."""
     before = set(bpy.data.objects)
     bpy.ops.import_scene.gltf(filepath=path)
     new = [o for o in bpy.data.objects if o not in before]
@@ -173,10 +169,12 @@ def add_barrel(path, cfg, attach=True):
         for l, u in zip(f.loops, us):
             l[cuv].uv = (u * 0.98 + 0.01, v0 + (l.vert.co.z / hh + 0.5) * (v1 - v0))
 
-    # Orienté (debout, ou couché vers l'avant comme un bélier) puis posé sur le moine
+    # Orienté (debout, couché vers l'avant, ou couché en travers) puis posé sur le moine
     for v in bm.verts:
         if cfg.get('axis') == 'forward':
             v.co.y, v.co.z = -v.co.z, v.co.y
+        elif cfg.get('axis') == 'side':
+            v.co.x, v.co.z = v.co.z, -v.co.x
         v.co.x += cfg['center'][0]
         v.co.y += cfg['center'][1]
         v.co.z += cfg['center'][2]
@@ -210,22 +208,67 @@ def add_barrel(path, cfg, attach=True):
     me.uv_layers[0].name = mesh.data.uv_layers.active.name
     me.materials.clear()
     me.materials.append(bpy.data.materials.new('Tonneau'))
-    if not attach:
-        mat = me.materials[0]
-        mat.use_nodes = True
-        node = mat.node_tree.nodes.new('ShaderNodeTexImage')
-        node.image = img
-        bsdf = mat.node_tree.nodes['Principled BSDF']
-        mat.node_tree.links.new(node.outputs['Color'], bsdf.inputs['Base Color'])
-        bsdf.inputs['Roughness'].default_value = 1
-        return barrel
 
+    if 'roll' in cfg:
+        add_roll_bone(cfg)
     # Porté rigidement par un os du moine, puis fusionné dans son maillage
     group = barrel.vertex_groups.new(name=cfg['bone'])
     group.add(range(len(me.vertices)), 1.0, 'REPLACE')
     select_only(mesh)
     barrel.select_set(True)
     bpy.ops.object.join()
+
+
+def use_action(arm, action):
+    arm.animation_data.action = action
+    if len(getattr(action, 'slots', ())):
+        arm.animation_data.action_slot = action.slots[0]
+
+
+def add_roll_bone(cfg):
+    """Os du tonneau, à son centre et selon son axe (en travers), qui tourne en continu dans chaque animation."""
+    arm = bpy.data.objects['Armature']
+    select_only(arm)
+    bpy.ops.object.mode_set(mode='EDIT')
+    bone = arm.data.edit_bones.new(cfg['bone'])
+    c = Vector(cfg['center'])
+    bone.head = c
+    bone.tail = c + Vector((0.3, 0, 0))
+    bone.parent = arm.data.edit_bones[cfg['roll']['parent']]
+    bpy.ops.object.mode_set(mode='OBJECT')
+    pb = arm.pose.bones[cfg['bone']]
+    pb.rotation_mode = 'XYZ'
+    arm.animation_data_create()
+    for action in bpy.data.actions:
+        use_action(arm, action)
+        f0, f1 = int(action.frame_range[0]), int(action.frame_range[1])
+        duration = (f1 - f0) / scene.render.fps
+        # Un nombre entier de tours par boucle (pas d'à-coup au raccord), au plus près de la vitesse voulue
+        turns = 0 if action.name in cfg['roll']['still'] else max(1, round(cfg['roll']['speed'] * duration / (2 * math.pi * cfg['bulge'])))
+        for f in range(f0, f1 + 1):
+            # Autour de l'axe de l'os (Y de l'os = axe du tonneau) : le haut part vers l'avant
+            pb.rotation_euler = (0, turns * 2 * math.pi * (f - f0) / max(1, f1 - f0), 0)
+            pb.keyframe_insert('rotation_euler', frame=f)
+
+
+def place_hands(cfg):
+    """Mains posées sur le tonneau : les contrôleurs IK des mains fixés au même endroit à chaque image."""
+    arm = bpy.data.objects['Armature']
+    h = cfg['hands']
+    for name in h['actions']:
+        action = bpy.data.actions[name]
+        use_action(arm, action)
+        f0, f1 = int(action.frame_range[0]), int(action.frame_range[1])
+        for f in range(f0, f1 + 1):
+            scene.frame_set(f)
+            for side, sx in (('L', 1), ('R', -1)):
+                pb = arm.pose.bones['IK-Hand_' + side]
+                at = Vector((h['at'][0] * sx, h['at'][1], h['at'][2]))
+                pb.matrix = Matrix.Translation(at) @ pb.bone.matrix_local.to_3x3().to_4x4()
+                bpy.context.view_layer.update()
+                pb.keyframe_insert('location', frame=f)
+                rot = 'rotation_quaternion' if pb.rotation_mode == 'QUATERNION' else 'rotation_euler'
+                pb.keyframe_insert(rot, frame=f)
 
 
 def rgb_to_hsv(rgb):
@@ -275,23 +318,12 @@ def pixels(name, size):
     return np.array(img.pixels[:], dtype=np.float32).reshape(size, size, 4)
 
 
-if 'prop' in variant:
-    # Accessoire seul : le tonneau cuit, sans le moine ni son squelette
-    if not args.barrel:
-        sys.exit(f'La variante {args.variant} demande --barrel')
-    prop = add_barrel(args.barrel, variant['prop'], attach=False)
-    for o in list(bpy.data.objects):
-        if o is not prop:
-            bpy.data.objects.remove(o)
-    bpy.ops.export_scene.gltf(filepath=args.out, export_format='GLB', export_animations=False,
-                              export_cameras=False, export_lights=False)
-    print('Accessoire exporté :', args.variant, args.out)
-    sys.exit(0)
-
 if 'barrel' in variant:
     if not args.barrel:
         sys.exit(f'La variante {args.variant} demande --barrel')
     add_barrel(args.barrel, variant['barrel'])
+    if 'hands' in variant['barrel']:
+        place_hands(variant['barrel'])
 
 # Atlas des matériaux présents
 names = [m.name for m in mesh.data.materials]

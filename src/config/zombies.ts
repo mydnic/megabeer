@@ -13,10 +13,8 @@ export const ZOMBIE_MODELS = {
   moine: { file: 'moine.glb', height: 2.0, walkAnimAt: 1.2 },
   // Le Pèlerin gonflé : bure rouge vin et tonneau enfilé autour du ventre (monk.py --variant pelerin). Il court.
   moine_pelerin: { file: 'moine_pelerin.glb', height: 2.0, clips: { walk: ['Run'] }, walkAnimAt: 1.8 },
-  // Le Frère tonnelier : bure ardoise, tonneau couché devant lui en bélier (monk.py --variant tonnelier). Il trotte.
-  moine_tonnelier: { file: 'moine_tonnelier.glb', height: 2.0, clips: { walk: ['Run'] }, walkAnimAt: 1.1 },
-  // Le même, mains vides : pendant sa charge (son tonneau roule devant lui) et quand il l'a cassé
-  moine_tonnelier_vide: { file: 'moine_tonnelier_vide.glb', height: 2.0, clips: { walk: ['Run'] }, walkAnimAt: 1.1 },
+  // Le Frère tonnelier : bure ardoise, il pousse devant lui un gros tonneau qui roule sans fin (monk.py --variant tonnelier)
+  moine_tonnelier: { file: 'moine_tonnelier.glb', height: 2.0, walkAnimAt: 1.2 },
   // Le Novice : il court (et bondit pour frapper, il n'a pas d'attaque)
   ribcage: { file: 'Zombie_Ribcage.gltf', height: 1.4, clips: { walk: ['Run'] }, walkAnimAt: 3.7 },
 } as const;
@@ -95,7 +93,7 @@ export const ZOMBIE_VISUAL = {
     hit: ['HitReact'],
     death: ['Death'],
   },
-  /** Cadence maxi de l'animation de marche (fois la normale) : une charge rapide ne la fait pas s'emballer. */
+  /** Cadence maxi de l'animation de marche (fois la normale) : une course rapide ne la fait pas s'emballer. */
   maxWalkRate: 3,
   /** Fondu entre deux animations (s). */
   fade: 0.25,

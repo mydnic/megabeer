@@ -20,35 +20,6 @@ export type EnemyDef = {
   thrower?: ThrowerDef;
   /** Brique Kamikaze : il fonce, allume sa mèche au contact et explose ; tué, il explose sur place. */
   kamikaze?: KamikazeDef;
-  /** Brique Chargeur : à portée, il marque une ligne au sol, prend son élan, puis fonce en ligne droite. */
-  charger?: ChargerDef;
-};
-
-/**
- * Brique Chargeur (GDD section 11) : il s'arrête, marque au sol la ligne de sa charge (droit sur le
- * joueur), prend son élan, puis fonce en ligne droite sans dévier, derrière son tonneau qui roule en
- * tête. On l'esquive en sortant de la ligne. Le tonneau qui percute le joueur éclate et arrête la
- * charge ; raté, il s'arrête au bout de la ligne et le moine le ramasse pendant qu'il est sonné.
- * Tonneau éclaté, il en reprend un à la fin du délai entre deux charges.
- */
-export type ChargerDef = {
-  /** Distance au joueur (m) à partir de laquelle il prend son élan. */
-  range: number;
-  /** Durée de l'élan, ligne marquée au sol (s) : le temps qu'a le joueur pour en sortir. */
-  windup: number;
-  /** Longueur (m) et largeur (m) de la charge, vitesse (m/s). */
-  length: number;
-  width: number;
-  speed: number;
-  /** PV retirés au joueur renversé. */
-  damage: number;
-  /** Sonné après la charge (s), puis délai avant la suivante (s). */
-  recover: number;
-  cooldown: number;
-  /** Le tonneau roule à cette distance devant lui (m, centre à centre). */
-  barrelAhead: number;
-  /** Modèle mains vides (pendant la charge, et tant qu'il n'a plus de tonneau). */
-  emptyModel: ZombieModel;
 };
 
 /**
@@ -99,14 +70,8 @@ export const ENEMIES = {
     name: 'Pèlerin gonflé', model: 'moine_pelerin', hp: 10, speed: 3.6, damage: 0, xp: 4,
     kamikaze: { trigger: 2.2, fuse: 0.9, radius: 3.2, damage: 22 },
   },
-  /** Chargeur : fonce en ligne droite, tonneau en avant comme un bélier. */
-  tonnelier: {
-    name: 'Frère tonnelier', model: 'moine_tonnelier', hp: 22, speed: 2.4, damage: 8, xp: 5,
-    charger: {
-      range: 10, windup: 1.0, length: 14, width: 1.6, speed: 15, damage: 18, recover: 1.4, cooldown: 4,
-      barrelAhead: 1.1, emptyModel: 'moine_tonnelier_vide',
-    },
-  },
+  /** Marcheur lourd : il pousse devant lui un gros tonneau qui roule (c'est son modèle), coups au contact. */
+  tonnelier: { name: 'Frère tonnelier', model: 'moine_tonnelier', hp: 22, speed: 2.2, damage: 10, xp: 5 },
 } as const satisfies Record<string, EnemyDef>;
 
 export type EnemyId = keyof typeof ENEMIES;
@@ -137,17 +102,6 @@ export const KAMIKAZE_LOOK = {
   shakeAmplitude: 0.35,
   shakeDecay: 2.2,
   shakeDist: 14,
-} as const;
-
-/** Frère tonnelier (brique Chargeur) : la ligne de sa charge marquée au sol. */
-export const CHARGER_LOOK = {
-  markColor: 0xff3a1e,
-  markOpacity: 0.55,
-  /** Largeur des bords de la ligne (m). */
-  edge: 0.12,
-  /** Le tonneau qui roule : fichier, rayon (m, pour la rotation et la hauteur). */
-  barrelFile: 'tonneau.glb',
-  barrelRadius: 0.27,
 } as const;
 
 /** Une entrée de roster : l'ennemi arrive à partir de `from` s de run, avec un poids de tirage. */
