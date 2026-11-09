@@ -1,10 +1,11 @@
 import { LUCK, RARITIES, type UpgradeDef } from '../config/upgrades';
 import type { Weapon, WeaponId } from '../weapons/weapon';
+import type { SynergyId } from './synergies';
 
 /** Amélioration d'une arme équipée, avec sa rareté. */
 export type UpgradeCard = { kind: 'upgrade'; weapon: Weapon; upgrade: UpgradeDef; tier: number };
-/** Nouvelle arme à équiper (une place libre dans l'arsenal). */
-export type NewWeaponCard = { kind: 'weapon'; weaponId: WeaponId };
+/** Nouvelle arme à équiper (une place libre dans l'arsenal), et les synergies qu'elle activerait. */
+export type NewWeaponCard = { kind: 'weapon'; weaponId: WeaponId; synergies: SynergyId[] };
 /** Une carte de level-up. */
 export type Card = UpgradeCard | NewWeaponCard;
 
@@ -35,7 +36,7 @@ function upgradeCard(weapon: Weapon, luck: number): UpgradeCard | null {
 export function rollCards(n: number, luck: number, equipped: readonly Weapon[], available: readonly WeaponId[], guaranteeBelow = 3): Card[] {
   const cards: Card[] = [];
   const news = [...available];
-  const take = (id: WeaponId) => { news.splice(news.indexOf(id), 1); cards.push({ kind: 'weapon', weaponId: id }); };
+  const take = (id: WeaponId) => { news.splice(news.indexOf(id), 1); cards.push({ kind: 'weapon', weaponId: id, synergies: [] }); };
   if (equipped.length < guaranteeBelow && news.length && n > 0) take(pickOne(news));
   // Le reste : armes équipées et autres nouvelles armes, mélangées, une carte par arme
   const pool: (Weapon | WeaponId)[] = [...equipped, ...news];

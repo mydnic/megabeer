@@ -20,6 +20,7 @@ import { Emitter } from './emitter';
 import { applyCard, rollCards, type Card } from './levelUpCards';
 import { WEAPON_FACTORIES } from '../weapons/registry';
 import { SYNERGIES } from '../config/weapons';
+import { activeSynergies, synergiesCompletedBy, type SynergyId } from './synergies';
 import { Loadout } from './loadout';
 import { PlayerStats } from './playerStats';
 import { SpawnDirector, spawnCurveAt } from './spawnDirector';
@@ -64,6 +65,8 @@ export type GameEvents = {
   summonCast: { zombie: Zombie };
   /** Les invoqués de `zombie` sortent de terre autour de lui. */
   summoned: { zombie: Zombie; skeletons: Zombie[] };
+  /** Une synergie s'active : toutes ses armes sont maintenant équipées. */
+  synergyActivated: { id: SynergyId };
   /** Un diviseur tué se sépare : `children` sortent de son corps. */
   enemySplit: { zombie: Zombie; children: Zombie[] };
   /** Abbaye : un coup de cloche de volée, après le grand coup du débarquement. */
@@ -230,7 +233,7 @@ export class Game {
   /** Choisit une des cartes proposées ; la suivante s'enchaîne s'il reste des degrés à choisir. */
   pickCard(card: Card) {
     if (!this.offer?.includes(card)) return;
-    if (card.kind === 'weapon') this.loadout.add(card.weaponId);
+    if (card.kind === 'weapon') this.equip(card.weaponId);
     else applyCard(card);
     this.progression.pending--;
     this.offer = null;
@@ -283,6 +286,20 @@ export class Game {
    * Fait apparaître un zombie au sol à la direction `at`, tourné vers `facing`. Plus la run avance,
    * plus il a de PV (courbe de la run et difficulté).
    */
+  /** Synergies actives (toutes leurs armes équipées). */
+  activeSynergies() { return activeSynergies((id) => this.loadout.has(id)); }
+
+  /**
+   * Équipe une arme (carte de level-up, outils de dev) ; annonce les synergies qu'elle active.
+   * Renvoie null si l'arsenal est plein ou si elle est déjà là.
+   */
+  equip(id: WeaponId) {
+    const completes = synergiesCompletedBy(id, (x) => this.loadout.has(x));
+    const w = this.loadout.add(id);
+    if (w) for (const s of completes) this.events.emit('synergyActivated', { id: s });
+    return w;
+  }
+
   /** Fin du geste d'un invocateur : ses invoqués sortent de terre en cercle autour de lui, tournés vers l'extérieur. */
   private summonAround(z: Zombie) {
     const S = z.def.summoner!;
@@ -315,11 +332,9 @@ export class Game {
   hitZombie(z: Zombie, damage: number, crit: boolean, impact: THREE.Vector3, vel: THREE.Vector3, weapon: Weapon | null = null, knock = 1) {
     if (z.intangible) return false; // un fantôme intouchable : le coup le traverse
     // Synergies actives : une arme marque le zombie (sonné), une autre lui fait plus de dégâts pendant ce temps
+    const synergies = this.activeSynergies().map((s) => SYNERGIES[s]);
     let combo = false;
-    for (const S of Object.values(SYNERGIES)) {
-      if (!weapon || !S.weapons.every((id) => this.loadout.has(id))) continue;
-      if (weapon.id === S.boosted && z.dazed > 0) { damage *= S.mult; combo = true; }
-    }
+    for (const S of synergies) if (weapon?.id === S.boosted && z.dazed > 0) { damage *= S.mult; combo = true; }
     // Dans le halo d'un porte-reliques : dégâts réduits
     const shield = this.horde.shieldOf(z);
     damage *= 1 - shield;
@@ -330,9 +345,7 @@ export class Game {
       this.kills++;
       this.xp.drop(z.pos, z.def.xp);
     }
-    for (const S of Object.values(SYNERGIES)) {
-      if (!killed && weapon?.id === S.marker && S.weapons.every((id) => this.loadout.has(id))) z.dazed = S.duration;
-    }
+    for (const S of synergies) if (!killed && weapon?.id === S.marker) z.dazed = S.duration;
     this.events.emit('zombieHit', { weapon, zombie: z, damage, crit, killed, hpAfter: z.hp, impact: impact.clone(), dir, shielded: shield > 0, combo });
     // Un kamikaze tué explose sur place
     if (killed && z.def.kamikaze) this.explode(z, true);
@@ -430,6 +443,8 @@ export class Game {
     const available = this.loadout.full ? [] : (Object.keys(WEAPON_FACTORIES) as WeaponId[]).filter((id) => !this.loadout.has(id));
     const cards = rollCards(LEVEL_UP_SCREEN.cards, this.stats.luck, this.loadout.weapons, available, LEVEL_UP_SCREEN.newWeaponBelow);
     if (!cards.length) { this.progression.pending = 0; return; }
+    // Une nouvelle arme annonce les synergies qu'elle activerait
+    for (const c of cards) if (c.kind === 'weapon') c.synergies = synergiesCompletedBy(c.weaponId, (x) => this.loadout.has(x));
     this.offer = cards;
     const level = this.progression.level - this.progression.pending + 1;
     this.events.emit('levelUpOffered', { level, cards, first });

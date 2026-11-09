@@ -1,6 +1,6 @@
 import { LEVEL_UP_SCREEN as L, RARITIES } from '../config/upgrades';
 import { cardText, type Card } from '../game/levelUpCards';
-import { WEAPON_INFO } from '../config/weapons';
+import { SYNERGIES, WEAPON_INFO } from '../config/weapons';
 import { weaponIcon } from './icons';
 
 const CSS = `
@@ -35,6 +35,10 @@ const CSS = `
 @keyframes lu-shine { to { background-position: 200% 0; } }
 .lu-card.new { background: linear-gradient(#5a2a12, #2e1408); }
 .lu-card.new .lu-eff { font-size: 16px; color: #f3e6cf; }
+.lu-syn { margin-top: -2px; padding: 4px 10px; border-radius: 10px; border: 2px solid #1a120c; background: var(--s); color: #2a1608;
+  font-size: 14px; line-height: 1.1; box-shadow: 0 3px 0 #1a120c; animation: lu-syn 1.2s ease-in-out infinite alternate; }
+.lu-syn small { display: block; font-size: 11px; opacity: .85; }
+@keyframes lu-syn { to { box-shadow: 0 3px 0 #1a120c, 0 0 16px var(--s); } }
 .lu-hint { color: #cdbfa6; font-size: 15px; letter-spacing: .04em; }
 `;
 
@@ -93,7 +97,10 @@ export function createLevelUpScreen(onPick: (card: Card) => void, onHover: () =>
           d.className = `lu-card new${i === 0 ? ' sel' : ''}`;
           d.style.setProperty('--c', L.newWeaponColor);
           d.innerHTML = `${key}<div class="lu-tier">Nouvelle arme</div>${weaponIcon(c.weaponId, 'lu-bottle')}
-            <div class="lu-name">${info.name}</div><div class="lu-eff">${info.pitch}</div>`;
+            <div class="lu-name">${info.name}</div><div class="lu-eff">${info.pitch}</div>${c.synergies.map((s) => {
+              const S = SYNERGIES[s];
+              return `<div class="lu-syn" style="--s:${S.color}">Synergie : ${S.name}<small>${S.pitch}</small></div>`;
+            }).join('')}`;
         } else {
           const r = RARITIES[c.tier];
           d.className = `lu-card t${c.tier}${i === 0 ? ' sel' : ''}`;

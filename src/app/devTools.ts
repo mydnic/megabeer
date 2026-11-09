@@ -60,7 +60,7 @@ export async function wireDevTools(game: Game, d: {
       runLog.event('dev', 'level');
     },
     weapons: Object.keys(WEAPON_FACTORIES),
-    giveWeapon(id) { if (inRun() && game.loadout.add(id as WeaponId)) runLog.event('dev', 'weapon', id); },
+    giveWeapon(id) { if (inRun() && game.equip(id as WeaponId)) runLog.event('dev', 'weapon', id); },
     heal() { if (inRun()) { game.health.reset(); runLog.event('dev', 'heal'); } },
     die() {
       if (!inRun()) return;

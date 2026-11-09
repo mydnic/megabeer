@@ -84,8 +84,12 @@ export const STOUT_IMPACT = {
  * la Canette (`boosted`) lui fait `mult` fois ses dégâts. Sonné ne l'arrête pas : c'est une marque.
  */
 export const SYNERGIES = {
-  blackAndTan: { name: 'Black and Tan', weapons: ['canette', 'stout'], marker: 'stout', boosted: 'canette', duration: 2, mult: 2 },
-} as const satisfies Record<string, { name: string; weapons: readonly BottleWeaponId[]; marker: BottleWeaponId; boosted: BottleWeaponId; duration: number; mult: number }>;
+  blackAndTan: {
+    name: 'Black and Tan', weapons: ['canette', 'stout'], marker: 'stout', boosted: 'canette', duration: 2, mult: 2,
+    /** Interface : explication courte (bandeau, carte) et couleur (badge de carte, liseré des emplacements du HUD). */
+    pitch: 'La Stout sonne, la Canette frappe double', color: '#e8c76a',
+  },
+} as const satisfies Record<string, { name: string; weapons: readonly BottleWeaponId[]; marker: BottleWeaponId; boosted: BottleWeaponId; duration: number; mult: number; pitch: string; color: string }>;
 
 /** Signe au-dessus d'un zombie sonné (Black and Tan) : bulles de mousse qui tournent autour de la tête. */
 export const DAZED_LOOK = {

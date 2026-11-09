@@ -11,11 +11,19 @@ const CSS = `
 .wpn-lvl { position: absolute; right: -7px; bottom: -7px; min-width: 22px; height: 22px; padding: 0 4px; border-radius: 11px;
   border: 2px solid #1a120c; background: linear-gradient(#ffd45a, #f5a623); color: #2a1608; font-size: 13px; line-height: 18px;
   text-align: center; box-sizing: border-box; }
+.wpn-slot.syn { border-color: var(--s); box-shadow: 0 3px 0 rgba(26,18,12,.55), 0 0 10px var(--s), inset 0 3px 6px rgba(0,0,0,.4); }
+.wpn-link { position: absolute; left: -8px; top: -8px; width: 20px; height: 20px; border-radius: 50%; border: 2px solid #1a120c;
+  background: var(--s); display: flex; align-items: center; justify-content: center; }
+.wpn-link svg { width: 13px; height: 13px; }
 .wpn-slot.pop { animation: wpn-pop .45s cubic-bezier(.2,1.6,.4,1); }
 @keyframes wpn-pop { 0% { transform: scale(1) } 40% { transform: scale(1.3) rotate(-6deg) } 100% { transform: scale(1) } }
 `;
 
-export type WeaponSlot = { id: string; icon: string; level: number };
+/** `synergy` : couleur de la synergie active dont l'arme fait partie (liseré et maillon). */
+export type WeaponSlot = { id: string; icon: string; level: number; synergy?: string };
+
+/** Maillon de chaîne : les armes liées par une synergie. */
+const LINK = `<svg viewBox="0 0 16 16"><path d="M6.5 9.5l3-3M7 4.5l1-1a2.8 2.8 0 0 1 4 4l-1 1M9 11.5l-1 1a2.8 2.8 0 0 1-4-4l1-1" stroke="#1a120c" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`;
 
 /**
  * Emplacements d'armes (sous les PV) : 4 cases (GDD section 6), l'icône de chaque arme équipée
@@ -42,13 +50,15 @@ export function createWeaponHud() {
     update(weapons: WeaponSlot[]) {
       slots.forEach((s, i) => {
         const w = weapons[i];
-        const key = w ? `${w.id}:${w.level}` : '';
+        const key = w ? `${w.id}:${w.level}:${w.synergy ?? ''}` : '';
         if (key === shown[i]) return;
         const prev = shown[i]?.split(':');
         const levelUp = !!w && prev?.[0] === w.id && w.level > Number(prev[1]);
         shown[i] = key;
         s.classList.toggle('empty', !w);
-        s.innerHTML = w ? `${w.icon}<div class="wpn-lvl">${w.level}</div>` : '';
+        s.classList.toggle('syn', !!w?.synergy);
+        if (w?.synergy) s.style.setProperty('--s', w.synergy);
+        s.innerHTML = w ? `${w.icon}<div class="wpn-lvl">${w.level}</div>${w.synergy ? `<div class="wpn-link">${LINK}</div>` : ''}` : '';
         if (levelUp) {
           s.classList.remove('pop');
           void s.offsetWidth;

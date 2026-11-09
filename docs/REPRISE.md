@@ -49,7 +49,8 @@ Fait et validé dans la feature 7 :
      « Pool de cartes ») : une carte par arme, une seule amélioration par arme, nouvelle arme garantie
      sous 3 armes (`LEVEL_UP_SCREEN.newWeaponBelow`). `game/levelUpCards.ts` (cartes `upgrade` et
      `weapon`), noms et présentations des armes dans `WEAPON_INFO` (`config/weapons.ts`).
-   - c) **la synergie Black and Tan : faite, à faire valider.** Combo choisi par l'utilisateur : la Stout
+   - c) **la synergie Black and Tan : validée**, avec son affichage (badge sur la carte, bandeau à
+     l'activation, liseré et maillon dans le HUD : `game/synergies.ts`, événement `synergyActivated`, à faire valider). Combo choisi par l'utilisateur : la Stout
      sonne le zombie 2 s (`z.dazed`, vue `enemies/dazedView.ts`), les canettes lui font x2 (`SYNERGIES`
      dans `config/weapons.ts`, appliqué dans `game.hitZombie`, événement `zombieHit.combo`).
    L'évolution (Imperial Stout) attend l'objet « Bière plus forte » (feature objets).

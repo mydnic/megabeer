@@ -1,3 +1,5 @@
+import { SYNERGIES } from '../config/weapons';
+import { SYNERGY_BANNER } from '../config/hud';
 import { AUDIO } from '../config/audio';
 import type { AudioEngine } from '../audio/audio';
 import type { InputState } from '../core/input';
@@ -47,10 +49,14 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
     weaponHud.setVisible(v);
   };
   const icons = new Map<WeaponId, string>();
-  const slots = (): WeaponSlot[] => game.loadout.weapons.map((w) => {
-    if (!icons.has(w.id)) icons.set(w.id, weaponIcon(w.id, 'wpn-icon'));
-    return { id: w.id, icon: icons.get(w.id)!, level: w.mods.level };
-  });
+  const slots = (): WeaponSlot[] => {
+    const active = game.activeSynergies().map((s) => SYNERGIES[s]);
+    return game.loadout.weapons.map((w) => {
+      if (!icons.has(w.id)) icons.set(w.id, weaponIcon(w.id, 'wpn-icon'));
+      const syn = active.find((S) => (S.weapons as readonly string[]).includes(w.id));
+      return { id: w.id, icon: icons.get(w.id)!, level: w.mods.level, synergy: syn?.color };
+    });
+  };
 
   // --- Écrans
   const loading = createLoadingScreen();
@@ -85,6 +91,13 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   game.events.on('bellToll', () => banner.pulse());
   game.events.on('bellsLanding', ({ duration }) => { banner.show('Les cloches sonnent !', `Débarquement : tiens ${duration} secondes`); banner.pulse(); });
   game.events.on('bellsSurgeEnded', () => banner.hideAfter(2.5, 'Ils ont fini de sortir de terre'));
+  // Synergie qui s'active : bandeau avec son nom et ce qu'elle fait
+  game.events.on('synergyActivated', ({ id }) => {
+    const S = SYNERGIES[id];
+    banner.show(`Synergie : ${S.name} !`, S.pitch);
+    banner.pulse();
+    banner.hideAfter(SYNERGY_BANNER.duration);
+  });
   game.events.on('died', () => banner.clear());
   game.events.on('home', () => banner.clear());
   game.events.on('levelUpOffered', ({ level, cards }) => levelUp.show(level, cards));

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { SYNERGIES, WEAPONS } from '../../src/config/weapons';
+import { LEVELS } from '../../src/config/xp';
 import { createTestGame } from '../support/testGame';
 
 const BT = SYNERGIES.blackAndTan;
@@ -13,7 +14,7 @@ function arena(withStout: boolean) {
   t.game.horde.setPassive(true);
   const canette = t.game.loadout.weapons[0];
   canette.mods.critChance = -C.critChance;
-  const stout = withStout ? t.game.loadout.add('stout')! : null;
+  const stout = withStout ? t.game.equip('stout')! : null;
   if (stout) stout.mods.critChance = -WEAPONS.stout.critChance;
   return { t, canette, stout };
 }
@@ -76,5 +77,28 @@ describe('La synergie Black and Tan (Canette + Stout)', () => {
     t.playUntil(() => t.events('zombieHit').length >= 2, 4);
     expect(z.dazed).toBe(0);
     for (const h of t.events('zombieHit')) expect(h.damage).toBeCloseTo(C.damage);
+  });
+
+  it("la carte de la Stout annonce la synergie qu'elle complète, et la prendre l'active", () => {
+    const t = createTestGame();
+    t.startRunAndLand();
+    t.noSpawns();
+    t.game.addXp(LEVELS.first);
+    t.play(1 / 60);
+    const card = t.game.offer!.find((c) => c.kind === 'weapon' && c.weaponId === 'stout');
+    expect(card).toBeDefined();
+    if (card?.kind !== 'weapon') return;
+    expect(card.synergies).toEqual(['blackAndTan']);
+    expect(t.game.activeSynergies()).toEqual([]);
+    t.game.pickCard(card);
+    expect(t.events('synergyActivated').map((e) => e.id)).toEqual(['blackAndTan']);
+    expect(t.game.activeSynergies()).toEqual(['blackAndTan']);
+  });
+
+  it("ne s'annonce qu'une fois, même si on rééquipe", () => {
+    const { t } = arena(true);
+    expect(t.events('synergyActivated')).toHaveLength(1);
+    t.game.equip('stout');
+    expect(t.events('synergyActivated')).toHaveLength(1);
   });
 });

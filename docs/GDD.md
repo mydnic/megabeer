@@ -212,7 +212,7 @@ Chaque arme a **une évolution** : arme au niveau 8 ou plus + un objet passif pr
 
 ### Synergies entre armes [DÉCIDÉ]
 
-Avoir **l'arme X et l'arme Y équipées en même temps**, quel que soit leur niveau, débloque un bonus de synergie (liste plus bas). Une synergie ajoute un effet sans rien remplacer, alors qu'une évolution (arme + objet) transforme l'arme. Avec 4 emplacements maximum, les synergies rendent le choix des armes stratégique.
+Avoir **l'arme X et l'arme Y équipées en même temps**, quel que soit leur niveau, débloque un bonus de synergie (liste plus bas). [DÉCIDÉ le 2026-11-09] **La synergie se voit dans l'interface** : la carte « Nouvelle arme » qui en compléterait une porte un badge « Synergie : nom » avec son effet ; quand elle s'active, un bandeau « Synergie : nom ! » s'affiche ; dans le HUD, les emplacements des armes liées ont un liseré de la couleur de la synergie et un petit maillon. Une synergie ajoute un effet sans rien remplacer, alors qu'une évolution (arme + objet) transforme l'arme. Avec 4 emplacements maximum, les synergies rendent le choix des armes stratégique.
 
 ### Roster V1 [DÉCIDÉ]
 
