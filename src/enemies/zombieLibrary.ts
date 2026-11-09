@@ -9,7 +9,7 @@ import { ZOMBIE_STATES as STATES, type BakedClip, type ZombieState, type ZombieT
 
 // Zombies Quaternius d'origine, le Moine préparé par tools/blender/monk.py, personnages Kenney du cimetière
 const urls = import.meta.glob([
-  '../assets/quaternius-zombies/*.gltf', '../assets/models/moine*.glb',
+  '../assets/quaternius-zombies/*.gltf', '../assets/models/moine*.glb', '../assets/models/porte_reliques.glb',
   '../assets/kenney-graveyard-kit/Models/GLB format/character-*.glb',
 ], { query: '?url', import: 'default', eager: true }) as Record<string, string>;
 

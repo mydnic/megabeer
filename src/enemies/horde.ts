@@ -214,6 +214,19 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
       // Corps entièrement enfoncés : retirés
       for (let i = zombies.length - 1; i >= 0; i--) if (zombies[i].gone) zombies.splice(i, 1);
     },
+    /**
+     * Brique Protecteur : part des dégâts retirée à `z` (0 si aucun halo d'un autre protecteur
+     * debout ne le couvre ; les halos ne se cumulent pas).
+     */
+    shieldOf(z: Zombie) {
+      let best = 0;
+      for (const p of zombies) {
+        const P = p.def.protector;
+        if (!P || p === z || p.dead || P.reduction <= best) continue;
+        if (p.pos.angleTo(z.pos) * PLANET_RADIUS < P.radius) best = P.reduction;
+      }
+      return best;
+    },
     /** Zombies encore debout (cibles des armes). */
     alive() { return zombies.filter((z) => !z.dead); },
     /** Appelé quand un zombie touche le joueur, avec la direction du coup (du zombie vers le joueur). */

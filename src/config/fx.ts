@@ -82,3 +82,17 @@ export const DAMAGE_NUMBERS = {
   critScale: 1.6,
   critSuffix: ' !',
 } as const;
+
+/** Étincelles dorées d'un coup amorti par le halo d'un porte-reliques. */
+export const SHIELD_SPARKS = {
+  max: 400,
+  perBurst: 8,
+  size: 0.05,
+  speed: 3.5,
+  forward: -1.5,
+  upward: 3,
+  spin: 20,
+  life: 0.5,
+  color: 0xffd35a,
+  glow: 1.4,
+} as const satisfies ShardLook;

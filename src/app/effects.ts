@@ -24,6 +24,8 @@ type Deps = {
   /** Explosion d'un kamikaze : gouttes de vin et éclats de tonneau. */
   wine: ReturnType<typeof createShards>;
   wood: ReturnType<typeof createShards>;
+  /** Coup amorti par le halo d'un porte-reliques : étincelles dorées. */
+  sparks: ReturnType<typeof createShards>;
   damageNumbers: ReturnType<typeof createDamageNumbers>;
 };
 
@@ -33,12 +35,13 @@ type Deps = {
  * séquence de mort (pinte qui s'échappe, plongée de la caméra, image qui se désature).
  */
 export function wireEffects(game: Game, d: Deps) {
-  const { buveur, rig, pint, pipeline, shards, wine, wood, damageNumbers } = d;
+  const { buveur, rig, pint, pipeline, shards, wine, wood, sparks, damageNumbers } = d;
   const up = new THREE.Vector3(), numPos = new THREE.Vector3(), soft = new THREE.Vector3();
 
-  game.events.on('zombieHit', ({ zombie, impact, dir, damage, crit }) => {
+  game.events.on('zombieHit', ({ zombie, impact, dir, damage, crit, shielded }) => {
     buveur.splashAt(impact, 14);
     shards.burst(impact, dir);
+    if (shielded) sparks.burst(impact, dir);
     up.copy(zombie.pos).normalize();
     damageNumbers.spawn(numPos.copy(zombie.pos).addScaledVector(up, 2.0), damage, crit);
   });
@@ -111,6 +114,7 @@ export function wireEffects(game: Game, d: Deps) {
     pint.hide();
     shards.clear();
     wine.clear();
+    sparks.clear();
     wood.clear();
     damageNumbers.clear();
     rig.setAnchor(null);

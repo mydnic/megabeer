@@ -22,6 +22,18 @@ export type EnemyDef = {
   kamikaze?: KamikazeDef;
   /** Brique Fantôme : il traverse le décor, et devient intouchable par moments. */
   ghost?: GhostDef;
+  /** Brique Protecteur : les ennemis autour de lui prennent moins de dégâts. */
+  protector?: ProtectorDef;
+};
+
+/**
+ * Brique Protecteur (GDD section 11) : les ennemis à portée de son halo encaissent une part réduite
+ * des dégâts. Lui-même n'est pas protégé par son propre halo, et plusieurs halos ne se cumulent pas.
+ */
+export type ProtectorDef = {
+  /** Rayon du halo (m, au sol) et part des dégâts retirée aux ennemis dedans (0 à 1). */
+  radius: number;
+  reduction: number;
 };
 
 /**
@@ -87,6 +99,8 @@ export const ENEMIES = {
   tonnelier: { name: 'Frère tonnelier', model: 'moine_tonnelier', hp: 22, speed: 2.2, damage: 10, xp: 5 },
   /** Fantôme : traverse les murs, intouchable 1 s sur 3. */
   fantome: { name: 'Fantôme du cloître', model: 'fantome', hp: 12, speed: 3, damage: 8, xp: 5, ghost: { every: 3, intangible: 1 } },
+  /** Protecteur : ses voisins prennent 50 % de dégâts en moins. */
+  reliques: { name: 'Moine porte-reliques', model: 'porte_reliques', hp: 18, speed: 2.6, damage: 6, xp: 6, protector: { radius: 6, reduction: 0.5 } },
 } as const satisfies Record<string, EnemyDef>;
 
 export type EnemyId = keyof typeof ENEMIES;
@@ -119,6 +133,13 @@ export const KAMIKAZE_LOOK = {
   shakeDist: 14,
 } as const;
 
+/** Moine porte-reliques (brique Protecteur) : son halo au sol, et les étincelles des coups amortis. */
+export const PROTECTOR_LOOK = {
+  markColor: 0xffc94a,
+  markOpacity: 0.35,
+  markRing: 0.06,
+} as const;
+
 /** Une entrée de roster : l'ennemi arrive à partir de `from` s de run, avec un poids de tirage. */
 export type RosterEntry = { enemy: EnemyId; from: number; weight: number };
 
@@ -131,5 +152,6 @@ export const ROSTERS = {
     { enemy: 'pelerin', from: 180, weight: 1 },
     { enemy: 'tonnelier', from: 240, weight: 1 },
     { enemy: 'fantome', from: 300, weight: 1 },
+    { enemy: 'reliques', from: 360, weight: 1 },
   ],
 } as const satisfies Record<string, readonly RosterEntry[]>;

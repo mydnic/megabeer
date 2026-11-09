@@ -15,6 +15,8 @@ export const ZOMBIE_MODELS = {
   moine_pelerin: { file: 'moine_pelerin.glb', height: 2.0, clips: { walk: ['Run'] }, walkAnimAt: 1.8 },
   // Le Frère tonnelier : bure ardoise, il pousse devant lui un gros tonneau qui roule sans fin (monk.py --variant tonnelier)
   moine_tonnelier: { file: 'moine_tonnelier.glb', height: 2.0, walkAnimAt: 1.2 },
+  // Le Moine porte-reliques : Rogue encapuchonné KayKit en bure crème, un coffret doré à la main (tools/blender/kaykit.py)
+  porte_reliques: { file: 'porte_reliques.glb', height: 1.5, walkAnimAt: 1.6 },
   // Le Fantôme du cloître : fantôme du kit Kenney cimetière (pièces animées, sans squelette), translucide, il flotte
   fantome: {
     file: 'character-ghost.glb', height: 1.2, walkAnimAt: 2.5,

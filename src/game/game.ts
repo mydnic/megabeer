@@ -36,7 +36,7 @@ export type GameEvents = {
   /** Un zombie frappe le joueur ; `blocked` : ignoré (invulnérabilité ou godmode). */
   playerHurt: { zombie: Zombie; dir: THREE.Vector3; damage: number; hp: number; blocked: boolean };
   /** Un zombie encaisse un coup (arme null : coup sans arme, ex. outils de dev). */
-  zombieHit: { weapon: Weapon | null; zombie: Zombie; damage: number; crit: boolean; killed: boolean; hpAfter: number; impact: THREE.Vector3; dir: THREE.Vector3 };
+  zombieHit: { weapon: Weapon | null; zombie: Zombie; damage: number; crit: boolean; killed: boolean; hpAfter: number; impact: THREE.Vector3; dir: THREE.Vector3; shielded: boolean };
   projectileHitGround: { weapon: Weapon; pos: THREE.Vector3; vel: THREE.Vector3 };
   xpCollected: { amount: number };
   levelGained: { level: number };
@@ -284,6 +284,9 @@ export class Game {
    */
   hitZombie(z: Zombie, damage: number, crit: boolean, impact: THREE.Vector3, vel: THREE.Vector3, weapon: Weapon | null = null) {
     if (z.intangible) return false; // un fantôme intouchable : le coup le traverse
+    // Dans le halo d'un porte-reliques : dégâts réduits
+    const shield = this.horde.shieldOf(z);
+    damage *= 1 - shield;
     const up = this.tmp.copy(z.pos).normalize();
     const dir = vel.clone().addScaledVector(up, -vel.dot(up)).normalize();
     const killed = z.damage(damage, dir);
@@ -291,7 +294,7 @@ export class Game {
       this.kills++;
       this.xp.drop(z.pos, z.def.xp);
     }
-    this.events.emit('zombieHit', { weapon, zombie: z, damage, crit, killed, hpAfter: z.hp, impact: impact.clone(), dir });
+    this.events.emit('zombieHit', { weapon, zombie: z, damage, crit, killed, hpAfter: z.hp, impact: impact.clone(), dir, shielded: shield > 0 });
     // Un kamikaze tué explose sur place
     if (killed && z.def.kamikaze) this.explode(z, true);
     return killed;

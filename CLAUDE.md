@@ -72,10 +72,10 @@ recopie son état à chaque image. Ne jamais remettre de logique de jeu dans `ma
   **Ajouter une arme** = un fichier qui implémente `Weapon`, une entrée dans le registre, sa config
   et ses cartes, son icône (`ui/icons.ts`), son rendu, et ses tests. Rien d'autre à toucher.
 - `enemies/` : les ennemis sont des fiches (`config/enemies.ts` : `ENEMIES` et le roster de chaque map),
-  `zombie.ts` et `horde.ts` (simulation, briques Tireur, Kamikaze et Fantôme ; les armes visent
+  `zombie.ts` et `horde.ts` (simulation, briques Tireur, Kamikaze, Fantôme et Protecteur ; les armes visent
   `z.targetable`), `hordeView.ts` et `zombieLibrary.ts`
   (rendu, modèles et animations pré-calculées ; accepte aussi les personnages Kenney à pièces animées
-  sans squelette, et les modèles translucides), `enemyShotsView.ts` et `kamikazeView.ts` (marques au sol
+  sans squelette, et les modèles translucides), `enemyShotsView.ts`, `kamikazeView.ts` et `protectorView.ts` (marques au sol
   `fx/groundMarks.ts`, qui épousent le relief). `fx/shards.ts` : gerbes de morceaux (verre, vin, bois). `pickups/` : `xpDrops.ts` + `xpDropsView.ts`.
 - `app/` : l'application navigateur branchée sur le noyau, une responsabilité par fichier :
   `planet.ts` (seed, relief, décor, chargement), `screens.ts` (accueil, HUD, pause, level-up,
@@ -111,7 +111,9 @@ BD/aquarelle, Valheim, style anime, herbe dense.
 `tools/blender/buveur.py` (le Buveur, rig et clips), `tools/blender/abbaye.py` et `tools/blender/monk.py`
 (prépare le Moine de `MONK.blend` pour la foule : textures en un atlas, un seul matériau, animations
 renommées comme les zombies ; `--variant` : lanceur, pelerin (bure rouge, tonneau sans fond autour du ventre) ou tonnelier (bure ardoise, gros tonneau qui roule devant lui, mains dessus), tonneau donné par `--barrel` ; source dans `Desktop/MODELS/personnages/kelgar_monk`) génèrent les GLB
-de `src/assets/models/`. Ne pas éditer les GLB à la main : modifier le script et relancer.
+de `src/assets/models/`, comme `tools/blender/kaykit.py` (personnages KayKit : pièces retirées, recolorés, objet
+en main, animations du Rig_Medium ; sources lues dans `Desktop/MODELS`). Outils communs dans `crowd_utils.py`.
+Pas plus de 3 ennemis sur le même corps de base. Ne pas éditer les GLB à la main : modifier le script et relancer.
 
 ```
 "C:\Program Files\Blender Foundation\Blender 5.2\blender.exe" -b --factory-startup -P tools/blender/buveur.py -- --out src/assets/models/buveur.glb [--render DOSSIER]
