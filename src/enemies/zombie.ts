@@ -55,6 +55,15 @@ export class Zombie {
   throwing = false;
   /** Brique Kamikaze : mèche allumée (s restantes, -1 : éteinte). */
   fuse = -1;
+  /** Brique Chargeur : phase (élan, charge, sonné), temps restant de la phase, délai avant la suivante (s). */
+  charge: 'none' | 'windup' | 'charge' | 'recover' = 'none';
+  chargeTimer = 0;
+  chargeCooldown = 0;
+  /** Ligne de la charge : départ et direction (tangente au sol), distance restante (m), joueur déjà renversé. */
+  readonly chargeFrom = new THREE.Vector3();
+  readonly chargeDir = new THREE.Vector3();
+  chargeLeft = 0;
+  chargeHit = false;
   /** Sortie de terre en cours (s restantes) : il émerge du sol, immobile, sans frapper. */
   rise = 0;
   /** Vrai quand le corps a fini de s'enfoncer : la horde le retire. */
@@ -142,7 +151,7 @@ export class Zombie {
   update(dt: number) {
     // Cadence des pas calée sur la vitesse réelle : les pieds ne patinent pas
     const animAt = (ZOMBIE_MODELS[this.model] as { walkAnimAt?: number }).walkAnimAt ?? ZOMBIE_MOVE.walkAnimAt;
-    const rate = this.state === 'walk' ? Math.max(0.3, this.walkSpeed / animAt) : this.animSpeed;
+    const rate = this.state === 'walk' ? THREE.MathUtils.clamp(this.walkSpeed / animAt, 0.3, V.maxWalkRate) : this.animSpeed;
     const c = this.kind.clips[this.state];
     const before = (this.time % c.duration) / c.duration;
     this.time += dt * rate;

@@ -11,7 +11,8 @@ Le jeu fusionne chaque ennemi en une seule géométrie avec une seule texture (e
 Variantes (--variant) :
 - lanceur : le moine tel quel ;
 - pelerin : bure rouge vin, et un tonneau sans fond enfilé autour du ventre (--barrel : un glTF de
-  tonneau, son apparence est cuite dans une petite texture de l'atlas).
+  tonneau, son apparence est cuite dans une petite texture de l'atlas) ;
+- tonnelier : bure gris ardoise, et un tonneau fermé tenu couché devant lui comme un bélier (--barrel).
 
 Usage (Blender 5.2) :
   blender -b --factory-startup --disable-autoexec -P tools/blender/monk.py -- --src MONK.blend
@@ -66,12 +67,26 @@ VARIANTS = {
         'robe': {'hue': 0.985, 'sat': 1.7, 'val': 1.0},
         # Tonneau autour du ventre (m, repère du moine : face vers -Y, pieds en Z = 0)
         'barrel': {
+            'open': True,  # sans fond : il l'a transpercé
             'bulge': 0.42,  # rayon au ventre du tonneau
             'height': 0.8,
             'center': (0.0, -0.09, 1.06),
             'wall': 0.025,  # épaisseur des douelles vues par l'ouverture
             'bone': 'Spine',  # os qui le porte
             'bake': CELL // 2,  # taille de sa texture cuite
+        },
+    },
+    'tonnelier': {
+        # Bure gris ardoise
+        'robe': {'hue': 0.6, 'sat': 0.45, 'val': 1.15},
+        # Tonneau fermé, couché devant le ventre comme un bélier
+        'barrel': {
+            'axis': 'forward',
+            'bulge': 0.27,
+            'height': 0.62,  # longueur
+            'center': (0.0, -0.52, 0.98),
+            'bone': 'Spine',
+            'bake': CELL // 2,
         },
     },
 }
@@ -108,41 +123,62 @@ def add_barrel(path, cfg):
     select_only(barrel)
     bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
 
-    # Sans couvercles : on enlève les faces horizontales des deux bouts
+    # Travail dans le repère du tonneau : axe en Z, centré, mis à la taille voulue
     bm = bmesh.new()
     bm.from_mesh(barrel.data)
     zs = [v.co.z for v in bm.verts]
     z0, z1 = min(zs), max(zs)
     h = z1 - z0
     caps = [f for f in bm.faces if abs(f.normal.z) > 0.7 and not (z0 + 0.2 * h < f.calc_center_median().z < z1 - 0.2 * h)]
-    bmesh.ops.delete(bm, geom=caps, context='FACES')
-    # Recentré et mis à la taille du ventre
+    if cfg.get('open'):
+        # Sans couvercles : on enlève les faces horizontales des deux bouts
+        bmesh.ops.delete(bm, geom=caps, context='FACES')
+        caps = []
+    caps = set(caps)
     cx = sum(v.co.x for v in bm.verts) / len(bm.verts)
     cy = sum(v.co.y for v in bm.verts) / len(bm.verts)
     bulge = max(((v.co.x - cx) ** 2 + (v.co.y - cy) ** 2) ** 0.5 for v in bm.verts)
     s = cfg['bulge'] / bulge
     sz = cfg['height'] / h
     for v in bm.verts:
-        v.co.x = (v.co.x - cx) * s + cfg['center'][0]
-        v.co.y = (v.co.y - cy) * s + cfg['center'][1]
-        v.co.z = (v.co.z - (z0 + h / 2)) * sz + cfg['center'][2]
-    # UV de cuisson dépliées en cylindre : tour complet en U, hauteur en V
+        v.co.x = (v.co.x - cx) * s
+        v.co.y = (v.co.y - cy) * s
+        v.co.z = (v.co.z - (z0 + h / 2)) * sz
+
+    # UV de cuisson : les douelles dépliées en cylindre (tour en U, hauteur en V) ; les couvercles
+    # éventuels à plat dans deux carrés en bas de la texture
     cuv = bm.loops.layers.uv.new('cuisson')
-    zc, hh = cfg['center'][2], cfg['height']
+    R, hh = cfg['bulge'], cfg['height']
+    v0, v1 = (0.27, 0.99) if caps else (0.01, 0.99)
     for f in bm.faces:
-        us = [math.atan2(l.vert.co.y - cfg['center'][1], l.vert.co.x - cfg['center'][0]) / (2 * math.pi) + 0.5 for l in f.loops]
+        if f in caps:
+            u0 = 0.01 if f.calc_center_median().z > 0 else 0.27
+            for l in f.loops:
+                l[cuv].uv = (u0 + (l.vert.co.x / (2 * R) + 0.5) * 0.24, 0.01 + (l.vert.co.y / (2 * R) + 0.5) * 0.24)
+            continue
+        us = [math.atan2(l.vert.co.y, l.vert.co.x) / (2 * math.pi) + 0.5 for l in f.loops]
         if max(us) - min(us) > 0.5:  # face à cheval sur la couture : refermée sur le bord droit
             us = [u if u >= 0.5 else 1.0 for u in us]
         for l, u in zip(f.loops, us):
-            l[cuv].uv = (u * 0.98 + 0.01, (l.vert.co.z - zc) / hh * 0.98 + 0.5)
+            l[cuv].uv = (u * 0.98 + 0.01, v0 + (l.vert.co.z / hh + 0.5) * (v1 - v0))
+
+    # Orienté (debout, ou couché vers l'avant comme un bélier) puis posé sur le moine
+    for v in bm.verts:
+        if cfg.get('axis') == 'forward':
+            v.co.y, v.co.z = -v.co.z, v.co.y
+        v.co.x += cfg['center'][0]
+        v.co.y += cfg['center'][1]
+        v.co.z += cfg['center'][2]
+    bm.normal_update()
     bm.to_mesh(barrel.data)
     bm.free()
 
-    # Épaisseur, pour voir l'intérieur des douelles par l'ouverture
-    mod = barrel.modifiers.new('epaisseur', 'SOLIDIFY')
-    mod.thickness = cfg['wall']
-    mod.offset = -1
-    bpy.ops.object.modifier_apply(modifier=mod.name)
+    if cfg.get('open'):
+        # Épaisseur, pour voir l'intérieur des douelles par l'ouverture
+        mod = barrel.modifiers.new('epaisseur', 'SOLIDIFY')
+        mod.thickness = cfg['wall']
+        mod.offset = -1
+        bpy.ops.object.modifier_apply(modifier=mod.name)
 
     # Apparence cuite dans une texture à lui, sur de nouvelles UV
     me = barrel.data
@@ -221,7 +257,7 @@ def pixels(name, size):
 
 if 'barrel' in variant:
     if not args.barrel:
-        sys.exit('La variante pelerin demande --barrel')
+        sys.exit(f'La variante {args.variant} demande --barrel')
     add_barrel(args.barrel, variant['barrel'])
 
 # Atlas des matériaux présents

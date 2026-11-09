@@ -72,9 +72,9 @@ recopie son état à chaque image. Ne jamais remettre de logique de jeu dans `ma
   **Ajouter une arme** = un fichier qui implémente `Weapon`, une entrée dans le registre, sa config
   et ses cartes, son icône (`ui/icons.ts`), son rendu, et ses tests. Rien d'autre à toucher.
 - `enemies/` : les ennemis sont des fiches (`config/enemies.ts` : `ENEMIES` et le roster de chaque map),
-  `zombie.ts` et `horde.ts` (simulation, briques Tireur et Kamikaze), `hordeView.ts` et `zombieLibrary.ts`
-  (rendu, modèles et animations pré-calculées), `enemyShotsView.ts` et `kamikazeView.ts` (marques au sol
-  `fx/groundMarks.ts`, qui épousent le relief). `fx/shards.ts` : gerbes de morceaux (verre, vin, bois). `pickups/` : `xpDrops.ts` + `xpDropsView.ts`.
+  `zombie.ts` et `horde.ts` (simulation, briques Tireur, Kamikaze et Chargeur), `hordeView.ts` et `zombieLibrary.ts`
+  (rendu, modèles et animations pré-calculées), `enemyShotsView.ts`, `kamikazeView.ts` et `chargerView.ts` (marques
+  et lignes au sol `fx/groundMarks.ts`, qui épousent le relief). `fx/shards.ts` : gerbes de morceaux (verre, vin, bois). `pickups/` : `xpDrops.ts` + `xpDropsView.ts`.
 - `app/` : l'application navigateur branchée sur le noyau, une responsabilité par fichier :
   `planet.ts` (seed, relief, décor, chargement), `screens.ts` (accueil, HUD, pause, level-up,
   mort), `effects.ts` (impacts, caméra, séquence de mort), `sounds.ts` (sons et musique),
@@ -108,7 +108,7 @@ BD/aquarelle, Valheim, style anime, herbe dense.
 
 `tools/blender/buveur.py` (le Buveur, rig et clips), `tools/blender/abbaye.py` et `tools/blender/monk.py`
 (prépare le Moine de `MONK.blend` pour la foule : textures en un atlas, un seul matériau, animations
-renommées comme les zombies ; `--variant` : lanceur, ou pelerin avec bure rouge et tonneau `--barrel` ; source dans `Desktop/MODELS/personnages/kelgar_monk`) génèrent les GLB
+renommées comme les zombies ; `--variant` : lanceur, pelerin (bure rouge, tonneau sans fond autour du ventre) ou tonnelier (bure ardoise, tonneau en bélier), tonneau donné par `--barrel` ; source dans `Desktop/MODELS/personnages/kelgar_monk`) génèrent les GLB
 de `src/assets/models/`. Ne pas éditer les GLB à la main : modifier le script et relancer.
 
 ```

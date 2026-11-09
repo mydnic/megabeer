@@ -61,6 +61,11 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
     audio.play('impactWood_heavy', K.woodVolume * k, jitter(0.08));
     audio.play('impactSoft_heavy', K.splashVolume * k, 0.8 * jitter(0.08));
   });
+  // Frère tonnelier : il frappe son tonneau en prenant son élan
+  game.events.on('chargeAimed', ({ from }) => {
+    const k = near(from, AUDIO.charger.hearDist);
+    if (k > 0) audio.play('impactWood_medium', AUDIO.charger.aimVolume * k, 0.75 * jitter(0.06));
+  });
   // Cloches de l'Abbaye : coups d'alerte, puis un coup plus grave au débarquement
   game.events.on('bellToll', () => audio.bell(BELL_SOUND.tollVolume, BELL_SOUND.pitch, BELL_SOUND.reverb));
   game.events.on('bellsLanding', () => audio.bell(BELL_SOUND.landingVolume, BELL_SOUND.pitch * BELL_SOUND.landingPitch, BELL_SOUND.reverb));

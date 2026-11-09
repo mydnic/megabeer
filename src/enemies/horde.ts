@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { ENEMIES, type EnemyId } from '../config/enemies';
+import { ENEMIES, type ChargerDef, type EnemyId } from '../config/enemies';
 import { ZOMBIE_ATTACK, ZOMBIE_HURT as H, ZOMBIE_MOVE as M, ZOMBIE_VISUAL as V, type ZombieModel } from '../config/zombies';
 import { PLANET_RADIUS } from '../config/world';
 import { heightAt } from '../world/terrain';
@@ -59,6 +59,9 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
       if (z.state !== 'attack' || z.attackDone) z.play('idle');
       return;
     }
+    // Brique Chargeur : élan (ligne marquée), charge en ligne droite, puis sonné
+    const C = z.def.charger;
+    if (C && chargerStep(z, C, dt, dist)) return;
     // Brique Kamikaze : tout près du joueur, il s'arrête et allume la mèche (il ne frappe jamais)
     const K = z.def.kamikaze;
     if (K) {
@@ -125,6 +128,60 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
     if (z.state === 'attack' || z.stateTime > V.minStateTime) z.play(next);
   }
 
+  /** Brique Chargeur : renvoie vrai quand elle pilote le zombie à ce pas (élan, charge ou sonné). */
+  function chargerStep(z: Zombie, C: ChargerDef, dt: number, dist: number) {
+    z.chargeCooldown = Math.max(0, z.chargeCooldown - dt);
+    if (z.charge === 'windup') {
+      z.walkSpeed = 0;
+      z.facing.copy(z.chargeDir);
+      z.chargeTimer -= dt;
+      if (z.chargeTimer <= 0) { z.charge = 'charge'; z.chargeLeft = C.length; z.chargeHit = false; }
+      return true;
+    }
+    if (z.charge === 'charge') {
+      // Droit devant, sans viser : la direction reste celle de la ligne (recollée au plan du sol)
+      z.chargeDir.addScaledVector(up, -z.chargeDir.dot(up)).normalize();
+      z.facing.copy(z.chargeDir);
+      const step = Math.min(C.speed * dt, z.chargeLeft);
+      before.copy(z.pos);
+      z.pos.addScaledVector(z.chargeDir, step);
+      decor?.resolve(z.pos, M.radius);
+      snap(z.pos);
+      const moved = tmp.subVectors(z.pos, before).length();
+      z.chargeLeft -= step;
+      z.walkSpeed = dt > 0 ? moved / dt : 0;
+      if (z.state !== 'walk') z.play('walk');
+      // Le joueur sur son passage est renversé (une fois par charge)
+      if (!z.chargeHit && !passive && z.pos.angleTo(player.pos) * PLANET_RADIUS < C.width / 2 + M.playerRadius) {
+        z.chargeHit = true;
+        api.onChargeHit?.(z, z.chargeDir.clone());
+      }
+      // Fin de la ligne, ou arrêté net par un mur : sonné
+      if (z.chargeLeft <= 0 || (step > 0 && moved < step * M.stuckRatio)) { z.charge = 'recover'; z.chargeTimer = C.recover; }
+      return true;
+    }
+    if (z.charge === 'recover') {
+      z.walkSpeed = 0;
+      if (z.state !== 'hit') z.play('hit');
+      z.chargeTimer -= dt;
+      if (z.chargeTimer <= 0) { z.charge = 'none'; z.chargeCooldown = C.cooldown; z.play('idle'); }
+      return true;
+    }
+    // À portée (mais pas au contact) et tourné vers le joueur : il prend son élan, la ligne est marquée
+    if (z.chargeCooldown <= 0 && !passive && dist <= C.range && dist > V.attackRange
+        && z.facing.dot(tmp.copy(want).normalize()) > 0.95) {
+      z.charge = 'windup';
+      z.chargeTimer = C.windup;
+      z.chargeFrom.copy(z.pos);
+      z.chargeDir.copy(want).normalize();
+      z.walkSpeed = 0;
+      z.play('idle');
+      api.onAim?.(z);
+      return true;
+    }
+    return false;
+  }
+
   // Grille de hachage pour l'écartement (seuls les voisins de case sont testés)
   const grid = new Map<number, number[]>();
   const cellKey = (x: number, y: number, z: number) => ((x * 73856093) ^ (y * 19349663) ^ (z * 83492791)) | 0;
@@ -161,7 +218,8 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
     // Le joueur est repoussé hors des corps (sur le plan tangent)
     const pr = M.radius + M.playerRadius;
     for (const z of zombies) {
-      if (z.dead) continue;
+      // Un chargeur lancé renverse le joueur et le traverse, il ne le pousse pas devant lui
+      if (z.dead || z.charge === 'charge') continue;
       push.subVectors(player.pos, z.pos);
       up.copy(player.pos).normalize();
       push.addScaledVector(up, -push.dot(up));
@@ -211,6 +269,10 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
     onHit: undefined as ((z: Zombie, dir: THREE.Vector3) => void) | undefined,
     /** Appelé quand un tireur lâche son projectile. */
     onThrow: undefined as ((z: Zombie) => void) | undefined,
+    /** Appelé quand un chargeur prend son élan (sa ligne est dans chargeFrom / chargeDir). */
+    onAim: undefined as ((z: Zombie) => void) | undefined,
+    /** Appelé quand un chargeur renverse le joueur, avec la direction de la charge. */
+    onChargeHit: undefined as ((z: Zombie, dir: THREE.Vector3) => void) | undefined,
     /** Appelé quand un kamikaze allume sa mèche. */
     onArm: undefined as ((z: Zombie) => void) | undefined,
     /** Appelé quand la mèche d'un kamikaze arrive au bout. */

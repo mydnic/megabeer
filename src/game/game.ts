@@ -53,6 +53,8 @@ export type GameEvents = {
   enemyThrow: { shot: EnemyShot };
   /** Un projectile ennemi touche le sol ; `hit` : le joueur était dans la zone. */
   enemyShotLanded: { shot: EnemyShot; hit: boolean };
+  /** Un chargeur prend son élan : il foncera dans `windup` s, de `from` le long de `dir`, sur `length` m et `width` m de large. */
+  chargeAimed: { zombie: Zombie; from: THREE.Vector3; dir: THREE.Vector3; length: number; width: number; windup: number };
   /** Un kamikaze allume sa mèche : il explosera dans `fuse` s, dans un rayon `radius` autour de `at`. */
   kamikazeArmed: { zombie: Zombie; at: THREE.Vector3; radius: number; fuse: number };
   /** Un kamikaze explose à `at` ; `killed` : tué par le joueur (sinon, au bout de sa mèche) ; `hit` : le joueur était dans la zone. */
@@ -144,6 +146,11 @@ export class Game {
       this.events.emit('kamikazeArmed', { zombie: z, at: z.pos.clone(), radius: K.radius, fuse: K.fuse });
     };
     this.horde.onExplode = (z) => this.explode(z, false);
+    this.horde.onAim = (z) => {
+      const C = z.def.charger!;
+      this.events.emit('chargeAimed', { zombie: z, from: z.chargeFrom.clone(), dir: z.chargeDir.clone(), length: C.length, width: C.width, windup: C.windup });
+    };
+    this.horde.onChargeHit = (z, dir) => this.hurtPlayer(z, dir, z.def.charger!.damage);
     this.horde.onSpawn = (zombie) => this.events.emit('zombieSpawned', { zombie });
     this.xp = createXpDrops(groundAt);
     this.director = new SpawnDirector({

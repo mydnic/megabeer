@@ -20,6 +20,29 @@ export type EnemyDef = {
   thrower?: ThrowerDef;
   /** Brique Kamikaze : il fonce, allume sa mèche au contact et explose ; tué, il explose sur place. */
   kamikaze?: KamikazeDef;
+  /** Brique Chargeur : à portée, il marque une ligne au sol, prend son élan, puis fonce en ligne droite. */
+  charger?: ChargerDef;
+};
+
+/**
+ * Brique Chargeur (GDD section 11) : il s'arrête, marque au sol la ligne de sa charge (droit sur le
+ * joueur), prend son élan, puis fonce en ligne droite sans dévier. On l'esquive en sortant de la
+ * ligne. Après la charge il reste sonné, puis attend avant d'en relancer une.
+ */
+export type ChargerDef = {
+  /** Distance au joueur (m) à partir de laquelle il prend son élan. */
+  range: number;
+  /** Durée de l'élan, ligne marquée au sol (s) : le temps qu'a le joueur pour en sortir. */
+  windup: number;
+  /** Longueur (m) et largeur (m) de la charge, vitesse (m/s). */
+  length: number;
+  width: number;
+  speed: number;
+  /** PV retirés au joueur renversé. */
+  damage: number;
+  /** Sonné après la charge (s), puis délai avant la suivante (s). */
+  recover: number;
+  cooldown: number;
 };
 
 /**
@@ -70,6 +93,11 @@ export const ENEMIES = {
     name: 'Pèlerin gonflé', model: 'moine_pelerin', hp: 10, speed: 3.6, damage: 0, xp: 4,
     kamikaze: { trigger: 2.2, fuse: 0.9, radius: 3.2, damage: 22 },
   },
+  /** Chargeur : fonce en ligne droite, tonneau en avant comme un bélier. */
+  tonnelier: {
+    name: 'Frère tonnelier', model: 'moine_tonnelier', hp: 22, speed: 2.4, damage: 8, xp: 5,
+    charger: { range: 10, windup: 1.0, length: 14, width: 1.6, speed: 15, damage: 18, recover: 1.4, cooldown: 4 },
+  },
 } as const satisfies Record<string, EnemyDef>;
 
 export type EnemyId = keyof typeof ENEMIES;
@@ -102,6 +130,14 @@ export const KAMIKAZE_LOOK = {
   shakeDist: 14,
 } as const;
 
+/** Frère tonnelier (brique Chargeur) : la ligne de sa charge marquée au sol. */
+export const CHARGER_LOOK = {
+  markColor: 0xff3a1e,
+  markOpacity: 0.55,
+  /** Largeur des bords de la ligne (m). */
+  edge: 0.12,
+} as const;
+
 /** Une entrée de roster : l'ennemi arrive à partir de `from` s de run, avec un poids de tirage. */
 export type RosterEntry = { enemy: EnemyId; from: number; weight: number };
 
@@ -112,5 +148,6 @@ export const ROSTERS = {
     { enemy: 'novice', from: 60, weight: 1 },
     { enemy: 'lanceur', from: 120, weight: 1 },
     { enemy: 'pelerin', from: 180, weight: 1 },
+    { enemy: 'tonnelier', from: 240, weight: 1 },
   ],
 } as const satisfies Record<string, readonly RosterEntry[]>;
