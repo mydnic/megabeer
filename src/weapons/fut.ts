@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { FUT as F, WEAPON_INFO } from '../config/weapons';
+import { FUT as F, TARGETING, WEAPON_INFO } from '../config/weapons';
+import { pickTarget } from './targeting';
 import { FUT_UPGRADES } from '../config/upgrades';
 import type { Zombie } from '../enemies/zombie';
 import type { StatLine } from '../game/playerStats';
@@ -26,16 +27,6 @@ export function createFut(ctx: WeaponContext): Weapon {
   let timer: number = F.firstDelay;
   const up = new THREE.Vector3(), d = new THREE.Vector3(), vel = new THREE.Vector3(), lead = new THREE.Vector3();
 
-  /** Le zombie le plus proche à portée (ou rien). */
-  function nearest() {
-    let best: Zombie | null = null, bestD: number = F.range;
-    for (const z of ctx.zombies()) {
-      if (!z.targetable) continue;
-      const dist = z.pos.distanceTo(ctx.playerPos());
-      if (dist < bestD) { best = z; bestD = dist; }
-    }
-    return best;
-  }
 
   /** Pose le fût sur le sol : son axe à un rayon au-dessus du sol (ou du dessus du décor). */
   function place(b: Barrel) {
@@ -103,7 +94,7 @@ export function createFut(ctx: WeaponContext): Weapon {
     update(dt: number) {
       timer -= dt;
       if (timer > 0) return;
-      const target = nearest();
+      const target = pickTarget(ctx.zombies(), ctx.playerPos(), F.range, TARGETING.spread);
       if (!target) return;
       timer = F.cooldown / (ctx.stats.attackSpeed * mods.rate);
       ctx.rig.gesture(1);

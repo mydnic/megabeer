@@ -1,12 +1,16 @@
 import * as THREE from 'three';
-import { WEAPONS, type BottleWeaponId } from '../config/weapons';
+import { TARGETING, WEAPONS, type BottleWeaponId } from '../config/weapons';
+import { anyInRange, pickTarget } from './targeting';
 import type { UpgradeDef } from '../config/upgrades';
 import type { Zombie } from '../enemies/zombie';
 import type { StatLine } from '../game/playerStats';
 import type { Projectile, Weapon, WeaponContext, WeaponMods } from './weapon';
 
-/** Une bouteille en vol : zombies qu'elle peut encore traverser, et ceux déjà touchés (pas deux fois le même). */
-type Bottle = Projectile & { pierce: number; hits: Zombie[] };
+/**
+ * Une bouteille en vol : zombies qu'elle peut encore traverser, ceux déjà touchés (pas deux fois le
+ * même), sa cible et les dégâts qu'elle lui réserve (comptés dans `incoming` jusqu'à sa fin).
+ */
+type Bottle = Projectile & { pierce: number; hits: Zombie[]; target: Zombie | null; expected: number };
 
 /** Bouteille en attente de lâcher (volée en cours). */
 type Pending = { t: number; index: number };
@@ -40,17 +44,8 @@ export function createBottleWeapon(ctx: WeaponContext, id: BottleWeaponId, name:
   const prev = new THREE.Vector3();
   const a0 = new THREE.Vector3(), a1 = new THREE.Vector3();
 
-  /** Les n zombies les plus proches à portée (le plus proche d'abord). */
-  function nearest(from: THREE.Vector3, n: number) {
-    const list: { z: Zombie; d: number }[] = [];
-    for (const z of ctx.zombies()) {
-      if (!z.targetable) continue;
-      const dist = z.pos.distanceTo(from);
-      if (dist < W.range * mods.range) list.push({ z, d: dist });
-    }
-    list.sort((a, b) => a.d - b.d);
-    return list.slice(0, n).map((x) => x.z);
-  }
+  /** Zombies déjà visés par la volée en cours (une cible différente par bouteille). */
+  const volley = new Set<Zombie>();
 
   /** Vitesse de lancer pour atteindre le zombie en cloche, en anticipant sa marche. */
   function solve(from: THREE.Vector3, z: Zombie, out: THREE.Vector3) {
@@ -68,10 +63,10 @@ export function createBottleWeapon(ctx: WeaponContext, id: BottleWeaponId, name:
   }
 
   /** Lance une bouteille (réutilise un emplacement libre). */
-  function launch(pos: THREE.Vector3, v: THREE.Vector3) {
+  function launch(pos: THREE.Vector3, v: THREE.Vector3, target: Zombie) {
     let b = projectiles.find((x) => !x.active);
     if (!b) {
-      b = { pos: new THREE.Vector3(), vel: new THREE.Vector3(), up0: new THREE.Vector3(), spinAxis: new THREE.Vector3(), spinRate: 0, gravity: 0, age: 0, size: 1, active: false, pierce: 0, hits: [] };
+      b = { pos: new THREE.Vector3(), vel: new THREE.Vector3(), up0: new THREE.Vector3(), spinAxis: new THREE.Vector3(), spinRate: 0, gravity: 0, age: 0, size: 1, active: false, pierce: 0, hits: [], target: null, expected: 0 };
       projectiles.push(b);
     }
     b.pos.copy(pos);
@@ -83,22 +78,35 @@ export function createBottleWeapon(ctx: WeaponContext, id: BottleWeaponId, name:
     b.active = true;
     b.pierce = W.pierce + mods.pierce;
     b.hits.length = 0;
+    // Réserve ses dégâts sur sa cible : les tirs suivants visent ailleurs si elle est condamnée
+    b.target = target;
+    b.expected = W.damage * mods.damage;
+    target.incoming += b.expected;
     // Tourne « par-dessus » : axe horizontal perpendiculaire à la trajectoire
     b.up0.copy(pos).normalize();
     b.spinAxis.crossVectors(v, b.up0).normalize();
     if (b.spinAxis.lengthSq() < 1e-6) b.spinAxis.set(1, 0, 0);
   }
 
-  /** Lâche une bouteille de la main vers la cible n° `index` de la volée. */
-  function release(index: number) {
+  /** Lâche une bouteille de la main vers une cible de la volée (voir targeting.ts). */
+  function release() {
     ctx.rig.handPos(hand);
-    const targets = nearest(hand, index + 1);
-    if (!targets.length) return;
-    // Plus de bouteilles que de zombies : les suivantes repartent sur les cibles déjà prises
-    const z = targets[index % targets.length];
+    const range = W.range * mods.range;
+    let z = pickTarget(ctx.zombies(), hand, range, TARGETING.spread, volley);
+    // Plus de bouteilles que de zombies : les suivantes repartent sur les cibles déjà prises, un peu écartées
+    const again = !z;
+    z ??= pickTarget(ctx.zombies(), hand, range, TARGETING.spread);
+    if (!z) return;
+    volley.add(z);
     solve(hand, z, vel);
-    if (index >= targets.length) vel.applyAxisAngle(tmp.copy(hand).normalize(), (Math.random() - 0.5) * 0.25);
-    launch(hand, vel);
+    if (again) vel.applyAxisAngle(tmp.copy(hand).normalize(), (Math.random() - 0.5) * 0.25);
+    launch(hand, vel, z);
+  }
+
+  /** Fin d'une bouteille : elle libère les dégâts réservés sur sa cible. */
+  function settle(b: Bottle) {
+    if (b.target) b.target.incoming = Math.max(0, b.target.incoming - b.expected);
+    b.target = null;
   }
 
   /** Distance entre le segment [p, q] et l'axe du zombie (pieds -> tête). */
@@ -139,11 +147,12 @@ export function createBottleWeapon(ctx: WeaponContext, id: BottleWeaponId, name:
       // Lâchers en attente (volée en cours)
       for (let i = pending.length - 1; i >= 0; i--) {
         pending[i].t -= dt;
-        if (pending[i].t <= 0) { release(pending[i].index); pending.splice(i, 1); }
+        if (pending[i].t <= 0) { release(); pending.splice(i, 1); }
       }
       timer -= dt;
       if (timer > 0) return;
-      if (!nearest(ctx.playerPos(), 1).length) return;
+      if (!anyInRange(ctx.zombies(), ctx.playerPos(), W.range * mods.range)) return;
+      volley.clear();
       timer += interval;
       if (timer < 0) timer = interval;
       // Geste accéléré quand la cadence monte (un geste complet tient dans l'intervalle)
@@ -163,13 +172,14 @@ export function createBottleWeapon(ctx: WeaponContext, id: BottleWeaponId, name:
         b.vel.addScaledVector(up, -b.gravity * dt);
         b.pos.addScaledVector(b.vel, dt);
         b.age += dt;
-        if (b.age > W.life || !fly(b)) b.active = false;
+        if (b.age > W.life || !fly(b)) { b.active = false; settle(b); }
       }
     },
     reset() {
       timer = 0.3;
       pending.length = 0;
-      for (const b of projectiles) b.active = false;
+      for (const b of projectiles) { b.active = false; settle(b); }
+      volley.clear();
       Object.assign(mods, MODS0);
     },
     stats(): StatLine[] {

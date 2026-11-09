@@ -64,6 +64,12 @@ export const WEAPONS = {
 export type BottleWeaponId = keyof typeof WEAPONS;
 
 /**
+ * Visée de toutes les armes (weapons/targeting.ts) : chaque tir choisit au hasard parmi les `spread`
+ * zombies les plus proches qui n'ont pas déjà assez de dégâts en route pour mourir.
+ */
+export const TARGETING = { spread: 3 } as const;
+
+/**
  * Fût qui roule (GDD section 6, n° 12) : un grand tonneau roule tout droit sur le sol vers le zombie
  * le plus proche et écrase tous ceux de sa ligne (une fois chacun), puis éclate au bout de sa course
  * ou contre le décor (rebondir dessus sera son évolution, Rouleau compresseur).

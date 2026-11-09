@@ -57,6 +57,8 @@ export class Zombie {
   fuse = -1;
   /** Brique Fantôme : horloge de son cycle (s), décalée au hasard pour qu'ils ne clignotent pas ensemble. */
   ghostClock = 0;
+  /** Dégâts déjà en route vers lui (projectiles en vol qui le visent) : au-delà de ses PV, les armes visent ailleurs. */
+  incoming = 0;
   /** Sonné par une synergie (Black and Tan) : temps restant (s). Il ne l'arrête pas, c'est une marque. */
   dazed = 0;
   /** Brique Invocateur : temps avant la prochaine invocation (s), et temps restant du geste en cours (s). */

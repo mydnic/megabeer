@@ -30,7 +30,9 @@ export function createGueuze(ctx: WeaponContext): Weapon {
   function groups(n: number) {
     const from = ctx.playerPos();
     const radius = G.radius * mods.radius;
-    const near = ctx.zombies().filter((z) => z.targetable && z.pos.distanceTo(from) < G.range)
+    const inRange = ctx.zombies().filter((z) => z.targetable && z.pos.distanceTo(from) < G.range);
+    const alive = inRange.filter((z) => z.incoming < z.hp);
+    const near = (alive.length ? alive : inRange)
       .sort((a, b) => a.pos.distanceToSquared(from) - b.pos.distanceToSquared(from)).slice(0, G.candidates);
     const scored = near.map((z) => {
       const members = near.filter((o) => o.pos.distanceTo(z.pos) < radius);
