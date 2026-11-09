@@ -88,8 +88,10 @@ export const SYNERGIES = {
     name: 'Black and Tan', weapons: ['canette', 'stout'], marker: 'stout', boosted: 'canette', duration: 2, mult: 2,
     /** Interface : explication courte (bandeau, carte) et couleur (badge de carte, liseré des emplacements du HUD). */
     pitch: 'La Stout sonne, la Canette frappe double', color: '#e8c76a',
+    /** Effet détaillé (menu pause). */
+    details: 'Un zombie touché par une Stout est sonné 2 s : les canettes lui font double dégâts.',
   },
-} as const satisfies Record<string, { name: string; weapons: readonly BottleWeaponId[]; marker: BottleWeaponId; boosted: BottleWeaponId; duration: number; mult: number; pitch: string; color: string }>;
+} as const satisfies Record<string, { name: string; weapons: readonly BottleWeaponId[]; marker: BottleWeaponId; boosted: BottleWeaponId; duration: number; mult: number; pitch: string; color: string; details: string }>;
 
 /** Signe au-dessus d'un zombie sonné (Black and Tan) : bulles de mousse qui tournent autour de la tête. */
 export const DAZED_LOOK = {

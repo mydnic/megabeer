@@ -154,9 +154,13 @@ function pauseStats(game: Game): PauseStats {
     title: 'Le Buveur',
     rows: [['PV', `${Math.ceil(h.hp)} / ${h.max}`, ''] as [string, string, string], ...game.stats.lines().map(toRow)],
   };
+  const active = game.activeSynergies().map((s) => SYNERGIES[s]);
   const weapons = Array.from({ length: game.loadout.max }, (_, i) => {
     const w = game.loadout.weapons[i];
-    return w ? { title: w.name, icon: weaponIcon(w.id, ''), level: w.mods.level, rows: w.stats().map(toRow) } : null;
+    if (!w) return null;
+    const syn = active.find((S) => (S.weapons as readonly string[]).includes(w.id));
+    return { title: w.name, icon: weaponIcon(w.id, ''), level: w.mods.level, rows: w.stats().map(toRow), synergy: syn && { name: syn.name, color: syn.color } };
   });
-  return { player, weapons };
+  const synergies = active.map((S) => ({ name: S.name, color: S.color, icons: S.weapons.map((id) => weaponIcon(id, '')), details: S.details }));
+  return { player, weapons, synergies };
 }
