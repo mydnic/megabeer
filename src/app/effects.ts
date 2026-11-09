@@ -9,7 +9,7 @@ import type { BuveurVisual } from '../player/buveurVisual';
 import type { CameraRig } from '../player/cameraRig';
 import type { PintProp } from '../player/pintProp';
 import type { Pipeline } from '../render/pipeline';
-import { KAMIKAZE_LOOK } from '../config/enemies';
+import { CHARGER_LOOK, KAMIKAZE_LOOK } from '../config/enemies';
 import type { createShards } from '../fx/shards';
 import type { createDamageNumbers } from '../ui/damageNumbers';
 import { jitter } from './sounds';
@@ -61,6 +61,13 @@ export function wireEffects(game: Game, d: Deps) {
     wood.burst(numPos, still);
     const k = 1 - at.distanceTo(game.player.pos) / L.shakeDist;
     if (k > 0) rig.shake(L.shake * k, L.shakeAmplitude, L.shakeDecay);
+  });
+  // Tonneau du Frère tonnelier qui éclate sur le joueur : bois et vin
+  game.events.on('barrelBroke', ({ at }) => {
+    up.copy(at).normalize();
+    numPos.copy(at).addScaledVector(up, CHARGER_LOOK.barrelRadius);
+    wood.burst(numPos, still);
+    wine.burst(numPos, still);
   });
   game.events.on('playerHurt', ({ blocked }) => {
     if (blocked) return;

@@ -15,6 +15,8 @@ export const ZOMBIE_MODELS = {
   moine_pelerin: { file: 'moine_pelerin.glb', height: 2.0, clips: { walk: ['Run'] }, walkAnimAt: 1.8 },
   // Le Frère tonnelier : bure ardoise, tonneau couché devant lui en bélier (monk.py --variant tonnelier). Il trotte.
   moine_tonnelier: { file: 'moine_tonnelier.glb', height: 2.0, clips: { walk: ['Run'] }, walkAnimAt: 1.1 },
+  // Le même, mains vides : pendant sa charge (son tonneau roule devant lui) et quand il l'a cassé
+  moine_tonnelier_vide: { file: 'moine_tonnelier_vide.glb', height: 2.0, clips: { walk: ['Run'] }, walkAnimAt: 1.1 },
   // Le Novice : il court (et bondit pour frapper, il n'a pas d'attaque)
   ribcage: { file: 'Zombie_Ribcage.gltf', height: 1.4, clips: { walk: ['Run'] }, walkAnimAt: 3.7 },
 } as const;

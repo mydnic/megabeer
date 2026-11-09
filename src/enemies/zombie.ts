@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { SPAWN } from '../config/spawn';
 import { ENEMIES, type EnemyDef, type EnemyId } from '../config/enemies';
-import { ZOMBIE_ATTACK, ZOMBIE_HURT as H, ZOMBIE_MODELS, ZOMBIE_MOVE, ZOMBIE_VISUAL as V } from '../config/zombies';
+import { ZOMBIE_ATTACK, ZOMBIE_HURT as H, ZOMBIE_MODELS, ZOMBIE_MOVE, ZOMBIE_VISUAL as V, type ZombieModel } from '../config/zombies';
 
 export type ZombieState = 'idle' | 'walk' | 'attack' | 'hit' | 'death';
 export const ZOMBIE_STATES = Object.keys(V.clips) as ZombieState[];
@@ -64,6 +64,11 @@ export class Zombie {
   readonly chargeDir = new THREE.Vector3();
   chargeLeft = 0;
   chargeHit = false;
+  /** Son tonneau : dans les bras, qui roule devant lui, posé au bout de la ligne, ou éclaté. */
+  barrel: 'held' | 'rolling' | 'resting' | 'broken' = 'held';
+  /** Position du tonneau hors des bras (au sol), et distance qu'il a roulé (m). */
+  readonly barrelPos = new THREE.Vector3();
+  barrelTravel = 0;
   /** Sortie de terre en cours (s restantes) : il émerge du sol, immobile, sans frapper. */
   rise = 0;
   /** Vrai quand le corps a fini de s'enfoncer : la horde le retire. */
@@ -78,7 +83,11 @@ export class Zombie {
   private up = new THREE.Vector3();
   private tmp = new THREE.Vector3();
 
-  constructor(readonly kind: ZombieTimings, readonly enemy: EnemyId) {
+  /**
+   * `kind` : durées d'animation de son modèle ; `emptyKind` : celles du modèle mains vides
+   * (chargeur sans tonneau dans les bras).
+   */
+  constructor(private readonly baseKind: ZombieTimings, readonly enemy: EnemyId, private readonly emptyKind?: ZombieTimings) {
     this.hp = ENEMIES[enemy].hp;
     const T = (ENEMIES[enemy] as EnemyDef).thrower;
     if (T) this.throwTimer = Math.random() * T.firstDelay;
@@ -93,8 +102,12 @@ export class Zombie {
 
   /** Fiche de l'ennemi (PV, vitesse, dégâts, XP, briques). */
   get def(): EnemyDef { return ENEMIES[this.enemy]; }
+  /** Le tonneau n'est pas dans ses bras : il est affiché mains vides. */
+  private get emptyHanded() { return !!this.def.charger && this.barrel !== 'held'; }
   /** Modèle 3D affiché. */
-  get model() { return ENEMIES[this.enemy].model; }
+  get model(): ZombieModel { return this.emptyHanded ? this.def.charger!.emptyModel : ENEMIES[this.enemy].model; }
+  /** Durées d'animation du modèle affiché. */
+  get kind(): ZombieTimings { return this.emptyHanded && this.emptyKind ? this.emptyKind : this.baseKind; }
 
   play(state: ZombieState, force = false) {
     if (this.state === state && !force) return;

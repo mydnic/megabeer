@@ -76,7 +76,7 @@ const shards = createShards(scene, groundAt);
 const wine = createShards(scene, groundAt, WINE_BURST);
 const wood = createShards(scene, groundAt, BARREL_SHARDS);
 const kamikazeView = createKamikazeView(scene);
-const chargerView = createChargerView(scene);
+const chargerView = await createChargerView(scene);
 const damageNumbers = createDamageNumbers(camera);
 const pint = new PintProp(scene, { verre: new THREE.Color(), biere: new THREE.Color(), mousse: new THREE.Color() }, (p, r) => game.player.supportAt(p, r));
 const rig = new CameraRig(camera);

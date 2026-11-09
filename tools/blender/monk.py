@@ -12,7 +12,9 @@ Variantes (--variant) :
 - lanceur : le moine tel quel ;
 - pelerin : bure rouge vin, et un tonneau sans fond enfilé autour du ventre (--barrel : un glTF de
   tonneau, son apparence est cuite dans une petite texture de l'atlas) ;
-- tonnelier : bure gris ardoise, et un tonneau fermé tenu couché devant lui comme un bélier (--barrel).
+- tonnelier : bure gris ardoise, et un tonneau fermé tenu couché devant lui comme un bélier (--barrel) ;
+- tonnelier_vide : le même, mains vides (pendant sa charge) ;
+- tonneau : le tonneau du tonnelier seul, qui roule pendant la charge (--barrel).
 
 Usage (Blender 5.2) :
   blender -b --factory-startup --disable-autoexec -P tools/blender/monk.py -- --src MONK.blend
@@ -89,6 +91,14 @@ VARIANTS = {
             'bake': CELL // 2,
         },
     },
+    # Le tonnelier pendant sa charge : mains vides, son tonneau roule devant lui
+    'tonnelier_vide': {
+        'robe': {'hue': 0.6, 'sat': 0.45, 'val': 1.15},
+    },
+    # Le tonneau seul (celui du tonnelier), qui roule pendant la charge : axe en Z, centré à l'origine
+    'tonneau': {
+        'prop': {'bulge': 0.27, 'height': 0.62, 'center': (0.0, 0.0, 0.0), 'bake': CELL // 2},
+    },
 }
 variant = VARIANTS[args.variant]
 
@@ -108,8 +118,9 @@ def select_only(obj):
     bpy.context.view_layer.objects.active = obj
 
 
-def add_barrel(path, cfg):
-    """Importe le tonneau, le vide de ses couvercles, le cuit dans sa texture et l'enfile au moine."""
+def add_barrel(path, cfg, attach=True):
+    """Importe le tonneau, le vide de ses couvercles, le cuit dans sa texture et l'enfile au moine
+    (ou le renvoie seul, texturé, si `attach` est faux)."""
     before = set(bpy.data.objects)
     bpy.ops.import_scene.gltf(filepath=path)
     new = [o for o in bpy.data.objects if o not in before]
@@ -199,6 +210,15 @@ def add_barrel(path, cfg):
     me.uv_layers[0].name = mesh.data.uv_layers.active.name
     me.materials.clear()
     me.materials.append(bpy.data.materials.new('Tonneau'))
+    if not attach:
+        mat = me.materials[0]
+        mat.use_nodes = True
+        node = mat.node_tree.nodes.new('ShaderNodeTexImage')
+        node.image = img
+        bsdf = mat.node_tree.nodes['Principled BSDF']
+        mat.node_tree.links.new(node.outputs['Color'], bsdf.inputs['Base Color'])
+        bsdf.inputs['Roughness'].default_value = 1
+        return barrel
 
     # Porté rigidement par un os du moine, puis fusionné dans son maillage
     group = barrel.vertex_groups.new(name=cfg['bone'])
@@ -254,6 +274,19 @@ def pixels(name, size):
     img.scale(size, size)
     return np.array(img.pixels[:], dtype=np.float32).reshape(size, size, 4)
 
+
+if 'prop' in variant:
+    # Accessoire seul : le tonneau cuit, sans le moine ni son squelette
+    if not args.barrel:
+        sys.exit(f'La variante {args.variant} demande --barrel')
+    prop = add_barrel(args.barrel, variant['prop'], attach=False)
+    for o in list(bpy.data.objects):
+        if o is not prop:
+            bpy.data.objects.remove(o)
+    bpy.ops.export_scene.gltf(filepath=args.out, export_format='GLB', export_animations=False,
+                              export_cameras=False, export_lights=False)
+    print('Accessoire exporté :', args.variant, args.out)
+    sys.exit(0)
 
 if 'barrel' in variant:
     if not args.barrel:

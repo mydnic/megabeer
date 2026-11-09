@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { ENEMIES, type ChargerDef, type EnemyId } from '../config/enemies';
+import { ENEMIES, type ChargerDef, type EnemyDef, type EnemyId } from '../config/enemies';
 import { ZOMBIE_ATTACK, ZOMBIE_HURT as H, ZOMBIE_MOVE as M, ZOMBIE_VISUAL as V, type ZombieModel } from '../config/zombies';
 import { PLANET_RADIUS } from '../config/world';
 import { heightAt } from '../world/terrain';
@@ -28,7 +28,8 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
 
   /** Pose un zombie sur le sol, à la direction donnée, regardant vers `facing`. */
   function spawn(enemy: EnemyId, dir: THREE.Vector3, facing: THREE.Vector3) {
-    const z = new Zombie(kinds[ENEMIES[enemy].model], enemy);
+    const C = (ENEMIES[enemy] as EnemyDef).charger;
+    const z = new Zombie(kinds[ENEMIES[enemy].model], enemy, C && kinds[C.emptyModel]);
     // Sonde un peu au-dessus du relief : trouve aussi le dessus du décor (dalles, marches)
     z.pos.copy(dir).normalize();
     z.pos.setLength(PLANET_RADIUS + heightAt(z.pos) + 2.5);
@@ -128,14 +129,30 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
     if (z.state === 'attack' || z.stateTime > V.minStateTime) z.play(next);
   }
 
+  /** Le tonneau qui roule devant le chargeur, posé au sol sur sa ligne. */
+  function placeBarrel(z: Zombie, C: ChargerDef) {
+    z.barrelPos.copy(z.pos).addScaledVector(z.chargeDir, C.barrelAhead);
+    snap(z.barrelPos);
+  }
+
   /** Brique Chargeur : renvoie vrai quand elle pilote le zombie à ce pas (élan, charge ou sonné). */
   function chargerStep(z: Zombie, C: ChargerDef, dt: number, dist: number) {
     z.chargeCooldown = Math.max(0, z.chargeCooldown - dt);
+    // Tonneau éclaté : il en reprend un à la fin du délai
+    if (z.barrel === 'broken' && z.charge === 'none' && z.chargeCooldown <= 0) z.barrel = 'held';
     if (z.charge === 'windup') {
       z.walkSpeed = 0;
       z.facing.copy(z.chargeDir);
       z.chargeTimer -= dt;
-      if (z.chargeTimer <= 0) { z.charge = 'charge'; z.chargeLeft = C.length; z.chargeHit = false; }
+      if (z.chargeTimer <= 0) {
+        z.charge = 'charge';
+        z.chargeLeft = C.length;
+        z.chargeHit = false;
+        // Il lâche son tonneau, qui roule devant lui
+        z.barrel = 'rolling';
+        z.barrelTravel = 0;
+        placeBarrel(z, C);
+      }
       return true;
     }
     if (z.charge === 'charge') {
@@ -151,24 +168,39 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
       z.chargeLeft -= step;
       z.walkSpeed = dt > 0 ? moved / dt : 0;
       if (z.state !== 'walk') z.play('walk');
-      // Le joueur sur son passage est renversé (une fois par charge)
-      if (!z.chargeHit && !passive && z.pos.angleTo(player.pos) * PLANET_RADIUS < C.width / 2 + M.playerRadius) {
-        z.chargeHit = true;
+      z.barrelTravel += moved;
+      placeBarrel(z, C);
+      // Le tonneau percute le joueur sur son passage : renversé, le tonneau éclate, la charge s'arrête
+      if (!passive && z.barrelPos.angleTo(player.pos) * PLANET_RADIUS < C.width / 2 + M.playerRadius) {
+        z.barrel = 'broken';
+        z.charge = 'recover';
+        z.chargeTimer = C.recover;
         api.onChargeHit?.(z, z.chargeDir.clone());
+        api.onBarrelBreak?.(z);
+        return true;
       }
-      // Fin de la ligne, ou arrêté net par un mur : sonné
-      if (z.chargeLeft <= 0 || (step > 0 && moved < step * M.stuckRatio)) { z.charge = 'recover'; z.chargeTimer = C.recover; }
+      // Fin de la ligne, ou arrêté net par un mur : le tonneau s'arrête là, il est sonné
+      if (z.chargeLeft <= 0 || (step > 0 && moved < step * M.stuckRatio)) {
+        z.barrel = 'resting';
+        z.charge = 'recover';
+        z.chargeTimer = C.recover;
+      }
       return true;
     }
     if (z.charge === 'recover') {
       z.walkSpeed = 0;
       if (z.state !== 'hit') z.play('hit');
       z.chargeTimer -= dt;
-      if (z.chargeTimer <= 0) { z.charge = 'none'; z.chargeCooldown = C.cooldown; z.play('idle'); }
+      if (z.chargeTimer <= 0) {
+        z.charge = 'none';
+        z.chargeCooldown = C.cooldown;
+        if (z.barrel === 'resting') z.barrel = 'held'; // il a ramassé son tonneau
+        z.play('idle');
+      }
       return true;
     }
-    // À portée (mais pas au contact) et tourné vers le joueur : il prend son élan, la ligne est marquée
-    if (z.chargeCooldown <= 0 && !passive && dist <= C.range && dist > V.attackRange
+    // À portée (mais pas au contact), tonneau en main et tourné vers le joueur : il prend son élan, la ligne est marquée
+    if (z.chargeCooldown <= 0 && z.barrel === 'held' && !passive && dist <= C.range && dist > V.attackRange
         && z.facing.dot(tmp.copy(want).normalize()) > 0.95) {
       z.charge = 'windup';
       z.chargeTimer = C.windup;
@@ -273,6 +305,8 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
     onAim: undefined as ((z: Zombie) => void) | undefined,
     /** Appelé quand un chargeur renverse le joueur, avec la direction de la charge. */
     onChargeHit: undefined as ((z: Zombie, dir: THREE.Vector3) => void) | undefined,
+    /** Appelé quand le tonneau d'un chargeur éclate sur le joueur (il est en barrelPos). */
+    onBarrelBreak: undefined as ((z: Zombie) => void) | undefined,
     /** Appelé quand un kamikaze allume sa mèche. */
     onArm: undefined as ((z: Zombie) => void) | undefined,
     /** Appelé quand la mèche d'un kamikaze arrive au bout. */

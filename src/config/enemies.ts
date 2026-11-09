@@ -26,8 +26,10 @@ export type EnemyDef = {
 
 /**
  * Brique Chargeur (GDD section 11) : il s'arrête, marque au sol la ligne de sa charge (droit sur le
- * joueur), prend son élan, puis fonce en ligne droite sans dévier. On l'esquive en sortant de la
- * ligne. Après la charge il reste sonné, puis attend avant d'en relancer une.
+ * joueur), prend son élan, puis fonce en ligne droite sans dévier, derrière son tonneau qui roule en
+ * tête. On l'esquive en sortant de la ligne. Le tonneau qui percute le joueur éclate et arrête la
+ * charge ; raté, il s'arrête au bout de la ligne et le moine le ramasse pendant qu'il est sonné.
+ * Tonneau éclaté, il en reprend un à la fin du délai entre deux charges.
  */
 export type ChargerDef = {
   /** Distance au joueur (m) à partir de laquelle il prend son élan. */
@@ -43,6 +45,10 @@ export type ChargerDef = {
   /** Sonné après la charge (s), puis délai avant la suivante (s). */
   recover: number;
   cooldown: number;
+  /** Le tonneau roule à cette distance devant lui (m, centre à centre). */
+  barrelAhead: number;
+  /** Modèle mains vides (pendant la charge, et tant qu'il n'a plus de tonneau). */
+  emptyModel: ZombieModel;
 };
 
 /**
@@ -96,7 +102,10 @@ export const ENEMIES = {
   /** Chargeur : fonce en ligne droite, tonneau en avant comme un bélier. */
   tonnelier: {
     name: 'Frère tonnelier', model: 'moine_tonnelier', hp: 22, speed: 2.4, damage: 8, xp: 5,
-    charger: { range: 10, windup: 1.0, length: 14, width: 1.6, speed: 15, damage: 18, recover: 1.4, cooldown: 4 },
+    charger: {
+      range: 10, windup: 1.0, length: 14, width: 1.6, speed: 15, damage: 18, recover: 1.4, cooldown: 4,
+      barrelAhead: 1.1, emptyModel: 'moine_tonnelier_vide',
+    },
   },
 } as const satisfies Record<string, EnemyDef>;
 
@@ -136,6 +145,9 @@ export const CHARGER_LOOK = {
   markOpacity: 0.55,
   /** Largeur des bords de la ligne (m). */
   edge: 0.12,
+  /** Le tonneau qui roule : fichier, rayon (m, pour la rotation et la hauteur). */
+  barrelFile: 'tonneau.glb',
+  barrelRadius: 0.27,
 } as const;
 
 /** Une entrée de roster : l'ennemi arrive à partir de `from` s de run, avec un poids de tirage. */

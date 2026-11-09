@@ -641,7 +641,7 @@ Scaling actuel : PV des ennemis x(1 + temps/90 s). Spawn : intervalle de 1,1 s q
 | 1 | Novice zombie | Coureur | Contact, fragile |
 | 2 | Moine lanceur | Tireur | Bouteilles vides lancées en cloche, impact marqué au sol |
 | 3 | Pèlerin gonflé | Kamikaze | Explose en gerbe de vin |
-| 4 | Frère tonnelier | Chargeur | Fonce dans un tonneau en ligne droite |
+| 4 | Frère tonnelier | Le Moine en bure gris ardoise, qui porte un tonneau fermé couché devant le ventre (`monk.py --variant tonnelier`) ; pendant sa charge il est mains vides (`tonnelier_vide`) et son tonneau (`tonneau.glb`, même tonneau cuit) roule devant lui. Choisi le 2026-11-09 : plus drôle que de foncer tonneau au ventre. Au roster de l'Abbaye à 4:00 |
 | 5 | Fantôme du cloître | Fantôme | Traverse les murs, intouchable 1 s sur 3 |
 | 6 | Moine porte-reliques | Protecteur | Ses voisins prennent 50% de dégâts en moins |
 | 7 | Gargouille | Sauteur | Bondit sur la position du joueur |
@@ -1170,7 +1170,7 @@ L'ordre après l'étape 7 est indicatif : il se rediscute à chaque feature vali
 | Look du Pèlerin gonflé | Le Moine en bure rouge vin, un tonneau sans fond enfilé autour du ventre comme s'il l'avait transpercé (tonneau du Fantasy Props MegaKit, `monk.py --variant pelerin`). Il court. Validé le 2026-11-09 |
 | Brique Kamikaze | Il fonce (3,6 m/s) ; à 2,2 m du joueur il s'arrête, allume la mèche (0,9 s) et gonfle, la zone (3,2 m) marquée au sol comme les bouteilles ; puis il explose (22 PV) et disparaît sans lâcher de bière. Il ne frappe jamais au contact. Tué, il explose aussitôt sur place (bière lâchée) : le tuer de loin est sûr, à bout portant ça fait mal. L'explosion ne blesse pas les autres ennemis, sauf avec le noeud Dégâts collatéraux du skill tree (section 14). Pèlerin gonflé au roster de l'Abbaye à 3:00 |
 | Frère tonnelier | Le Moine en bure gris ardoise, un tonneau fermé tenu couché devant le ventre comme un bélier (`monk.py --variant tonnelier`), choisi pour ne pas le confondre avec le Pèlerin. Au roster de l'Abbaye à 4:00 |
-| Brique Chargeur | À 10 m, il s'arrête et marque au sol la ligne de sa charge, droit sur le joueur (14 m de long, 1,6 m de large), prend son élan 1 s, puis fonce à 15 m/s sans dévier : le joueur sur la ligne est renversé (18 PV) et traversé. Un mur l'arrête net. Ensuite il reste sonné 1,4 s, puis attend 4 s avant une nouvelle charge. Au contact, il frappe comme un marcheur |
+| Brique Chargeur | À 10 m, il s'arrête et marque au sol la ligne de sa charge, droit sur le joueur (14 m de long, 1,6 m de large), prend son élan 1 s, puis fonce à 15 m/s sans dévier, derrière son tonneau qui roule en tête. Le tonneau qui percute le joueur le renverse (18 PV) et éclate (bois et vin) : la charge s'arrête net. Raté, le tonneau s'arrête au bout de la ligne (ou contre un mur) et il le ramasse pendant qu'il est sonné (1,4 s). Délai de 4 s avant la charge suivante ; tonneau éclaté, il en reprend un à la fin de ce délai. Au contact, il frappe comme un marcheur |
 | Brique Tireur | Fiche `thrower` réutilisable par tout ennemi : il s'arrête à portée (15 m), lance en cloche vers l'endroit où est le joueur au lâcher (vol 1,3 s), impact marqué au sol par un anneau rouge qui se remplit, éclatement de 1,6 m (10 PV). Au contact il frappe comme les autres. Moine lanceur : 14 PV, 2,4 m/s, 4 de bière, arrive à 2:00 |
 | Plus tard | Les nouveaux types d'ennemis par minute, les élites, les boss et les videurs arrivent avec leurs features |
 
