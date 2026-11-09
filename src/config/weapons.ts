@@ -63,6 +63,50 @@ export const WEAPONS = {
 
 export type BottleWeaponId = keyof typeof WEAPONS;
 
+/**
+ * Fût qui roule (GDD section 6, n° 12) : un grand tonneau roule tout droit sur le sol vers le zombie
+ * le plus proche et écrase tous ceux de sa ligne (une fois chacun), puis éclate au bout de sa course
+ * ou contre le décor (rebondir dessus sera son évolution, Rouleau compresseur).
+ */
+export const FUT = {
+  /** Temps entre deux fûts (s), et délai avant le premier (s). */
+  cooldown: 3.5,
+  firstDelay: 1,
+  damage: 28,
+  critChance: 0.05,
+  critMult: 2,
+  /** Portée de détection de la cible (m) : le fût roule ensuite jusqu'au bout de sa course. */
+  range: 18,
+  /** Vitesse au sol (m/s) et durée de la course (s). */
+  speed: 9,
+  life: 2.6,
+  /** Rayon du tonneau couché (m, multiplié par la Taille) : hauteur de son axe au-dessus du sol. */
+  radius: 0.45,
+  /** Longueur du tonneau (m, multipliée par la Taille). */
+  length: 1.1,
+  /** Corps d'un zombie pour l'écrasement (m) et recul donné (fois le recul normal). */
+  zombieRadius: 0.4,
+  knock: 3,
+  /** Départ : distance devant le joueur (m), écart entre les fûts d'une même volée (rad). */
+  spawnAhead: 1.2,
+  spread: 0.35,
+} as const;
+
+/** Apparence du fût (grand tonneau KayKit Dungeon, découpé par tools/blender/props.py). */
+export const FUT_LOOK = {
+  file: 'fut.glb',
+  /** Le modèle est mis à cette longueur (m) le long de son axe, comme FUT.length. */
+  length: 1.1,
+  colors: { Bois: 0x8a5230, Cerclage: 0x6f7378 } as Record<string, number>,
+} as const;
+
+/** Sons du fût : lancer, écrasement d'un zombie, éclatement. */
+export const FUT_SOUND = {
+  launch: { sample: 'impactWood_heavy', volume: 0.35, pitch: 0.7 },
+  crush: { sample: 'impactPunch_heavy', volume: 0.45, pitch: 0.75 },
+  burst: { sample: 'impactWood_heavy', volume: 0.6, pitch: 0.9 },
+} as const;
+
 /** Apparence de la bouteille de Stout (KayKit Dungeon, découpée par tools/blender/props.py). */
 export const STOUT_LOOK = {
   file: 'bouteille_stout.glb',
@@ -110,7 +154,8 @@ export const DAZED_LOOK = {
 export const WEAPON_INFO = {
   canette: { name: 'Canette', pitch: 'Canette lancée sur le zombie le plus proche' },
   stout: { name: 'Stout', pitch: 'Lourde et lente : gros dégâts, gros recul, traverse un zombie' },
-} as const satisfies Record<BottleWeaponId, { name: string; pitch: string }>;
+  fut: { name: 'Fût qui roule', pitch: 'Un tonneau roule tout droit et écrase toute la ligne' },
+} as const satisfies Record<string, { name: string; pitch: string }>;
 
 /** Apparence de la Canette (canette de soda Kenney, découpée par tools/blender/props.py). */
 export const CANETTE_LOOK = {

@@ -1,4 +1,4 @@
-import { WEAPONS } from '../config/weapons';
+import { FUT, WEAPONS } from '../config/weapons';
 import { RARITIES } from '../config/upgrades';
 import { ENEMIES } from '../config/enemies';
 import type { createRunLog } from '../dev/runLog';
@@ -13,7 +13,7 @@ export function wireRunLog(game: Game, runLog: ReturnType<typeof createRunLog>, 
   game.events.on('runStarted', () => runLog.start({
     character: 'buveur', map: 'abbaye', seed: meta().seed, difficulty: game.difficulty,
     stats: { ...game.stats, maxHp: game.health.max },
-    weapons: Object.fromEntries(game.loadout.weapons.map((w) => [w.id, WEAPONS[w.id]])),
+    weapons: Object.fromEntries(game.loadout.weapons.map((w) => [w.id, w.id === 'fut' ? FUT : WEAPONS[w.id]])),
     enemies: ENEMIES,
   }));
   game.events.on('landed', () => runLog.event('landed'));

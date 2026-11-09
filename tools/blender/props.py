@@ -8,6 +8,7 @@ Une face va dans un matériau selon la couleur de la texture sous elle (saturati
 Variantes (--variant) :
 - stout : la bouteille trapue étiquetée du KayKit Dungeon (Verre, Etiquette, Bouchon), pour la Stout.
 - canette : la canette de soda du Kenney Food Kit (Metal, Corps), pour la Canette.
+- fut : le grand tonneau du KayKit Dungeon (Bois, Cerclage), pour le Fût qui roule.
 
 Usage (Blender 5.2) :
   blender -b --factory-startup --disable-autoexec -P tools/blender/props.py -- --lib C:/Users/mydnic/Desktop/MODELS
@@ -44,6 +45,14 @@ VARIANTS = {
         'rules': [
             ('Metal', {'max_sat': 0.35}),
             ('Corps', {}),
+        ],
+    },
+    'fut': {
+        'src': 'decor/kaykit_dungeon/gltf/barrel_large.gltf',
+        # Cerclages gris (peu saturés) ; le reste, les douelles en bois
+        'rules': [
+            ('Cerclage', {'max_sat': 0.3}),
+            ('Bois', {}),
         ],
     },
 }

@@ -1,4 +1,5 @@
 import { createCanette } from './canette';
+import { createFut } from './fut';
 import { createStout } from './stout';
 import type { Weapon, WeaponContext, WeaponId } from './weapon';
 
@@ -6,4 +7,5 @@ import type { Weapon, WeaponContext, WeaponId } from './weapon';
 export const WEAPON_FACTORIES: Record<WeaponId, (ctx: WeaponContext) => Weapon> = {
   canette: createCanette,
   stout: createStout,
+  fut: createFut,
 };

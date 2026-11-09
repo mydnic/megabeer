@@ -43,16 +43,19 @@ export function wireEffects(game: Game, d: Deps) {
   const up = new THREE.Vector3(), numPos = new THREE.Vector3(), soft = new THREE.Vector3();
 
   game.events.on('zombieHit', ({ weapon, zombie, impact, dir, damage, crit, shielded, combo }) => {
-    // La Stout éclate en bière brune ; la Canette gicle en bière blonde, sans verre (elle est en métal)
+    // La Stout éclate en bière brune ; la Canette gicle en bière blonde, sans verre (elle est en métal) ;
+    // le fût écrase sans se briser (il éclate à la fin de sa course)
     if (weapon?.id === 'stout') stoutSplash.burst(impact, dir);
-    else buveur.splashAt(impact, 14);
-    if (weapon?.id !== 'canette') shards.burst(impact, dir);
+    else if (weapon?.id !== 'fut') buveur.splashAt(impact, 14);
+    if (weapon?.id !== 'canette' && weapon?.id !== 'fut') shards.burst(impact, dir);
     if (shielded) sparks.burst(impact, dir);
     up.copy(zombie.pos).normalize();
     // Un coup combo (synergie) s'affiche en gros, comme un critique
     damageNumbers.spawn(numPos.copy(zombie.pos).addScaledVector(up, 2.0), damage, crit || combo);
   });
   game.events.on('projectileHitGround', ({ weapon, pos, vel }) => {
+    // Le fût qui éclate : éclats de bois et une grosse giclée de bière
+    if (weapon.id === 'fut') { wood.burst(pos, soft.copy(vel).normalize().multiplyScalar(0.3)); buveur.splashAt(pos, 30); return; }
     buveur.splashAt(pos, 10);
     if (weapon.id !== 'canette') shards.burst(pos, soft.copy(vel).normalize().multiplyScalar(0.3));
   });

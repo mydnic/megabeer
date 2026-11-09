@@ -13,7 +13,7 @@ import { createBottleView } from './weapons/bottleView';
 import { createEnemyShotsView } from './enemies/enemyShotsView';
 import { createShards } from './fx/shards';
 import { BARREL_SHARDS, EARTH_CLODS, SHIELD_SPARKS, STOUT_SPLASH, WINE_BURST } from './config/fx';
-import { CANETTE_LOOK, STOUT_LOOK } from './config/weapons';
+import { CANETTE_LOOK, FUT_LOOK, STOUT_LOOK } from './config/weapons';
 import type { WeaponId } from './weapons/weapon';
 import { createKamikazeView } from './enemies/kamikazeView';
 import { createProtectorView } from './enemies/protectorView';
@@ -76,6 +76,7 @@ const xpView = createXpDropsView(scene);
 const bottleViews: Record<WeaponId, Awaited<ReturnType<typeof createBottleView>>> = {
   canette: await createBottleView(scene, CANETTE_LOOK),
   stout: await createBottleView(scene, STOUT_LOOK),
+  fut: await createBottleView(scene, FUT_LOOK),
 };
 const enemyShotsView = await createEnemyShotsView(scene);
 const groundAt = (p: THREE.Vector3) => game.player.supportAt(p, p.length());

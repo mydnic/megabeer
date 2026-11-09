@@ -32,10 +32,21 @@ export const stoutIcon = (cls: string) => `<svg viewBox="0 0 40 90" class="${cls
 <text x="20" y="70" text-anchor="middle" textLength="26" lengthAdjust="spacingAndGlyphs" font-family="Georgia, 'Times New Roman', serif" font-weight="900" font-size="10" fill="#c8102e">Stout</text>
 <path d="M9 44c1.5-5 4-9 6.5-11.5" stroke="#fff3" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`;
 
+/** Fût qui roule : tonneau en bois bombé, douelles, deux cerclages, bonde. */
+export const futIcon = (cls: string) => `<svg viewBox="0 0 40 90" class="${cls}"><path d="M8 20c4-2 20-2 24 0c3 8 4 16 4 25s-1 17-4 25c-4 2-20 2-24 0c-3-8-4-16-4-25s1-17 4-25z"
+ fill="#8a5230" stroke="#1a120c" stroke-width="3" stroke-linejoin="round"/>
+<path d="M14 21c-1.5 8-2 16-2 24s.5 16 2 24M20 20.5v49M26 21c1.5 8 2 16 2 24s-.5 16-2 24" stroke="#5e3519" stroke-width="1.6" fill="none"/>
+<path d="M6.2 31c6-1.6 21.6-1.6 27.6 0M6.2 59c6 1.6 21.6 1.6 27.6 0" stroke="#6f7378" stroke-width="4" fill="none"/>
+<path d="M6.2 31c6-1.6 21.6-1.6 27.6 0M6.2 59c6 1.6 21.6 1.6 27.6 0" stroke="#1a120c" stroke-width="1" fill="none" transform="translate(0 2.2)"/>
+<ellipse cx="20" cy="20.5" rx="12" ry="2.6" fill="#a8693f" stroke="#1a120c" stroke-width="2"/>
+<rect x="17.5" y="43" width="5" height="4" rx="1" fill="#3a2214"/>
+<path d="M10 36c0 6 0 12 1 18" stroke="#fff3" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`;
+
 /** Icône de chaque arme (ajouter une arme = ajouter son icône ici). */
 const WEAPON_ICONS: Record<WeaponId, (cls: string) => string> = {
   canette: canetteIcon,
   stout: stoutIcon,
+  fut: futIcon,
 };
 
 export const weaponIcon = (id: WeaponId, cls: string) => WEAPON_ICONS[id](cls);

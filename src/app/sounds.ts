@@ -1,4 +1,4 @@
-import { CANETTE_IMPACT, STOUT_IMPACT } from '../config/weapons';
+import { CANETTE_IMPACT, FUT_SOUND, STOUT_IMPACT } from '../config/weapons';
 import type * as THREE from 'three';
 import { BELL_SOUND } from '../config/abbey';
 import { AUDIO } from '../config/audio';
@@ -65,6 +65,13 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
   // La Stout qui éclate sur un zombie : un choc sourd en plus du verre
   game.events.on('zombieHit', ({ weapon }) => {
     if (weapon?.id === 'stout') audio.play(STOUT_IMPACT.sample, STOUT_IMPACT.volume, STOUT_IMPACT.pitch * jitter(0.06));
+  });
+  // Le Fût qui roule : il part dans un grondement de bois, écrase chaque zombie, éclate au bout de sa course
+  game.events.on('zombieHit', ({ weapon }) => {
+    if (weapon?.id === 'fut') audio.play(FUT_SOUND.crush.sample, FUT_SOUND.crush.volume, FUT_SOUND.crush.pitch * jitter(0.08));
+  });
+  game.events.on('projectileHitGround', ({ weapon }) => {
+    if (weapon.id === 'fut') audio.play(FUT_SOUND.burst.sample, FUT_SOUND.burst.volume, FUT_SOUND.burst.pitch * jitter(0.08));
   });
   // La Canette : tintement de fer-blanc sur un zombie ou par terre
   const tin = () => audio.play(CANETTE_IMPACT.sample, CANETTE_IMPACT.volume, CANETTE_IMPACT.pitch * jitter(0.1));

@@ -60,6 +60,18 @@ export const STOUT_UPGRADES: readonly UpgradeDef[] = [
   { id: 'size', label: 'taille', value: 0.10, kind: 'percent' },
 ];
 
+/** Améliorations du Fût qui roule : dégâts, cadence, taille du tonneau, course plus longue, recul, fûts en plus. */
+export const FUT_UPGRADES: readonly UpgradeDef[] = [
+  { id: 'damage', label: 'dégâts', value: 0.15, kind: 'percent' },
+  { id: 'rate', label: "vitesse d'attaque", value: 0.10, kind: 'percent' },
+  { id: 'size', label: 'taille du fût', value: 0.15, kind: 'percent' },
+  { id: 'duration', label: 'distance parcourue', value: 0.15, kind: 'percent' },
+  { id: 'knock', label: 'recul', value: 0.20, kind: 'percent' },
+  { id: 'projectiles', label: 'fût en plus', value: 1, kind: 'flat', fixed: true, minTier: 2 },
+  { id: 'critChance', label: 'chances de critique', value: 0.04, kind: 'points' },
+  { id: 'critMult', label: 'multiplicateur critique', value: 0.15, kind: 'mult' },
+];
+
 /** Écran de level-up. */
 export const LEVEL_UP_SCREEN = {
   cards: 3,
