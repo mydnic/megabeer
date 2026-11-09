@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { ENEMIES, type EnemyId, type LeaperDef } from '../config/enemies';
+import { ENEMIES, type EnemyId } from '../config/enemies';
 import { ZOMBIE_ATTACK, ZOMBIE_HURT as H, ZOMBIE_MOVE as M, ZOMBIE_VISUAL as V, type ZombieModel } from '../config/zombies';
 import { PLANET_RADIUS } from '../config/world';
 import { heightAt } from '../world/terrain';
@@ -69,9 +69,6 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
       if (z.state !== 'attack' || z.attackDone) z.play('idle');
       return;
     }
-    // Brique Sauteur : se ramasse (zone marquée), bondit en cloche, retombe, sonné
-    const J = z.def.leaper;
-    if (J && leaperStep(z, J, dt, dist)) return;
     // Brique Kamikaze : tout près du joueur, il s'arrête et allume la mèche (il ne frappe jamais)
     const K = z.def.kamikaze;
     if (K) {
@@ -137,53 +134,6 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
     if (z.state === 'attack' || z.stateTime > V.minStateTime) z.play(next);
   }
 
-  /** Brique Sauteur : renvoie vrai quand elle pilote le zombie à ce pas (se ramasse, en vol ou sonné). */
-  function leaperStep(z: Zombie, J: LeaperDef, dt: number, dist: number) {
-    z.leapCooldown = Math.max(0, z.leapCooldown - dt);
-    if (z.leap === 'windup') {
-      z.walkSpeed = 0;
-      z.turnToward(z.leapTo, dt);
-      z.leapTimer -= dt;
-      if (z.leapTimer <= 0) { z.leap = 'flight'; z.leapTimer = J.flight; z.leapFrom.copy(z.pos); z.play('walk'); }
-      return true;
-    }
-    if (z.leap === 'flight') {
-      z.leapTimer = Math.max(0, z.leapTimer - dt);
-      const t = 1 - z.leapTimer / J.flight;
-      // Sur le grand cercle du départ à la cible, au niveau du relief, plus la cloche
-      tmp.copy(z.leapFrom).normalize().lerp(side.copy(z.leapTo).normalize(), t).normalize();
-      const ground = PLANET_RADIUS + heightAt(tmp);
-      z.pos.copy(tmp).multiplyScalar(ground + 4 * J.height * t * (1 - t));
-      z.walkSpeed = 0;
-      if (z.leapTimer <= 0) {
-        z.leap = 'recover';
-        z.leapTimer = J.recover;
-        z.pos.copy(z.leapTo);
-        api.onLand?.(z);
-      }
-      return true;
-    }
-    if (z.leap === 'recover') {
-      z.walkSpeed = 0;
-      if (z.state !== 'hit') z.play('hit');
-      z.leapTimer -= dt;
-      if (z.leapTimer <= 0) { z.leap = 'none'; z.leapCooldown = J.cooldown; z.play('idle'); }
-      return true;
-    }
-    // À portée (mais pas au contact) : il se ramasse, l'endroit où se trouve le joueur est marqué
-    if (z.leapCooldown <= 0 && !passive && dist <= J.range && dist > V.attackRange) {
-      z.leap = 'windup';
-      z.leapTimer = J.windup;
-      z.leapTo.copy(player.pos).normalize();
-      z.leapTo.multiplyScalar(PLANET_RADIUS + heightAt(z.leapTo));
-      z.walkSpeed = 0;
-      z.play('idle');
-      api.onLeapAim?.(z);
-      return true;
-    }
-    return false;
-  }
-
   // Grille de hachage pour l'écartement (seuls les voisins de case sont testés)
   const grid = new Map<number, number[]>();
   const cellKey = (x: number, y: number, z: number) => ((x * 73856093) ^ (y * 19349663) ^ (z * 83492791)) | 0;
@@ -193,7 +143,7 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
     const minD = M.radius * 2, cell = minD;
     for (const list of grid.values()) list.length = 0;
     zombies.forEach((z, i) => {
-      if (z.dead || z.leap === 'flight') return; // les corps et les sauteurs en vol ne gênent personne
+      if (z.dead) return; // les corps ne gênent personne
       const k = cellKey(Math.floor(z.pos.x / cell), Math.floor(z.pos.y / cell), Math.floor(z.pos.z / cell));
       let list = grid.get(k);
       if (!list) { list = []; grid.set(k, list); }
@@ -201,7 +151,7 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
     });
     for (let i = 0; i < zombies.length; i++) {
       const a = zombies[i];
-      if (a.dead || a.leap === 'flight') continue;
+      if (a.dead) continue;
       const cx = Math.floor(a.pos.x / cell), cy = Math.floor(a.pos.y / cell), cz = Math.floor(a.pos.z / cell);
       for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) {
         const list = grid.get(cellKey(cx + dx, cy + dy, cz + dz));
@@ -220,7 +170,7 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
     // Le joueur est repoussé hors des corps (sur le plan tangent)
     const pr = M.radius + M.playerRadius;
     for (const z of zombies) {
-      if (z.dead || z.leap === 'flight') continue;
+      if (z.dead) continue;
       push.subVectors(player.pos, z.pos);
       up.copy(player.pos).normalize();
       push.addScaledVector(up, -push.dot(up));
@@ -242,7 +192,7 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
       for (const z of zombies) step(z, dt, player.pos);
       separate();
       for (const z of zombies) {
-        if (z.leap !== 'flight') settle(z); // en vol : sa hauteur est celle du bond
+        settle(z);
         if (z.def.ghost) z.ghostClock += dt;
         z.update(dt);
         // Mèche du kamikaze : à zéro, il explose (même sonné)
@@ -283,10 +233,6 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
     onHit: undefined as ((z: Zombie, dir: THREE.Vector3) => void) | undefined,
     /** Appelé quand un tireur lâche son projectile. */
     onThrow: undefined as ((z: Zombie) => void) | undefined,
-    /** Appelé quand un sauteur se ramasse (le point visé est dans leapTo). */
-    onLeapAim: undefined as ((z: Zombie) => void) | undefined,
-    /** Appelé quand un sauteur retombe (en leapTo). */
-    onLand: undefined as ((z: Zombie) => void) | undefined,
     /** Appelé quand un kamikaze allume sa mèche. */
     onArm: undefined as ((z: Zombie) => void) | undefined,
     /** Appelé quand la mèche d'un kamikaze arrive au bout. */

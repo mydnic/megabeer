@@ -9,7 +9,7 @@ import type { BuveurVisual } from '../player/buveurVisual';
 import type { CameraRig } from '../player/cameraRig';
 import type { PintProp } from '../player/pintProp';
 import type { Pipeline } from '../render/pipeline';
-import { KAMIKAZE_LOOK, LEAPER_LOOK } from '../config/enemies';
+import { KAMIKAZE_LOOK } from '../config/enemies';
 import type { createShards } from '../fx/shards';
 import type { createDamageNumbers } from '../ui/damageNumbers';
 import { jitter } from './sounds';
@@ -26,8 +26,6 @@ type Deps = {
   wood: ReturnType<typeof createShards>;
   /** Coup amorti par le halo d'un porte-reliques : étincelles dorées. */
   sparks: ReturnType<typeof createShards>;
-  /** Gargouille qui retombe : éclats de pierre. */
-  stones: ReturnType<typeof createShards>;
   damageNumbers: ReturnType<typeof createDamageNumbers>;
 };
 
@@ -37,7 +35,7 @@ type Deps = {
  * séquence de mort (pinte qui s'échappe, plongée de la caméra, image qui se désature).
  */
 export function wireEffects(game: Game, d: Deps) {
-  const { buveur, rig, pint, pipeline, shards, wine, wood, sparks, stones, damageNumbers } = d;
+  const { buveur, rig, pint, pipeline, shards, wine, wood, sparks, damageNumbers } = d;
   const up = new THREE.Vector3(), numPos = new THREE.Vector3(), soft = new THREE.Vector3();
 
   game.events.on('zombieHit', ({ zombie, impact, dir, damage, crit, shielded }) => {
@@ -64,14 +62,6 @@ export function wireEffects(game: Game, d: Deps) {
     numPos.copy(at).addScaledVector(up, L.burstHeight);
     wine.burst(numPos, still);
     wood.burst(numPos, still);
-    const k = 1 - at.distanceTo(game.player.pos) / L.shakeDist;
-    if (k > 0) rig.shake(L.shake * k, L.shakeAmplitude, L.shakeDecay);
-  });
-  // Gargouille qui retombe : éclats de pierre, la caméra tremble si c'est près
-  game.events.on('leapLanded', ({ at }) => {
-    const L = LEAPER_LOOK;
-    up.copy(at).normalize();
-    stones.burst(numPos.copy(at).addScaledVector(up, 0.2), still);
     const k = 1 - at.distanceTo(game.player.pos) / L.shakeDist;
     if (k > 0) rig.shake(L.shake * k, L.shakeAmplitude, L.shakeDecay);
   });
@@ -125,7 +115,6 @@ export function wireEffects(game: Game, d: Deps) {
     shards.clear();
     wine.clear();
     sparks.clear();
-    stones.clear();
     wood.clear();
     damageNumbers.clear();
     rig.setAnchor(null);
