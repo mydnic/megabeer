@@ -35,12 +35,13 @@ Fait et validé dans la feature 7 :
 | 6 | Moine porte-reliques | Protecteur (voisins à -50 % de dégâts) | Rogue encapuchonné KayKit (`kaykit.py`) | validé |
 | 7 | Gargouille | Marcheur (contact, coup de tête) | Dragon Animated Monsters en pierre (`monsters.py`) | validé |
 | 8 | Prieur | Invocateur (3 squelettes KayKit sortent de terre toutes les 8 s) | Eye Summoner (Polygonal Mind) sur le squelette UAL (`summoner.py`) | validé |
-| 9 | Frère cellérier | Tank + diviseur (60 PV ; tué, 3 moinillons sortent de son corps) | Quaternius Zombie Chubby (moinillons : le même en petit) | **à faire valider en jeu** |
+| 9 | Frère cellérier | Tank + diviseur (60 PV ; tué, 3 moinillons sortent de son corps) | Quaternius Zombie Chubby (moinillons : le même en petit) | validé |
 
 **Prochaine étape :**
-1. Faire valider le **Frère cellérier** (9:00) : Zombie Chubby tel quel, brique Diviseur (`splitter`,
-   `split` dans `game.ts`, événement `enemySplit`, gerbe de vin et son mou). Le roster de l'Abbaye est alors complet.
-2. Ensuite, discuter avec l'utilisateur de la suite (section 20 du GDD : armes une par une, objets,
+1. **Le roster de l'Abbaye est complet et validé** (2026-11-09). Reste de la feature 7 : la
+   tension sur 10 min, reportée à quand il y aura plusieurs armes. Choisir avec l'utilisateur la
+   prochaine feature (section 20 du GDD).
+2. Pistes : discuter avec l'utilisateur de la suite (section 20 du GDD : armes une par une, objets,
    élites, boss...). L'équilibrage de la difficulté est reporté : il faut d'abord les armes.
 
 Idées notées pour plus tard (GDD section 14) : nœud « Dégâts collatéraux » du skill tree (les
