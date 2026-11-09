@@ -186,7 +186,7 @@ PV à 0 : fin de run (défaite), bilan, TUNAS gagnés conservés [EXISTE].
 
 ### Règles générales
 
-- Les armes **tirent automatiquement** sur l'ennemi le plus proche dans leur portée [EXISTE].
+- Les armes **tirent automatiquement** [EXISTE]. **Visée façon survivors** [DÉCIDÉ le 2026-11-09] : pas toujours le plus proche (en fin de partie, tous les tirs partiraient sur le même ennemi, mort avant que les suivants arrivent). Chaque projectile en vol réserve ses dégâts sur sa cible ; un ennemi qui a déjà assez de dégâts en route pour mourir n'est plus visé tant qu'il reste d'autres cibles ; parmi les 3 plus proches encore vivants, le tir en choisit un au hasard (`weapons/targeting.ts`, `TARGETING`).
 - **4 armes maximum** équipées en même temps [ISSUE #11].
 - Les armes s'obtiennent **uniquement par les cartes de level-up**, jamais par le loot au sol [ISSUE #11] [ISSUE #3].
 - Une arme doit d'abord être **débloquée en boutique TUNAS** pour pouvoir apparaître en carte de level-up [EXISTE].
