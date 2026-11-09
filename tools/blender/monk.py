@@ -23,12 +23,16 @@ Usage (Blender 5.2) :
 """
 import argparse
 import math
+import os
 import sys
 
 import bmesh
 import bpy
 import numpy as np
 from mathutils import Matrix, Vector
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from crowd_utils import hsv_to_rgb, rgb_to_hsv  # noqa: E402
 
 ap = argparse.ArgumentParser()
 ap.add_argument('--src', required=True)
@@ -269,33 +273,6 @@ def place_hands(cfg):
                 pb.keyframe_insert('location', frame=f)
                 rot = 'rotation_quaternion' if pb.rotation_mode == 'QUATERNION' else 'rotation_euler'
                 pb.keyframe_insert(rot, frame=f)
-
-
-def rgb_to_hsv(rgb):
-    r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
-    mx, mn = rgb.max(-1), rgb.min(-1)
-    d = mx - mn
-    h = np.zeros_like(mx)
-    nz = d > 1e-6
-    rm, gm = nz & (mx == r), nz & (mx == g) & (mx != r)
-    bm_ = nz & ~rm & ~gm
-    h[rm] = ((g - b)[rm] / d[rm]) % 6
-    h[gm] = (b - r)[gm] / d[gm] + 2
-    h[bm_] = (r - g)[bm_] / d[bm_] + 4
-    s = np.where(mx > 1e-6, d / np.maximum(mx, 1e-6), 0)
-    return np.stack([h / 6, s, mx], -1)
-
-
-def hsv_to_rgb(hsv):
-    h, s, v = hsv[..., 0] * 6, hsv[..., 1], hsv[..., 2]
-    i = np.floor(h).astype(int) % 6
-    f = h - np.floor(h)
-    p, q, t = v * (1 - s), v * (1 - s * f), v * (1 - s * (1 - f))
-    choices = [np.stack(c, -1) for c in ((v, t, p), (q, v, p), (p, v, t), (p, q, v), (t, p, v), (v, p, q))]
-    out = np.zeros(h.shape + (3,), dtype=np.float32)
-    for k, c in enumerate(choices):
-        out[i == k] = c[i == k]
-    return out
 
 
 def recolor_robe(px, cfg):
