@@ -24,6 +24,29 @@ export type EnemyDef = {
   ghost?: GhostDef;
   /** Brique Protecteur : les ennemis autour de lui prennent moins de dégâts. */
   protector?: ProtectorDef;
+  /** Brique Sauteur : à portée, il bondit en cloche sur l'endroit où se trouve le joueur. */
+  leaper?: LeaperDef;
+};
+
+/**
+ * Brique Sauteur (GDD section 11) : il se ramasse et marque au sol l'endroit où se trouve le joueur,
+ * puis bondit en cloche dessus. À l'atterrissage, le joueur dans la zone et au sol est écrasé : on
+ * esquive en sortant de la marque, ou en sautant au bon moment. Ensuite il reste sonné, puis attend
+ * avant le bond suivant.
+ */
+export type LeaperDef = {
+  /** Distance au joueur (m) à partir de laquelle il bondit. */
+  range: number;
+  /** Temps pour se ramasser avant de bondir (s), durée du vol (s), hauteur de la cloche (m). */
+  windup: number;
+  flight: number;
+  height: number;
+  /** Rayon de la zone d'impact (m) et PV retirés au joueur écrasé. */
+  radius: number;
+  damage: number;
+  /** Sonné après l'atterrissage (s), puis délai avant le bond suivant (s). */
+  recover: number;
+  cooldown: number;
 };
 
 /**
@@ -101,6 +124,11 @@ export const ENEMIES = {
   fantome: { name: 'Fantôme du cloître', model: 'fantome', hp: 12, speed: 3, damage: 8, xp: 5, ghost: { every: 3, intangible: 1 } },
   /** Protecteur : ses voisins prennent 50 % de dégâts en moins. */
   reliques: { name: 'Moine porte-reliques', model: 'porte_reliques', hp: 18, speed: 2.6, damage: 6, xp: 6, protector: { radius: 6, reduction: 0.5 } },
+  /** Sauteur : bondit sur la position du joueur. */
+  gargouille: {
+    name: 'Gargouille', model: 'gargouille', hp: 20, speed: 2.8, damage: 8, xp: 6,
+    leaper: { range: 10, windup: 0.5, flight: 1.0, height: 4, radius: 2, damage: 16, recover: 0.8, cooldown: 3.5 },
+  },
 } as const satisfies Record<string, EnemyDef>;
 
 export type EnemyId = keyof typeof ENEMIES;
@@ -153,6 +181,18 @@ export const PROTECTOR_LOOK = {
   bodyPulseAmount: 0.25,
 } as const;
 
+/** Gargouille (brique Sauteur) : marque de la zone d'impact (un danger : même langage que les bouteilles). */
+export const LEAPER_LOOK = {
+  markColor: 0xff3a1e,
+  markOpacity: 0.55,
+  markRing: 0.12,
+  /** Secousse de caméra à l'atterrissage près du joueur (nulle à `shakeDist` m). */
+  shake: 0.45,
+  shakeAmplitude: 0.3,
+  shakeDecay: 2.4,
+  shakeDist: 12,
+} as const;
+
 /** Une entrée de roster : l'ennemi arrive à partir de `from` s de run, avec un poids de tirage. */
 export type RosterEntry = { enemy: EnemyId; from: number; weight: number };
 
@@ -166,5 +206,6 @@ export const ROSTERS = {
     { enemy: 'tonnelier', from: 240, weight: 1 },
     { enemy: 'fantome', from: 300, weight: 1 },
     { enemy: 'reliques', from: 360, weight: 1 },
+    { enemy: 'gargouille', from: 420, weight: 1 },
   ],
 } as const satisfies Record<string, readonly RosterEntry[]>;

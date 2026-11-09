@@ -53,6 +53,10 @@ export type GameEvents = {
   enemyThrow: { shot: EnemyShot };
   /** Un projectile ennemi touche le sol ; `hit` : le joueur était dans la zone. */
   enemyShotLanded: { shot: EnemyShot; hit: boolean };
+  /** Un sauteur se ramasse : il retombera sur `to` dans `time` s, dans un rayon `radius`. */
+  leapAimed: { zombie: Zombie; to: THREE.Vector3; radius: number; time: number };
+  /** Un sauteur retombe sur `at` ; `hit` : le joueur était dans la zone, au sol. */
+  leapLanded: { zombie: Zombie; at: THREE.Vector3; hit: boolean };
   /** Un kamikaze allume sa mèche : il explosera dans `fuse` s, dans un rayon `radius` autour de `at`. */
   kamikazeArmed: { zombie: Zombie; at: THREE.Vector3; radius: number; fuse: number };
   /** Un kamikaze explose à `at` ; `killed` : tué par le joueur (sinon, au bout de sa mèche) ; `hit` : le joueur était dans la zone. */
@@ -144,6 +148,11 @@ export class Game {
       this.events.emit('kamikazeArmed', { zombie: z, at: z.pos.clone(), radius: K.radius, fuse: K.fuse });
     };
     this.horde.onExplode = (z) => this.explode(z, false);
+    this.horde.onLeapAim = (z) => {
+      const J = z.def.leaper!;
+      this.events.emit('leapAimed', { zombie: z, to: z.leapTo.clone(), radius: J.radius, time: J.windup + J.flight });
+    };
+    this.horde.onLand = (z) => this.leapLanded(z);
     this.horde.onSpawn = (zombie) => this.events.emit('zombieSpawned', { zombie });
     this.xp = createXpDrops(groundAt);
     this.director = new SpawnDirector({
@@ -341,6 +350,21 @@ export class Game {
     }
     z.vanish();
     this.events.emit('enemyExploded', { zombie: z, at, radius: K.radius, killed, hit });
+  }
+
+  /** Un sauteur retombe : le joueur dans la zone et au sol est écrasé (sauter au bon moment l'esquive). */
+  private leapLanded(z: Zombie) {
+    const J = z.def.leaper!;
+    const p = this.player.pos;
+    const hit = this.phase === 'run' && this.player.onGround && p.angleTo(z.leapTo) * PLANET_RADIUS < J.radius;
+    if (hit) {
+      const dir = p.clone().sub(z.leapTo);
+      const up = this.tmp.copy(p).normalize();
+      dir.addScaledVector(up, -dir.dot(up));
+      if (dir.lengthSq() < 1e-6) dir.copy(this.player.facing).negate();
+      this.hurtPlayer(z, dir.normalize(), J.damage);
+    }
+    this.events.emit('leapLanded', { zombie: z, at: z.leapTo.clone(), hit });
   }
 
   /** Un tireur lâche son projectile vers l'endroit où se trouve le joueur (au sol). */

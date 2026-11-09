@@ -17,6 +17,8 @@ export const ZOMBIE_MODELS = {
   moine_tonnelier: { file: 'moine_tonnelier.glb', height: 2.0, walkAnimAt: 1.2 },
   // Le Moine porte-reliques : Rogue encapuchonné KayKit en bure crème, un coffret doré tenu devant lui (tools/blender/kaykit.py)
   porte_reliques: { file: 'porte_reliques.glb', height: 1.85, walkAnimAt: 1.9 },
+  // La Gargouille : le Dragon des Animated Monsters en pierre grise (tools/blender/monsters.py), qui vole bas
+  gargouille: { file: 'gargouille.glb', height: 1.8, walkAnimAt: 2.8 },
   // Le Fantôme du cloître : fantôme du kit Kenney cimetière (pièces animées, sans squelette), translucide, il flotte
   fantome: {
     file: 'character-ghost.glb', height: 1.2, walkAnimAt: 2.5,

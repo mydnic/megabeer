@@ -96,3 +96,17 @@ export const SHIELD_SPARKS = {
   color: 0xffd35a,
   glow: 1.4,
 } as const satisfies ShardLook;
+
+/** Éclats de pierre quand une gargouille retombe. */
+export const STONE_CHIPS = {
+  max: 300,
+  perBurst: 14,
+  size: 0.12,
+  speed: 5,
+  forward: 0,
+  upward: 4,
+  spin: 15,
+  life: 0.9,
+  color: 0x8a8a90,
+  glow: 0,
+} as const satisfies ShardLook;

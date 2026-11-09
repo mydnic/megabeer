@@ -72,10 +72,10 @@ recopie son état à chaque image. Ne jamais remettre de logique de jeu dans `ma
   **Ajouter une arme** = un fichier qui implémente `Weapon`, une entrée dans le registre, sa config
   et ses cartes, son icône (`ui/icons.ts`), son rendu, et ses tests. Rien d'autre à toucher.
 - `enemies/` : les ennemis sont des fiches (`config/enemies.ts` : `ENEMIES` et le roster de chaque map),
-  `zombie.ts` et `horde.ts` (simulation, briques Tireur, Kamikaze, Fantôme et Protecteur ; les armes visent
+  `zombie.ts` et `horde.ts` (simulation, briques Tireur, Kamikaze, Fantôme, Protecteur et Sauteur ; les armes visent
   `z.targetable`), `hordeView.ts` et `zombieLibrary.ts`
   (rendu, modèles et animations pré-calculées ; accepte aussi les personnages Kenney à pièces animées
-  sans squelette, et les modèles translucides), `enemyShotsView.ts` et `kamikazeView.ts` (marques au sol `fx/groundMarks.ts`, qui
+  sans squelette, et les modèles translucides), `enemyShotsView.ts`, `kamikazeView.ts` et `leaperView.ts` (marques au sol `fx/groundMarks.ts`, qui
   épousent le relief, réservées aux dangers pour le joueur), `protectorView.ts` (étoile qui scintille au-dessus
   du protecteur ; liseré de lumière sur les protégés via l'attribut `aGlow` de la foule : règle de tous les
   buffs entre ennemis). `fx/shards.ts` : gerbes de morceaux (verre, vin, bois). `pickups/` : `xpDrops.ts` + `xpDropsView.ts`.
@@ -114,7 +114,8 @@ BD/aquarelle, Valheim, style anime, herbe dense.
 (prépare le Moine de `MONK.blend` pour la foule : textures en un atlas, un seul matériau, animations
 renommées comme les zombies ; `--variant` : lanceur, pelerin (bure rouge, tonneau sans fond autour du ventre) ou tonnelier (bure ardoise, gros tonneau qui roule devant lui, mains dessus), tonneau donné par `--barrel` ; source dans `Desktop/MODELS/personnages/kelgar_monk`) génèrent les GLB
 de `src/assets/models/`, comme `tools/blender/kaykit.py` (personnages KayKit : pièces retirées, recolorés, objet
-en main, animations du Rig_Medium ; sources lues dans `Desktop/MODELS`). Outils communs dans `crowd_utils.py`.
+en main, animations du Rig_Medium ; sources lues dans `Desktop/MODELS`). `tools/blender/monsters.py` (monstres Quaternius
+à couleurs unies, rangées dans une palette). Outils communs dans `crowd_utils.py`.
 Pas plus de 3 ennemis sur le même corps de base. Ne pas éditer les GLB à la main : modifier le script et relancer.
 
 ```

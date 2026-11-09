@@ -55,6 +55,13 @@ export class Zombie {
   throwing = false;
   /** Brique Kamikaze : mèche allumée (s restantes, -1 : éteinte). */
   fuse = -1;
+  /** Brique Sauteur : phase (se ramasse, en vol, sonné), temps restant de la phase, délai avant le suivant (s). */
+  leap: 'none' | 'windup' | 'flight' | 'recover' = 'none';
+  leapTimer = 0;
+  leapCooldown = 0;
+  /** Départ et point visé du bond (au sol). */
+  readonly leapFrom = new THREE.Vector3();
+  readonly leapTo = new THREE.Vector3();
   /** Brique Fantôme : horloge de son cycle (s), décalée au hasard pour qu'ils ne clignotent pas ensemble. */
   ghostClock = 0;
   /** Sortie de terre en cours (s restantes) : il émerge du sol, immobile, sans frapper. */
