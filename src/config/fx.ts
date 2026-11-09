@@ -52,6 +52,21 @@ export const WINE_BURST = {
   shape: 'drop',
 } as const satisfies ShardLook;
 
+/** Gerbe de bière brune quand une Stout éclate sur un zombie. */
+export const STOUT_SPLASH = {
+  max: 600,
+  perBurst: 40,
+  size: 0.1,
+  speed: 5.5,
+  forward: 1.5,
+  upward: 4,
+  spin: 0,
+  life: 0.9,
+  color: 0x2a1a10,
+  glow: 0.15,
+  shape: 'drop',
+} as const satisfies ShardLook;
+
 /** Éclats du tonneau qui vole en morceaux. */
 export const BARREL_SHARDS = {
   max: 300,

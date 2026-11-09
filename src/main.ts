@@ -12,7 +12,9 @@ import { createXpDropsView } from './pickups/xpDropsView';
 import { createBottleView } from './weapons/bottleView';
 import { createEnemyShotsView } from './enemies/enemyShotsView';
 import { createShards } from './fx/shards';
-import { BARREL_SHARDS, EARTH_CLODS, SHIELD_SPARKS, WINE_BURST } from './config/fx';
+import { BARREL_SHARDS, EARTH_CLODS, SHIELD_SPARKS, STOUT_SPLASH, WINE_BURST } from './config/fx';
+import { BOTTLE_LOOK, STOUT_LOOK } from './config/weapons';
+import type { WeaponId } from './weapons/weapon';
 import { createKamikazeView } from './enemies/kamikazeView';
 import { createProtectorView } from './enemies/protectorView';
 import { createDamageNumbers } from './ui/damageNumbers';
@@ -69,7 +71,11 @@ buveur.load().catch((e) => console.error(e));
 game.setThrowRig({ gesture: (rate) => buveur.throwGesture(rate), handPos: (out) => buveur.leftHandPos(out) });
 const hordeView = createHordeView(scene, zombieLib);
 const xpView = createXpDropsView(scene);
-const bottleView = await createBottleView(scene);
+// Une vue de bouteilles par arme (chaque arme a sa bouteille)
+const bottleViews: Record<WeaponId, Awaited<ReturnType<typeof createBottleView>>> = {
+  blonde: await createBottleView(scene, BOTTLE_LOOK),
+  stout: await createBottleView(scene, STOUT_LOOK),
+};
 const enemyShotsView = await createEnemyShotsView(scene);
 const groundAt = (p: THREE.Vector3) => game.player.supportAt(p, p.length());
 const shards = createShards(scene, groundAt);
@@ -79,6 +85,7 @@ const kamikazeView = createKamikazeView(scene);
 const protectorView = createProtectorView(scene);
 const sparks = createShards(scene, groundAt, SHIELD_SPARKS);
 const earth = createShards(scene, groundAt, EARTH_CLODS);
+const stoutSplash = createShards(scene, groundAt, STOUT_SPLASH);
 const damageNumbers = createDamageNumbers(camera);
 const pint = new PintProp(scene, { verre: new THREE.Color(), biere: new THREE.Color(), mousse: new THREE.Color() }, (p, r) => game.player.supportAt(p, r));
 const rig = new CameraRig(camera);
@@ -92,7 +99,7 @@ wireSounds(game, audio, buveur);
 wireMusic(game, audio, music, 'abbaye');
 
 // --- Effets, interface, journal de run
-const effects = wireEffects(game, { buveur, rig, pint, pipeline, audio, shards, wine, wood, sparks, earth, damageNumbers });
+const effects = wireEffects(game, { buveur, rig, pint, pipeline, audio, shards, wine, wood, sparks, earth, stoutSplash, damageNumbers });
 const screens = wireScreens(game, { planet, canvas: renderer.domElement, audio });
 const runLog = createRunLog();
 let fps = 0;
@@ -107,7 +114,7 @@ let fpsAcc = 0, fpsN = 0;
 // --- Boucle : le noyau avance, puis l'affichage recopie son état
 let last = performance.now();
 const focusPoint = new THREE.Vector3();
-const projectiles = () => game.loadout.weapons.flatMap((w) => w.projectiles);
+const projectiles = (id: WeaponId) => game.loadout.weapons.filter((w) => w.id === id).flatMap((w) => w.projectiles);
 
 function frame(now: number) {
   const realDt = Math.min(0.1, (now - last) / 1000);
@@ -121,7 +128,7 @@ function frame(now: number) {
   buveur.update(dt, player);
   hordeView.sync(game.horde.zombies);
   xpView.sync(game.xp.drops);
-  bottleView.sync(projectiles());
+  for (const id of Object.keys(bottleViews) as WeaponId[]) bottleViews[id].sync(projectiles(id));
   enemyShotsView.sync(game.shots.shots);
   kamikazeView.sync(game.horde.zombies);
   protectorView.sync(game.horde.zombies);
@@ -130,6 +137,7 @@ function frame(now: number) {
   wood.update(dt);
   sparks.update(dt);
   earth.update(dt);
+  stoutSplash.update(dt);
   damageNumbers.update(realDt);
   pint.update(dt);
   effects.update();

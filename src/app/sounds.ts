@@ -1,3 +1,4 @@
+import { STOUT_IMPACT } from '../config/weapons';
 import type * as THREE from 'three';
 import { BELL_SOUND } from '../config/abbey';
 import { AUDIO } from '../config/audio';
@@ -60,6 +61,10 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
     if (k <= 0) return;
     audio.play('impactWood_heavy', K.woodVolume * k, jitter(0.08));
     audio.play('impactSoft_heavy', K.splashVolume * k, 0.8 * jitter(0.08));
+  });
+  // La Stout qui éclate sur un zombie : un choc sourd en plus du verre
+  game.events.on('zombieHit', ({ weapon }) => {
+    if (weapon?.id === 'stout') audio.play(STOUT_IMPACT.sample, STOUT_IMPACT.volume, STOUT_IMPACT.pitch * jitter(0.06));
   });
   // Frère cellérier tué : il éclate (ses moinillons en sortent)
   game.events.on('enemySplit', ({ zombie }) => {

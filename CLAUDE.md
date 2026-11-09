@@ -74,7 +74,8 @@ recopie son état à chaque image. Ne jamais remettre de logique de jeu dans `ma
   montée en difficulté, courbe dans `config/spawn.ts`), `mechanics/` (mécanique propre à chaque map, interface
   `MapMechanic` et registre : Abbaye = les cloches), `emitter.ts`.
 - `weapons/` : `weapon.ts` (**interface `Weapon`** et `WeaponContext`), `registry.ts`, une arme
-  par fichier (`blonde.ts`, simulation et projectiles), son rendu à part (`bottleView.ts`).
+  par fichier (`blonde.ts`, `stout.ts`), les bouteilles lancées partageant la brique `bottleWeapon.ts` (visée, volées,
+  perçage, recul), leur rendu à part (`bottleView.ts`, une vue par arme).
   **Ajouter une arme** = un fichier qui implémente `Weapon`, une entrée dans le registre, sa config
   et ses cartes, son icône (`ui/icons.ts`), son rendu, et ses tests. Rien d'autre à toucher.
 - `enemies/` : les ennemis sont des fiches (`config/enemies.ts` : `ENEMIES` et le roster de chaque map),

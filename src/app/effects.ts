@@ -28,6 +28,8 @@ type Deps = {
   sparks: ReturnType<typeof createShards>;
   /** Squelette du Prieur qui sort de terre : mottes de terre. */
   earth: ReturnType<typeof createShards>;
+  /** Stout qui éclate sur un zombie : gerbe de bière brune. */
+  stoutSplash: ReturnType<typeof createShards>;
   damageNumbers: ReturnType<typeof createDamageNumbers>;
 };
 
@@ -37,11 +39,13 @@ type Deps = {
  * séquence de mort (pinte qui s'échappe, plongée de la caméra, image qui se désature).
  */
 export function wireEffects(game: Game, d: Deps) {
-  const { buveur, rig, pint, pipeline, shards, wine, wood, sparks, earth, damageNumbers } = d;
+  const { buveur, rig, pint, pipeline, shards, wine, wood, sparks, earth, stoutSplash, damageNumbers } = d;
   const up = new THREE.Vector3(), numPos = new THREE.Vector3(), soft = new THREE.Vector3();
 
-  game.events.on('zombieHit', ({ zombie, impact, dir, damage, crit, shielded }) => {
-    buveur.splashAt(impact, 14);
+  game.events.on('zombieHit', ({ weapon, zombie, impact, dir, damage, crit, shielded }) => {
+    // La Stout éclate en bière brune ; les autres en bière blonde
+    if (weapon?.id === 'stout') stoutSplash.burst(impact, dir);
+    else buveur.splashAt(impact, 14);
     shards.burst(impact, dir);
     if (shielded) sparks.burst(impact, dir);
     up.copy(zombie.pos).normalize();
@@ -127,6 +131,7 @@ export function wireEffects(game: Game, d: Deps) {
     wine.clear();
     sparks.clear();
     earth.clear();
+    stoutSplash.clear();
     wood.clear();
     damageNumbers.clear();
     rig.setAnchor(null);

@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { DIFFICULTIES, type DifficultyId } from '../config/spawn';
+import { WEAPON_FACTORIES } from '../weapons/registry';
+import type { WeaponId } from '../weapons/weapon';
 import { ENEMIES, type EnemyId } from '../config/enemies';
 import type { createMusic } from '../audio/music';
 import type { createRunLog } from '../dev/runLog';
@@ -57,6 +59,8 @@ export async function wireDevTools(game: Game, d: {
       game.addXp(Math.max(1, p.next - p.xp));
       runLog.event('dev', 'level');
     },
+    weapons: Object.keys(WEAPON_FACTORIES),
+    giveWeapon(id) { if (inRun() && game.loadout.add(id as WeaponId)) runLog.event('dev', 'weapon', id); },
     heal() { if (inRun()) { game.health.reset(); runLog.event('dev', 'heal'); } },
     die() {
       if (!inRun()) return;

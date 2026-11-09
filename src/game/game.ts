@@ -170,7 +170,7 @@ export class Game {
       stats: this.stats,
       rig: defaultRig(player),
       groundAt,
-      hitZombie: (weapon, z, damage, crit, impact, vel) => { self.hitZombie(z, damage, crit, impact, vel, weapon); },
+      hitZombie: (weapon, z, damage, crit, impact, vel, knock) => { self.hitZombie(z, damage, crit, impact, vel, weapon, knock); },
       hitGround: (weapon, pos, vel) => this.events.emit('projectileHitGround', { weapon, pos, vel }),
     };
     this.loadout = new Loadout(this.weaponCtx, deps.startingWeapon ?? 'blonde');
@@ -308,14 +308,14 @@ export class Game {
    * dans ce sens). Mort : +1 kill et une goutte de bière. Renvoie true s'il meurt. Un fantôme
    * intouchable n'encaisse rien.
    */
-  hitZombie(z: Zombie, damage: number, crit: boolean, impact: THREE.Vector3, vel: THREE.Vector3, weapon: Weapon | null = null) {
+  hitZombie(z: Zombie, damage: number, crit: boolean, impact: THREE.Vector3, vel: THREE.Vector3, weapon: Weapon | null = null, knock = 1) {
     if (z.intangible) return false; // un fantôme intouchable : le coup le traverse
     // Dans le halo d'un porte-reliques : dégâts réduits
     const shield = this.horde.shieldOf(z);
     damage *= 1 - shield;
     const up = this.tmp.copy(z.pos).normalize();
     const dir = vel.clone().addScaledVector(up, -vel.dot(up)).normalize();
-    const killed = z.damage(damage, dir);
+    const killed = z.damage(damage, dir, knock);
     if (killed) {
       this.kills++;
       this.xp.drop(z.pos, z.def.xp);

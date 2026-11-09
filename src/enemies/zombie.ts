@@ -124,15 +124,15 @@ export class Zombie {
   }
 
   /**
-   * Encaisse un coup venant de la direction dir (tangente, du tireur vers le zombie).
-   * Renvoie true si le coup le tue.
+   * Encaisse un coup venant de la direction dir (tangente, du tireur vers le zombie), avec un recul
+   * multiplié par `knock` (armes lourdes). Renvoie true si le coup le tue.
    */
-  damage(amount: number, dir: THREE.Vector3) {
+  damage(amount: number, dir: THREE.Vector3, knock = 1) {
     if (this.dead) return false;
     this.hp -= amount;
     this.flash = 1;
     const killed = this.hp <= 0;
-    this.knockVel.copy(dir).multiplyScalar(H.knockSpeed * (killed ? H.deathKnock : 1));
+    this.knockVel.copy(dir).multiplyScalar(H.knockSpeed * knock * (killed ? H.deathKnock : 1));
     if (killed) {
       this.deadTime = 0;
       this.play('death');

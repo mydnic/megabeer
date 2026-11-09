@@ -4,7 +4,7 @@ import type { PlayerStats, StatLine } from '../game/playerStats';
 import type { UpgradeDef } from '../config/upgrades';
 
 /** Identifiant d'arme (une entrée de src/weapons/registry.ts). */
-export type WeaponId = 'blonde';
+export type WeaponId = 'blonde' | 'stout';
 
 /** Améliorations d'une arme gagnées en run : un champ par id de carte, plus son niveau. */
 export type WeaponMods = { level: number } & Record<string, number>;
@@ -26,8 +26,11 @@ export interface WeaponContext {
   rig: ThrowRig;
   /** Rayon du sol sous un point. */
   groundAt(p: THREE.Vector3): number;
-  /** Un projectile touche un zombie : le jeu applique les dégâts et annonce le coup. */
-  hitZombie(weapon: Weapon, z: Zombie, damage: number, crit: boolean, impact: THREE.Vector3, vel: THREE.Vector3): void;
+  /**
+   * Un projectile touche un zombie : le jeu applique les dégâts et annonce le coup. `knock` multiplie
+   * le recul normal d'un coup (armes lourdes).
+   */
+  hitZombie(weapon: Weapon, z: Zombie, damage: number, crit: boolean, impact: THREE.Vector3, vel: THREE.Vector3, knock?: number): void;
   /** Un projectile s'écrase au sol. */
   hitGround(weapon: Weapon, pos: THREE.Vector3, vel: THREE.Vector3): void;
 }

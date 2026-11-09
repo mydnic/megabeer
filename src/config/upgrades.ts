@@ -48,6 +48,18 @@ export const BLONDE_UPGRADES: readonly UpgradeDef[] = [
   { id: 'size', label: 'taille', value: 0.10, kind: 'percent' },
 ];
 
+/** Améliorations de la Stout : comme la Blonde, plus le recul et le perçage (pas de projectile en plus ni de vitesse). */
+export const STOUT_UPGRADES: readonly UpgradeDef[] = [
+  { id: 'damage', label: 'dégâts', value: 0.15, kind: 'percent' },
+  { id: 'rate', label: "vitesse d'attaque", value: 0.10, kind: 'percent' },
+  { id: 'knock', label: 'recul', value: 0.20, kind: 'percent' },
+  { id: 'pierce', label: 'zombie traversé', value: 1, kind: 'flat', fixed: true, minTier: 2 },
+  { id: 'range', label: 'portée', value: 0.10, kind: 'percent' },
+  { id: 'critChance', label: 'chances de critique', value: 0.04, kind: 'points' },
+  { id: 'critMult', label: 'multiplicateur critique', value: 0.15, kind: 'mult' },
+  { id: 'size', label: 'taille', value: 0.10, kind: 'percent' },
+];
+
 /** Écran de level-up. */
 export const LEVEL_UP_SCREEN = {
   cards: 3,
