@@ -475,7 +475,7 @@ Les boss lâchent un fût **gratuit** de rareté élevée.
 
 - Monnaie **perdue à la fin de la run** (les TUNAS restent la monnaie permanente).
 - Sources : kills (petite chance, **à la place** de la goutte d'XP : décision de l'utilisateur le 2026-11-10), poubelles, machine à sous, certains bonus.
-- Présentées comme des **capsules de bière dorées** (choix de l'utilisateur), plates, debout, qui tournent ; compteur à côté des kills.
+- Présentées comme des **capsules de bière** (choix de l'utilisateur) : modèle d'une vraie capsule couronne, dessus imprimé rouge à anneau blanc, jupe dorée à 21 crans, penchée et qui tourne (la première version toute dorée se confondait avec l'XP, retour de l'utilisateur). Compteur à côté des kills, icône de capsule de trois quarts.
 - Dépenses : fûts, machine à sous du PMU.
 - Attirées par le Ramassage comme les capsules.
 

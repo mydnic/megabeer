@@ -9,14 +9,20 @@ export const COINS = {
 } as const;
 
 /**
- * Capsules au sol : même vol que les gouttes d'XP (lévitation, aspiration par la Portée d'attraction),
- * mais plates et dorées, debout, qui tournent sur elles-mêmes pour ne pas les confondre avec l'XP.
+ * Capsules au sol : même vol que les gouttes d'XP (lévitation, aspiration par la Portée d'attraction).
+ * Modèle d'une vraie capsule couronne : dessus imprimé rouge à anneau blanc (rien à voir avec l'or de
+ * l'XP), jupe dorée crantée ; penchées, elles tournent pour montrer leur dessus.
  */
 export const COIN_DROPS = {
-  /** Rayon de la capsule (m), épaisseur (m), nombre de crans de la jupe. */
-  radius: 0.22,
-  thickness: 0.07,
+  /** Rayon de la capsule (m), hauteur relative au rayon, crans de la jupe (21 sur une vraie), creux des crans. */
+  radius: 0.26,
+  height: 0.38,
   teeth: 21,
+  crimp: 0.86,
+  /** Inclinaison (rad) pour voir le dessus imprimé ; couleurs du dessus et de son anneau. */
+  tilt: 0.75,
+  top: 0xd42a2a,
+  print: 0xfff4dc,
   /** Lévitation et aspiration : comme les gouttes d'XP (xp.ts). */
   hover: 0.7,
   bob: 0.1,
@@ -25,9 +31,9 @@ export const COIN_DROPS = {
   attract: 45,
   maxSpeed: 30,
   collectDist: 0.7,
-  /** Rotation sur elle-même (tours par seconde), couleur et lueur. */
+  /** Rotation sur elle-même (tours par seconde), couleur de la jupe (dorée), lueur. */
   spin: 0.8,
   color: 0xffd23a,
-  glow: 0.35,
+  glow: 0.12,
   max: 600,
 } as const;
