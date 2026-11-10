@@ -383,7 +383,7 @@ export class Game {
     this.coinDrops.update(dt, this.chest, this.phase === 'run' ? this.stats.pickupRange : 0, (v) => {
       // Porte-monnaie : la part en plus s'accumule, une capsule entière à la fois
       this.coinFrac += v * (this.stats.coinGain - 1);
-      const extra = Math.floor(this.coinFrac);
+      const extra = Math.floor(this.coinFrac + 1e-9);
       this.coinFrac -= extra;
       this.coins += v + extra;
       this.events.emit('coinsCollected', { amount: v + extra, total: this.coins });

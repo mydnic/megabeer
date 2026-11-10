@@ -178,7 +178,7 @@ export class PlayerController {
       this.airTime = COYOTE;
       this.jumpBuffer = 0;
       this.events.jumped = true;
-    } else if (input.jumpPressed && !this.onGround && this.airTime >= COYOTE && this.airJumpsLeft > 0) {
+    } else if (this.jumpBuffer > 0 && !this.onGround && this.airTime >= COYOTE && this.airJumpsLeft > 0) {
       // Double saut : en l'air, un nouvel appui relance vers le haut
       this.airJumpsLeft--;
       this.vr = speed;
