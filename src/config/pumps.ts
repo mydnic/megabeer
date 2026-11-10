@@ -12,6 +12,8 @@ export const PUMPS = {
   radius: 3,
   fillTime: 6,
   drainPerSecond: 0.08,
+  /** La jauge reste affichée tant que le joueur est à moins de ce multiple du rayon (pinte pas encore vide). */
+  gaugeRange: 2.5,
   /** Nombre de bonus proposés quand elle est pleine. */
   choices: 3,
 } as const;

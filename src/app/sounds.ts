@@ -80,6 +80,16 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
     audio.play(S.glass, S.glassVolume * k, jitter(0.08));
     audio.play(S.boom, S.boomVolume * k, S.boomPitch * jitter(0.08));
   });
+  // Pompe à bière : la bière coule tant que le joueur remplit la pinte ; un tintement quand elle est pleine
+  let pourAt = -Infinity;
+  game.events.on('tick', () => {
+    if (!game.pumps.filling) { pourAt = -Infinity; return; }
+    const now = performance.now() / 1000;
+    if (now - pourAt < AUDIO.pump.every) return;
+    pourAt = now;
+    audio.play(AUDIO.pump.pour, AUDIO.pump.pourVolume, jitter(0.04));
+  });
+  game.events.on('pumpFilled', () => audio.play(AUDIO.pump.full, AUDIO.pump.fullVolume, AUDIO.pump.fullRate, 0, 'ui'));
   // La Canette : tintement de fer-blanc sur un zombie ou par terre
   const tin = () => audio.play(CANETTE_IMPACT.sample, CANETTE_IMPACT.volume, CANETTE_IMPACT.pitch * jitter(0.1));
   game.events.on('zombieHit', ({ weapon }) => { if (weapon?.id === 'canette') tin(); });

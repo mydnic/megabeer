@@ -38,6 +38,12 @@ function randomDir(out: THREE.Vector3) {
  */
 export class Pumps {
   readonly list: Pump[] = [];
+  /**
+   * Pompe affichée par la jauge : celle dont le joueur est le plus près, s'il est dans sa zone ou
+   * qu'elle n'est pas encore vide ; `filling` : il est dans sa zone (la bière coule).
+   */
+  focus: Pump | null = null;
+  filling = false;
   private tmp = new THREE.Vector3();
 
   constructor(private collider: DecorCollider) {}
@@ -57,14 +63,19 @@ export class Pumps {
     }
   }
 
-  clear() { this.list.length = 0; }
+  clear() { this.list.length = 0; this.focus = null; this.filling = false; }
 
   /** Remplit (ou vide) chaque pompe ; renvoie celle qui vient d'être pleine, s'il y en a une. */
   update(dt: number, playerPos: THREE.Vector3): Pump | null {
     let full: Pump | null = null;
+    let best = Infinity;
+    this.focus = null;
+    this.filling = false;
     for (const p of this.list) {
       if (p.used) continue;
-      const near = p.pos.angleTo(playerPos) * PLANET_RADIUS < P.radius;
+      const d = p.pos.angleTo(playerPos) * PLANET_RADIUS;
+      const near = d < P.radius;
+      if ((near || p.fill > 0) && d < P.radius * P.gaugeRange && d < best) { best = d; this.focus = p; this.filling = near; }
       p.fill = near ? Math.min(1, p.fill + dt / P.fillTime) : Math.max(0, p.fill - dt * P.drainPerSecond);
       if (p.fill >= 1 && !full) { p.used = true; full = p; }
     }

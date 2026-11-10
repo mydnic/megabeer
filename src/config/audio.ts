@@ -67,6 +67,12 @@ export const AUDIO = {
   split: { sample: 'impactSoft_heavy', volume: 0.8, pitch: 0.7, hearDist: 35 },
   /** Prieur : tintement de cloche d'encensoir au début du geste, craquement de terre quand les squelettes sortent. */
   summon: { castSample: 'impactBell_heavy', castVolume: 0.35, castPitch: 1.6, earthSample: 'impactMining', earthVolume: 0.7, earthPitch: 0.6, hearDist: 35 },
+  /**
+   * Pompe à bière : la bière qui coule dans le verre pendant le remplissage. Échantillon `pour`
+   * (fichier pour.mp3 ou pour_001.ogg... dans src/assets/sfx), relancé toutes les `every` s ;
+   * sans fichier, rien ne se joue. `full` : la pinte est pleine.
+   */
+  pump: { pour: 'pour', pourVolume: 0.5, every: 1.4, full: 'impactGlass_light', fullVolume: 0.6, fullRate: 1.1 },
   /** Fondu de l'ambiance quand une partie commence ou finit (constante de temps, s). */
   ambienceFade: 0.6,
   /** Ambiances synthétisées : vent permanent, oiseaux le jour, chouette la nuit. */

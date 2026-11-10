@@ -55,6 +55,20 @@ describe('Les pompes à bière', () => {
     expect(pump.fill).toBeLessThan(before);
   });
 
+  it("la jauge suit la pompe qu'on remplit, et dit si la bière coule", () => {
+    const { t } = arena();
+    const pump = t.game.pumps.list[0];
+    expect(t.game.pumps.focus).toBeNull();
+    standNear(t, pump, PUMPS.radius * 0.5);
+    t.play(1);
+    expect(t.game.pumps.focus).toBe(pump);
+    expect(t.game.pumps.filling).toBe(true);
+    standNear(t, pump, PUMPS.radius * 1.5);
+    t.play(0.5);
+    expect(t.game.pumps.focus).toBe(pump);
+    expect(t.game.pumps.filling).toBe(false);
+  });
+
   it('pleine, le jeu se fige et propose 3 bonus de stat différents', () => {
     const { t } = arena();
     const pump = t.game.pumps.list[0];

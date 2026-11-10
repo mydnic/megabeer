@@ -7,6 +7,7 @@ import type { InputState } from '../core/input';
 import { loadSettings, saveSettings } from '../core/settings';
 import type { Game } from '../game/game';
 import { createAlcoholHud } from '../ui/alcoholHud';
+import { createPumpGauge } from '../ui/pumpGauge';
 import { createDeathBanner } from '../ui/deathBanner';
 import { createEventBanner } from '../ui/eventBanner';
 import { createHealthHud } from '../ui/healthHud';
@@ -40,6 +41,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   // --- HUD de run
   const healthHud = createHealthHud(game.health);
   const alcoholHud = createAlcoholHud(game.progression);
+  const pumpGauge = createPumpGauge();
   const runHud = createRunHud();
   const banner = createEventBanner();
   const weaponHud = createWeaponHud();
@@ -138,6 +140,8 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
       levelUp.input(input.moveX, input.jumpPressed);
       healthHud.update(realDt);
       alcoholHud.update();
+      if (game.phase === 'run' && !game.frozen) pumpGauge.update(game.pumps.focus, game.pumps.filling);
+      else pumpGauge.hide();
       runHud.update(game.runTime, game.kills);
       weaponHud.update(slots());
       if (game.phase === 'dead') deathBanner.update(game.deadTime, game.runTime, game.kills);

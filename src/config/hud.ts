@@ -6,6 +6,9 @@ export const LOADING = { frameBudgetMs: 25 } as const;
 /** Emplacements d'armes : 4 armes maximum (GDD section 6). */
 export const WEAPON_HUD = { slots: 4 } as const;
 
+/** Jauge de la pompe à bière : message quand le joueur sort de la zone (la pinte se vide). */
+export const PUMP_GAUGE = { outHint: 'Reviens près de la pompe !' } as const;
+
 /** Bandeau « Synergie : ... ! » quand une synergie s'active : durée d'affichage (s). */
 export const SYNERGY_BANNER = { duration: 3.5 } as const;
 
