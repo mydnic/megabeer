@@ -46,6 +46,7 @@ const CSS = `
 /* Coffre ouvert sous les cartes : elles en sortent une par une */
 .lu-chest { position: relative; width: clamp(110px, 16vh, 180px); margin-top: -1vh; }
 .lu:not(.chest) .lu-chest { display: none; }
+.lu-chest .ch-ray { display: none; }
 .lu-chest svg { width: 100%; display: block; overflow: visible; position: relative; filter: drop-shadow(0 8px 0 rgba(10,6,4,.6)); }
 .lu-chest::before { content: ''; position: absolute; left: 50%; top: 40%; width: 260%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%;
   background: radial-gradient(circle, var(--c), transparent 60%); opacity: .35; animation: lu-glow 1.6s ease-in-out infinite alternate; }

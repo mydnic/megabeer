@@ -118,7 +118,7 @@ export const chestSvg = (cls: string, color?: string) => {
 <path d="M44 12v40M94 12v40" stroke="#5c6168" stroke-width="7"/>
 <path d="M24 52L30 12h78l2 40z" fill="none" stroke="${K}" stroke-width="3.5" stroke-linejoin="round"/>
 </g>
-<path class="ch-beam" d="M20 56L4 -40h116L104 56z" style="fill: var(--c, #ffc93a)" fill-opacity=".3"/>
+<path class="ch-beam ch-ray" d="M20 56L4 -40h116L104 56z" style="fill: var(--c, #ffc93a)" fill-opacity=".3"/>
 <path d="M12 58l12-6h86l-12 6z" fill="#2a1608" stroke="${K}" stroke-width="3" stroke-linejoin="round"/>
 <path class="ch-beam" d="M22 56.5l6-3h76l-6 3z" style="fill: var(--c, #ffc93a)"/>
 <path d="M98 58l12-6v40l-12 8z" fill="#6a3d22" stroke="${K}" stroke-width="3.5" stroke-linejoin="round"/>
