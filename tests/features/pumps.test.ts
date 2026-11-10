@@ -32,6 +32,29 @@ function fill(t: ReturnType<typeof createTestGame>, pump: { pos: THREE.Vector3 }
 }
 
 describe('Les pompes à bière', () => {
+  it('le fût est plein : on bute dessus au lieu de le traverser', () => {
+    const { t } = arena();
+    const pump = t.game.pumps.list[0];
+    standNear(t, pump, 5);
+    // Il marche droit dessus : il s'approche, bute, puis glisse le long du fût sans jamais entrer
+    let closest = Infinity;
+    for (let i = 0; i < 3 * 60; i++) {
+      t.play(1 / 60, { moveY: 1 });
+      closest = Math.min(closest, pump.pos.angleTo(t.game.player.pos) * PLANET_RADIUS);
+    }
+    expect(closest).toBeLessThan(3);
+    expect(closest).toBeGreaterThan(Math.min(PUMPS.body.halfX, PUMPS.body.halfZ));
+  });
+
+  it('les pompes de la run précédente ne bloquent plus rien', () => {
+    const { t } = arena();
+    const old = t.game.pumps.list[0].pos.clone();
+    const decor = t.game.player.decor!;
+    expect(decor.occupied(old.clone().setLength(old.length() + 1), 0.2)).toBe(true);
+    t.game.abandon();
+    expect(decor.occupied(old.clone().setLength(old.length() + 1), 0.2)).toBe(false);
+  });
+
   it('une run en pose plusieurs, loin du départ et espacées entre elles', () => {
     const { t, spawn } = arena();
     const pumps = t.game.pumps.list;

@@ -45,11 +45,24 @@ export class DecorCollider {
     this.reset(bodies);
   }
 
+  /** Objets du jeu posés en plus du décor pour la durée d'une run (pompes à bière...). */
+  private extra: DecorBody[] = [];
+
   /** Remplace tout le décor (nouvelle planète) ; les joueurs et la horde gardent la même référence. */
   reset(bodies: DecorBody[]) {
     this.bodies = bodies;
+    this.reindex();
+  }
+
+  /** Remplace les objets du jeu posés en plus du décor (vide : il n'en reste aucun). */
+  setExtra(bodies: DecorBody[]) {
+    this.extra = bodies;
+    this.reindex();
+  }
+
+  private reindex() {
     this.buckets.clear();
-    for (const b of bodies) {
+    for (const b of [...this.bodies, ...this.extra]) {
       const r = b.shape.radius;
       const lo = this.tmp.copy(b.pos).subScalar(r).divideScalar(CELL).floor();
       const hi = this.lp.copy(b.pos).addScalar(r).divideScalar(CELL).floor();

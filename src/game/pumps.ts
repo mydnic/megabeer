@@ -1,8 +1,9 @@
 import * as THREE from 'three';
-import { PUMPS as P, PUMP_TIERS, STAT_BONUSES, type PumpTier } from '../config/pumps';
+import { PUMPS as P, PUMP_LOOK, PUMP_TIERS, STAT_BONUSES, type PumpTier } from '../config/pumps';
 import { PLANET_RADIUS } from '../config/world';
 import { heightAt } from '../world/terrain';
-import type { DecorCollider } from '../world/decor/collider';
+import type { DecorBody, DecorCollider } from '../world/decor/collider';
+import { boxShape } from '../world/decor/gridShape';
 import { rollTier as rollRarity, type StatCard } from './levelUpCards';
 import { RARITIES } from '../config/upgrades';
 
@@ -50,7 +51,7 @@ export class Pumps {
 
   /** Nouvelle run : pose les pompes loin de `spawnDir`. */
   place(spawnDir: THREE.Vector3) {
-    this.list.length = 0;
+    this.clear();
     const dir = new THREE.Vector3();
     for (let i = 0; i < P.placementTries && this.list.length < P.count; i++) {
       randomDir(dir);
@@ -61,9 +62,16 @@ export class Pumps {
       if (this.collider.occupied(this.tmp.copy(dir).multiplyScalar(pos.length() + 1), 1.2)) continue;
       this.list.push({ pos, tier: rollTier(), fill: 0, used: false });
     }
+    // Le fût est plein : le joueur et les zombies butent dessus (même repère que son rendu)
+    const shape = boxShape(P.body.halfX, P.body.halfZ, PUMP_LOOK.height);
+    const Y = new THREE.Vector3(0, 1, 0);
+    this.collider.setExtra(this.list.map((p): DecorBody => {
+      const rot = new THREE.Quaternion().setFromUnitVectors(Y, p.pos.clone().normalize());
+      return { pos: p.pos, rot, inv: new THREE.Matrix4().compose(p.pos, rot, new THREE.Vector3(1, 1, 1)).invert(), shape };
+    }));
   }
 
-  clear() { this.list.length = 0; this.focus = null; this.filling = false; }
+  clear() { this.list.length = 0; this.focus = null; this.filling = false; this.collider.setExtra([]); }
 
   /** Remplit (ou vide) chaque pompe ; renvoie celle qui vient d'être pleine, s'il y en a une. */
   update(dt: number, playerPos: THREE.Vector3): Pump | null {

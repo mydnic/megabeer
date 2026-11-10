@@ -22,6 +22,24 @@ export type GridShape = {
 export const NONE = -1e9;
 
 /**
+ * Forme pleine d'une boîte posée au sol, centrée sur l'origine : demi-largeurs `halfX` et `halfZ`,
+ * hauteur `height` (m). Pour les objets du jeu dont on connaît l'encombrement sans charger le modèle.
+ */
+export function boxShape(halfX: number, halfZ: number, height: number, cell = 0.25): GridShape {
+  const minX = -halfX, minZ = -halfZ;
+  const nx = Math.max(1, Math.round((2 * halfX) / cell)), nz = Math.max(1, Math.round((2 * halfZ) / cell));
+  const cx = (2 * halfX) / nx, cz = (2 * halfZ) / nz;
+  // Cases carrées exigées par le collider : on garde la plus petite maille
+  const c = Math.min(cx, cz);
+  const mx = Math.ceil((2 * halfX) / c), mz = Math.ceil((2 * halfZ) / c);
+  return {
+    cell: c, minX, minZ, nx: mx, nz: mz,
+    top: new Float32Array(mx * mz).fill(height), bottom: new Float32Array(mx * mz).fill(0),
+    radius: Math.hypot(halfX, halfZ), height,
+  };
+}
+
+/**
  * @param headroom hauteur du « plafond de corps » : au-dessus, la géométrie ne compte pas pour
  * marcher ou buter (un peu plus que la hauteur libre exigée pour passer dessous).
  */

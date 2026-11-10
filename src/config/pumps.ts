@@ -6,6 +6,11 @@ export const PUMPS = {
   count: 20,
   minFromSpawn: 25,
   minSpacing: 25,
+  /**
+   * Encombrement du fût sur son chevalet (m) : on bute dessus, les zombies aussi. Mesuré sur
+   * pompe.glb (1,8 x 2,0 x 2,05 m) mis à la hauteur PUMP_LOOK.height (3,2 m).
+   */
+  body: { halfX: 1.4, halfZ: 1.56 },
   /** Essais de placement (positions tirées au hasard, écartées si trop près ou dans le décor). */
   placementTries: 400,
   /** Rayon où le Buveur remplit la pinte (m, au sol), temps pour la remplir (s), vidange quand il s'éloigne (part par s). */

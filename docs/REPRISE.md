@@ -68,7 +68,8 @@ Fait et validé dans la feature 7 :
    l'équilibrage serait faussé). Ordre proposé : pompe à bière, puis Pièces et poubelles, puis fûts et
    premiers objets passifs, puis mini-carte. **Pompe à bière : checkpoint 1 fait, à faire valider**
    (placement, remplissage, choix de 3 bonus de stat avec rareté et LUCK, modèle, faisceau, jauge à l'écran,
-   dôme de zone, icône tireuse). Sphère de zone ronde de 6 m, fût de 3,2 m. Son de la bière qui coule : « Beer service 2 » de BigSoundBank (CC0, choisi par l'utilisateur),
+   dôme de zone, icône tireuse). Sphère de zone ronde de 6 m, fût de 3,2 m, plein (collision en boîte mesurée sur le modèle,
+   `PUMPS.body`, posée dans le collider du décor par `DecorCollider.setExtra` pour la durée de la run). Son de la bière qui coule : « Beer service 2 » de BigSoundBank (CC0, choisi par l'utilisateur),
    joué d'un bloc pendant le remplissage, repris au niveau de la pinte, coupé en fondu hors de la zone. Reste : sons du
    remplissage et de la pompe pleine, collision du fût (on le traverse), nombre de pompes (passé à 20, demande de l'utilisateur)
    (6 sur une planète d'environ 1 080 m de tour : la plus proche peut être à 190 m).
