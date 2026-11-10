@@ -475,7 +475,7 @@ Les boss lâchent un fût **gratuit** de rareté élevée.
 
 - Monnaie **perdue à la fin de la run** (les TUNAS restent la monnaie permanente).
 - Sources : kills (petite chance, **à la place** de la goutte d'XP : décision de l'utilisateur le 2026-11-10), poubelles, machine à sous, certains bonus.
-- Présentées comme des **capsules de bière** (choix de l'utilisateur) : modèle « Bottlecap » de Poly by Google fourni par l'utilisateur (crédit dans src/assets/models/CREDITS.md), dessus rouge, jupe dorée crantée, penchée et qui tourne (la première version toute dorée se confondait avec l'XP, retour de l'utilisateur). Compteur à côté des kills, icône de capsule de trois quarts.
+- Présentées comme des **capsules de bière** (choix de l'utilisateur) : modèle « Bottlecap » de Poly by Google fourni par l'utilisateur (crédit dans src/assets/models/CREDITS.md), toute rouge (pas de jaune : demande de l'utilisateur), rayon 0,2 m (un peu plus petite, demande de l'utilisateur), penchée et qui tourne (la première version toute dorée se confondait avec l'XP, retour de l'utilisateur). Compteur à côté des kills, icône de capsule de trois quarts.
 - Dépenses : fûts, machine à sous du PMU.
 - Attirées par le Ramassage comme les capsules.
 

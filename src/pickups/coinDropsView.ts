@@ -8,7 +8,7 @@ const urls = import.meta.glob('../assets/models/capsule.glb', { query: '?url', i
 
 /**
  * Capsule couronne : le modèle « Bottlecap » (Poly by Google), ramené à un rayon de 1 et posé sur son
- * centre ; ses faces du dessus prennent la couleur imprimée (rouge), la jupe crantée la couleur dorée.
+ * centre, toute rouge (demande de l'utilisateur : pas de jaune, rien à voir avec l'or de l'XP).
  */
 async function capsuleGeometry() {
   const gltf = await new GLTFLoader().loadAsync(Object.values(urls)[0]);
@@ -21,22 +21,12 @@ async function capsuleGeometry() {
   const r = Math.max(bb.max.x - bb.min.x, bb.max.z - bb.min.z) / 2;
   geo.translate(-(bb.min.x + bb.max.x) / 2, -(bb.min.y + bb.max.y) / 2, -(bb.min.z + bb.max.z) / 2).scale(1 / r, 1 / r, 1 / r);
   geo.computeVertexNormals();
-  // Dessus : faces tournées vers le haut, dans la moitié haute de la capsule
-  const pos = geo.attributes.position, nrm = geo.attributes.normal;
-  const top = new THREE.Color(C.top), skirt = new THREE.Color(C.color), col: number[] = [];
-  for (let t = 0; t < pos.count; t += 3) {
-    let ny = 0, y = 0;
-    for (let k = 0; k < 3; k++) { ny += nrm.getY(t + k) / 3; y += pos.getY(t + k) / 3; }
-    const c = ny > C.topNormal && y > 0 ? top : skirt;
-    for (let k = 0; k < 3; k++) col.push(c.r, c.g, c.b);
-  }
-  geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
   return geo;
 }
 
 /** Rendu des capsules (Pièces) au sol : penchées pour montrer leur dessus imprimé, elles tournent ; un seul dessin pour toutes. */
 export async function createCoinDropsView(scene: THREE.Scene) {
-  const mat = characterMaterial({ vertexColors: true, emissive: 0xffffff, emissiveIntensity: C.glow, side: THREE.DoubleSide });
+  const mat = characterMaterial({ color: C.color, emissive: C.color, emissiveIntensity: C.glow, side: THREE.DoubleSide });
   const mesh = new THREE.InstancedMesh(await capsuleGeometry(), mat, C.max);
   mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   mesh.frustumCulled = false;

@@ -15,7 +15,7 @@ const CSS = `
 .run-kills.pop, .run-coins.pop { animation: run-pop .22s ease-out; }
 .run-row { display: flex; gap: 8px; }
 .run-coins { display: flex; align-items: center; gap: 6px; padding: 2px 12px 3px 8px; border-radius: 14px;
-  background: rgba(26,18,12,.55); font-size: 20px; line-height: 1; font-variant-numeric: tabular-nums; color: #ffd23a;
+  background: rgba(26,18,12,.55); font-size: 20px; line-height: 1; font-variant-numeric: tabular-nums; color: #ff6a5a;
   text-shadow: -2px 0 #1a120c, 2px 0 #1a120c, 0 -2px #1a120c, 0 2px #1a120c; }
 .run-coins svg { width: 22px; height: 22px; flex: none; }
 @keyframes run-pop { 0% { transform: scale(1) } 40% { transform: scale(1.18) } 100% { transform: scale(1) } }
@@ -24,8 +24,8 @@ const CSS = `
 /** Tête de zombie (crâne vert) pour le compteur de kills. */
 const SKULL = `<svg viewBox="0 0 24 24"><path d="M12 2C6.9 2 3.5 5.6 3.5 10.2c0 2.9 1.3 4.8 3 5.9V19a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2v-2.9c1.7-1.1 3-3 3-5.9C20.5 5.6 17.1 2 12 2z" fill="#8fc45a" stroke="#1a120c" stroke-width="2"/><circle cx="8.6" cy="11" r="2.3" fill="#1a120c"/><circle cx="15.4" cy="11" r="2.3" fill="#1a120c"/><path d="M10 17v3M14 17v3" stroke="#1a120c" stroke-width="1.6"/></svg>`;
 
-/** Capsule de bière (Pièces), vue de trois quarts : dessus rouge imprimé d'un anneau blanc, jupe dorée crantée. */
-const CAPSULE = `<svg viewBox="0 0 24 24"><path d="M2.5 9L1.9 17.5L4.1 16.6L6.4 18.5L8.6 17.5L10.9 19.1L13.1 17.7L15.4 18.9L17.6 17.1L19.9 18.0L22.1 16.1L21.5 9z" fill="#ffd23a" stroke="#1a120c" stroke-width="1.6" stroke-linejoin="round"/><path d="M5.7 10.9v5.7" stroke="#b8860b" stroke-width="1"/><path d="M8.8 12.3v4.8" stroke="#b8860b" stroke-width="1"/><path d="M12.0 12.8v4.4" stroke="#b8860b" stroke-width="1"/><path d="M15.2 12.3v4.8" stroke="#b8860b" stroke-width="1"/><path d="M18.3 10.9v5.7" stroke="#b8860b" stroke-width="1"/><ellipse cx="12" cy="9" rx="9.5" ry="4.2" fill="#d42a2a" stroke="#1a120c" stroke-width="1.6"/><ellipse cx="12" cy="9" rx="5.2" ry="2.3" fill="none" stroke="#fff4dc" stroke-width="1.3"/><path d="M6.5 7.6a6 2.6 0 0 1 3.5-1.5" stroke="#fff8" stroke-width="1.1" fill="none" stroke-linecap="round"/></svg>`;
+/** Capsule de bière (Pièces), vue de trois quarts : toute rouge, dessus clair et anneau imprimé, jupe crantée plus sombre. */
+const CAPSULE = `<svg viewBox="0 0 24 24"><path d="M2.5 9L1.9 17.5L4.1 16.6L6.4 18.5L8.6 17.5L10.9 19.1L13.1 17.7L15.4 18.9L17.6 17.1L19.9 18.0L22.1 16.1L21.5 9z" fill="#a81c1c" stroke="#1a120c" stroke-width="1.6" stroke-linejoin="round"/><path d="M5.7 10.9v5.7" stroke="#6e1010" stroke-width="1"/><path d="M8.8 12.3v4.8" stroke="#6e1010" stroke-width="1"/><path d="M12.0 12.8v4.4" stroke="#6e1010" stroke-width="1"/><path d="M15.2 12.3v4.8" stroke="#6e1010" stroke-width="1"/><path d="M18.3 10.9v5.7" stroke="#6e1010" stroke-width="1"/><ellipse cx="12" cy="9" rx="9.5" ry="4.2" fill="#d42a2a" stroke="#1a120c" stroke-width="1.6"/><ellipse cx="12" cy="9" rx="5.2" ry="2.3" fill="none" stroke="#fff4dc" stroke-width="1.3"/><path d="M6.5 7.6a6 2.6 0 0 1 3.5-1.5" stroke="#fff8" stroke-width="1.1" fill="none" stroke-linecap="round"/></svg>`;
 
 /** Chrono de la run (temps de jeu, figé en pause), compteur de zombies tués et Pièces en poche, en haut au centre. */
 export function createRunHud() {
