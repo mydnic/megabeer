@@ -37,6 +37,11 @@ Fait et validé dans la feature 7 :
 | 8 | Prieur | Invocateur (3 squelettes KayKit sortent de terre toutes les 8 s) | Eye Summoner (Polygonal Mind) sur le squelette UAL (`summoner.py`) | validé |
 | 9 | Frère cellérier | Tank + diviseur (60 PV ; tué, 3 moinillons sortent de son corps) | Quaternius Zombie Chubby (moinillons : le même en petit) | validé |
 
+**Refonte visuelle (2026-11-10), à valider en jeu par l'utilisateur** : icônes, animations d'interface et effets
+en jeu refaits en autonomie (détail dans le journal du GDD, ligne « Refonte visuelle »). Pour revenir en arrière :
+tag git `avant-refonte-visuelle`. Réglages des effets : `VFX` dans `config/fx.ts`. En dev, `__game.vfx`,
+`__game.sprites` et `__game.rings` permettent de lancer un effet depuis la console.
+
 **Prochaine étape :**
 1. **La Stout est terminée et validée** (2026-11-09) : l'arme, la carte « nouvelle arme » au level-up et
    la synergie Black and Tan avec son affichage partout. Son évolution (Imperial Stout) attend l'objet
@@ -179,6 +184,12 @@ de `src/enemies/zombieLibrary.ts`), sa brique éventuelle dans `src/enemies/hord
 sa vue dans `src/enemies/`, ses tests dans `tests/features/`.
 
 ## Pièges déjà rencontrés
+
+- **Écran tout noir après un effet** : même cause que le flash noir ci-dessous (un NaN étalé par le bloom), retrouvée
+  le 2026-11-10 dans la colonne de lumière (`pow(1.0 - vUv.y, k)` : l'uv interpolé dépasse 1 d'un arrondi). Dans
+  tout nouveau shader, borner ce qui entre dans `pow()` avec `clamp(..., 0.0, 1.0)`.
+- **Effets additifs qui blanchissent l'écran** : plusieurs explosions au même endroit s'additionnent. Garder les
+  `intensity` basses et laisser `VFX.crowd` alléger les recettes quand la réserve de particules se remplit.
 
 - **Flash noir d'une image sur tout l'écran** : un seul pixel NaN dans l'image HDR, que le halo (bloom)
   étale partout. Cause trouvée le 2026-11-10 : `pow(1.0 - abs(dot(...)), k)` dans le liseré de la foule

@@ -78,6 +78,9 @@ recopie son état à chaque image. Ne jamais remettre de logique de jeu dans `ma
   perçage, recul), leur rendu à part (`bottleView.ts`, une vue par arme).
   **Ajouter une arme** = un fichier qui implémente `Weapon`, une entrée dans le registre, sa config
   et ses cartes, son icône (`ui/icons.ts`), son rendu, et ses tests. Rien d'autre à toucher.
+  **Icônes** : un seul style (couleur, volume, contour épais) fourni par `ui/iconKit.ts` (dégradés partagés,
+  formes `P` `C` `E` `R`, pinte, capsule, étincelle) ; armes, pompe, coffre et capsule dans `ui/icons.ts`, une
+  icône par objet de coffre dans `ui/itemIcons.ts`. Toute nouvelle icône passe par ce kit.
 - `enemies/` : les ennemis sont des fiches (`config/enemies.ts` : `ENEMIES` et le roster de chaque map),
   `zombie.ts` et `horde.ts` (simulation, briques Tireur, Kamikaze, Fantôme, Protecteur, Invocateur et Diviseur ; les armes visent
   `z.targetable`), `hordeView.ts` et `zombieLibrary.ts`
@@ -85,7 +88,11 @@ recopie son état à chaque image. Ne jamais remettre de logique de jeu dans `ma
   sans squelette, et les modèles translucides), `enemyShotsView.ts` et `kamikazeView.ts` (marques au sol `fx/groundMarks.ts`, qui
   épousent le relief, réservées aux dangers pour le joueur), `protectorView.ts` (étoile qui scintille au-dessus
   du protecteur ; liseré de lumière sur les protégés via l'attribut `aGlow` de la foule : règle de tous les
-  buffs entre ennemis). `fx/shards.ts` : gerbes de morceaux (verre, vin, bois). `pickups/` : `xpDrops.ts` + `xpDropsView.ts`.
+  buffs entre ennemis). `fx/shards.ts` : gerbes de morceaux (verre, vin, bois). `fx/sprites.ts` : particules face à la caméra dessinées
+  par shader (lueur, étoile, anneau, fumée à deux tons) ; `fx/vfx.ts` : les recettes qui les composent (éclat
+  d'impact, critique, ennemi tué, explosion, poussière, colonne de lumière, traînée), réglées dans `VFX`
+  (`config/fx.ts`) et branchées sur les événements dans `app/effects.ts`. Elles s'allègent seules quand l'écran
+  est chargé (`VFX.crowd`). `fx/ringWaveView.ts` : ondes au sol. `pickups/` : `xpDrops.ts` + `xpDropsView.ts`.
 - `app/` : l'application navigateur branchée sur le noyau, une responsabilité par fichier :
   `planet.ts` (seed, relief, décor, chargement), `screens.ts` (accueil, HUD, pause, level-up,
   mort), `effects.ts` (impacts, caméra, séquence de mort), `sounds.ts` (sons et musique),

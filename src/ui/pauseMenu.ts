@@ -1,7 +1,21 @@
 const CSS = `
 .pause-veil { position: fixed; inset: 0; z-index: 35; display: flex; align-items: center; justify-content: center;
   padding: 16px; box-sizing: border-box; overflow-y: auto;
-  background: rgba(10,6,3,.62); font-family: 'Lilita One', system-ui, sans-serif; transition: opacity .15s; }
+  background: radial-gradient(ellipse at center, rgba(30,16,6,.5), rgba(8,4,2,.8)); backdrop-filter: blur(5px) saturate(.7);
+  font-family: 'Lilita One', system-ui, sans-serif; transition: opacity .15s; }
+/* Entrée : le titre tombe, les boutons et les cartes arrivent l'un après l'autre */
+.pause-veil:not(.off) .pause-title { animation: pause-title .45s cubic-bezier(.2,1.7,.4,1) both, pause-bob 3s ease-in-out .45s infinite; }
+@keyframes pause-title { from { transform: translateY(-60px) rotate(-10deg) scale(.5); opacity: 0; } }
+@keyframes pause-bob { 50% { transform: rotate(-1deg) translateY(4px); } }
+.pause-veil:not(.off) .pause-btn { animation: pause-in .32s cubic-bezier(.2,1.5,.4,1) both; }
+.pause-veil:not(.off) .pause-btn:nth-of-type(2) { animation-delay: .05s; } .pause-veil:not(.off) .pause-btn:nth-of-type(3) { animation-delay: .1s; }
+.pause-veil:not(.off) .pause-btn:nth-of-type(4) { animation-delay: .15s; }
+@keyframes pause-in { from { transform: translateY(24px) scale(.8); opacity: 0; } }
+.pause-veil:not(.off) .pause-card { animation: pause-card .34s cubic-bezier(.2,1.3,.4,1) both; }
+.pause-veil:not(.off) .pause-card:nth-child(2) { animation-delay: .04s; } .pause-veil:not(.off) .pause-card:nth-child(3) { animation-delay: .08s; }
+.pause-veil:not(.off) .pause-card:nth-child(4) { animation-delay: .12s; } .pause-veil:not(.off) .pause-card:nth-child(5) { animation-delay: .16s; }
+.pause-veil:not(.off) .pause-card:nth-child(n+6) { animation-delay: .2s; }
+@keyframes pause-card { from { transform: translateX(50px); opacity: 0; } }
 .pause-veil.off { opacity: 0; pointer-events: none; }
 /* Boutons au centre de l'écran, cartes de stats dans la colonne de droite */
 .pause-grid { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 28px; width: 100%; margin: auto; }
@@ -12,13 +26,14 @@ const CSS = `
     4px -4px #1a120c, -4px -4px #1a120c, 0 9px 0 #1a120c; transform: rotate(-2deg); }
 .pause-btn { width: 250px; font: inherit; font-size: 26px; letter-spacing: .05em; cursor: pointer;
   padding: 8px 24px 11px; border: 4px solid #1a120c; border-radius: 18px; transition: transform .08s;
-  color: #f3e6cf; background: rgba(42,22,8,.88); box-shadow: 0 5px 0 #1a120c; }
+  color: #f3e6cf; background: linear-gradient(rgba(74,46,28,.95), rgba(42,22,8,.92)); box-shadow: 0 5px 0 #1a120c, inset 0 2px 0 rgba(255,255,255,.15); }
 .pause-btn.main { color: #2a1608; background: linear-gradient(#ffd45a, #f5a623 60%, #e08a12);
   box-shadow: 0 6px 0 #1a120c, inset 0 4px 0 rgba(255,255,255,.45); }
-.pause-btn:hover, .pause-btn:focus-visible { transform: scale(1.05); outline: none; }
+.pause-btn:hover, .pause-btn:focus-visible { transform: scale(1.07) rotate(-1deg); outline: none; filter: brightness(1.12); }
+.pause-btn:active { transform: translateY(3px) scale(1.02); }
 .pause-btn.quit:hover, .pause-btn.quit:focus-visible { background: #7a2414; }
 .pause-card { width: 500px; box-sizing: border-box; padding: 7px 12px 8px; border: 3px solid #1a120c; border-radius: 14px;
-  background: linear-gradient(#fff4d6, #f3dfb4); box-shadow: 0 4px 0 #1a120c; color: #2a1608; }
+  background: linear-gradient(#fff8e2, #f1dcae); box-shadow: 0 4px 0 #1a120c, inset 0 2px 0 rgba(255,255,255,.7); color: #2a1608; }
 .pause-card h3 { display: flex; align-items: center; gap: 7px; margin: 0 0 3px; font-weight: normal; font-size: 17px; letter-spacing: .03em; }
 .pause-card h3 svg { height: 22px; width: auto; }
 .pause-card h3 .lvl { margin-left: auto; padding: 0 7px 1px; border: 2px solid #1a120c; border-radius: 10px;

@@ -161,7 +161,7 @@ export const EARTH_CLODS = {
 } as const satisfies ShardLook;
 
 /** Particules face à la caméra (fx/sprites.ts) : réserve de particules lumineuses et de bouffées de fumée. */
-export const SPRITE_FX = { maxLights: 1600, maxSmoke: 600 } as const;
+export const SPRITE_FX = { maxLights: 1600, maxSmoke: 600, smokeOpacity: 0.6 } as const;
 
 /** Look d'une explosion : éclair, braises, fumée (claire et sombre), nombre de braises et de bouffées. */
 export type ExplosionLook = { flash: number; ember: number; smoke: number; smokeDark: number; embers: number; puffs: number };
@@ -172,10 +172,12 @@ export type ExplosionLook = { flash: number; ember: number; smoke: number; smoke
  */
 export const VFX = {
   /** Éclat d'un coup qui porte, et coup critique (étoile, anneau, étincelles). */
-  hit: { color: 0xfff1c4, size: 1.3, life: 0.13, intensity: 1.5 },
+  hit: { color: 0xfff1c4, size: 1.2, life: 0.12, intensity: 1.0 },
   crit: { color: 0xffa23a, size: 2.8, life: 0.24, intensity: 2.4, sparks: 7 },
   /** Ennemi tué : bouffées de fumée claire à `height` m du sol, petit éclair. */
-  kill: { smoke: 0xe2dcc8, flash: 0xfff4dc, puffs: 5, height: 0.9 },
+  kill: { smoke: 0xcfc8ae, flash: 0xfff4dc, puffs: 3, height: 0.9 },
+  /** Écran chargé : part de la réserve de particules à partir de laquelle les recettes ne lancent presque plus rien. */
+  crowd: 0.35,
   /** Poussière soulevée (atterrissage, fût qui éclate, projectile au sol). */
   dust: { color: 0xcdbf9a },
   /** Traînée des projectiles du joueur : couleur par arme (absente : pas de traînée). */
@@ -185,7 +187,7 @@ export const VFX = {
   /** Explosions. */
   gueuze: { flash: 0xffc0d0, ember: 0xff5a7a, smoke: 0xf2a0b4, smokeDark: 0xa8405e, embers: 14, puffs: 9 } as ExplosionLook,
   wine: { flash: 0xffd0c0, ember: 0xd23b4a, smoke: 0x9a3a4e, smokeDark: 0x5a1e2e, embers: 16, puffs: 11 } as ExplosionLook,
-  ash: { flash: 0xffd28a, ember: 0xff7a2a, smoke: 0x8a8580, smokeDark: 0x4a4644, embers: 12, puffs: 8 } as ExplosionLook,
+  ash: { flash: 0xffd28a, ember: 0xff7a2a, smoke: 0x8a8580, smokeDark: 0x4a4644, embers: 10, puffs: 5 } as ExplosionLook,
   glass: { flash: 0xe8fff0, ember: 0xbfe6c8, smoke: 0xd8dccc, smokeDark: 0xa8ac9c, embers: 6, puffs: 4 } as ExplosionLook,
   /** Couleurs : niveau gagné, soin, coup reçu, gel, mousse, invocation, capsules, gouttes d'XP. */
   colors: { level: 0xffd45a, hurt: 0xff4a3a, ice: 0xa8e4ff, foam: 0xfff4dc, summon: 0x8a5ac8, coin: 0xff6a5a, xp: 0xffd45a, happy: 0xffc93a },

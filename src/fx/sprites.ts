@@ -125,7 +125,7 @@ export function createSprites(scene: THREE.Scene) {
       // Taille : part vite puis ralentit ; la fumée et les étoiles se referment sur la fin
       const ease = 1 - (1 - k) * (1 - k);
       let size = p.size + (p.endSize - p.size) * ease, alpha = 1;
-      if (p.kind === 3) { size *= Math.min(1, k * 8) * (k > 0.55 ? 1 - ((k - 0.55) / 0.45) ** 2 : 1); alpha = 0.92; }
+      if (p.kind === 3) { size *= Math.min(1, k * 8) * (k > 0.55 ? 1 - ((k - 0.55) / 0.45) ** 2 : 1); alpha = S.smokeOpacity; }
       else if (p.kind === 2) alpha = (1 - k) * p.intensity;
       else alpha = (1 - k * k) * p.intensity;
       L.pos.setXYZ(n, p.pos.x, p.pos.y, p.pos.z);
@@ -157,6 +157,8 @@ export function createSprites(scene: THREE.Scene) {
       lights.list.length = smokes.list.length = 0;
       lights.geo.instanceCount = smokes.geo.instanceCount = 0;
     },
+    /** Part de la réserve déjà prise (0 à 1), fumée ou lumières : les recettes s'allègent quand elle monte. */
+    load(smoke: boolean) { const L = smoke ? smokes : lights; return L.list.length / L.max; },
     /** Nombre de particules vivantes (tests, debug). */
     get count() { return lights.list.length + smokes.list.length; },
   };

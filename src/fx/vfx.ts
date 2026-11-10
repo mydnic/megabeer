@@ -11,6 +11,13 @@ import type { Sprites } from './sprites';
 export function createVfx(scene: THREE.Scene, sprites: Sprites) {
   const up = new THREE.Vector3(), dir = new THREE.Vector3(), vel = new THREE.Vector3(), at = new THREE.Vector3();
   const rand = (a: number, b: number) => a + Math.random() * (b - a);
+  /**
+   * Nombre de particules à lancer pour une recette qui en veut `n` : tout tant que l'écran est calme, de moins
+   * en moins quand la réserve se remplit (horde qui meurt en chaîne), pour que l'action reste lisible.
+   */
+  /** Écran déjà plein de lumières : les lueurs d'appoint (halos) ne s'ajoutent plus, pour ne pas blanchir l'image. */
+  const calm = () => sprites.load(false) < V.crowd * 0.5;
+  const budget = (n: number, smoke: boolean) => Math.max(1, Math.round(n * Math.max(0, 1 - sprites.load(smoke) / V.crowd)));
 
   /** Direction au hasard, ramenée vers le ciel de `lift` (0 : toutes directions, 1 : surtout vers le haut). */
   function scatter(lift: number) {
@@ -88,10 +95,10 @@ export function createVfx(scene: THREE.Scene, sprites: Sprites) {
       const K = V.kill;
       up.copy(pos).normalize();
       at.copy(pos).addScaledVector(up, K.height);
-      sprites.emit(at, { kind: 'glow', color: K.flash, size: 2.2, endSize: 3.2, life: 0.16, intensity: 1.1 });
-      for (let i = 0; i < K.puffs; i++) {
+      if (calm()) sprites.emit(at, { kind: 'glow', color: K.flash, size: 1.5, endSize: 2.2, life: 0.14, intensity: 0.5 });
+      for (let i = budget(K.puffs, true); i > 0; i--) {
         sprites.emit(at, {
-          kind: 'smoke', color: K.smoke, size: rand(0.5, 0.8), endSize: rand(0.9, 1.3), life: rand(0.35, 0.6),
+          kind: 'smoke', color: K.smoke, size: rand(0.3, 0.45), endSize: rand(0.55, 0.8), life: rand(0.25, 0.42),
           vel: vel.copy(scatter(0.5)).multiplyScalar(rand(1.5, 3.5)), drag: 3.5, gravity: -0.08, rot: Math.random() * 6.28, spin: rand(-2, 2),
         });
       }
@@ -100,18 +107,18 @@ export function createVfx(scene: THREE.Scene, sprites: Sprites) {
     /** Explosion de rayon `radius` : éclair, halo, anneau, braises qui retombent, fumée qui roule. */
     explosion(pos: THREE.Vector3, radius: number, L: ExplosionLook) {
       up.copy(pos).normalize();
-      sprites.emit(pos, { kind: 'star', color: L.flash, size: radius * 1.3, endSize: radius * 2.1, life: 0.16, intensity: 1.5, rot: Math.random() * Math.PI });
-      sprites.emit(pos, { kind: 'glow', color: L.ember, size: radius * 1.4, endSize: radius * 2.4, life: 0.3, intensity: 0.55 });
-      sprites.emit(pos, { kind: 'ring', color: L.flash, size: radius * 1.2, endSize: radius * 2.6, life: 0.36, intensity: 0.9 });
-      for (let i = 0; i < L.embers; i++) {
+      sprites.emit(pos, { kind: 'star', color: L.flash, size: radius * 1.3, endSize: radius * 2.1, life: 0.16, intensity: calm() ? 1.3 : 0.6, rot: Math.random() * Math.PI });
+      if (calm()) sprites.emit(pos, { kind: 'glow', color: L.ember, size: radius * 1.4, endSize: radius * 2.4, life: 0.3, intensity: 0.5 });
+      sprites.emit(pos, { kind: 'ring', color: L.flash, size: radius * 1.2, endSize: radius * 2.6, life: 0.36, intensity: 0.6 });
+      for (let i = budget(L.embers, false); i > 0; i--) {
         sprites.emit(pos, {
           kind: 'glow', color: L.ember, size: rand(0.22, 0.42), endSize: 0, life: rand(0.5, 1.0),
           vel: vel.copy(scatter(0.9)).multiplyScalar(rand(0.8, 2.2) * radius + 3), gravity: 0.75, drag: 0.6, intensity: 2.4,
         });
       }
-      for (let i = 0; i < L.puffs; i++) {
+      for (let i = budget(L.puffs, true); i > 0; i--) {
         sprites.emit(at.copy(pos).addScaledVector(scatter(0.2), radius * 0.25), {
-          kind: 'smoke', color: i % 3 === 0 ? L.smokeDark : L.smoke, size: radius * rand(0.3, 0.45), endSize: radius * rand(0.6, 0.9), life: rand(0.55, 1.0),
+          kind: 'smoke', color: i % 3 === 0 ? L.smokeDark : L.smoke, size: radius * rand(0.2, 0.3), endSize: radius * rand(0.38, 0.55), life: rand(0.45, 0.8),
           vel: vel.copy(scatter(0.45)).multiplyScalar(radius * rand(1.2, 2.6)), drag: 3, gravity: -0.1, rot: Math.random() * 6.28, spin: rand(-1.5, 1.5),
         });
       }
@@ -121,7 +128,7 @@ export function createVfx(scene: THREE.Scene, sprites: Sprites) {
     dust(pos: THREE.Vector3, count: number, size = 0.5, speed = 3) {
       up.copy(pos).normalize();
       at.copy(pos).addScaledVector(up, size * 0.4);
-      for (let i = 0; i < count; i++) {
+      for (let i = budget(count, true); i > 0; i--) {
         sprites.emit(at, {
           kind: 'smoke', color: V.dust.color, size: size * rand(0.6, 1), endSize: size * rand(1.2, 1.8), life: rand(0.35, 0.65),
           vel: vel.copy(ground()).multiplyScalar(speed * rand(0.5, 1)).addScaledVector(up, rand(0.3, 1.2)), drag: 3.5, rot: Math.random() * 6.28,

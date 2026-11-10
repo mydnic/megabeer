@@ -1,6 +1,7 @@
 import { PUMP_GAUGE as G } from '../config/hud';
 import { PUMP_TIERS } from '../config/pumps';
 import type { Pump } from '../game/pumps';
+import { ensureIconDefs } from './iconKit';
 
 const CSS = `
 .pg { position: fixed; left: 50%; bottom: 92px; transform: translateX(-50%) scale(.6); opacity: 0; z-index: 11; pointer-events: none;
@@ -8,6 +9,8 @@ const CSS = `
   transition: opacity .2s, transform .25s cubic-bezier(.2,1.6,.4,1); }
 .pg.on { opacity: 1; transform: translateX(-50%) scale(1); }
 .pg.out { opacity: .55; }
+.pg.on:not(.out) svg { animation: pg-fill .5s ease-in-out infinite alternate; }
+@keyframes pg-fill { to { transform: scale(1.04) rotate(1.5deg); } }
 .pg-name { font-size: 18px; letter-spacing: .05em; color: var(--c);
   text-shadow: -2px 0 #1a120c, 2px 0 #1a120c, 0 -2px #1a120c, 0 2px #1a120c, 0 4px 0 #1a120c; }
 .pg-hint { height: 18px; font-size: 15px; color: #ffd0a0; text-shadow: -2px 0 #1a120c, 2px 0 #1a120c, 0 -2px #1a120c, 0 2px #1a120c; }
@@ -26,6 +29,7 @@ export function createPumpGauge() {
   const style = document.createElement('style');
   style.textContent = CSS;
   document.head.appendChild(style);
+  ensureIconDefs();
   const el = document.createElement('div');
   el.className = 'pg';
   // Pinte : verre (contour), bière qui monte (rectangle découpé par la forme du verre), mousse, bulles
@@ -33,12 +37,13 @@ export function createPumpGauge() {
     <svg viewBox="0 0 64 92"><defs><clipPath id="pg-glass"><path d="M8 6h48l-5 80H13z"/></clipPath></defs>
       <path d="M8 6h48l-5 80H13z" fill="rgba(255,255,255,.18)"/>
       <g clip-path="url(#pg-glass)">
-        <rect class="pg-beer" x="0" y="86" width="64" height="0" fill="#e8a01c"/>
-        <rect class="pg-foam" x="0" y="80" width="64" height="7" fill="#fff4dc"/>
+        <rect class="pg-beer" x="0" y="86" width="64" height="0" fill="url(#mb-beer)"/>
+        <rect class="pg-foam" x="0" y="80" width="64" height="7" fill="url(#mb-foam)"/>
         <circle class="pg-bubble" cx="22" cy="82" r="1.8" fill="#fff6" style="animation-delay:0s"/>
         <circle class="pg-bubble" cx="36" cy="84" r="1.4" fill="#fff6" style="animation-delay:.4s"/>
         <circle class="pg-bubble" cx="44" cy="80" r="1.6" fill="#fff6" style="animation-delay:.75s"/>
       </g>
+      <path d="M8 6h48l-5 80H13z" fill="url(#mb-vol)" opacity=".8"/>
       <path d="M8 6h48l-5 80H13z" fill="none" stroke="#1a120c" stroke-width="4" stroke-linejoin="round"/>
       <path d="M15 14l3 62" stroke="#fff8" stroke-width="3" stroke-linecap="round"/>
     </svg>

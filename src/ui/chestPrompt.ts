@@ -4,11 +4,14 @@ import { CHEST_HUD as H } from '../config/hud';
 const CSS = `
 .chp { position: fixed; left: 50%; bottom: ${H.bottom}px; transform: translateX(-50%) scale(.7); opacity: 0; z-index: 11;
   pointer-events: none; user-select: none; display: flex; align-items: center; gap: 10px; padding: 6px 14px 7px 8px;
-  border-radius: 16px; background: rgba(26,18,12,.7); font-family: 'Lilita One', system-ui, sans-serif; color: #fff4dc;
+  border-radius: 16px; background: linear-gradient(rgba(58,36,24,.9), rgba(26,18,12,.85)); border: 2px solid #1a120c; box-shadow: 0 4px 0 rgba(26,18,12,.5), inset 0 2px 0 rgba(255,255,255,.12); font-family: 'Lilita One', system-ui, sans-serif; color: #fff4dc;
   font-size: 20px; transition: opacity .15s, transform .2s cubic-bezier(.2,1.6,.4,1); }
 .chp.on { opacity: 1; transform: translateX(-50%) scale(1); }
 .chp-key { min-width: 30px; height: 30px; padding: 0 6px; display: grid; place-items: center; border-radius: 8px;
-  background: #fff4dc; color: #1a120c; font-size: 17px; box-shadow: 0 3px 0 #1a120c; }
+  background: linear-gradient(#fffaea, #e8d3a6); color: #1a120c; font-size: 17px; box-shadow: 0 3px 0 #1a120c; }
+.chp.on .chp-key { animation: chp-key .7s ease-in-out infinite; }
+@keyframes chp-key { 50% { transform: translateY(3px); box-shadow: 0 0 0 #1a120c; } }
+.chp-price svg { width: 22px; height: 22px; }
 .chp-price { display: flex; align-items: center; gap: 4px; color: #ff6a5a; }
 .chp-price.poor { color: #8a7a70; text-decoration: line-through; }
 .chp.shake { animation: chp-shake ${H.shake}s linear; }
