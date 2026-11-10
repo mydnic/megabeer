@@ -79,7 +79,8 @@ Fait et validé dans la feature 7 :
    à l'ouverture, 1 objet parmi 3), premier lot de 8 objets à stat (`config/items.ts`), DEV « +50 capsules ».
    **Validé par l'utilisateur le 2026-11-10** (capsules à 30 %). Fait ensuite : ouverture façon lootbox dans le HUD
    (événement `chestRevealing`, `ui/chestReveal.ts`, cadence partagée avec les sons par `revealSchedule`), à valider.
-   Mini-carte : le relief suit la rotation de la caméra sans à-coups (corrigé). Reste : icônes d'objets, objets
+   Mini-carte : le relief suit la rotation de la caméra sans à-coups (corrigé). Puis : nouveau coffre dessiné
+   (`chestSvg`), cartes qui sortent du coffre ouvert posé dessous, une icône par objet, à valider. Reste : objets
    à effets spéciaux un par un, poubelles, coffre piégé. Son de la bière qui coule : « Beer service 2 » de BigSoundBank (CC0, choisi par l'utilisateur),
    joué d'un bloc pendant le remplissage, repris au niveau de la pinte, coupé en fondu hors de la zone. Reste : sons du
    remplissage et de la pompe pleine, collision du fût (on le traverse), nombre de pompes (passé à 20, demande de l'utilisateur)

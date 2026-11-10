@@ -91,4 +91,11 @@ export const LEVEL_UP_SCREEN = {
   newWeaponColor: '#ff8a3a',
   /** Délai avant que les cartes acceptent un choix (s, évite un clic involontaire). */
   inputDelay: 0.35,
+  /** Durée de l'entrée des cartes (s) : la carte choisie se soulève ensuite. */
+  introTime: 0.55,
+  /**
+   * Cartes d'un coffre : elles jaillissent de la bouche du coffre (`mouth` : hauteur dans le coffre,
+   * 0 = haut), l'une après l'autre (`stagger`), en tournoyant (`spin` degrés au départ).
+   */
+  fromChest: { delay: 0.18, stagger: 0.12, duration: 0.55, mouth: 0.45, spin: 25 },
 } as const;

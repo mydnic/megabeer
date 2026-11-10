@@ -115,7 +115,8 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   game.events.on('levelUpOffered', ({ level, cards }) => levelUp.show(level, cards));
   // Pompe à bière pleine : même écran, titre de la pompe
   game.events.on('pumpFilled', ({ pump, cards }) => levelUp.show(0, cards, `Pompe en ${PUMP_TIERS[pump.tier].name} !`));
-  game.events.on('chestOpened', ({ rarity, cards }) => levelUp.show(0, cards, `Coffre ${RARITIES[rarity].name.toLowerCase()} !`));
+  game.events.on('chestOpened', () => chestReveal.finish());
+  game.events.on('chestOpened', ({ rarity, cards }) => levelUp.show(0, cards, `Coffre ${RARITIES[rarity].name.toLowerCase()} !`, RARITIES[rarity].color));
   game.events.on('chestDenied', () => chestPrompt.deny());
   // Coffre payé : ouverture façon lootbox, puis l'écran de choix
   game.events.on('chestRevealing', (e) => chestReveal.play(e.rarity, revealSchedule(e)));

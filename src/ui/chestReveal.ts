@@ -1,5 +1,6 @@
 import { CHEST_OPENING as O } from '../config/hud';
 import { RARITIES } from '../config/upgrades';
+import { chestSvg } from './icons';
 
 /**
  * Cadence de l'ouverture d'un coffre, partagée par l'animation et les sons : la roulette des
@@ -61,11 +62,12 @@ const CSS = `
 .cr-shake.s3 { animation: cr-shake2 .07s linear infinite; }
 @keyframes cr-shake { 0%,100% { transform: rotate(0) } 25% { transform: rotate(-3deg) } 75% { transform: rotate(3deg) } }
 @keyframes cr-shake2 { 0%,100% { transform: rotate(0) translateY(0) } 25% { transform: rotate(-5deg) translateY(-3px) } 75% { transform: rotate(5deg) translateY(2px) } }
-.cr-lid { transform-box: fill-box; transform-origin: 50% 100%; transition: transform .35s cubic-bezier(.2,1.8,.4,1); }
-.cr.burst .cr-lid { transform: translate(-18px, -70px) rotate(-28deg); }
-.cr-lock { transition: fill .08s; }
-.cr-beam { opacity: 0; transition: opacity .2s; }
-.cr.burst .cr-beam { opacity: 1; }
+.cr .ch-lid { transition: transform .3s cubic-bezier(.2,1.8,.4,1), opacity .22s ease-in .06s; }
+.cr.burst .ch-lid { transform: translate(-10px, -60px) rotate(-14deg); opacity: 0; }
+.cr .ch-open { transform: scaleY(0); transition: transform .38s cubic-bezier(.2,1.8,.4,1) .05s; }
+.cr.burst .ch-open { opacity: 1; transform: scaleY(1); }
+.cr .ch-beam { transition: opacity .2s; }
+.cr.burst .ch-beam { opacity: 1; }
 .cr-name { position: absolute; top: 330px; font-size: 54px; letter-spacing: .04em; color: var(--c); opacity: 0;
   text-shadow: -4px 0 #1a120c, 4px 0 #1a120c, 0 -4px #1a120c, 0 4px #1a120c, 0 8px 0 #1a120c; }
 .cr.burst .cr-name { animation: cr-name .5s cubic-bezier(.2,1.8,.4,1) .08s both; }
@@ -78,19 +80,6 @@ const CSS = `
 .cr.quake { animation: cr-quake .35s linear; }
 @keyframes cr-quake { 0%,100% { transform: translate(0,0) } 20% { transform: translate(-9px,5px) } 40% { transform: translate(8px,-6px) } 60% { transform: translate(-6px,-4px) } 80% { transform: translate(5px,6px) } }
 `;
-
-/** Coffre vu de face : corps, ferrures, serrure de la couleur tirée ; couvercle à part (il saute) ; faisceau dedans. */
-const CHEST = `<svg viewBox="0 0 120 110">
-<path class="cr-beam" d="M28 52L6 -60h108L92 52z" style="fill: var(--c)" opacity=".5"/>
-<ellipse class="cr-beam" cx="60" cy="54" rx="34" ry="7" fill="#fff8"/>
-<path d="M12 52h96v48H12z" fill="#8a5230" stroke="#1a120c" stroke-width="4" stroke-linejoin="round"/>
-<path d="M30 52v48M90 52v48" stroke="#6a6e75" stroke-width="9"/>
-<path d="M12 64h96" stroke="#5e3820" stroke-width="3"/>
-<g class="cr-lid"><path d="M10 52c0-20 22-32 50-32s50 12 50 32z" fill="#9a5f36" stroke="#1a120c" stroke-width="4" stroke-linejoin="round"/>
-<path d="M30 25v27M90 25v27" stroke="#6a6e75" stroke-width="9"/><path d="M20 40c6-9 18-13 28-14" stroke="#fff6" stroke-width="4" fill="none" stroke-linecap="round"/></g>
-<rect class="cr-lock" x="50" y="44" width="20" height="22" rx="3" style="fill: var(--c)" stroke="#1a120c" stroke-width="3.5"/>
-<circle cx="60" cy="53" r="3" fill="#1a120c"/><path d="M60 55v6" stroke="#1a120c" stroke-width="3"/>
-</svg>`;
 
 /**
  * Ouverture d'un coffre façon lootbox, par-dessus le jeu figé : le coffre tombe, tremble de plus en
@@ -105,7 +94,7 @@ export function createChestReveal() {
   const el = document.createElement('div');
   el.className = 'cr';
   el.innerHTML = `<div class="cr-dim"></div><div class="cr-flash"></div><div class="cr-stage"><div class="cr-rays"></div><div class="cr-glow"></div>
-    <div class="cr-chest"><div class="cr-shake">${CHEST}</div></div><div class="cr-sparks"></div><div class="cr-name"></div></div>`;
+    <div class="cr-chest"><div class="cr-shake">${chestSvg('')}</div></div><div class="cr-sparks"></div><div class="cr-name"></div></div>`;
   document.body.appendChild(el);
   const chest = el.querySelector<HTMLElement>('.cr-shake')!;
   const name = el.querySelector<HTMLElement>('.cr-name')!;
@@ -135,7 +124,7 @@ export function createChestReveal() {
         const a = Math.random() * Math.PI * 2, d = (120 + Math.random() * 160) * (1 + rarity * 0.2);
         return `<i class="cr-spark" style="--x:${(Math.cos(a) * d).toFixed(0)}px;--y:${(Math.sin(a) * d).toFixed(0)}px;--d:${(0.6 + Math.random() * 0.5).toFixed(2)}s"></i>`;
       }).join('');
-      const { ticks, burst, end } = schedule;
+      const { ticks, burst } = schedule;
       ticks.forEach((k, i) => later(k.t, () => {
         color(k.rarity);
         // Le coffre tremble de plus en plus à l'approche de l'ouverture
@@ -148,8 +137,13 @@ export function createChestReveal() {
         el.classList.add('burst');
         if (rarity >= O.bigFrom) el.classList.add('big', 'quake');
       });
-      later(end - O.fadeOut, () => el.classList.add('out'));
-      later(end, stop);
+    },
+    /** Le jeu a fini la révélation (l'écran de choix s'ouvre) : fondu de sortie. Suivre le noyau plutôt
+     * qu'une minuterie évite un trou sans rien à l'écran si les images ralentissent. */
+    finish() {
+      if (!el.classList.contains('on')) return;
+      el.classList.add('out');
+      later(O.fadeOut, stop);
     },
     stop,
   };

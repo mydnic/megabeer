@@ -3,7 +3,7 @@ import { LEVEL_UP_SCREEN as L, RARITIES } from '../config/upgrades';
 import { cardText, statCardText, type Card } from '../game/levelUpCards';
 import { PUMP_TIERS, STAT_BONUSES } from '../config/pumps';
 import { SYNERGIES, WEAPON_INFO } from '../config/weapons';
-import { pumpIcon, weaponIcon, chestIcon } from './icons';
+import { pumpIcon, weaponIcon, itemIcon, chestSvg } from './icons';
 
 const CSS = `
 .lu { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -42,6 +42,20 @@ const CSS = `
 .lu-syn small { display: block; font-size: 11px; opacity: .85; }
 @keyframes lu-syn { to { box-shadow: 0 3px 0 #1a120c, 0 0 16px var(--s); } }
 .lu-hint { color: #cdbfa6; font-size: 15px; letter-spacing: .04em; }
+.lu-item { width: 92px; height: 100px; filter: drop-shadow(0 4px 0 rgba(0,0,0,.35)); }
+/* Coffre ouvert sous les cartes : elles en sortent une par une */
+.lu-chest { position: relative; width: clamp(110px, 16vh, 180px); margin-top: -1vh; }
+.lu:not(.chest) .lu-chest { display: none; }
+.lu-chest svg { width: 100%; display: block; overflow: visible; position: relative; filter: drop-shadow(0 8px 0 rgba(10,6,4,.6)); }
+.lu-chest::before { content: ''; position: absolute; left: 50%; top: 40%; width: 260%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%;
+  background: radial-gradient(circle, var(--c), transparent 60%); opacity: .35; animation: lu-glow 1.6s ease-in-out infinite alternate; }
+@keyframes lu-glow { to { opacity: .55; scale: 1.08; } }
+.lu.on .lu-chest { animation: lu-chest .4s cubic-bezier(.2,1.6,.4,1) both; }
+@keyframes lu-chest { from { transform: translateY(40px) scale(.6); opacity: 0; } }
+.lu.on.chest .lu-card { animation: lu-pop var(--pop) cubic-bezier(.25,1.25,.45,1) forwards; }
+.lu.chest .lu-card:nth-child(n) { animation-delay: var(--at) !important; }
+@keyframes lu-pop { 0% { transform: translate(var(--fx), var(--fy)) scale(.12) rotate(var(--rot)); opacity: 0; }
+  12% { opacity: 1; } 100% { transform: translate(0, 0) scale(1) rotate(0); opacity: 1; } }
 `;
 
 /**
@@ -54,15 +68,17 @@ export function createLevelUpScreen(onPick: (card: Card) => void, onHover: () =>
   document.head.appendChild(style);
   const el = document.createElement('div');
   el.className = 'lu';
-  el.innerHTML = `<div class="lu-title"></div><div class="lu-cards"></div><div class="lu-hint">Clic, 1 2 3, ou flèches et Espace</div>`;
+  el.innerHTML = `<div class="lu-title"></div><div class="lu-cards"></div><div class="lu-chest"></div><div class="lu-hint">Clic, 1 2 3, ou flèches et Espace</div>`;
   document.body.appendChild(el);
   const title = el.querySelector<HTMLElement>('.lu-title')!;
   const row = el.querySelector<HTMLElement>('.lu-cards')!;
+  const chestEl = el.querySelector<HTMLElement>('.lu-chest')!;
+  let selTimer = 0;
   let cards: Card[] = [];
   let sel = 0, open = false, openedAt = 0, lastMoveX = 0;
 
   function select(i: number) {
-    if (i === sel) return;
+    if (i === sel || performance.now() - openedAt < 50) return;
     sel = (i + cards.length) % cards.length;
     [...row.children].forEach((c, k) => c.classList.toggle('sel', k === sel));
     onHover();
@@ -85,8 +101,11 @@ export function createLevelUpScreen(onPick: (card: Card) => void, onHover: () =>
 
   return {
     get open() { return open; },
-    /** `heading` : titre à la place de « N° atteint ! » (pompe à bière). */
-    show(level: number, list: Card[], heading?: string) {
+    /**
+     * `heading` : titre à la place de « N° atteint ! » (pompe, coffre). `chest` : couleur de la rareté
+     * d'un coffre, posé ouvert sous les cartes qui en sortent.
+     */
+    show(level: number, list: Card[], heading?: string, chest?: string) {
       cards = list;
       sel = 0;
       title.textContent = heading ?? `${level}° atteint !`;
@@ -97,7 +116,7 @@ export function createLevelUpScreen(onPick: (card: Card) => void, onHover: () =>
         if (c.kind === 'weapon') {
           // Nouvelle arme : cadre à part, sa présentation à la place d'un effet chiffré
           const info = WEAPON_INFO[c.weaponId];
-          d.className = `lu-card new${i === 0 ? ' sel' : ''}`;
+          d.className = 'lu-card new';
           d.style.setProperty('--c', L.newWeaponColor);
           d.innerHTML = `${key}<div class="lu-tier">Nouvelle arme</div>${weaponIcon(c.weaponId, 'lu-bottle')}
             <div class="lu-name">${info.name}</div><div class="lu-eff">${info.pitch}</div>${c.synergies.map((s) => {
@@ -108,7 +127,7 @@ export function createLevelUpScreen(onPick: (card: Card) => void, onHover: () =>
           // Bonus de pompe : cadre et nom de sa rareté, comme les cartes d'arme
           const r = RARITIES[c.rarity];
           const label = STAT_BONUSES.find((b) => b.id === c.stat)!.label;
-          d.className = `lu-card t${c.rarity}${i === 0 ? ' sel' : ''}`;
+          d.className = `lu-card t${c.rarity}`;
           d.style.setProperty('--c', r.color);
           d.innerHTML = `${key}<div class="lu-tier">${r.name}</div>${pumpIcon('lu-bottle', PUMP_TIERS[c.tier].color)}
             <div class="lu-name">${label[0].toUpperCase()}${label.slice(1)}</div><div class="lu-eff">${statCardText(c)}</div>`;
@@ -116,13 +135,13 @@ export function createLevelUpScreen(onPick: (card: Card) => void, onHover: () =>
           // Objet de coffre : cadre et nom de la rareté du coffre, son nom et son effet
           const r = RARITIES[c.rarity];
           const def = ITEMS[c.item];
-          d.className = `lu-card t${c.rarity}${i === 0 ? ' sel' : ''}`;
+          d.className = `lu-card t${c.rarity}`;
           d.style.setProperty('--c', r.color);
-          d.innerHTML = `${key}<div class="lu-tier">${r.name}</div>${chestIcon('lu-bottle', parseInt(r.color.slice(1), 16))}
+          d.innerHTML = `${key}<div class="lu-tier">${r.name}</div>${itemIcon(c.item, 'lu-item')}
             <div class="lu-name">${def.name}</div><div class="lu-eff">${statCardText({ kind: 'stat', stat: def.stat, value: c.value, rarity: c.rarity, tier: 'bronze' })}</div>`;
         } else {
           const r = RARITIES[c.tier];
-          d.className = `lu-card t${c.tier}${i === 0 ? ' sel' : ''}`;
+          d.className = `lu-card t${c.tier}`;
           d.style.setProperty('--c', r.color);
           d.innerHTML = `${key}<div class="lu-tier">${r.name}</div>${weaponIcon(c.weapon.id, 'lu-bottle')}
             <div class="lu-name">${c.weapon.name}</div><div class="lu-eff">${cardText(c)}</div>`;
@@ -131,10 +150,31 @@ export function createLevelUpScreen(onPick: (card: Card) => void, onHover: () =>
         d.addEventListener('click', (e) => { e.stopPropagation(); pick(i); });
         row.appendChild(d);
       });
-      // Relance l'animation d'entrée
+      // Coffre : chaque carte part de la bouche du coffre (mesurée avant l'animation)
       el.classList.remove('on');
+      el.classList.toggle('chest', !!chest);
+      chestEl.innerHTML = chest ? chestSvg('open') : '';
+      if (chest) el.style.setProperty('--c', chest);
+      let intro = L.introTime;
+      if (chest) {
+        const C = L.fromChest, m = chestEl.getBoundingClientRect();
+        const mx = m.left + m.width / 2, my = m.top + m.height * C.mouth;
+        [...row.children].forEach((d, i) => {
+          const r = d.getBoundingClientRect(), h = d as HTMLElement;
+          // La carte est encore décalée de son état de départ (translateY(40px)) : on mesure son centre au repos
+          h.style.setProperty('--fx', `${(mx - (r.left + r.width / 2)).toFixed(0)}px`);
+          h.style.setProperty('--fy', `${(my - (r.top + r.height / 2 - 40)).toFixed(0)}px`);
+          h.style.setProperty('--rot', `${(i - (list.length - 1) / 2) * -C.spin}deg`);
+          h.style.setProperty('--at', `${C.delay + C.stagger * i}s`);
+          h.style.setProperty('--pop', `${C.duration}s`);
+        });
+        intro = C.delay + C.stagger * (list.length - 1) + C.duration;
+      }
       void el.offsetWidth;
       el.classList.add('on');
+      // La carte choisie ne se soulève qu'une fois l'entrée finie (sa pose écraserait l'animation)
+      clearTimeout(selTimer);
+      selTimer = window.setTimeout(() => { if (open) row.children[sel]?.classList.add('sel'); }, intro * 1000);
       open = true;
       openedAt = performance.now();
       if (document.pointerLockElement) document.exitPointerLock();
