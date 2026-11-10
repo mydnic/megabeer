@@ -74,7 +74,7 @@ buveur.load().catch((e) => console.error(e));
 game.setThrowRig({ gesture: (rate) => buveur.throwGesture(rate), handPos: (out) => buveur.leftHandPos(out) });
 const hordeView = createHordeView(scene, zombieLib);
 const xpView = createXpDropsView(scene);
-const coinView = createCoinDropsView(scene);
+const coinView = await createCoinDropsView(scene);
 // Une vue de bouteilles par arme (chaque arme a sa bouteille)
 const bottleViews: Record<WeaponId, Awaited<ReturnType<typeof createBottleView>>> = {
   canette: await createBottleView(scene, CANETTE_LOOK),

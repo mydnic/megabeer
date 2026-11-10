@@ -1,43 +1,43 @@
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { COIN_DROPS as C } from '../config/coins';
 import { characterMaterial, LAYER_CHARACTER } from '../render/materials';
 import type { XpDrop } from './xpDrops';
 
+const urls = import.meta.glob('../assets/models/capsule.glb', { query: '?url', import: 'default', eager: true }) as Record<string, string>;
+
 /**
- * Capsule couronne (modèle des vraies capsules de bière) : dessus plat imprimé (rouge, anneau blanc),
- * épaule arrondie, puis jupe dorée qui s'évase et finit en crans (21 sur une vraie capsule). Faite
- * de bandes de couleur franche (couleurs par sommet), rayon 1, posée sur y = 0.
+ * Capsule couronne : le modèle « Bottlecap » (Poly by Google), ramené à un rayon de 1 et posé sur son
+ * centre ; ses faces du dessus prennent la couleur imprimée (rouge), la jupe crantée la couleur dorée.
  */
-function capsuleGeometry() {
-  const n = C.teeth * 2, h = C.height;
-  const pos: number[] = [], col: number[] = [];
-  const top = new THREE.Color(C.top), print = new THREE.Color(C.print), skirt = new THREE.Color(C.color);
-  const at = (r: number, a: number, y: number) => [Math.cos(a) * r, y, Math.sin(a) * r];
-  // Une bande entre deux cercles (r0, y0) -> (r1, y1) ; `crimp` : le bord extérieur alterne creux et bosses
-  const band = (r0: number, y0: number, r1: number, y1: number, c: THREE.Color, crimp = false) => {
-    for (let k = 0; k < n; k++) {
-      const a0 = (k / n) * Math.PI * 2, a1 = ((k + 1) / n) * Math.PI * 2;
-      const o0 = crimp && k % 2 ? r1 * C.crimp : r1, o1 = crimp && (k + 1) % 2 ? r1 * C.crimp : r1;
-      const v = [at(r0, a0, y0), at(o0, a0, y1), at(o1, a1, y1), at(r0, a0, y0), at(o1, a1, y1), at(r0, a1, y0)];
-      for (const q of v) { pos.push(...q); col.push(c.r, c.g, c.b); }
-    }
-  };
-  band(0, h, 0.42, h, top);
-  band(0.42, h, 0.55, h, print);
-  band(0.55, h, 0.72, h, top);
-  band(0.72, h, 0.86, h * 0.75, skirt);
-  band(0.86, h * 0.75, 1, 0, skirt, true);
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+async function capsuleGeometry() {
+  const gltf = await new GLTFLoader().loadAsync(Object.values(urls)[0]);
+  let src: THREE.BufferGeometry | null = null;
+  gltf.scene.traverse((o) => { if ((o as THREE.Mesh).isMesh && !src) src = (o as THREE.Mesh).geometry; });
+  const geo = src!.clone().toNonIndexed();
+  geo.deleteAttribute('uv');
+  geo.computeBoundingBox();
+  const bb = geo.boundingBox!;
+  const r = Math.max(bb.max.x - bb.min.x, bb.max.z - bb.min.z) / 2;
+  geo.translate(-(bb.min.x + bb.max.x) / 2, -(bb.min.y + bb.max.y) / 2, -(bb.min.z + bb.max.z) / 2).scale(1 / r, 1 / r, 1 / r);
   geo.computeVertexNormals();
-  return geo.translate(0, -h / 2, 0);
+  // Dessus : faces tournées vers le haut, dans la moitié haute de la capsule
+  const pos = geo.attributes.position, nrm = geo.attributes.normal;
+  const top = new THREE.Color(C.top), skirt = new THREE.Color(C.color), col: number[] = [];
+  for (let t = 0; t < pos.count; t += 3) {
+    let ny = 0, y = 0;
+    for (let k = 0; k < 3; k++) { ny += nrm.getY(t + k) / 3; y += pos.getY(t + k) / 3; }
+    const c = ny > C.topNormal && y > 0 ? top : skirt;
+    for (let k = 0; k < 3; k++) col.push(c.r, c.g, c.b);
+  }
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  return geo;
 }
 
 /** Rendu des capsules (Pièces) au sol : penchées pour montrer leur dessus imprimé, elles tournent ; un seul dessin pour toutes. */
-export function createCoinDropsView(scene: THREE.Scene) {
+export async function createCoinDropsView(scene: THREE.Scene) {
   const mat = characterMaterial({ vertexColors: true, emissive: 0xffffff, emissiveIntensity: C.glow, side: THREE.DoubleSide });
-  const mesh = new THREE.InstancedMesh(capsuleGeometry(), mat, C.max);
+  const mesh = new THREE.InstancedMesh(await capsuleGeometry(), mat, C.max);
   mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   mesh.frustumCulled = false;
   mesh.layers.set(LAYER_CHARACTER); // contour comme les persos : lisible sur l'herbe
