@@ -9,7 +9,7 @@ export const PUMPS = {
   /** Essais de placement (positions tirées au hasard, écartées si trop près ou dans le décor). */
   placementTries: 400,
   /** Rayon où le Buveur remplit la pinte (m, au sol), temps pour la remplir (s), vidange quand il s'éloigne (part par s). */
-  radius: 3,
+  radius: 6,
   fillTime: 6,
   drainPerSecond: 0.08,
   /** La jauge reste affichée tant que le joueur est à moins de ce multiple du rayon (pinte pas encore vide). */
@@ -52,28 +52,27 @@ export const STAT_BONUSES: readonly StatBonusDef[] = [
 
 /** Apparence d'une pompe (world/pumpsView.ts) : fût sur chevalet KayKit, faisceau, pinte-jauge au-dessus. */
 export const PUMP_LOOK = {
-  /** Hauteur du fût sur son chevalet (m). */
-  height: 1.3,
+  /** Hauteur du fût sur son chevalet (m) : grand comme une statue. */
+  height: 3.2,
   wood: 0x8a5230,
   /** Cerclages d'une pompe déjà vidée (ternes). */
   usedHoops: 0x5a5550,
   /** Faisceau de lumière : rayon et hauteur (m), opacité. */
-  beamRadius: 0.35,
+  beamRadius: 0.7,
   beamHeight: 40,
   beamOpacity: 0.22,
   /**
-   * Zone de remplissage : dôme très discret du rayon PUMPS.radius, dont seuls les bords luisent
-   * (liseré), aplati en hauteur ; plus visible quand le joueur est dedans.
+   * Zone de remplissage : sphère très discrète du rayon PUMPS.radius, centrée sur le pied du fût,
+   * dont seuls les bords luisent (liseré) ; plus visible quand le joueur est dedans.
    */
-  zoneFlatten: 0.6,
   zoneOpacity: 0.12,
   zoneOpacityInside: 0.24,
   zoneRim: 2.2,
   /** Pinte-jauge : hauteur au-dessus du sol (m), taille du verre (m), épaisseur de mousse (m), couleurs. */
-  pintAbove: 1.75,
-  pintRadius: 0.16,
-  pintHeight: 0.42,
-  foam: 0.06,
+  pintAbove: 4,
+  pintRadius: 0.3,
+  pintHeight: 0.8,
+  foam: 0.1,
   beer: 0xe0a020,
   foamColor: 0xfff4dc,
 } as const;

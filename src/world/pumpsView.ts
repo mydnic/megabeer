@@ -9,7 +9,7 @@ const urls = import.meta.glob('../assets/models/pompe.glb', { query: '?url', imp
 /** Ce qui représente une pompe : le fût, son faisceau, sa zone, la pinte-jauge au-dessus. */
 type PumpMesh = { root: THREE.Group; hoops: THREE.MeshToonMaterial; beam: THREE.Mesh; zone: THREE.Mesh; zoneMat: THREE.ShaderMaterial; pint: THREE.Group; beer: THREE.Mesh; foam: THREE.Mesh };
 
-/** Dôme de la zone : transparent au centre, seuls ses bords (là où on le voit de biais) luisent. */
+/** Sphère de la zone : transparent au centre, seuls ses bords (là où on le voit de biais) luisent. */
 function zoneMaterial() {
   return new THREE.ShaderMaterial({
     uniforms: { uColor: { value: new THREE.Color() }, uOpacity: { value: L.zoneOpacity }, uRim: { value: L.zoneRim } },
@@ -37,7 +37,7 @@ export async function createPumpsView(scene: THREE.Scene) {
   template.position.set(-(box.min.x + box.max.x) / 2, -box.min.y, -(box.min.z + box.max.z) / 2);
 
   const wood = characterMaterial({ color: L.wood });
-  const zoneGeo = new THREE.SphereGeometry(PUMPS.radius, 32, 12, 0, Math.PI * 2, 0, Math.PI / 2);
+  const zoneGeo = new THREE.SphereGeometry(PUMPS.radius, 48, 32);
   const beamGeo = new THREE.CylinderGeometry(L.beamRadius, L.beamRadius, L.beamHeight, 16, 1, true).translate(0, L.beamHeight / 2, 0);
   const glassGeo = new THREE.CylinderGeometry(L.pintRadius, L.pintRadius * 0.85, L.pintHeight, 16, 1, true).translate(0, L.pintHeight / 2, 0);
   const beerGeo = new THREE.CylinderGeometry(L.pintRadius * 0.92, L.pintRadius * 0.8, 1, 16).translate(0, 0.5, 0);
@@ -70,7 +70,6 @@ export async function createPumpsView(scene: THREE.Scene) {
     root.add(beam);
     const zoneMat = zoneMaterial();
     const zone = sky(new THREE.Mesh(zoneGeo, zoneMat)) as THREE.Mesh;
-    zone.scale.y = L.zoneFlatten;
     root.add(zone);
     // Pinte-jauge : verre, bière qui monte, mousse au-dessus
     const pint = new THREE.Group();

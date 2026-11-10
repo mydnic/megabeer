@@ -68,7 +68,10 @@ Fait et validé dans la feature 7 :
    l'équilibrage serait faussé). Ordre proposé : pompe à bière, puis Pièces et poubelles, puis fûts et
    premiers objets passifs, puis mini-carte. **Pompe à bière : checkpoint 1 fait, à faire valider**
    (placement, remplissage, choix de 3 bonus de stat avec rareté et LUCK, modèle, faisceau, jauge à l'écran,
-   dôme de zone, icône tireuse). Son de la bière qui coule : il manque l'échantillon `pour` (le demander). Reste : sons du
+   dôme de zone, icône tireuse). Sphère de zone ronde de 6 m, fût de 3,2 m. Son de la bière qui coule : il manque l'échantillon `pour`.
+   L'utilisateur a validé 3 sons CC0 de BigSoundBank (Joseph Sardin) : Beer service #1, #2, #3 (s1391, s1933, s1934) ;
+   le site bloque les téléchargements automatiques (Cloudflare) : l'utilisateur les télécharge à la main, puis
+   découper des extraits de 1 à 2 s avec fondus (ffmpeg) en src/assets/sfx/pour_001.ogg... et noter la source. Reste : sons du
    remplissage et de la pompe pleine, collision du fût (on le traverse), nombre de pompes (passé à 20, demande de l'utilisateur)
    (6 sur une planète d'environ 1 080 m de tour : la plus proche peut être à 190 m).
 3. **Ensuite : caler la run de 10 min** (fin de feature 7), à partir des journaux de run de
