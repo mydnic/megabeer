@@ -1,7 +1,8 @@
 import { LEVEL_UP_SCREEN as L, RARITIES } from '../config/upgrades';
-import { cardText, type Card } from '../game/levelUpCards';
+import { cardText, statCardText, type Card } from '../game/levelUpCards';
+import { PUMP_TIERS, STAT_BONUSES } from '../config/pumps';
 import { SYNERGIES, WEAPON_INFO } from '../config/weapons';
-import { weaponIcon } from './icons';
+import { pumpIcon, weaponIcon } from './icons';
 
 const CSS = `
 .lu { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -83,10 +84,11 @@ export function createLevelUpScreen(onPick: (card: Card) => void, onHover: () =>
 
   return {
     get open() { return open; },
-    show(level: number, list: Card[]) {
+    /** `heading` : titre à la place de « N° atteint ! » (pompe à bière). */
+    show(level: number, list: Card[], heading?: string) {
       cards = list;
       sel = 0;
-      title.textContent = `${level}° atteint !`;
+      title.textContent = heading ?? `${level}° atteint !`;
       row.innerHTML = '';
       list.forEach((c, i) => {
         const d = document.createElement('div');
@@ -101,6 +103,14 @@ export function createLevelUpScreen(onPick: (card: Card) => void, onHover: () =>
               const S = SYNERGIES[s];
               return `<div class="lu-syn" style="--s:${S.color}">Synergie : ${S.name}<small>${S.pitch}</small></div>`;
             }).join('')}`;
+        } else if (c.kind === 'stat') {
+          // Bonus de pompe : cadre de la couleur de la pompe (bronze, argent, or)
+          const T = PUMP_TIERS[c.tier];
+          const label = STAT_BONUSES.find((b) => b.id === c.stat)!.label;
+          d.className = `lu-card${i === 0 ? ' sel' : ''}`;
+          d.style.setProperty('--c', `#${T.color.toString(16).padStart(6, '0')}`);
+          d.innerHTML = `${key}<div class="lu-tier">Pompe ${T.name}</div>${pumpIcon('lu-bottle', T.color)}
+            <div class="lu-name">${label[0].toUpperCase()}${label.slice(1)}</div><div class="lu-eff">${statCardText(c)}</div>`;
         } else {
           const r = RARITIES[c.tier];
           d.className = `lu-card t${c.tier}${i === 0 ? ' sel' : ''}`;

@@ -133,7 +133,7 @@ describe('Les cartes', () => {
   /** Des armes équipées de test (le tirage ne lit que l'identifiant et les améliorations). */
   const fakes = (n: number) => Array.from({ length: n }, (_, i) => ({ ...weapons()[0], id: `arme${i}` as WeaponId }) as Weapon);
   const ids = (n: number) => Array.from({ length: n }, (_, i) => `nouvelle${i}` as WeaponId);
-  const weaponOf = (c: Card) => (c.kind === 'weapon' ? c.weaponId : c.weapon.id);
+  const weaponOf = (c: Card) => (c.kind === 'weapon' ? c.weaponId : c.kind === 'upgrade' ? c.weapon.id : c.stat);
 
   it('ne proposent jamais deux cartes pour la même arme : une seule amélioration par arme', () => {
     const w = fakes(4);

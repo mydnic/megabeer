@@ -21,6 +21,11 @@ import { applyCard, rollCards, type Card } from './levelUpCards';
 import { WEAPON_FACTORIES } from '../weapons/registry';
 import { SYNERGIES } from '../config/weapons';
 import { activeSynergies, synergiesCompletedBy, type SynergyId } from './synergies';
+import { Pumps, rollStatCards, type Pump } from './pumps';
+import { PUMPS } from '../config/pumps';
+import type { StatId } from '../config/pumps';
+import { BASE_SPEED } from '../config/world';
+import { PLAYER_STATS } from '../config/player';
 import { Loadout } from './loadout';
 import { PlayerStats } from './playerStats';
 import { SpawnDirector, spawnCurveAt } from './spawnDirector';
@@ -67,6 +72,10 @@ export type GameEvents = {
   summoned: { zombie: Zombie; skeletons: Zombie[] };
   /** Une arme du joueur explose en `pos` (la Gueuze) ; elle ne blesse jamais le joueur. */
   weaponExploded: { weapon: Weapon; pos: THREE.Vector3; radius: number };
+  /** Une pompe à bière est pleine : le jeu se fige et propose ses bonus de stat. */
+  pumpFilled: { pump: Pump; cards: Card[] };
+  /** Un bonus de stat est appliqué (pompe à bière). */
+  statGained: { stat: StatId; value: number };
   /** Une synergie s'active : toutes ses armes sont maintenant équipées. */
   synergyActivated: { id: SynergyId };
   /** Un diviseur tué se sépare : `children` sortent de son corps. */
@@ -110,6 +119,8 @@ export class Game {
   readonly progression = new Progression();
   readonly stats = new PlayerStats();
   readonly horde: ReturnType<typeof createHorde>;
+  /** Pompes à bière de la run (exploration). */
+  readonly pumps: Pumps;
   readonly xp: ReturnType<typeof createXpDrops>;
   /** Projectiles des ennemis tireurs en vol. */
   readonly shots = createEnemyShots();
@@ -151,6 +162,7 @@ export class Game {
     const groundAt = (p: THREE.Vector3) => player.supportAt(p, p.length());
     this.groundAt = groundAt;
     this.horde = createHorde(deps.zombieKinds, player, deps.collider);
+    this.pumps = new Pumps(deps.collider);
     this.horde.onHit = (z, dir) => this.hurtPlayer(z, dir, z.def.damage);
     this.horde.onThrow = (z) => this.throwFrom(z);
     this.horde.onArm = (z) => {
@@ -201,6 +213,7 @@ export class Game {
     this.resetRun();
     this.phase = 'run';
     this.player.reset(spawn.dir, spawn.facing);
+    this.pumps.place(spawn.dir);
     const landing = this.player.pos.clone();
     this.player.drop(ARRIVAL.height, ARRIVAL.speed);
     this.arriving = true;
@@ -237,10 +250,13 @@ export class Game {
   /** Choisit une des cartes proposées ; la suivante s'enchaîne s'il reste des degrés à choisir. */
   pickCard(card: Card) {
     if (!this.offer?.includes(card)) return;
-    if (card.kind === 'weapon') this.equip(card.weaponId);
-    else applyCard(card);
-    this.progression.pending--;
     this.offer = null;
+    if (card.kind === 'stat') this.applyStatBonus(card.stat, card.value);
+    else {
+      if (card.kind === 'weapon') this.equip(card.weaponId);
+      else applyCard(card);
+      this.progression.pending--;
+    }
     this.events.emit('cardPicked', { card });
     if (this.progression.pending > 0) this.offerCards(false);
   }
@@ -271,6 +287,13 @@ export class Game {
       if (!frozen) {
         this.director.update(dt, this.runTime, this.mods.count);
         this.mechanic.update(dt);
+        // Pompes à bière : pleine, elle fige le jeu et propose ses bonus
+        const full = this.pumps.update(dt, p.pos);
+        if (full) {
+          const cards = rollStatCards(full.tier, PUMPS.choices);
+          this.offer = cards;
+          this.events.emit('pumpFilled', { pump: full, cards });
+        }
       }
       this.loadout.update(dt);
       this.events.emit('tick', { dt });
@@ -290,6 +313,21 @@ export class Game {
    * Fait apparaître un zombie au sol à la direction `at`, tourné vers `facing`. Plus la run avance,
    * plus il a de PV (courbe de la run et difficulté).
    */
+  /**
+   * Bonus de stat (pompe à bière) : ajouté à la stat du joueur. PV max : la vie monte d'autant ;
+   * vitesse : appliquée au déplacement.
+   */
+  applyStatBonus(stat: StatId, value: number) {
+    if (stat === 'maxHp') {
+      this.health.max += value;
+      this.health.heal(value);
+    } else {
+      this.stats[stat] += value;
+      if (stat === 'moveSpeed') this.player.speed = BASE_SPEED * this.stats.moveSpeed;
+    }
+    this.events.emit('statGained', { stat, value });
+  }
+
   /** Synergies actives (toutes leurs armes équipées). */
   activeSynergies() { return activeSynergies((id) => this.loadout.has(id)); }
 
@@ -335,6 +373,8 @@ export class Game {
    */
   hitZombie(z: Zombie, damage: number, crit: boolean, impact: THREE.Vector3, vel: THREE.Vector3, weapon: Weapon | null = null, knock = 1) {
     if (z.intangible) return false; // un fantôme intouchable : le coup le traverse
+    // Stat Dégâts du joueur : toutes ses armes
+    if (weapon) damage *= this.stats.damage;
     // Synergies actives : une arme marque le zombie (sonné), une autre lui fait plus de dégâts pendant ce temps
     const synergies = this.activeSynergies().map((s) => SYNERGIES[s]);
     let combo = false;
@@ -485,9 +525,12 @@ export class Game {
     this.runTime = 0;
     this.kills = 0;
     this.acc = 0;
+    this.health.max = PLAYER_STATS.maxHp;
     this.health.reset();
     this.progression.reset();
     this.stats.reset();
+    this.player.speed = BASE_SPEED;
+    this.pumps.clear();
     this.loadout.reset();
     this.horde.clear();
     this.horde.setPassive(false);

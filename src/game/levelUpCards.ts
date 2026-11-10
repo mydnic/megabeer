@@ -1,13 +1,16 @@
 import { LUCK, RARITIES, type UpgradeDef } from '../config/upgrades';
 import type { Weapon, WeaponId } from '../weapons/weapon';
 import type { SynergyId } from './synergies';
+import { STAT_BONUSES, type PumpTier, type StatId } from '../config/pumps';
 
 /** Amélioration d'une arme équipée, avec sa rareté. */
 export type UpgradeCard = { kind: 'upgrade'; weapon: Weapon; upgrade: UpgradeDef; tier: number };
 /** Nouvelle arme à équiper (une place libre dans l'arsenal), et les synergies qu'elle activerait. */
 export type NewWeaponCard = { kind: 'weapon'; weaponId: WeaponId; synergies: SynergyId[] };
-/** Une carte de level-up. */
-export type Card = UpgradeCard | NewWeaponCard;
+/** Bonus de stat d'une pompe à bière (valeur déjà multipliée par sa qualité). */
+export type StatCard = { kind: 'stat'; stat: StatId; value: number; tier: PumpTier };
+/** Une carte proposée : level-up (amélioration, nouvelle arme) ou pompe (bonus de stat). */
+export type Card = UpgradeCard | NewWeaponCard | StatCard;
 
 /** Tire un tier de rareté selon la LUCK (les tiers hauts gagnent du poids, plafonné). */
 export function rollTier(luck: number) {
@@ -61,6 +64,15 @@ export function cardText(c: UpgradeCard) {
   const k = c.upgrade.kind;
   if (k === 'percent' || k === 'points') return `+${Math.round(v * 100)} % ${c.upgrade.label}`;
   return `+${String(Math.round(v * 100) / 100).replace('.', ',')} ${c.upgrade.label}`;
+}
+
+/** Texte d'un bonus de stat (pompe), ex. "+16 % dégâts", "+30 PV max", "+1 m ramassage". */
+export function statCardText(c: StatCard) {
+  const def = STAT_BONUSES.find((b) => b.id === c.stat)!;
+  const num = (v: number) => String(Math.round(v * 100) / 100).replace('.', ',');
+  if (def.kind === 'percent') return `+${Math.round(c.value * 100)} % ${def.label}`;
+  if (def.kind === 'meters') return `+${num(c.value)} m ${def.label}`;
+  return `+${num(c.value)} ${def.label}`;
 }
 
 /** Applique une amélioration à son arme (améliorations additives, l'arme monte d'un niveau). */

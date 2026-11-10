@@ -60,6 +60,18 @@ export const gueuzeIcon = (cls: string) => `<svg viewBox="0 0 40 90" class="${cl
 <path d="M13 69h14" stroke="#e9d9b6" stroke-width=".7"/>
 <path d="M10.5 36c-.5 6-.5 8 0 10" stroke="#fff3" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>`;
 
+/** Pompe à bière : fût couché sur son chevalet, cerclages de la couleur de la pompe, robinet qui coule. */
+export const pumpIcon = (cls: string, hoop: number) => {
+  const c = `#${hoop.toString(16).padStart(6, '0')}`;
+  return `<svg viewBox="0 0 40 90" class="${cls}"><path d="M8 62l-3 18M32 62l3 18M10 70h20" stroke="#5e3519" stroke-width="3.5" stroke-linecap="round"/>
+<ellipse cx="20" cy="48" rx="15" ry="14" fill="#8a5230" stroke="#1a120c" stroke-width="3"/>
+<ellipse cx="20" cy="48" rx="9" ry="8.5" fill="#a8693f" stroke="#1a120c" stroke-width="2"/>
+<ellipse cx="20" cy="48" rx="13" ry="12" fill="none" stroke="${c}" stroke-width="2.6"/>
+<rect x="17" y="53" width="6" height="5" rx="1" fill="${c}" stroke="#1a120c" stroke-width="1.5"/>
+<path d="M20 58v8" stroke="#f2c14e" stroke-width="2.4" stroke-linecap="round"/>
+<path d="M10 40c2-3 4-5 7-6" stroke="#fff4" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>`;
+};
+
 /** Icône de chaque arme (ajouter une arme = ajouter son icône ici). */
 const WEAPON_ICONS: Record<WeaponId, (cls: string) => string> = {
   canette: canetteIcon,

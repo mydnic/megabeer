@@ -32,7 +32,7 @@ export function createTestGame(seed = 1) {
 
   /** Tous les événements reçus, dans l'ordre. */
   const log: { type: keyof GameEvents; payload: unknown }[] = [];
-  const types: (keyof GameEvents)[] = ['runStarted', 'landed', 'zombieSpawned', 'playerHurt', 'zombieHit', 'projectileHitGround', 'xpCollected', 'levelGained', 'levelUpOffered', 'cardPicked', 'paused', 'resumed', 'died', 'runEnded', 'home', 'bellToll', 'bellsLanding', 'bellsSurgeEnded', 'enemyThrow', 'enemyShotLanded', 'kamikazeArmed', 'enemyExploded', 'summonCast', 'summoned', 'enemySplit', 'synergyActivated', 'weaponExploded'];
+  const types: (keyof GameEvents)[] = ['runStarted', 'landed', 'zombieSpawned', 'playerHurt', 'zombieHit', 'projectileHitGround', 'xpCollected', 'levelGained', 'levelUpOffered', 'cardPicked', 'paused', 'resumed', 'died', 'runEnded', 'home', 'bellToll', 'bellsLanding', 'bellsSurgeEnded', 'enemyThrow', 'enemyShotLanded', 'kamikazeArmed', 'enemyExploded', 'summonCast', 'summoned', 'enemySplit', 'synergyActivated', 'weaponExploded', 'pumpFilled', 'statGained'];
   for (const t of types) game.events.on(t, (payload) => log.push({ type: t, payload }));
 
   const api = {

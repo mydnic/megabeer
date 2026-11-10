@@ -17,6 +17,10 @@ export type StatUnit = 'count' | 'mult' | 'perSecond' | 'meters' | 'speed' | 'pe
  * perso. Les armes les lisent (vitesse d'attaque, projectiles en plus...).
  */
 export class PlayerStats {
+  /** Multiplicateur global des dégâts des armes (stat Dégâts). */
+  damage!: number;
+  /** Multiplicateur de la vitesse de déplacement (stat Vitesse). */
+  moveSpeed!: number;
   attackSpeed!: number;
   extraProjectiles!: number;
   pickupRange!: number;
@@ -27,6 +31,8 @@ export class PlayerStats {
 
   /** Revient aux valeurs de départ (nouvelle run). */
   reset() {
+    this.damage = 1;
+    this.moveSpeed = 1;
     this.attackSpeed = PLAYER_STATS.attackSpeed;
     this.extraProjectiles = PLAYER_STATS.extraProjectiles;
     this.pickupRange = XP_DROPS.pickupRange;
@@ -37,6 +43,8 @@ export class PlayerStats {
   /** Lignes de stats pour l'écran de pause. */
   lines(): StatLine[] {
     return [
+      { label: 'Dégâts', value: this.damage, unit: 'mult', bonus: this.damage - 1, bonusKind: 'percent' },
+      { label: 'Vitesse', value: this.moveSpeed, unit: 'mult', bonus: this.moveSpeed - 1, bonusKind: 'percent' },
       { label: "Vitesse d'attaque", value: this.attackSpeed, unit: 'mult', bonus: this.attackSpeed - PLAYER_STATS.attackSpeed, bonusKind: 'percent' },
       { label: 'Projectiles en plus', value: this.extraProjectiles, unit: 'count', bonus: this.extraProjectiles - PLAYER_STATS.extraProjectiles, bonusKind: 'plus' },
       { label: 'Ramassage', value: this.pickupRange, unit: 'meters', bonus: this.pickupRange / XP_DROPS.pickupRange - 1, bonusKind: 'percent' },

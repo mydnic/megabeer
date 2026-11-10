@@ -1,3 +1,4 @@
+import { PUMP_TIERS } from '../config/pumps';
 import { SYNERGIES } from '../config/weapons';
 import { SYNERGY_BANNER } from '../config/hud';
 import { AUDIO } from '../config/audio';
@@ -101,6 +102,8 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   game.events.on('died', () => banner.clear());
   game.events.on('home', () => banner.clear());
   game.events.on('levelUpOffered', ({ level, cards }) => levelUp.show(level, cards));
+  // Pompe à bière pleine : même écran, titre de la pompe
+  game.events.on('pumpFilled', ({ pump, cards }) => levelUp.show(0, cards, `Pompe en ${PUMP_TIERS[pump.tier].name} !`));
   game.events.on('cardPicked', () => { if (game.progression.pending === 0) lockCursor(); });
   game.events.on('playerHurt', ({ blocked }) => { if (!blocked) healthHud.hit(); });
   let pausedAt = 0;
