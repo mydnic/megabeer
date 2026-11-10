@@ -71,7 +71,12 @@ Fait et validé dans la feature 7 :
    dôme de zone, icône tireuse). Sphère de zone ronde de 6 m, fût de 3,2 m, plein (collision en boîte mesurée sur le modèle,
    `PUMPS.body`, posée dans le collider du décor par `DecorCollider.setExtra` pour la durée de la run).
    **Mini-carte faite** (2026-11-10, à valider en jeu) : disque local sans brouillard, `ui/minimap.ts`.
-   Reste de l'exploration : poubelles et Pièces (décider d'abord à quoi servent les Pièces), fûts payants. Son de la bière qui coule : « Beer service 2 » de BigSoundBank (CC0, choisi par l'utilisateur),
+   **En cours : Pièces et coffres** (choix de l'utilisateur). Coffre KayKit Dungeon (couvercle séparé, source
+   `Desktop/MODELS/decor/kaykit_dungeon`), ouverture par touche d'action E / bouton X, prix croissant, 1 objet parmi 3.
+   Fait : Pièces (capsules dorées, 8 % des kills à la place de l'XP, compteur HUD). Les tests tirent la capsule par
+   `createTestGame(seed, { coins: 'never' | 'always' | 'real' })` (« never » par défaut).
+   Ensuite : coffres (placement, prix, touche d'action, écran de choix), système d'objets et premiers objets
+   simples (stats existantes), poubelles, coffre piégé. Son de la bière qui coule : « Beer service 2 » de BigSoundBank (CC0, choisi par l'utilisateur),
    joué d'un bloc pendant le remplissage, repris au niveau de la pinte, coupé en fondu hors de la zone. Reste : sons du
    remplissage et de la pompe pleine, collision du fût (on le traverse), nombre de pompes (passé à 20, demande de l'utilisateur)
    (6 sur une planète d'environ 1 080 m de tour : la plus proche peut être à 190 m).

@@ -9,6 +9,7 @@ import type { InputState } from '../core/input';
 import { createHorde } from '../enemies/horde';
 import type { Zombie, ZombieTimings } from '../enemies/zombie';
 import { createXpDrops } from '../pickups/xpDrops';
+import { COIN_DROPS, COINS } from '../config/coins';
 import { createEnemyShots, type EnemyShot } from '../enemies/enemyShots';
 import { PLANET_RADIUS } from '../config/world';
 import { PlayerController } from '../player/controller';
@@ -48,6 +49,8 @@ export type GameEvents = {
   zombieHit: { weapon: Weapon | null; zombie: Zombie; damage: number; crit: boolean; killed: boolean; hpAfter: number; impact: THREE.Vector3; dir: THREE.Vector3; shielded: boolean; combo: boolean };
   projectileHitGround: { weapon: Weapon; pos: THREE.Vector3; vel: THREE.Vector3 };
   xpCollected: { amount: number };
+  /** Capsules ramassées : `amount` gagnées, `total` en poche. */
+  coinsCollected: { amount: number; total: number };
   levelGained: { level: number };
   /** Cartes proposées ; `first` : premier écran d'une série (les suivantes s'enchaînent). */
   levelUpOffered: { level: number; cards: Card[]; first: boolean };
@@ -99,6 +102,8 @@ export type GameDeps = {
   startingWeapon?: WeaponId;
   /** Map jouée (sa mécanique propre). */
   map?: MapId;
+  /** Tirage « cet ennemi tué lâche une capsule au lieu de l'XP » (par défaut : la chance de la config). */
+  rollCoin?: () => boolean;
 };
 
 /** Aucune entrée : joueur immobile (accueil, mort, pause, chute d'arrivée). */
@@ -122,6 +127,11 @@ export class Game {
   /** Pompes à bière de la run (exploration). */
   readonly pumps: Pumps;
   readonly xp: ReturnType<typeof createXpDrops>;
+  /** Capsules (Pièces) au sol. */
+  readonly coinDrops: ReturnType<typeof createXpDrops>;
+  /** Pièces en poche (monnaie de la run, perdue à la fin). */
+  coins = 0;
+  private rollCoin: () => boolean;
   /** Projectiles des ennemis tireurs en vol. */
   readonly shots = createEnemyShots();
   readonly loadout: Loadout;
@@ -174,6 +184,8 @@ export class Game {
     this.horde.onSummon = (z) => this.summonAround(z);
     this.horde.onSpawn = (zombie) => this.events.emit('zombieSpawned', { zombie });
     this.xp = createXpDrops(groundAt);
+    this.coinDrops = createXpDrops(groundAt, COIN_DROPS);
+    this.rollCoin = deps.rollCoin ?? (() => Math.random() < COINS.dropChance);
     this.director = new SpawnDirector({
       player, collider: deps.collider, zombies: () => this.horde.zombies,
       roster: ROSTERS[deps.map ?? 'abbaye'],
@@ -301,6 +313,10 @@ export class Game {
     this.loadout.updateProjectiles(dt);
     this.chest.copy(p.renderPos).addScaledVector(p.upDir, 1.0);
     this.xp.update(dt, this.chest, this.phase === 'run' ? this.stats.pickupRange : 0, (v) => this.collectXp(v * this.stats.xpGain));
+    this.coinDrops.update(dt, this.chest, this.phase === 'run' ? this.stats.pickupRange : 0, (v) => {
+      this.coins += v;
+      this.events.emit('coinsCollected', { amount: v, total: this.coins });
+    });
     return dt;
   }
 
@@ -387,7 +403,9 @@ export class Game {
     const killed = z.damage(damage, dir, knock);
     if (killed) {
       this.kills++;
-      this.xp.drop(z.pos, z.def.xp);
+      // Parfois une capsule (Pièces) à la place de la goutte d'XP
+      if (this.rollCoin()) this.coinDrops.drop(z.pos, COINS.value);
+      else this.xp.drop(z.pos, z.def.xp);
     }
     for (const S of synergies) if (!killed && weapon?.id === S.marker) z.dazed = S.duration;
     this.events.emit('zombieHit', { weapon, zombie: z, damage, crit, killed, hpAfter: z.hp, impact: impact.clone(), dir, shielded: shield > 0, combo });
@@ -537,6 +555,8 @@ export class Game {
     this.director.reset();
     this.mechanic?.reset();
     this.xp.clear();
+    this.coinDrops.clear();
+    this.coins = 0;
     this.shots.clear();
   }
 }

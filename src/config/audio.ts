@@ -74,6 +74,8 @@ export const AUDIO = {
    * sans fichier, rien ne se joue. `full` : la pinte est pleine.
    */
   pump: { pour: 'pour', pourVolume: 0.5, fade: 0.15, full: 'impactGlass_light', fullVolume: 0.6, fullRate: 1.1 },
+  /** Capsule (Pièce) ramassée : petit tintement métallique aigu. */
+  coin: { sample: 'impactMetal_light', volume: 0.45, rate: 1.9, minGap: 0.05 },
   /** Fondu de l'ambiance quand une partie commence ou finit (constante de temps, s). */
   ambienceFade: 0.6,
   /** Ambiances synthétisées : vent permanent, oiseaux le jour, chouette la nuit. */

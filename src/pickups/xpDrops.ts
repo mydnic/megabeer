@@ -1,5 +1,11 @@
 ﻿import * as THREE from 'three';
-import { XP_DROPS as X } from '../config/xp';
+import { XP_DROPS } from '../config/xp';
+
+/** Réglages de vol d'un objet à ramasser (gouttes d'XP, capsules...). */
+export type DropMotion = {
+  radius: number; hover: number; bob: number; bobSpeed: number;
+  startSpeed: number; attract: number; maxSpeed: number; collectDist: number; max: number;
+};
 
 /** Une goutte de bière (XP) : position, point de chute, valeur, et son état d'aspiration. */
 export type XpDrop = {
@@ -12,7 +18,7 @@ export type XpDrop = {
  * sol ; à portée de ramassage, elles filent en ligne droite vers le joueur en accélérant et sont
  * avalées (jamais d'orbite).
  */
-export function createXpDrops(groundAt: (p: THREE.Vector3) => number) {
+export function createXpDrops(groundAt: (p: THREE.Vector3) => number, X: DropMotion = XP_DROPS) {
   const drops: XpDrop[] = [];
   const up = new THREE.Vector3(), tmp = new THREE.Vector3();
 

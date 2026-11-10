@@ -9,6 +9,7 @@ import { wireRunLog } from './app/runLogging';
 import { loadZombieLibrary } from './enemies/zombieLibrary';
 import { createHordeView } from './enemies/hordeView';
 import { createXpDropsView } from './pickups/xpDropsView';
+import { createCoinDropsView } from './pickups/coinDropsView';
 import { createBottleView } from './weapons/bottleView';
 import { createEnemyShotsView } from './enemies/enemyShotsView';
 import { createShards } from './fx/shards';
@@ -73,6 +74,7 @@ buveur.load().catch((e) => console.error(e));
 game.setThrowRig({ gesture: (rate) => buveur.throwGesture(rate), handPos: (out) => buveur.leftHandPos(out) });
 const hordeView = createHordeView(scene, zombieLib);
 const xpView = createXpDropsView(scene);
+const coinView = createCoinDropsView(scene);
 // Une vue de bouteilles par arme (chaque arme a sa bouteille)
 const bottleViews: Record<WeaponId, Awaited<ReturnType<typeof createBottleView>>> = {
   canette: await createBottleView(scene, CANETTE_LOOK),
@@ -135,6 +137,7 @@ function frame(now: number) {
   buveur.update(dt, player);
   hordeView.sync(game.horde.zombies);
   xpView.sync(game.xp.drops);
+  coinView.sync(game.coinDrops.drops);
   for (const id of Object.keys(bottleViews) as WeaponId[]) bottleViews[id].sync(projectiles(id));
   enemyShotsView.sync(game.shots.shots);
   kamikazeView.sync(game.horde.zombies);

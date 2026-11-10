@@ -24,15 +24,20 @@ export const FPS = 60;
  * Un jeu prêt à tester : vraie planète (relief d'une seed fixe), sans décor ni rendu. Les helpers
  * pilotent le jeu comme un joueur et notent tous les événements annoncés.
  */
-export function createTestGame(seed = 1) {
+/**
+ * `coins` : un ennemi tué lâche-t-il une capsule au lieu de son XP ? « never » par défaut (les tests
+ * d'XP restent exacts), « always », ou « real » (la vraie chance de la config).
+ */
+export function createTestGame(seed = 1, opts: { coins?: 'never' | 'always' | 'real' } = {}) {
   setTerrainSeed(seed);
   const collider = new DecorCollider([], PLAYER_PHYSICS.stepHeight, PLAYER_PHYSICS.headClearance);
   const kinds = Object.fromEntries((Object.keys(ZOMBIE_MODELS) as ZombieModel[]).map((m) => [m, TEST_ZOMBIE_TIMINGS])) as Record<ZombieModel, ZombieTimings>;
-  const game = new Game({ zombieKinds: kinds, collider });
+  const coins = opts.coins ?? 'never';
+  const game = new Game({ zombieKinds: kinds, collider, rollCoin: coins === 'real' ? undefined : () => coins === 'always' });
 
   /** Tous les événements reçus, dans l'ordre. */
   const log: { type: keyof GameEvents; payload: unknown }[] = [];
-  const types: (keyof GameEvents)[] = ['runStarted', 'landed', 'zombieSpawned', 'playerHurt', 'zombieHit', 'projectileHitGround', 'xpCollected', 'levelGained', 'levelUpOffered', 'cardPicked', 'paused', 'resumed', 'died', 'runEnded', 'home', 'bellToll', 'bellsLanding', 'bellsSurgeEnded', 'enemyThrow', 'enemyShotLanded', 'kamikazeArmed', 'enemyExploded', 'summonCast', 'summoned', 'enemySplit', 'synergyActivated', 'weaponExploded', 'pumpFilled', 'statGained'];
+  const types: (keyof GameEvents)[] = ['runStarted', 'landed', 'zombieSpawned', 'playerHurt', 'zombieHit', 'projectileHitGround', 'xpCollected', 'levelGained', 'levelUpOffered', 'cardPicked', 'paused', 'resumed', 'died', 'runEnded', 'home', 'bellToll', 'bellsLanding', 'bellsSurgeEnded', 'enemyThrow', 'enemyShotLanded', 'kamikazeArmed', 'enemyExploded', 'summonCast', 'summoned', 'enemySplit', 'synergyActivated', 'weaponExploded', 'pumpFilled', 'statGained', 'coinsCollected'];
   for (const t of types) game.events.on(t, (payload) => log.push({ type: t, payload }));
 
   const api = {

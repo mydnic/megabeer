@@ -147,7 +147,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
       else pumpGauge.hide();
       const pl = game.player;
       minimap.update(realDt, pl.pos, pl.facing, pl.camFwd, game.pumps.list);
-      runHud.update(game.runTime, game.kills);
+      runHud.update(game.runTime, game.kills, game.coins);
       weaponHud.update(slots());
       if (game.phase === 'dead') deathBanner.update(game.deadTime, game.runTime, game.kills);
       // Espace ou bouton A : Jouer sur l'accueil, Continuer sur le bilan de mort

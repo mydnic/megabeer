@@ -34,6 +34,14 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
     }
   };
 
+  // Capsule ramassée : tintement de métal aigu
+  let lastCoin = -1;
+  game.events.on('coinsCollected', () => {
+    const C = AUDIO.coin, now = performance.now() / 1000;
+    if (now - lastCoin < C.minGap) return;
+    lastCoin = now;
+    audio.play(C.sample, C.volume, C.rate * jitter(0.06), 0, 'ui');
+  });
   // Ramassage : une bulle, de plus en plus aiguë quand on en avale plusieurs à la suite
   let lastPickup = -1, combo = 0;
   game.events.on('xpCollected', () => {
