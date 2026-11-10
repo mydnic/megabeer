@@ -4,10 +4,16 @@ const CSS = `
 .wpn { position: fixed; top: 58px; left: 18px; z-index: 10; display: flex; gap: 8px; pointer-events: none; user-select: none;
   font-family: 'Lilita One', system-ui, sans-serif; }
 .wpn-slot { position: relative; width: 48px; height: 48px; border: 3px solid #1a120c; border-radius: 12px;
-  background: rgba(58,36,24,.85); box-shadow: 0 3px 0 rgba(26,18,12,.55), inset 0 3px 6px rgba(0,0,0,.4);
+  background: radial-gradient(circle at 50% 35%, rgba(110,72,44,.95), rgba(48,30,20,.9) 75%); box-shadow: 0 3px 0 rgba(26,18,12,.55), inset 0 2px 0 rgba(255,255,255,.18), inset 0 -6px 8px rgba(0,0,0,.35);
   display: flex; align-items: center; justify-content: center; }
+/* Éclat qui part de la case quand l'arme monte de niveau */
+.wpn-slot::after { content: ''; position: absolute; inset: -3px; border-radius: 12px; border: 4px solid #ffe27a; opacity: 0; pointer-events: none; }
+.wpn-slot.pop::after { animation: wpn-ring .55s ease-out; }
+@keyframes wpn-ring { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.9); opacity: 0; } }
+.wpn-slot.pop .wpn-lvl { animation: wpn-lvl .5s cubic-bezier(.2,1.8,.4,1); }
+@keyframes wpn-lvl { 0% { transform: scale(2.2); } 100% { transform: scale(1); } }
 .wpn-slot.empty { background: rgba(26,18,12,.35); border-style: dashed; border-color: rgba(26,18,12,.7); box-shadow: none; }
-.wpn-icon { height: 36px; width: auto; }
+.wpn-icon { height: 38px; width: auto; filter: drop-shadow(0 2px 0 rgba(0,0,0,.35)); }
 .wpn-lvl { position: absolute; right: -7px; bottom: -7px; min-width: 22px; height: 22px; padding: 0 4px; border-radius: 11px;
   border: 2px solid #1a120c; background: linear-gradient(#ffd45a, #f5a623); color: #2a1608; font-size: 13px; line-height: 18px;
   text-align: center; box-sizing: border-box; }
@@ -16,7 +22,7 @@ const CSS = `
   background: var(--s); display: flex; align-items: center; justify-content: center; }
 .wpn-link svg { width: 13px; height: 13px; }
 .wpn-slot.pop { animation: wpn-pop .45s cubic-bezier(.2,1.6,.4,1); }
-@keyframes wpn-pop { 0% { transform: scale(1) } 40% { transform: scale(1.3) rotate(-6deg) } 100% { transform: scale(1) } }
+@keyframes wpn-pop { 0% { transform: scale(1) } 35% { transform: scale(1.38) rotate(-8deg) } 65% { transform: scale(.94) rotate(3deg) } 100% { transform: scale(1) } }
 `;
 
 /** `synergy` : couleur de la synergie active dont l'arme fait partie (liseré et maillon). */

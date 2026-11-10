@@ -2,7 +2,17 @@ const CSS = `
 .event-banner { position: fixed; left: 50%; top: 104px; transform: translateX(-50%); z-index: 12; pointer-events: none;
   user-select: none; display: none; flex-direction: column; align-items: center; gap: 2px; white-space: nowrap;
   font-family: 'Lilita One', system-ui, sans-serif; }
-.event-banner.on { display: flex; animation: event-in .35s cubic-bezier(.2,1.6,.4,1); }
+.event-banner.on { display: flex; animation: event-in .45s cubic-bezier(.2,1.7,.4,1); }
+/* Filets dorés de part et d'autre du titre, qui s'étirent à l'arrivée */
+.event-title { position: relative; }
+.event-title::before, .event-title::after { content: ''; position: absolute; top: 52%; width: 90px; height: 5px; border-radius: 3px;
+  background: linear-gradient(90deg, transparent, #ffc23a); box-shadow: 0 0 0 2px #1a120c; }
+.event-title::before { right: calc(100% + 16px); transform-origin: right; }
+.event-title::after { left: calc(100% + 16px); transform-origin: left; background: linear-gradient(270deg, transparent, #ffc23a); }
+.event-banner.on .event-title::before, .event-banner.on .event-title::after { animation: event-rule .6s cubic-bezier(.2,1.4,.4,1) .1s both; }
+@keyframes event-rule { from { transform: scaleX(0); opacity: 0; } }
+.event-banner.on .event-sub { animation: event-sub .4s ease-out .18s both; }
+@keyframes event-sub { from { transform: translateY(-8px); opacity: 0; } }
 .event-banner.off { display: flex; animation: event-out .4s ease-in forwards; }
 .event-title { font-size: clamp(28px, 4.2vw, 52px); line-height: 1; letter-spacing: .04em; color: #ffc23a;
   text-shadow: -3px 0 #1a120c, 3px 0 #1a120c, 0 -3px #1a120c, 0 3px #1a120c, 3px 3px #1a120c, -3px 3px #1a120c,
@@ -10,7 +20,7 @@ const CSS = `
 .event-sub { font-size: 20px; color: #f3e6cf; letter-spacing: .03em;
   text-shadow: -2px 0 #1a120c, 2px 0 #1a120c, 0 -2px #1a120c, 0 2px #1a120c; }
 .event-banner.toll .event-title { animation: event-toll .5s ease-out; }
-@keyframes event-in { from { transform: translateX(-50%) scale(.4); opacity: 0 } to { transform: translateX(-50%) scale(1); opacity: 1 } }
+@keyframes event-in { 0% { transform: translateX(-50%) scale(.3) rotate(-6deg); opacity: 0 } 60% { transform: translateX(-50%) scale(1.12) rotate(1.5deg); opacity: 1 } 100% { transform: translateX(-50%) scale(1); opacity: 1 } }
 @keyframes event-out { to { transform: translateX(-50%) translateY(-14px); opacity: 0 } }
 @keyframes event-toll { 0% { transform: rotate(0) scale(1) } 25% { transform: rotate(-4deg) scale(1.1) }
   55% { transform: rotate(3deg) scale(1.03) } 100% { transform: rotate(0) scale(1) } }

@@ -93,6 +93,8 @@ export const LEVEL_UP_SCREEN = {
   inputDelay: 0.35,
   /** Durée de l'entrée des cartes (s) : la carte choisie se soulève ensuite. */
   introTime: 0.55,
+  /** Durée de la sortie (s) : la carte prise s'envole, les autres retombent, le jeu a déjà repris. */
+  outTime: 0.36,
   /**
    * Cartes d'un coffre : elles jaillissent de la bouche du coffre (`mouth` : hauteur dans le coffre,
    * 0 = haut), l'une après l'autre (`stagger`), en tournoyant (`spin` degrés au départ).

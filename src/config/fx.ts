@@ -168,6 +168,10 @@ export const DAMAGE_NUMBERS = {
   life: 0.7,
   rise: 1.1,
   jitter: 18,
+  /** Gonflement à l'apparition (normal, critique) et inclinaison de départ au hasard (degrés). */
+  pop: 1.45,
+  critPop: 2,
+  tilt: 14,
   /** Couleur normale et taille de police (px). */
   color: '#fff6dc',
   size: 24,

@@ -57,6 +57,16 @@ const CSS = `
 .cr-chest { position: relative; width: 200px; animation: cr-drop .45s cubic-bezier(.3,1.6,.5,1) both; }
 @keyframes cr-drop { from { transform: translateY(-260px) scale(.6); opacity: 0 } }
 .cr-chest svg { width: 200px; display: block; overflow: visible; filter: drop-shadow(0 10px 0 rgba(10,6,4,.6)); }
+/* Ouverture : le coffre s'écrase puis bondit, deux ondes de choc partent, le halo du dedans gonfle */
+.cr.burst .cr-chest { animation: cr-jump .55s cubic-bezier(.3,1.5,.5,1) both; }
+@keyframes cr-jump { 0% { transform: scale(1.18,.78) translateY(14px) } 35% { transform: scale(.92,1.14) translateY(-34px) } 70% { transform: scale(1.05,.96) translateY(0) } 100% { transform: none } }
+.cr-ring { position: absolute; width: 160px; height: 160px; border-radius: 50%; border: 10px solid var(--c); opacity: 0; box-shadow: 0 0 30px var(--c), inset 0 0 30px var(--c); }
+.cr.burst .cr-ring { animation: cr-ring .7s cubic-bezier(.1,.7,.3,1) both; }
+.cr.burst .cr-ring.r2 { animation-delay: .12s; animation-duration: .9s; }
+@keyframes cr-ring { 0% { transform: scale(.3); opacity: 1; border-width: 14px } 100% { transform: scale(4.2); opacity: 0; border-width: 1px } }
+.cr .ch-beam.ch-ray { opacity: 0; transform: scaleY(.2); transition: opacity .25s, transform .5s cubic-bezier(.2,1.6,.4,1); }
+.cr.burst .ch-beam.ch-ray { opacity: 1; transform: scaleY(1); animation: cr-raypulse 1.2s ease-in-out .5s infinite alternate; }
+@keyframes cr-raypulse { to { transform: scaleY(1.08) scaleX(1.05); } }
 .cr-shake.s1 { animation: cr-shake .18s linear infinite; }
 .cr-shake.s2 { animation: cr-shake .1s linear infinite; }
 .cr-shake.s3 { animation: cr-shake2 .07s linear infinite; }
@@ -70,13 +80,17 @@ const CSS = `
 .cr.burst .ch-beam { opacity: 1; }
 .cr-name { position: absolute; top: 330px; font-size: 54px; letter-spacing: .04em; color: var(--c); opacity: 0;
   text-shadow: -4px 0 #1a120c, 4px 0 #1a120c, 0 -4px #1a120c, 0 4px #1a120c, 0 8px 0 #1a120c; }
-.cr.burst .cr-name { animation: cr-name .5s cubic-bezier(.2,1.8,.4,1) .08s both; }
+.cr.burst .cr-name { animation: cr-name .5s cubic-bezier(.2,1.8,.4,1) .08s both, cr-name-idle .9s ease-in-out .6s infinite alternate; }
+@keyframes cr-name-idle { to { transform: scale(1.07) rotate(-1.5deg); } }
 @keyframes cr-name { 0% { transform: scale(.2); opacity: 0 } 100% { transform: scale(1); opacity: 1 } }
 .cr-sparks { position: absolute; inset: 0; }
-.cr-spark { position: absolute; left: 50%; top: 50%; width: 12px; height: 12px; margin: -6px; border-radius: 50%;
-  background: var(--c); box-shadow: 0 0 10px var(--c); opacity: 0; }
+.cr-spark { position: absolute; left: 50%; top: 50%; width: var(--s, 12px); height: var(--s, 12px); margin: calc(var(--s, 12px) / -2); border-radius: 50%;
+  background: radial-gradient(circle, #fff 0 25%, var(--c) 60%); box-shadow: 0 0 12px var(--c); opacity: 0; }
+.cr-spark.star { border-radius: 0; box-shadow: none; background: linear-gradient(#fff, var(--c)); filter: drop-shadow(0 0 6px var(--c));
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); }
 .cr.burst .cr-spark { animation: cr-spark var(--d) cubic-bezier(.1,.7,.3,1) both; }
-@keyframes cr-spark { 0% { transform: translate(0,0) scale(1.2); opacity: 1 } 100% { transform: translate(var(--x), var(--y)) scale(.2); opacity: 0 } }
+@keyframes cr-spark { 0% { transform: translate(0,0) scale(1.4) rotate(0); opacity: 1 } 60% { opacity: 1 }
+  100% { transform: translate(var(--x), calc(var(--y) + 60px)) scale(.15) rotate(var(--r)); opacity: 0 } }
 .cr.quake { animation: cr-quake .35s linear; }
 @keyframes cr-quake { 0%,100% { transform: translate(0,0) } 20% { transform: translate(-9px,5px) } 40% { transform: translate(8px,-6px) } 60% { transform: translate(-6px,-4px) } 80% { transform: translate(5px,6px) } }
 `;
@@ -93,7 +107,7 @@ export function createChestReveal() {
   document.head.appendChild(style);
   const el = document.createElement('div');
   el.className = 'cr';
-  el.innerHTML = `<div class="cr-dim"></div><div class="cr-flash"></div><div class="cr-stage"><div class="cr-rays"></div><div class="cr-glow"></div>
+  el.innerHTML = `<div class="cr-dim"></div><div class="cr-flash"></div><div class="cr-stage"><div class="cr-rays"></div><div class="cr-glow"></div><div class="cr-ring"></div><div class="cr-ring r2"></div>
     <div class="cr-chest"><div class="cr-shake">${chestSvg('')}</div></div><div class="cr-sparks"></div><div class="cr-name"></div></div>`;
   document.body.appendChild(el);
   const chest = el.querySelector<HTMLElement>('.cr-shake')!;
@@ -122,7 +136,8 @@ export function createChestReveal() {
       const n = O.sparks + O.sparksPerRarity * rarity;
       sparks.innerHTML = Array.from({ length: n }, () => {
         const a = Math.random() * Math.PI * 2, d = (120 + Math.random() * 160) * (1 + rarity * 0.2);
-        return `<i class="cr-spark" style="--x:${(Math.cos(a) * d).toFixed(0)}px;--y:${(Math.sin(a) * d).toFixed(0)}px;--d:${(0.6 + Math.random() * 0.5).toFixed(2)}s"></i>`;
+        const star = Math.random() < 0.45, size = star ? 16 + Math.random() * 16 : 7 + Math.random() * 9;
+        return `<i class="cr-spark${star ? ' star' : ''}" style="--x:${(Math.cos(a) * d).toFixed(0)}px;--y:${(Math.sin(a) * d).toFixed(0)}px;--d:${(0.7 + Math.random() * 0.6).toFixed(2)}s;--s:${size.toFixed(0)}px;--r:${(Math.random() * 540 - 270).toFixed(0)}deg"></i>`;
       }).join('');
       const { ticks, burst } = schedule;
       ticks.forEach((k, i) => later(k.t, () => {

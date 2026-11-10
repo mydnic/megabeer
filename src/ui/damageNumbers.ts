@@ -5,7 +5,7 @@ const CSS = `
 .dmg { position: fixed; left: 0; top: 0; pointer-events: none; z-index: 8; font-family: 'Lilita One', system-ui, sans-serif;
   font-size: ${D.size}px; color: ${D.color}; white-space: nowrap; will-change: transform, opacity;
   text-shadow: -2px 0 #1a120c, 2px 0 #1a120c, 0 -2px #1a120c, 0 2px #1a120c, 2px 2px #1a120c, -2px 2px #1a120c; }
-.dmg.crit { color: ${D.critColor}; font-size: ${Math.round(D.size * D.critScale)}px; z-index: 9;
+.dmg.crit { color: ${D.critColor}; font-size: ${Math.round(D.size * D.critScale)}px; z-index: 9; filter: drop-shadow(0 0 6px ${D.critColor});
   text-shadow: -3px 0 #1a120c, 3px 0 #1a120c, 0 -3px #1a120c, 0 3px #1a120c, 3px 3px #1a120c, -3px 3px #1a120c; }
 `;
 
@@ -14,7 +14,7 @@ export function createDamageNumbers(camera: THREE.Camera) {
   const style = document.createElement('style');
   style.textContent = CSS;
   document.head.appendChild(style);
-  type Num = { el: HTMLDivElement; pos: THREE.Vector3; up: THREE.Vector3; t: number; dx: number; active: boolean };
+  type Num = { el: HTMLDivElement; pos: THREE.Vector3; up: THREE.Vector3; t: number; dx: number; rot: number; crit: boolean; active: boolean };
   const pool: Num[] = [];
   const p = new THREE.Vector3();
 
@@ -28,7 +28,7 @@ export function createDamageNumbers(camera: THREE.Camera) {
           const el = document.createElement('div');
           el.className = 'dmg';
           document.body.appendChild(el);
-          n = { el, pos: new THREE.Vector3(), up: new THREE.Vector3(), t: 0, dx: 0, active: false };
+          n = { el, pos: new THREE.Vector3(), up: new THREE.Vector3(), t: 0, dx: 0, rot: 0, crit: false, active: false };
           pool.push(n);
         }
       }
@@ -38,6 +38,8 @@ export function createDamageNumbers(camera: THREE.Camera) {
       n.up.copy(pos).normalize();
       n.t = 0;
       n.dx = (Math.random() * 2 - 1) * D.jitter;
+      n.rot = (Math.random() * 2 - 1) * D.tilt;
+      n.crit = crit;
       n.active = true;
       n.el.style.display = '';
     },
@@ -52,9 +54,13 @@ export function createDamageNumbers(camera: THREE.Camera) {
         if (p.z > 1) { n.el.style.display = 'none'; continue; }
         n.el.style.display = '';
         // Apparition en « pop », puis fondu sur la fin
-        const pop = k < 0.15 ? 0.6 + (k / 0.15) * 0.7 : 1.3 - Math.min(0.3, (k - 0.15) * 1.2);
+        // Apparition : gonfle d'un coup (plus fort pour un critique), retombe avec un petit rebond
+        const peak = n.crit ? D.critPop : D.pop, a = k / 0.12;
+        const pop = k < 0.12 ? 0.4 + a * (peak - 0.4) : 1 + (peak - 1) * Math.exp(-(k - 0.12) * 14) * Math.cos((k - 0.12) * 26);
+        // Il part penché et se redresse en montant
+        const rot = n.rot * (1 - Math.min(1, k * 2.5)) + (n.crit ? Math.sin(k * 40) * 4 * (1 - k) : 0);
         const x = (p.x * 0.5 + 0.5) * w + n.dx, y = (-p.y * 0.5 + 0.5) * h;
-        n.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(-50%, -50%) scale(${pop.toFixed(3)})`;
+        n.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(-50%, -50%) scale(${pop.toFixed(3)}) rotate(${rot.toFixed(1)}deg)`;
         n.el.style.opacity = String(k > 0.6 ? 1 - (k - 0.6) / 0.4 : 1);
       }
     },

@@ -21,6 +21,8 @@ export const HEALTH_HUD = {
   /** Opacité maxi du bord rouge (à 0 PV) et vitesse de pulsation (battements par seconde). */
   vignetteMax: 0.75,
   pulseRate: 1.6,
+  /** Soin d'au moins ce nombre de PV d'un coup : éclat vert sur la barre. */
+  healFlash: 3,
 } as const;
 
 /** Bandeau de mort (façon « YOU DIED » / « WASTED ») et ambiance qui retombe. */
