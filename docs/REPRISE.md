@@ -73,7 +73,7 @@ Fait et validé dans la feature 7 :
    **Mini-carte faite** (2026-11-10, à valider en jeu) : disque local sans brouillard, `ui/minimap.ts`.
    **En cours : Pièces et coffres** (choix de l'utilisateur). Coffre KayKit Dungeon (couvercle séparé, source
    `Desktop/MODELS/decor/kaykit_dungeon`), ouverture par touche d'action E / bouton X, prix croissant, 1 objet parmi 3.
-   Fait : Pièces (capsules dorées, 8 % des kills à la place de l'XP, compteur HUD). Les tests tirent la capsule par
+   Fait : Pièces (capsules rouges, 30 % des kills à la place de l'XP, compteur HUD). Les tests tirent la capsule par
    `createTestGame(seed, { coins: 'never' | 'always' | 'real' })` (« never » par défaut).
    Fait aussi : 100 coffres (sol plat, collision, touche d'action E / bouton X, prix 5 +3 par coffre, rareté
    à l'ouverture, 1 objet parmi 3), premier lot de 8 objets à stat (`config/items.ts`), DEV « +50 capsules ».

@@ -3,7 +3,7 @@
 
 export const COINS = {
   /** Chance qu'un ennemi tué lâche une capsule À LA PLACE de sa goutte d'XP (demande de l'utilisateur). */
-  dropChance: 0.08,
+  dropChance: 0.3,
   /** Pièces que vaut une capsule. */
   value: 1,
 } as const;
