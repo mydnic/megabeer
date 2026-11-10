@@ -2,6 +2,7 @@ import { CANETTE_IMPACT, FUT_SOUND, GUEUZE_BLAST, STOUT_IMPACT } from '../config
 import type * as THREE from 'three';
 import { BELL_SOUND } from '../config/abbey';
 import { AUDIO } from '../config/audio';
+import { PUMPS } from '../config/pumps';
 import { DEATH_BANNER } from '../config/player';
 import type { AudioEngine } from '../audio/audio';
 import type { createMusic } from '../audio/music';
@@ -81,13 +82,17 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
     audio.play(S.boom, S.boomVolume * k, S.boomPitch * jitter(0.08));
   });
   // Pompe à bière : la bière coule tant que le joueur remplit la pinte ; un tintement quand elle est pleine
-  let pourAt = -Infinity;
+  let stopPour: ((fade?: number) => void) | null = null;
   game.events.on('tick', () => {
-    if (!game.pumps.filling) { pourAt = -Infinity; return; }
-    const now = performance.now() / 1000;
-    if (now - pourAt < AUDIO.pump.every) return;
-    pourAt = now;
-    audio.play(AUDIO.pump.pour, AUDIO.pump.pourVolume, jitter(0.04));
+    const pouring = game.pumps.filling && !game.frozen;
+    if (pouring && !stopPour) {
+      // Repris où en est la pinte : le son suit le niveau de bière
+      const offset = (game.pumps.focus?.fill ?? 0) * PUMPS.fillTime;
+      stopPour = audio.play(AUDIO.pump.pour, AUDIO.pump.pourVolume, 1, 0, 'fx', offset);
+    } else if (!pouring && stopPour) {
+      stopPour(AUDIO.pump.fade);
+      stopPour = null;
+    }
   });
   game.events.on('pumpFilled', () => audio.play(AUDIO.pump.full, AUDIO.pump.fullVolume, AUDIO.pump.fullRate, 0, 'ui'));
   // La Canette : tintement de fer-blanc sur un zombie ou par terre

@@ -68,11 +68,12 @@ export const AUDIO = {
   /** Prieur : tintement de cloche d'encensoir au début du geste, craquement de terre quand les squelettes sortent. */
   summon: { castSample: 'impactBell_heavy', castVolume: 0.35, castPitch: 1.6, earthSample: 'impactMining', earthVolume: 0.7, earthPitch: 0.6, hearDist: 35 },
   /**
-   * Pompe à bière : la bière qui coule dans le verre pendant le remplissage. Échantillon `pour`
-   * (fichier pour.mp3 ou pour_001.ogg... dans src/assets/sfx), relancé toutes les `every` s ;
+   * Pompe à bière : la bière qui coule dans le verre pendant le remplissage (échantillon `pour`, un
+   * seul versement complet), repris là où en est la pinte, coupé en fondu de `fade` s quand le joueur
+   * sort de la zone ou que le jeu se fige ;
    * sans fichier, rien ne se joue. `full` : la pinte est pleine.
    */
-  pump: { pour: 'pour', pourVolume: 0.5, every: 1.4, full: 'impactGlass_light', fullVolume: 0.6, fullRate: 1.1 },
+  pump: { pour: 'pour', pourVolume: 0.5, fade: 0.15, full: 'impactGlass_light', fullVolume: 0.6, fullRate: 1.1 },
   /** Fondu de l'ambiance quand une partie commence ou finit (constante de temps, s). */
   ambienceFade: 0.6,
   /** Ambiances synthétisées : vent permanent, oiseaux le jour, chouette la nuit. */

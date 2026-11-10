@@ -95,11 +95,14 @@ export class AudioEngine {
     if (g && this.ctx) g.gain.setTargetAtTime(v, this.ctx.currentTime, 0.03);
   }
 
-  /** Joue une variante au hasard du groupe (sans répéter la précédente), sur le bus effets ou interface. */
-  play(group: string, volume: number, rate = 1, pan = 0, bus: 'fx' | 'ui' = 'fx') {
+  /**
+   * Joue une variante au hasard du groupe (sans répéter la précédente), sur le bus effets ou interface,
+   * à partir de `offset` s. Renvoie de quoi l'arrêter avant la fin, en fondu de `fade` s.
+   */
+  play(group: string, volume: number, rate = 1, pan = 0, bus: 'fx' | 'ui' = 'fx', offset = 0): (fade?: number) => void {
     const ctx = this.ctx, list = this.buffers.get(group);
     const out = bus === 'ui' ? this.ui : this.sfx;
-    if (!ctx || !list?.length || !out) return;
+    if (!ctx || !list?.length || !out) return () => {};
     let i = Math.floor(Math.random() * list.length);
     if (list.length > 1 && i === this.lastVariant.get(group)) i = (i + 1) % list.length;
     this.lastVariant.set(group, i);
@@ -111,7 +114,12 @@ export class AudioEngine {
     const p = ctx.createStereoPanner();
     p.pan.value = pan;
     src.connect(g).connect(p).connect(out);
-    src.start();
+    src.start(0, Math.min(offset, src.buffer.duration));
+    return (fade = 0.05) => {
+      const t = ctx.currentTime;
+      g.gain.setTargetAtTime(0, t, fade / 3);
+      try { src.stop(t + fade); } catch { /* déjà fini */ }
+    };
   }
 
   /**
