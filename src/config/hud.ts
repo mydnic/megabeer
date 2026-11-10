@@ -12,6 +12,24 @@ export const WEAPON_HUD = { slots: 4 } as const;
  */
 export const CHEST_HUD = { bottom: 210, shake: 0.4 } as const;
 
+/**
+ * Ouverture d'un coffre façon lootbox (ui/chestReveal.ts) : la roulette des couleurs s'arrête à
+ * `stopAt` de la durée ; changements de couleur (plus par rareté) qui ralentissent selon `slowDown`
+ * (plus grand : freinage plus marqué) ; le couvercle saute `burstDelay` s après ; étincelles (plus
+ * par rareté) ; dès `bigFrom` (Dingue), l'écran tremble ; fondu de sortie (s).
+ */
+export const CHEST_OPENING = {
+  stopAt: 0.62,
+  spins: 12,
+  spinsPerRarity: 3,
+  slowDown: 1.9,
+  burstDelay: 0.12,
+  sparks: 18,
+  sparksPerRarity: 12,
+  bigFrom: 3,
+  fadeOut: 0.18,
+} as const;
+
 /** Jauge de la pompe à bière : message quand le joueur sort de la zone (la pinte se vide). */
 export const PUMP_GAUGE = { outHint: 'Reviens près de la pompe !' } as const;
 

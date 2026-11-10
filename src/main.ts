@@ -21,7 +21,6 @@ import { createProtectorView } from './enemies/protectorView';
 import { createDazedView } from './enemies/dazedView';
 import { createPumpsView } from './world/pumpsView';
 import { createChestsView } from './world/chestsView';
-import { createRarityReveal } from './fx/rarityReveal';
 import { createDamageNumbers } from './ui/damageNumbers';
 import { createRunLog } from './dev/runLog';
 import { BuveurVisual } from './player/buveurVisual';
@@ -94,10 +93,6 @@ const protectorView = createProtectorView(scene);
 const dazedView = createDazedView(scene);
 const pumpsView = await createPumpsView(scene);
 const chestsView = await createChestsView(scene);
-// Coffre payé : la couleur de la rareté jaillit avant l'écran de choix
-const reveal = createRarityReveal(scene);
-game.events.on('chestRevealing', ({ chest, rarity, duration }) => reveal.play(chest.pos, rarity, duration));
-game.events.on('home', () => reveal.clear());
 const sparks = createShards(scene, groundAt, SHIELD_SPARKS);
 const earth = createShards(scene, groundAt, EARTH_CLODS);
 const stoutSplash = createShards(scene, groundAt, STOUT_SPLASH);
@@ -160,7 +155,6 @@ function frame(now: number) {
   stoutSplash.update(dt);
   gueuzeBurst.update(dt);
   damageNumbers.update(realDt);
-  reveal.update(realDt);
   pint.update(dt);
   effects.update();
 

@@ -10,6 +10,7 @@ import { createAlcoholHud } from '../ui/alcoholHud';
 import { createPumpGauge } from '../ui/pumpGauge';
 import { createMinimap } from '../ui/minimap';
 import { createChestPrompt } from '../ui/chestPrompt';
+import { createChestReveal, revealSchedule } from '../ui/chestReveal';
 import { capsuleIcon } from '../ui/icons';
 import { RARITIES } from '../config/upgrades';
 import { createDeathBanner } from '../ui/deathBanner';
@@ -48,6 +49,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   const pumpGauge = createPumpGauge();
   const minimap = createMinimap();
   const chestPrompt = createChestPrompt(capsuleIcon());
+  const chestReveal = createChestReveal();
   const runHud = createRunHud();
   const banner = createEventBanner();
   const weaponHud = createWeaponHud();
@@ -115,6 +117,9 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   game.events.on('pumpFilled', ({ pump, cards }) => levelUp.show(0, cards, `Pompe en ${PUMP_TIERS[pump.tier].name} !`));
   game.events.on('chestOpened', ({ rarity, cards }) => levelUp.show(0, cards, `Coffre ${RARITIES[rarity].name.toLowerCase()} !`));
   game.events.on('chestDenied', () => chestPrompt.deny());
+  // Coffre payé : ouverture façon lootbox, puis l'écran de choix
+  game.events.on('chestRevealing', (e) => chestReveal.play(e.rarity, revealSchedule(e)));
+  game.events.on('home', () => chestReveal.stop());
   game.events.on('cardPicked', () => { if (game.progression.pending === 0) lockCursor(); });
   game.events.on('playerHurt', ({ blocked }) => { if (!blocked) healthHud.hit(); });
   let pausedAt = 0;

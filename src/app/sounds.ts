@@ -2,6 +2,7 @@ import { CANETTE_IMPACT, FUT_SOUND, GUEUZE_BLAST, STOUT_IMPACT } from '../config
 import type * as THREE from 'three';
 import { BELL_SOUND } from '../config/abbey';
 import { AUDIO } from '../config/audio';
+import { revealSchedule } from '../ui/chestReveal';
 import { PUMPS } from '../config/pumps';
 import { DEATH_BANNER } from '../config/player';
 import type { AudioEngine } from '../audio/audio';
@@ -35,11 +36,16 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
   };
 
   // Coffres : le couvercle claque à l'ouverture ; choc sourd quand il manque des capsules
-  game.events.on('chestRevealing', ({ rarity }) => {
-    const R = AUDIO.reveal;
-    audio.play(AUDIO.chest.open, AUDIO.chest.openVolume, AUDIO.chest.openRate * jitter(0.04), 0, 'ui');
-    for (let i = 0; i <= rarity; i++) setTimeout(() => audio.play(R.sample, R.volume, R.rate + R.step * i, 0, 'ui'), (i + 1) * R.gap * 1000);
-    if (rarity >= R.bellFrom) setTimeout(() => audio.play(R.bell, R.bellVolume, R.bellRate, 0, 'ui'), (rarity + 1) * R.gap * 1000);
+  // Ouverture façon lootbox : tic à chaque couleur de la roulette, puis au moment où le couvercle
+  // saute, le claquement et une note de verre par rareté (cloche grave dès Dingue)
+  game.events.on('chestRevealing', (e) => {
+    const R = AUDIO.reveal, T = AUDIO.revealTick, { ticks, burst } = revealSchedule(e);
+    ticks.forEach((k, i) => setTimeout(() => audio.play(T.sample, T.volume, T.rate + T.rise * (i / ticks.length), 0, 'ui'), k.t * 1000));
+    setTimeout(() => {
+      audio.play(AUDIO.chest.open, AUDIO.chest.openVolume, AUDIO.chest.openRate * jitter(0.04), 0, 'ui');
+      for (let i = 0; i <= e.rarity; i++) setTimeout(() => audio.play(R.sample, R.volume, R.rate + R.step * i, 0, 'ui'), (i + 1) * R.gap * 1000);
+      if (e.rarity >= R.bellFrom) setTimeout(() => audio.play(R.bell, R.bellVolume, R.bellRate, 0, 'ui'), (e.rarity + 1) * R.gap * 1000);
+    }, burst * 1000);
   });
   game.events.on('chestDenied', () => audio.play(AUDIO.chest.deny, AUDIO.chest.denyVolume, AUDIO.chest.denyRate, 0, 'ui'));
   // Capsule ramassée : tintement de métal aigu

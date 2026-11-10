@@ -28,7 +28,7 @@ function standNear(t: ReturnType<typeof createTestGame>, chest: { pos: THREE.Vec
 const press = (t: ReturnType<typeof createTestGame>) => t.play(1 / 60, { action: true, actionPressed: true });
 
 /** Appui, puis attente de la fin de la révélation (l'écran de choix s'ouvre). */
-const open = (t: ReturnType<typeof createTestGame>) => { press(t); t.play(CHESTS.revealTime + 0.1); };
+const open = (t: ReturnType<typeof createTestGame>) => { press(t); t.play(t.events('chestRevealing').at(-1)!.duration + 0.1); };
 
 const dist = (a: THREE.Vector3, b: THREE.Vector3) => a.angleTo(b) * PLANET_RADIUS;
 
@@ -69,7 +69,7 @@ describe('Les coffres', () => {
     expect(t.game.frozen).toBe(true);
     expect(t.game.offer).toBeNull();
     expect(t.events('chestRevealing')).toHaveLength(1);
-    t.play(CHESTS.revealTime + 0.1);
+    t.play(t.events('chestRevealing')[0].duration + 0.1);
     expect(t.game.frozen).toBe(true);
     const cards = t.game.offer as ItemCard[];
     expect(cards).toHaveLength(CHESTS.choices);

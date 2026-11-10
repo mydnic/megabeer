@@ -387,8 +387,9 @@ export class Game {
     this.chests.opened++;
     const rarity = rollTier(this.stats.luck);
     const cards = rollItemCards(rarity, CHESTS.choices);
-    this.reveal = { chest, price, rarity, cards, left: CHESTS.revealTime };
-    this.events.emit('chestRevealing', { chest, rarity, duration: CHESTS.revealTime });
+    const duration = CHESTS.revealTime + CHESTS.revealPerRarity * rarity;
+    this.reveal = { chest, price, rarity, cards, left: duration };
+    this.events.emit('chestRevealing', { chest, rarity, duration });
   }
 
   /** Synergies actives (toutes leurs armes équipées). */

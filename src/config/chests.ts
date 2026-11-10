@@ -17,8 +17,12 @@ export const CHESTS = {
   priceStep: 3,
   /** Objets proposés à l'ouverture. */
   choices: 3,
-  /** Révélation de la rareté (s, temps réel) : le jeu est figé, l'effet se joue, puis l'écran de choix. */
-  revealTime: 1.1,
+  /**
+   * Ouverture façon lootbox (s, temps réel) : le jeu est figé, l'animation se joue, puis l'écran de
+   * choix. Plus la rareté est haute, plus le suspense dure (`revealPerRarity` par rareté).
+   */
+  revealTime: 2.2,
+  revealPerRarity: 0.35,
   /**
    * Encombrement du coffre (m) : le joueur et les zombies butent dessus. Mesuré sur coffre.glb
    * (1,6 x 1,25 x 1,3 m, couvercle fermé) mis à la largeur CHEST_LOOK.width.

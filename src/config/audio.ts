@@ -80,6 +80,8 @@ export const AUDIO = {
    * aiguë, espacées de `gap` s ; dès Dingue, une cloche grave en plus.
    */
   reveal: { sample: 'impactGlass_light', volume: 0.55, rate: 1.0, step: 0.2, gap: 0.12, bell: 'impactBell_heavy', bellVolume: 0.5, bellRate: 0.7, bellFrom: 3 },
+  /** Roulette de l'ouverture : un tic par changement de couleur, de plus en plus aigu. */
+  revealTick: { sample: 'impactPlate_light', volume: 0.35, rate: 1.3, rise: 0.9 },
   chest: { open: 'impactWood_heavy', openVolume: 0.7, openRate: 1.1, deny: 'impactPlate_light', denyVolume: 0.5, denyRate: 0.8 },
   /** Capsule (Pièce) ramassée : petit tintement métallique aigu. */
   coin: { sample: 'impactMetal_light', volume: 0.45, rate: 1.9, minGap: 0.05 },
