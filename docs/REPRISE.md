@@ -77,7 +77,7 @@ Fait et validé dans la feature 7 :
    `createTestGame(seed, { coins: 'never' | 'always' | 'real' })` (« never » par défaut).
    Fait aussi : 100 coffres (sol plat, collision, touche d'action E / bouton X, prix 5 +3 par coffre, rareté
    à l'ouverture, 1 objet parmi 3), premier lot de 8 objets à stat (`config/items.ts`), DEV « +50 capsules ».
-   À valider en jeu par l'utilisateur. Ensuite : effet de rareté à l'ouverture, icônes d'objets, objets
+   **Validé par l'utilisateur le 2026-11-10** (capsules à 30 %). Ensuite : effet de rareté à l'ouverture, icônes d'objets, objets
    à effets spéciaux un par un, poubelles, coffre piégé. Son de la bière qui coule : « Beer service 2 » de BigSoundBank (CC0, choisi par l'utilisateur),
    joué d'un bloc pendant le remplissage, repris au niveau de la pinte, coupé en fondu hors de la zone. Reste : sons du
    remplissage et de la pompe pleine, collision du fût (on le traverse), nombre de pompes (passé à 20, demande de l'utilisateur)
