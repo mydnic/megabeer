@@ -25,6 +25,7 @@ import { createPauseMenu, type PauseStats } from '../ui/pauseMenu';
 import { createRunHud } from '../ui/runHud';
 import { toRow } from '../ui/statFormat';
 import { createWeaponHud, type WeaponSlot } from '../ui/weaponHud';
+import { createItemHud } from '../ui/itemHud';
 import type { WeaponId } from '../weapons/weapon';
 import type { Planet } from './planet';
 import { jitter } from './sounds';
@@ -53,11 +54,13 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   const runHud = createRunHud();
   const banner = createEventBanner();
   const weaponHud = createWeaponHud();
+  const itemHud = createItemHud();
   const setHud = (v: boolean) => {
     healthHud.setVisible(v);
     alcoholHud.setVisible(v);
     runHud.setVisible(v);
     weaponHud.setVisible(v);
+    itemHud.setVisible(v);
     minimap.setVisible(v);
   };
   const icons = new Map<WeaponId, string>();
@@ -163,6 +166,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
       chestPrompt.update(chest ? game.chests.price : null, game.coins);
       runHud.update(game.runTime, game.kills, game.coins);
       weaponHud.update(slots());
+      itemHud.update(game.items);
       if (game.phase === 'dead') deathBanner.update(game.deadTime, game.runTime, game.kills);
       // Espace ou bouton A : Jouer sur l'accueil, Continuer sur le bilan de mort
       if (input.jumpPressed) {

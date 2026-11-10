@@ -6,6 +6,9 @@ export const LOADING = { frameBudgetMs: 25 } as const;
 /** Emplacements d'armes : 4 armes maximum (GDD section 6). */
 export const WEAPON_HUD = { slots: 4 } as const;
 
+/** Objets de coffre, sous les armes : hauteur depuis le haut (px), taille d'une case, écart, cases par rangée. */
+export const ITEM_HUD = { top: 124, size: 36, gap: 10, perRow: 6 } as const;
+
 /**
  * Rappel près d'un coffre fermé : hauteur au-dessus du bas de l'écran (px), durée du tremblement
  * quand il manque des capsules (s).
