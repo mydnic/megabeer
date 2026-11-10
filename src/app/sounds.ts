@@ -35,7 +35,12 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
   };
 
   // Coffres : le couvercle claque à l'ouverture ; choc sourd quand il manque des capsules
-  game.events.on('chestOpened', () => audio.play(AUDIO.chest.open, AUDIO.chest.openVolume, AUDIO.chest.openRate * jitter(0.04), 0, 'ui'));
+  game.events.on('chestRevealing', ({ rarity }) => {
+    const R = AUDIO.reveal;
+    audio.play(AUDIO.chest.open, AUDIO.chest.openVolume, AUDIO.chest.openRate * jitter(0.04), 0, 'ui');
+    for (let i = 0; i <= rarity; i++) setTimeout(() => audio.play(R.sample, R.volume, R.rate + R.step * i, 0, 'ui'), (i + 1) * R.gap * 1000);
+    if (rarity >= R.bellFrom) setTimeout(() => audio.play(R.bell, R.bellVolume, R.bellRate, 0, 'ui'), (rarity + 1) * R.gap * 1000);
+  });
   game.events.on('chestDenied', () => audio.play(AUDIO.chest.deny, AUDIO.chest.denyVolume, AUDIO.chest.denyRate, 0, 'ui'));
   // Capsule ramassée : tintement de métal aigu
   let lastCoin = -1;

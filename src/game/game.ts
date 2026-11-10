@@ -83,6 +83,8 @@ export type GameEvents = {
   pumpFilled: { pump: Pump; cards: Card[] };
   /** Un bonus de stat est appliqué (pompe à bière). */
   statGained: { stat: StatId; value: number };
+  /** Coffre payé : sa rareté se révèle pendant `duration` s (jeu figé), avant l'écran de choix. */
+  chestRevealing: { chest: Chest; rarity: number; duration: number };
   /** Coffre ouvert (payé `price`) : sa rareté et les objets proposés. */
   chestOpened: { chest: Chest; price: number; rarity: number; cards: Card[] };
   /** Touche d'action sur un coffre sans assez de capsules. */
@@ -229,7 +231,9 @@ export class Game {
   setThrowRig(rig: ThrowRig) { this.weaponCtx.rig = rig; }
 
   /** Le monde est figé (menu pause ou choix de carte). */
-  get frozen() { return this.menuPaused || this.offer !== null; }
+  get frozen() { return this.menuPaused || this.offer !== null || this.reveal !== null; }
+  /** Coffre en train de révéler sa rareté (temps restant, s). */
+  private reveal: { chest: Chest; price: number; rarity: number; cards: Card[]; left: number } | null = null;
 
   // ------------------------------------------------------------------ cycle de la run
 
@@ -298,6 +302,13 @@ export class Game {
   /** Avance le jeu de `realDt` secondes réelles ; renvoie la durée de jeu écoulée (0 si figé). */
   step(realDt: number, input: InputState = NO_INPUT) {
     if (this.deadTime >= 0) this.deadTime += realDt;
+    // Coffre : la révélation se joue en temps réel, puis l'écran de choix s'ouvre
+    if (this.reveal && (this.reveal.left -= realDt) <= 0) {
+      const { chest, price, rarity, cards } = this.reveal;
+      this.reveal = null;
+      this.offer = cards;
+      this.events.emit('chestOpened', { chest, price, rarity, cards });
+    }
     const frozen = this.frozen;
     const dt = frozen ? 0 : realDt * this.timeScale() * this.devTimeScale;
     const move = this.phase === 'run' && !frozen && !this.arriving ? input : NO_INPUT;
@@ -376,8 +387,8 @@ export class Game {
     this.chests.opened++;
     const rarity = rollTier(this.stats.luck);
     const cards = rollItemCards(rarity, CHESTS.choices);
-    this.offer = cards;
-    this.events.emit('chestOpened', { chest, price, rarity, cards });
+    this.reveal = { chest, price, rarity, cards, left: CHESTS.revealTime };
+    this.events.emit('chestRevealing', { chest, rarity, duration: CHESTS.revealTime });
   }
 
   /** Synergies actives (toutes leurs armes équipées). */
@@ -576,6 +587,7 @@ export class Game {
     this.arriving = false;
     this.menuPaused = false;
     this.offer = null;
+    this.reveal = null;
     this.runTime = 0;
     this.kills = 0;
     this.acc = 0;

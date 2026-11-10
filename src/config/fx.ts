@@ -141,3 +141,28 @@ export const SHIELD_SPARKS = {
   glow: 1.4,
 } as const satisfies ShardLook;
 
+
+/**
+ * Révélation de la rareté d'un coffre (GDD : « la couleur de la mousse révèle la rareté ») : une
+ * colonne de lumière et une fontaine de mousse de la couleur de la rareté (RARITIES), plus hautes et
+ * plus fournies quand la rareté monte. Animée en temps réel (le jeu est figé pendant ce temps).
+ */
+export const CHEST_REVEAL = {
+  /** Colonne : rayon (m), hauteur en Commun et ajout par rareté (m), opacité, montée (s), fondu final (s). */
+  columnRadius: 0.55,
+  columnHeight: 3,
+  columnPerRarity: 3.5,
+  columnOpacity: 0.55,
+  rise: 0.35,
+  fadeOut: 0.5,
+  /** Mousse : bulles en Commun et ajout par rareté, taille (m), vitesse vers le haut et d'écart (m/s), gravité, durée (s). */
+  foam: 24,
+  foamPerRarity: 18,
+  foamSize: 0.13,
+  foamUp: 7,
+  foamSpread: 2.6,
+  foamGravity: 14,
+  foamLife: 1.3,
+  /** Hauteur de départ au-dessus du pied du coffre (m). */
+  from: 0.8,
+} as const;

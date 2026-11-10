@@ -27,6 +27,9 @@ function standNear(t: ReturnType<typeof createTestGame>, chest: { pos: THREE.Vec
 /** Appui sur la touche d'action (une image). */
 const press = (t: ReturnType<typeof createTestGame>) => t.play(1 / 60, { action: true, actionPressed: true });
 
+/** Appui, puis attente de la fin de la révélation (l'écran de choix s'ouvre). */
+const open = (t: ReturnType<typeof createTestGame>) => { press(t); t.play(CHESTS.revealTime + 0.1); };
+
 const dist = (a: THREE.Vector3, b: THREE.Vector3) => a.angleTo(b) * PLANET_RADIUS;
 
 describe('Les coffres', () => {
@@ -62,12 +65,18 @@ describe('Les coffres', () => {
     press(t);
     expect(chest.opened).toBe(true);
     expect(t.game.coins).toBe(4);
+    // La rareté se révèle d'abord, jeu figé, sans cartes
+    expect(t.game.frozen).toBe(true);
+    expect(t.game.offer).toBeNull();
+    expect(t.events('chestRevealing')).toHaveLength(1);
+    t.play(CHESTS.revealTime + 0.1);
     expect(t.game.frozen).toBe(true);
     const cards = t.game.offer as ItemCard[];
     expect(cards).toHaveLength(CHESTS.choices);
     expect(new Set(cards.map((c) => c.item)).size).toBe(CHESTS.choices);
     expect(new Set(cards.map((c) => c.rarity)).size).toBe(1);
     expect(cards[0].rarity).toBe(t.events('chestOpened')[0].rarity);
+    expect(t.events('chestRevealing')[0].rarity).toBe(cards[0].rarity);
   });
 
   it('hors de portée, la touche ne fait rien', () => {
@@ -85,7 +94,7 @@ describe('Les coffres', () => {
     t.game.coins = 1000;
     const [a, b] = t.game.chests.list;
     standNear(t, a, 1.8);
-    press(t);
+    open(t);
     t.game.pickCard(t.game.offer![0]);
     const after1 = t.game.coins;
     expect(after1).toBe(1000 - CHESTS.basePrice);
@@ -98,7 +107,7 @@ describe('Les coffres', () => {
     const { t } = arena();
     t.game.coins = 100;
     standNear(t, t.game.chests.list[0], 1.8);
-    press(t);
+    open(t);
     const card = (t.game.offer as ItemCard[]).find((c) => ITEMS[c.item].stat === 'damage') ?? (t.game.offer as ItemCard[])[0];
     const stat = ITEMS[card.item].stat;
     const before = stat === 'maxHp' ? t.game.health.max : t.game.stats[stat];
@@ -132,5 +141,19 @@ describe('Les coffres', () => {
     }
     expect(closest).toBeLessThan(2);
     expect(closest).toBeGreaterThan(Math.min(CHESTS.body.halfX, CHESTS.body.halfZ));
+  });
+
+  it('pendant la révélation, les zombies sont figés et on ne peut pas mettre en pause', () => {
+    const { t } = arena();
+    t.game.coins = 100;
+    const chest = t.game.chests.list[0];
+    standNear(t, chest, 1.8);
+    const z = t.game.spawnZombie('zombie', t.inFront(8), t.game.player.facing.clone().negate())!;
+    press(t);
+    const at = z.pos.clone();
+    t.play(CHESTS.revealTime * 0.5);
+    expect(z.pos.distanceTo(at)).toBeLessThan(1e-6);
+    t.game.pause();
+    expect(t.events('paused')).toHaveLength(0);
   });
 });

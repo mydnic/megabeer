@@ -75,6 +75,11 @@ export const AUDIO = {
    */
   pump: { pour: 'pour', pourVolume: 0.5, fade: 0.15, full: 'impactGlass_light', fullVolume: 0.6, fullRate: 1.1 },
   /** Coffre : ouverture (bois qui claque), refus faute de capsules (petit choc sourd). */
+  /**
+   * Révélation de la rareté : une note de verre par rareté (Commun 1, Légendaire 5), de plus en plus
+   * aiguë, espacées de `gap` s ; dès Dingue, une cloche grave en plus.
+   */
+  reveal: { sample: 'impactGlass_light', volume: 0.55, rate: 1.0, step: 0.2, gap: 0.12, bell: 'impactBell_heavy', bellVolume: 0.5, bellRate: 0.7, bellFrom: 3 },
   chest: { open: 'impactWood_heavy', openVolume: 0.7, openRate: 1.1, deny: 'impactPlate_light', denyVolume: 0.5, denyRate: 0.8 },
   /** Capsule (Pièce) ramassée : petit tintement métallique aigu. */
   coin: { sample: 'impactMetal_light', volume: 0.45, rate: 1.9, minGap: 0.05 },
