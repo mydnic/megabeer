@@ -7,8 +7,8 @@ import { STAT_BONUSES, type PumpTier, type StatId } from '../config/pumps';
 export type UpgradeCard = { kind: 'upgrade'; weapon: Weapon; upgrade: UpgradeDef; tier: number };
 /** Nouvelle arme à équiper (une place libre dans l'arsenal), et les synergies qu'elle activerait. */
 export type NewWeaponCard = { kind: 'weapon'; weaponId: WeaponId; synergies: SynergyId[] };
-/** Bonus de stat d'une pompe à bière (valeur déjà multipliée par sa qualité). */
-export type StatCard = { kind: 'stat'; stat: StatId; value: number; tier: PumpTier };
+/** Bonus de stat d'une pompe à bière : sa rareté (index dans RARITIES), sa valeur (déjà multipliée), la qualité de la pompe. */
+export type StatCard = { kind: 'stat'; stat: StatId; value: number; rarity: number; tier: PumpTier };
 /** Une carte proposée : level-up (amélioration, nouvelle arme) ou pompe (bonus de stat). */
 export type Card = UpgradeCard | NewWeaponCard | StatCard;
 

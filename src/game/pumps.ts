@@ -3,7 +3,8 @@ import { PUMPS as P, PUMP_TIERS, STAT_BONUSES, type PumpTier } from '../config/p
 import { PLANET_RADIUS } from '../config/world';
 import { heightAt } from '../world/terrain';
 import type { DecorCollider } from '../world/decor/collider';
-import type { StatCard } from './levelUpCards';
+import { rollTier as rollRarity, type StatCard } from './levelUpCards';
+import { RARITIES } from '../config/upgrades';
 
 /** Une pompe à bière posée sur la planète. */
 export type Pump = {
@@ -71,15 +72,21 @@ export class Pumps {
   }
 }
 
-/** Les bonus proposés par une pompe : `n` stats différentes, valeurs multipliées par sa qualité. */
-export function rollStatCards(tier: PumpTier, n: number): StatCard[] {
-  const order: PumpTier[] = ['bronze', 'argent', 'or'];
-  const pool = STAT_BONUSES.filter((b) => order.indexOf(b.minTier ?? 'bronze') <= order.indexOf(tier));
+/**
+ * Les bonus proposés par une pompe : `n` stats différentes, chacune avec sa rareté, tirée avec la
+ * LUCK du joueur plus la chance de la pompe (une pompe en or sort plus souvent des raretés hautes).
+ * La valeur suit la rareté, comme les cartes d'arme.
+ */
+export function rollStatCards(tier: PumpTier, n: number, luck: number): StatCard[] {
   const cards: StatCard[] = [];
-  const left = [...pool];
+  const left = [...STAT_BONUSES];
   while (cards.length < n && left.length) {
-    const b = left.splice(Math.floor(Math.random() * left.length), 1)[0];
-    cards.push({ kind: 'stat', stat: b.id, value: b.fixed ? b.value : b.value * PUMP_TIERS[tier].mult, tier });
+    const rarity = rollRarity(luck + PUMP_TIERS[tier].luck);
+    const ok = left.filter((b) => (b.minRarity ?? 0) <= rarity);
+    if (!ok.length) break;
+    const b = ok[Math.floor(Math.random() * ok.length)];
+    left.splice(left.indexOf(b), 1);
+    cards.push({ kind: 'stat', stat: b.id, value: b.fixed ? b.value : b.value * RARITIES[rarity].mult, rarity, tier });
   }
   return cards;
 }

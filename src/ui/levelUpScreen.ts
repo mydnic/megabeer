@@ -104,12 +104,12 @@ export function createLevelUpScreen(onPick: (card: Card) => void, onHover: () =>
               return `<div class="lu-syn" style="--s:${S.color}">Synergie : ${S.name}<small>${S.pitch}</small></div>`;
             }).join('')}`;
         } else if (c.kind === 'stat') {
-          // Bonus de pompe : cadre de la couleur de la pompe (bronze, argent, or)
-          const T = PUMP_TIERS[c.tier];
+          // Bonus de pompe : cadre et nom de sa rareté, comme les cartes d'arme
+          const r = RARITIES[c.rarity];
           const label = STAT_BONUSES.find((b) => b.id === c.stat)!.label;
-          d.className = `lu-card${i === 0 ? ' sel' : ''}`;
-          d.style.setProperty('--c', `#${T.color.toString(16).padStart(6, '0')}`);
-          d.innerHTML = `${key}<div class="lu-tier">Pompe ${T.name}</div>${pumpIcon('lu-bottle', T.color)}
+          d.className = `lu-card t${c.rarity}${i === 0 ? ' sel' : ''}`;
+          d.style.setProperty('--c', r.color);
+          d.innerHTML = `${key}<div class="lu-tier">${r.name}</div>${pumpIcon('lu-bottle', PUMP_TIERS[c.tier].color)}
             <div class="lu-name">${label[0].toUpperCase()}${label.slice(1)}</div><div class="lu-eff">${statCardText(c)}</div>`;
         } else {
           const r = RARITIES[c.tier];

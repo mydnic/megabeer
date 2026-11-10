@@ -47,7 +47,7 @@ export class PlayerStats {
       { label: 'Vitesse', value: this.moveSpeed, unit: 'mult', bonus: this.moveSpeed - 1, bonusKind: 'percent' },
       { label: "Vitesse d'attaque", value: this.attackSpeed, unit: 'mult', bonus: this.attackSpeed - PLAYER_STATS.attackSpeed, bonusKind: 'percent' },
       { label: 'Projectiles en plus', value: this.extraProjectiles, unit: 'count', bonus: this.extraProjectiles - PLAYER_STATS.extraProjectiles, bonusKind: 'plus' },
-      { label: 'Ramassage', value: this.pickupRange, unit: 'meters', bonus: this.pickupRange / XP_DROPS.pickupRange - 1, bonusKind: 'percent' },
+      { label: "Portée d'attraction", value: this.pickupRange, unit: 'meters', bonus: this.pickupRange / XP_DROPS.pickupRange - 1, bonusKind: 'percent' },
       { label: "Gain d'XP", value: this.xpGain, unit: 'mult', bonus: this.xpGain - 1, bonusKind: 'percent' },
       { label: 'Chance', value: this.luck, unit: 'count', bonus: this.luck, bonusKind: 'plus' },
     ];

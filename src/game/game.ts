@@ -290,7 +290,7 @@ export class Game {
         // Pompes à bière : pleine, elle fige le jeu et propose ses bonus
         const full = this.pumps.update(dt, p.pos);
         if (full) {
-          const cards = rollStatCards(full.tier, PUMPS.choices);
+          const cards = rollStatCards(full.tier, PUMPS.choices, this.stats.luck);
           this.offer = cards;
           this.events.emit('pumpFilled', { pump: full, cards });
         }

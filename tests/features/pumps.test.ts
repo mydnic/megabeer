@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
-import { PUMPS, PUMP_TIERS, STAT_BONUSES } from '../../src/config/pumps';
+import { PUMPS, STAT_BONUSES } from '../../src/config/pumps';
+import { RARITIES } from '../../src/config/upgrades';
+import { rollStatCards } from '../../src/game/pumps';
 import { PLANET_RADIUS } from '../../src/config/world';
 import { WEAPONS } from '../../src/config/weapons';
 import type { StatCard } from '../../src/game/levelUpCards';
@@ -65,14 +67,24 @@ describe('Les pompes à bière', () => {
     expect(t.events('pumpFilled')[0].pump).toBe(pump);
   });
 
-  it('plus la pompe est précieuse, plus ses bonus sont forts', () => {
+  it('chaque bonus a une rareté, et sa valeur suit la rareté comme les cartes d\'arme', () => {
     const { t } = arena();
     const pump = t.game.pumps.list[0];
     fill(t, pump);
     for (const c of t.game.offer! as StatCard[]) {
       const base = STAT_BONUSES.find((b) => b.id === c.stat)!;
-      expect(c.value).toBeCloseTo(base.value * PUMP_TIERS[pump.tier].mult);
+      expect(c.value).toBeCloseTo(base.fixed ? base.value : base.value * RARITIES[c.rarity].mult);
     }
+  });
+
+  it('une pompe en or, ou plus de chance, sort plus souvent des raretés hautes', () => {
+    const highShare = (tier: 'bronze' | 'or', luck: number) => {
+      let high = 0, n = 0;
+      for (let i = 0; i < 1500; i++) for (const c of rollStatCards(tier, 3, luck)) { n++; if (c.rarity >= 2) high++; }
+      return high / n;
+    };
+    expect(highShare('or', 0)).toBeGreaterThan(highShare('bronze', 0) * 1.5);
+    expect(highShare('bronze', 20)).toBeGreaterThan(highShare('bronze', 0) * 1.5);
   });
 
   it("choisir un bonus l'applique, la pompe est vidée et ne se remplit plus", () => {
