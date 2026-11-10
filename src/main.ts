@@ -140,7 +140,7 @@ function frame(now: number) {
   kamikazeView.sync(game.horde.zombies);
   protectorView.sync(game.horde.zombies);
   dazedView.sync(game.horde.zombies);
-  pumpsView.sync(game.pumps.list);
+  pumpsView.sync(game.pumps.list, game.pumps.filling ? game.pumps.focus : null);
   shards.update(dt);
   wine.update(dt);
   wood.update(dt);

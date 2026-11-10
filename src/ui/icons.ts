@@ -60,16 +60,24 @@ export const gueuzeIcon = (cls: string) => `<svg viewBox="0 0 40 90" class="${cl
 <path d="M13 69h14" stroke="#e9d9b6" stroke-width=".7"/>
 <path d="M10.5 36c-.5 6-.5 8 0 10" stroke="#fff3" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>`;
 
-/** Pompe à bière : fût couché sur son chevalet, cerclages de la couleur de la pompe, robinet qui coule. */
-export const pumpIcon = (cls: string, hoop: number) => {
-  const c = `#${hoop.toString(16).padStart(6, '0')}`;
-  return `<svg viewBox="0 0 40 90" class="${cls}"><path d="M8 62l-3 18M32 62l3 18M10 70h20" stroke="#5e3519" stroke-width="3.5" stroke-linecap="round"/>
-<ellipse cx="20" cy="48" rx="15" ry="14" fill="#8a5230" stroke="#1a120c" stroke-width="3"/>
-<ellipse cx="20" cy="48" rx="9" ry="8.5" fill="#a8693f" stroke="#1a120c" stroke-width="2"/>
-<ellipse cx="20" cy="48" rx="13" ry="12" fill="none" stroke="${c}" stroke-width="2.6"/>
-<rect x="17" y="53" width="6" height="5" rx="1" fill="${c}" stroke="#1a120c" stroke-width="1.5"/>
-<path d="M20 58v8" stroke="#f2c14e" stroke-width="2.4" stroke-linecap="round"/>
-<path d="M10 40c2-3 4-5 7-6" stroke="#fff4" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>`;
+/**
+ * Pompe à bière, de profil : une tireuse (colonne chromée, bec, poignée de la couleur de la pompe) qui
+ * remplit une pinte posée sur l'égouttoir ; filet de bière, pinte à moitié pleine avec sa mousse.
+ */
+export const pumpIcon = (cls: string, handle: number) => {
+  const c = `#${handle.toString(16).padStart(6, '0')}`;
+  return `<svg viewBox="0 0 40 90" class="${cls}">
+<rect x="1.5" y="80" width="37" height="6" rx="2" fill="#5a5f66" stroke="#1a120c" stroke-width="2.5"/>
+<path d="M5 80V18c0-2 1.5-3.5 3.5-3.5h20c2 0 3.5 1.5 3.5 3.5v6h-4v-4H11v60z" fill="#c8ccd2" stroke="#1a120c" stroke-width="2.5" stroke-linejoin="round"/>
+<path d="M8 22v54" stroke="#fff8" stroke-width="2" stroke-linecap="round"/>
+<path d="M14.5 14.5l-1.5-11c0-1 .8-1.8 1.8-1.8h4.4c1 0 1.8.8 1.8 1.8l-1.5 11z" fill="${c}" stroke="#1a120c" stroke-width="2" stroke-linejoin="round"/>
+<path d="M30 28v29" stroke="#e8a01c" stroke-width="2.4" stroke-linecap="round"/>
+<path d="M19 48h22l-2.4 32H21.4z" fill="rgba(255,255,255,.22)"/>
+<path d="M19.9 60h20.2l-1.5 20H21.4z" fill="#e8a01c"/>
+<path d="M19.6 56h20.8l-.3 4.5H19.9z" fill="#fff4dc"/>
+<circle cx="25" cy="70" r="1.1" fill="#fff6"/><circle cx="33" cy="74" r=".9" fill="#fff6"/><circle cx="29" cy="66" r=".8" fill="#fff6"/>
+<path d="M19 48h22l-2.4 32H21.4z" fill="none" stroke="#1a120c" stroke-width="2.5" stroke-linejoin="round"/>
+<path d="M22 52l1.5 24" stroke="#fff8" stroke-width="1.6" stroke-linecap="round"/></svg>`;
 };
 
 /** Icône de chaque arme (ajouter une arme = ajouter son icône ici). */

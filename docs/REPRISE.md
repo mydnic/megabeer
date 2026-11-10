@@ -67,7 +67,8 @@ Fait et validé dans la feature 7 :
 2. **En cours : l'exploration** (choisie le 2026-11-10 avant de caler la run : sans raison de bouger,
    l'équilibrage serait faussé). Ordre proposé : pompe à bière, puis Pièces et poubelles, puis fûts et
    premiers objets passifs, puis mini-carte. **Pompe à bière : checkpoint 1 fait, à faire valider**
-   (placement, remplissage, choix de 3 bonus de stat, modèle, faisceau, pinte-jauge). Reste : sons du
+   (placement, remplissage, choix de 3 bonus de stat avec rareté et LUCK, modèle, faisceau, jauge à l'écran,
+   dôme de zone, icône tireuse). Son de la bière qui coule : il manque l'échantillon `pour` (le demander). Reste : sons du
    remplissage et de la pompe pleine, collision du fût (on le traverse), nombre de pompes (passé à 20, demande de l'utilisateur)
    (6 sur une planète d'environ 1 080 m de tour : la plus proche peut être à 190 m).
 3. **Ensuite : caler la run de 10 min** (fin de feature 7), à partir des journaux de run de

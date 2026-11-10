@@ -61,6 +61,14 @@ export const PUMP_LOOK = {
   beamRadius: 0.35,
   beamHeight: 40,
   beamOpacity: 0.22,
+  /**
+   * Zone de remplissage : dôme très discret du rayon PUMPS.radius, dont seuls les bords luisent
+   * (liseré), aplati en hauteur ; plus visible quand le joueur est dedans.
+   */
+  zoneFlatten: 0.6,
+  zoneOpacity: 0.12,
+  zoneOpacityInside: 0.24,
+  zoneRim: 2.2,
   /** Pinte-jauge : hauteur au-dessus du sol (m), taille du verre (m), épaisseur de mousse (m), couleurs. */
   pintAbove: 1.75,
   pintRadius: 0.16,
