@@ -64,7 +64,13 @@ Fait et validé dans la feature 7 :
    Fait aussi le 2026-11-09 : la Blonde est devenue la **Canette** (canette de bière en métal, icône
    façon Jupiler 33cl), icône de la Stout façon Duvel marquée « Stout ». La Pils tiède est retirée du
    roster : l'arme n° 10 est à inventer avec l'utilisateur.
-2. **En cours : caler la run de 10 min** (fin de feature 7), à partir des journaux de run de
+2. **En cours : l'exploration** (choisie le 2026-11-10 avant de caler la run : sans raison de bouger,
+   l'équilibrage serait faussé). Ordre proposé : pompe à bière, puis Pièces et poubelles, puis fûts et
+   premiers objets passifs, puis mini-carte. **Pompe à bière : checkpoint 1 fait, à faire valider**
+   (placement, remplissage, choix de 3 bonus de stat, modèle, faisceau, pinte-jauge). Reste : sons du
+   remplissage et de la pompe pleine, collision du fût (on le traverse), nombre et distance des pompes
+   (6 sur une planète d'environ 1 080 m de tour : la plus proche peut être à 190 m).
+3. **Ensuite : caler la run de 10 min** (fin de feature 7), à partir des journaux de run de
    l'utilisateur (`logs/runs/`). Ses premières parties (2026-11-09) n'ont pas été enregistrées : le
    serveur de dev était arrêté (le journal part vers `/__runlog` du serveur ; la page déjà chargée
    continue de tourner sans lui). Toujours vérifier que `corepack yarn dev` tourne avant qu'il joue.
@@ -140,6 +146,7 @@ L=C:/Users/mydnic/Desktop/MODELS
 "$B" -b --factory-startup --disable-autoexec -P tools/blender/props.py -- --lib $L --variant canette --out src/assets/models/canette.glb
 "$B" -b --factory-startup --disable-autoexec -P tools/blender/props.py -- --lib $L --variant fut --out src/assets/models/fut.glb
 "$B" -b --factory-startup --disable-autoexec -P tools/blender/props.py -- --lib $L --variant gueuze --out src/assets/models/bouteille_gueuze.glb
+"$B" -b --factory-startup --disable-autoexec -P tools/blender/props.py -- --lib $L --variant pompe --out src/assets/models/pompe.glb
 "$B" -b --factory-startup --disable-autoexec -P tools/blender/props.py -- --lib $L --variant stout --out src/assets/models/bouteille_stout.glb
 # Monstres Animated Monsters (gargouille)
 "$B" -b --factory-startup --disable-autoexec -P tools/blender/monsters.py -- --lib $L --variant gargouille --out src/assets/models/gargouille.glb

@@ -44,3 +44,23 @@ export const STAT_BONUSES: readonly StatBonusDef[] = [
   { id: 'luck', label: 'chance', value: 2, kind: 'flat' },
   { id: 'extraProjectiles', label: 'projectile en plus', value: 1, kind: 'flat', fixed: true, minTier: 'or' },
 ];
+
+/** Apparence d'une pompe (world/pumpsView.ts) : fût sur chevalet KayKit, faisceau, pinte-jauge au-dessus. */
+export const PUMP_LOOK = {
+  /** Hauteur du fût sur son chevalet (m). */
+  height: 1.3,
+  wood: 0x8a5230,
+  /** Cerclages d'une pompe déjà vidée (ternes). */
+  usedHoops: 0x5a5550,
+  /** Faisceau de lumière : rayon et hauteur (m), opacité. */
+  beamRadius: 0.35,
+  beamHeight: 40,
+  beamOpacity: 0.22,
+  /** Pinte-jauge : hauteur au-dessus du sol (m), taille du verre (m), épaisseur de mousse (m), couleurs. */
+  pintAbove: 1.75,
+  pintRadius: 0.16,
+  pintHeight: 0.42,
+  foam: 0.06,
+  beer: 0xe0a020,
+  foamColor: 0xfff4dc,
+} as const;

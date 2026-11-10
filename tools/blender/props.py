@@ -10,6 +10,7 @@ Variantes (--variant) :
 - canette : la canette de soda du Kenney Food Kit (Metal, Corps), pour la Canette.
 - fut : le grand tonneau du KayKit Dungeon (Bois, Cerclage), pour le Fût qui roule.
 - gueuze : la bouteille fine du Fantasy Props MegaKit (Verre, Bouchon), pour la Gueuze.
+- pompe : le fût sur chevalet du KayKit Dungeon (Bois, Cerclage), pour les pompes à bière.
 
 Usage (Blender 5.2) :
   blender -b --factory-startup --disable-autoexec -P tools/blender/props.py -- --lib C:/Users/mydnic/Desktop/MODELS
@@ -62,6 +63,14 @@ VARIANTS = {
         'rules': [
             ('Bouchon', {'min_height': 0.93}),
             ('Verre', {}),
+        ],
+    },
+    'pompe': {
+        'src': 'decor/kaykit_dungeon/gltf/keg.gltf',
+        # Cerclages gris (peu saturés), recolorés en bronze, argent ou or par le jeu ; le reste en bois
+        'rules': [
+            ('Cerclage', {'max_sat': 0.3}),
+            ('Bois', {}),
         ],
     },
 }
