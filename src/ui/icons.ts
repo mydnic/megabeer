@@ -89,3 +89,19 @@ const WEAPON_ICONS: Record<WeaponId, (cls: string) => string> = {
 };
 
 export const weaponIcon = (id: WeaponId, cls: string) => WEAPON_ICONS[id](cls);
+
+/** Coffre en bois cerclé de fer, couvercle bombé et serrure de la couleur `lock` (cartes d'objet). */
+export const chestIcon = (cls: string, lock: number) => {
+  const c = `#${lock.toString(16).padStart(6, '0')}`;
+  return `<svg viewBox="0 0 64 64" class="${cls}">
+<path d="M8 30c0-10 10-17 24-17s24 7 24 17z" fill="#9a5f36" stroke="#1a120c" stroke-width="3" stroke-linejoin="round"/>
+<path d="M8 30h48v24H8z" fill="#8a5230" stroke="#1a120c" stroke-width="3" stroke-linejoin="round"/>
+<path d="M16 15.5V54M48 15.5V54" stroke="#6a6e75" stroke-width="5"/><path d="M16 15.5V54M48 15.5V54" stroke="#1a120c" stroke-width="1.5" stroke-dasharray="0 0" opacity=".35"/>
+<path d="M8 30h48" stroke="#1a120c" stroke-width="3"/>
+<rect x="26" y="26" width="12" height="14" rx="2" fill="${c}" stroke="#1a120c" stroke-width="2.5"/>
+<circle cx="32" cy="32" r="2" fill="#1a120c"/><path d="M32 33v4" stroke="#1a120c" stroke-width="2"/>
+<path d="M13 24c3-5 9-7 14-8" stroke="#fff6" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>`;
+};
+
+/** Capsule de bière (Pièces), vue de trois quarts : toute rouge, dessus clair et anneau imprimé, jupe crantée plus sombre. */
+export const capsuleIcon = () => `<svg viewBox="0 0 24 24"><path d="M2.5 9L1.9 17.5L4.1 16.6L6.4 18.5L8.6 17.5L10.9 19.1L13.1 17.7L15.4 18.9L17.6 17.1L19.9 18.0L22.1 16.1L21.5 9z" fill="#a81c1c" stroke="#1a120c" stroke-width="1.6" stroke-linejoin="round"/><path d="M5.7 10.9v5.7" stroke="#6e1010" stroke-width="1"/><path d="M8.8 12.3v4.8" stroke="#6e1010" stroke-width="1"/><path d="M12.0 12.8v4.4" stroke="#6e1010" stroke-width="1"/><path d="M15.2 12.3v4.8" stroke="#6e1010" stroke-width="1"/><path d="M18.3 10.9v5.7" stroke="#6e1010" stroke-width="1"/><ellipse cx="12" cy="9" rx="9.5" ry="4.2" fill="#d42a2a" stroke="#1a120c" stroke-width="1.6"/><ellipse cx="12" cy="9" rx="5.2" ry="2.3" fill="none" stroke="#fff4dc" stroke-width="1.3"/><path d="M6.5 7.6a6 2.6 0 0 1 3.5-1.5" stroke="#fff8" stroke-width="1.1" fill="none" stroke-linecap="round"/></svg>`;

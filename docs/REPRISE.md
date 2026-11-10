@@ -75,8 +75,10 @@ Fait et validé dans la feature 7 :
    `Desktop/MODELS/decor/kaykit_dungeon`), ouverture par touche d'action E / bouton X, prix croissant, 1 objet parmi 3.
    Fait : Pièces (capsules dorées, 8 % des kills à la place de l'XP, compteur HUD). Les tests tirent la capsule par
    `createTestGame(seed, { coins: 'never' | 'always' | 'real' })` (« never » par défaut).
-   Ensuite : coffres (placement, prix, touche d'action, écran de choix), système d'objets et premiers objets
-   simples (stats existantes), poubelles, coffre piégé. Son de la bière qui coule : « Beer service 2 » de BigSoundBank (CC0, choisi par l'utilisateur),
+   Fait aussi : 100 coffres (sol plat, collision, touche d'action E / bouton X, prix 5 +3 par coffre, rareté
+   à l'ouverture, 1 objet parmi 3), premier lot de 8 objets à stat (`config/items.ts`), DEV « +50 capsules ».
+   À valider en jeu par l'utilisateur. Ensuite : effet de rareté à l'ouverture, icônes d'objets, objets
+   à effets spéciaux un par un, poubelles, coffre piégé. Son de la bière qui coule : « Beer service 2 » de BigSoundBank (CC0, choisi par l'utilisateur),
    joué d'un bloc pendant le remplissage, repris au niveau de la pinte, coupé en fondu hors de la zone. Reste : sons du
    remplissage et de la pompe pleine, collision du fût (on le traverse), nombre de pompes (passé à 20, demande de l'utilisateur)
    (6 sur une planète d'environ 1 080 m de tour : la plus proche peut être à 190 m).

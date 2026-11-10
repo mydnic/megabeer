@@ -9,6 +9,9 @@ import type { Game } from '../game/game';
 import { createAlcoholHud } from '../ui/alcoholHud';
 import { createPumpGauge } from '../ui/pumpGauge';
 import { createMinimap } from '../ui/minimap';
+import { createChestPrompt } from '../ui/chestPrompt';
+import { capsuleIcon } from '../ui/icons';
+import { RARITIES } from '../config/upgrades';
 import { createDeathBanner } from '../ui/deathBanner';
 import { createEventBanner } from '../ui/eventBanner';
 import { createHealthHud } from '../ui/healthHud';
@@ -44,6 +47,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   const alcoholHud = createAlcoholHud(game.progression);
   const pumpGauge = createPumpGauge();
   const minimap = createMinimap();
+  const chestPrompt = createChestPrompt(capsuleIcon());
   const runHud = createRunHud();
   const banner = createEventBanner();
   const weaponHud = createWeaponHud();
@@ -109,6 +113,8 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   game.events.on('levelUpOffered', ({ level, cards }) => levelUp.show(level, cards));
   // Pompe à bière pleine : même écran, titre de la pompe
   game.events.on('pumpFilled', ({ pump, cards }) => levelUp.show(0, cards, `Pompe en ${PUMP_TIERS[pump.tier].name} !`));
+  game.events.on('chestOpened', ({ rarity, cards }) => levelUp.show(0, cards, `Coffre ${RARITIES[rarity].name.toLowerCase()} !`));
+  game.events.on('chestDenied', () => chestPrompt.deny());
   game.events.on('cardPicked', () => { if (game.progression.pending === 0) lockCursor(); });
   game.events.on('playerHurt', ({ blocked }) => { if (!blocked) healthHud.hit(); });
   let pausedAt = 0;
@@ -146,7 +152,9 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
       if (game.phase === 'run' && !game.frozen) pumpGauge.update(game.pumps.focus, game.pumps.filling);
       else pumpGauge.hide();
       const pl = game.player;
-      minimap.update(realDt, pl.pos, pl.facing, pl.camFwd, game.pumps.list);
+      minimap.update(realDt, pl.pos, pl.facing, pl.camFwd, game.pumps.list, game.chests.list);
+      const chest = game.phase === 'run' && !game.frozen ? game.chests.focus : null;
+      chestPrompt.update(chest ? game.chests.price : null, game.coins);
       runHud.update(game.runTime, game.kills, game.coins);
       weaponHud.update(slots());
       if (game.phase === 'dead') deathBanner.update(game.deadTime, game.runTime, game.kills);

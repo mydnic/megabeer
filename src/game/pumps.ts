@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { PUMPS as P, PUMP_LOOK, PUMP_TIERS, STAT_BONUSES, type PumpTier } from '../config/pumps';
 import { PLANET_RADIUS } from '../config/world';
 import { heightAt } from '../world/terrain';
-import type { DecorBody, DecorCollider } from '../world/decor/collider';
+import { groundBodies, type DecorCollider } from '../world/decor/collider';
 import { boxShape } from '../world/decor/gridShape';
 import { rollTier as rollRarity, type StatCard } from './levelUpCards';
 import { RARITIES } from '../config/upgrades';
@@ -27,7 +27,7 @@ function rollTier(): PumpTier {
 }
 
 /** Point uniforme sur la sphère (direction). */
-function randomDir(out: THREE.Vector3) {
+export function randomDir(out: THREE.Vector3) {
   const u = Math.random() * 2 - 1, a = Math.random() * Math.PI * 2, r = Math.sqrt(1 - u * u);
   return out.set(r * Math.cos(a), u, r * Math.sin(a));
 }
@@ -63,15 +63,10 @@ export class Pumps {
       this.list.push({ pos, tier: rollTier(), fill: 0, used: false });
     }
     // Le fût est plein : le joueur et les zombies butent dessus (même repère que son rendu)
-    const shape = boxShape(P.body.halfX, P.body.halfZ, PUMP_LOOK.height);
-    const Y = new THREE.Vector3(0, 1, 0);
-    this.collider.setExtra(this.list.map((p): DecorBody => {
-      const rot = new THREE.Quaternion().setFromUnitVectors(Y, p.pos.clone().normalize());
-      return { pos: p.pos, rot, inv: new THREE.Matrix4().compose(p.pos, rot, new THREE.Vector3(1, 1, 1)).invert(), shape };
-    }));
+    this.collider.setExtra('pumps', groundBodies(this.list.map((p) => p.pos), boxShape(P.body.halfX, P.body.halfZ, PUMP_LOOK.height)));
   }
 
-  clear() { this.list.length = 0; this.focus = null; this.filling = false; this.collider.setExtra([]); }
+  clear() { this.list.length = 0; this.focus = null; this.filling = false; this.collider.setExtra('pumps', []); }
 
   /** Remplit (ou vide) chaque pompe ; renvoie celle qui vient d'être pleine, s'il y en a une. */
   update(dt: number, playerPos: THREE.Vector3): Pump | null {

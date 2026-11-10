@@ -23,6 +23,10 @@ import { WEAPON_FACTORIES } from '../weapons/registry';
 import { SYNERGIES } from '../config/weapons';
 import { activeSynergies, synergiesCompletedBy, type SynergyId } from './synergies';
 import { Pumps, rollStatCards, type Pump } from './pumps';
+import { Chests, rollItemCards, type Chest } from './chests';
+import { CHESTS } from '../config/chests';
+import { ITEMS, type ItemId } from '../config/items';
+import { rollTier } from './levelUpCards';
 import { PUMPS } from '../config/pumps';
 import type { StatId } from '../config/pumps';
 import { BASE_SPEED } from '../config/world';
@@ -79,6 +83,12 @@ export type GameEvents = {
   pumpFilled: { pump: Pump; cards: Card[] };
   /** Un bonus de stat est appliqué (pompe à bière). */
   statGained: { stat: StatId; value: number };
+  /** Coffre ouvert (payé `price`) : sa rareté et les objets proposés. */
+  chestOpened: { chest: Chest; price: number; rarity: number; cards: Card[] };
+  /** Touche d'action sur un coffre sans assez de capsules. */
+  chestDenied: { chest: Chest; price: number; coins: number };
+  /** Objet pris dans un coffre. */
+  itemGained: { item: ItemId; rarity: number; value: number };
   /** Une synergie s'active : toutes ses armes sont maintenant équipées. */
   synergyActivated: { id: SynergyId };
   /** Un diviseur tué se sépare : `children` sortent de son corps. */
@@ -107,7 +117,7 @@ export type GameDeps = {
 };
 
 /** Aucune entrée : joueur immobile (accueil, mort, pause, chute d'arrivée). */
-export const NO_INPUT: InputState = { moveX: 0, moveY: 0, lookX: 0, lookY: 0, mouseDX: 0, mouseDY: 0, zoom: 0, jump: false, jumpPressed: false };
+export const NO_INPUT: InputState = { moveX: 0, moveY: 0, lookX: 0, lookY: 0, mouseDX: 0, mouseDY: 0, zoom: 0, jump: false, jumpPressed: false, action: false, actionPressed: false };
 
 /** Pas de la physique du joueur (s). */
 const STEP = 1 / 120;
@@ -126,6 +136,9 @@ export class Game {
   readonly horde: ReturnType<typeof createHorde>;
   /** Pompes à bière de la run (exploration). */
   readonly pumps: Pumps;
+  readonly chests: Chests;
+  /** Objets pris pendant la run (dans l'ordre). */
+  readonly items: { item: ItemId; rarity: number }[] = [];
   readonly xp: ReturnType<typeof createXpDrops>;
   /** Capsules (Pièces) au sol. */
   readonly coinDrops: ReturnType<typeof createXpDrops>;
@@ -173,6 +186,7 @@ export class Game {
     this.groundAt = groundAt;
     this.horde = createHorde(deps.zombieKinds, player, deps.collider);
     this.pumps = new Pumps(deps.collider);
+    this.chests = new Chests(deps.collider);
     this.horde.onHit = (z, dir) => this.hurtPlayer(z, dir, z.def.damage);
     this.horde.onThrow = (z) => this.throwFrom(z);
     this.horde.onArm = (z) => {
@@ -226,6 +240,7 @@ export class Game {
     this.phase = 'run';
     this.player.reset(spawn.dir, spawn.facing);
     this.pumps.place(spawn.dir);
+    this.chests.place(spawn.dir, this.pumps.list.map((p) => p.pos));
     const landing = this.player.pos.clone();
     this.player.drop(ARRIVAL.height, ARRIVAL.speed);
     this.arriving = true;
@@ -264,6 +279,11 @@ export class Game {
     if (!this.offer?.includes(card)) return;
     this.offer = null;
     if (card.kind === 'stat') this.applyStatBonus(card.stat, card.value);
+    else if (card.kind === 'item') {
+      this.items.push({ item: card.item, rarity: card.rarity });
+      this.applyStatBonus(ITEMS[card.item].stat, card.value);
+      this.events.emit('itemGained', { item: card.item, rarity: card.rarity, value: card.value });
+    }
     else {
       if (card.kind === 'weapon') this.equip(card.weaponId);
       else applyCard(card);
@@ -306,6 +326,9 @@ export class Game {
           this.offer = cards;
           this.events.emit('pumpFilled', { pump: full, cards });
         }
+        // Coffres : celui à portée s'ouvre à la touche d'action, s'il y a de quoi payer
+        this.chests.update(p.pos);
+        if (input.actionPressed && this.chests.focus && !this.offer) this.openChest(this.chests.focus);
       }
       this.loadout.update(dt);
       this.events.emit('tick', { dt });
@@ -342,6 +365,19 @@ export class Game {
       if (stat === 'moveSpeed') this.player.speed = BASE_SPEED * this.stats.moveSpeed;
     }
     this.events.emit('statGained', { stat, value });
+  }
+
+  /** Paie et ouvre un coffre : la rareté se révèle, le jeu se fige sur 3 objets de cette rareté. */
+  private openChest(chest: Chest) {
+    const price = this.chests.price;
+    if (this.coins < price) { this.events.emit('chestDenied', { chest, price, coins: this.coins }); return; }
+    this.coins -= price;
+    chest.opened = true;
+    this.chests.opened++;
+    const rarity = rollTier(this.stats.luck);
+    const cards = rollItemCards(rarity, CHESTS.choices);
+    this.offer = cards;
+    this.events.emit('chestOpened', { chest, price, rarity, cards });
   }
 
   /** Synergies actives (toutes leurs armes équipées). */
@@ -549,6 +585,8 @@ export class Game {
     this.stats.reset();
     this.player.speed = BASE_SPEED;
     this.pumps.clear();
+    this.chests.clear();
+    this.items.length = 0;
     this.loadout.reset();
     this.horde.clear();
     this.horde.setPassive(false);

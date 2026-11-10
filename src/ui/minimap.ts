@@ -3,6 +3,7 @@ import { MINIMAP as M } from '../config/hud';
 import { PUMP_TIERS } from '../config/pumps';
 import { PLANET, PLANET_RADIUS } from '../config/world';
 import type { Pump } from '../game/pumps';
+import type { Chest } from '../game/chests';
 import { heightAt } from '../world/terrain';
 import { toMapCoords } from '../world/mapProjection';
 
@@ -90,7 +91,7 @@ export function createMinimap() {
   return {
     setVisible(v: boolean) { canvas.classList.toggle('on', v); },
     /** Chaque image : position du joueur, sa direction, l'avant de la caméra, les pompes. */
-    update(dt: number, playerPos: THREE.Vector3, facing: THREE.Vector3, camFwd: THREE.Vector3, pumps: readonly Pump[]) {
+    update(dt: number, playerPos: THREE.Vector3, facing: THREE.Vector3, camFwd: THREE.Vector3, pumps: readonly Pump[], chests: readonly Chest[]) {
       if (!canvas.classList.contains('on')) return;
       up.copy(playerPos).normalize();
       fwd.copy(camFwd).addScaledVector(up, -camFwd.dot(up)).normalize();
@@ -103,6 +104,18 @@ export function createMinimap() {
       ctx.beginPath(); ctx.arc(R, R, R, 0, Math.PI * 2); ctx.clip();
       ctx.imageSmoothingEnabled = true;
       ctx.drawImage(terrain, 0, 0, px, px);
+
+      // Coffres encore fermés dans le disque : petits carrés bruns
+      const cs = M.chestSize * dpr;
+      for (const c of chests) {
+        if (c.opened) continue;
+        const m = toMap(c.pos);
+        if (m.dist > M.range * 0.95) continue;
+        ctx.fillStyle = hex(M.colors.chest);
+        ctx.fillRect(R + m.x * scale - cs / 2, R - m.y * scale - cs / 2, cs, cs);
+        ctx.lineWidth = 1.5 * dpr; ctx.strokeStyle = '#1a120c';
+        ctx.strokeRect(R + m.x * scale - cs / 2, R - m.y * scale - cs / 2, cs, cs);
+      }
 
       // Pompes encore pleines dans le disque, en point de leur couleur ; rien d'autre (vidées ou trop loin)
       for (const p of pumps) {

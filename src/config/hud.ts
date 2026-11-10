@@ -6,6 +6,12 @@ export const LOADING = { frameBudgetMs: 25 } as const;
 /** Emplacements d'armes : 4 armes maximum (GDD section 6). */
 export const WEAPON_HUD = { slots: 4 } as const;
 
+/**
+ * Rappel près d'un coffre fermé : hauteur au-dessus du bas de l'écran (px), durée du tremblement
+ * quand il manque des capsules (s).
+ */
+export const CHEST_HUD = { bottom: 210, shake: 0.4 } as const;
+
 /** Jauge de la pompe à bière : message quand le joueur sort de la zone (la pinte se vide). */
 export const PUMP_GAUGE = { outHint: 'Reviens près de la pompe !' } as const;
 
@@ -23,7 +29,9 @@ export const MINIMAP = {
   rockBlend: 10,
   pumpDot: 6,
   playerArrow: 9,
-  colors: { low: 0x3d6b2e, high: 0x9ccc5a, rock: 0x8a8478, player: 0xfff4dc },
+  /** Côté du carré d'un coffre (px). */
+  chestSize: 7,
+  colors: { low: 0x3d6b2e, high: 0x9ccc5a, rock: 0x8a8478, player: 0xfff4dc, chest: 0xb07038 },
 } as const;
 
 /** Bandeau « Synergie : ... ! » quand une synergie s'active : durée d'affichage (s). */

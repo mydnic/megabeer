@@ -29,6 +29,15 @@ export function unbend(b: Bend, p: THREE.Vector3, out: THREE.Vector3) {
 
 const CELL = 10; // m, maille de l'index spatial
 
+/** Corps posés au sol aux points donnés (pieds), debout sur la verticale locale, d'une même forme. */
+export function groundBodies(points: readonly THREE.Vector3[], shape: GridShape): DecorBody[] {
+  const Y = new THREE.Vector3(0, 1, 0), one = new THREE.Vector3(1, 1, 1);
+  return points.map((pos) => {
+    const rot = new THREE.Quaternion().setFromUnitVectors(Y, pos.clone().normalize());
+    return { pos, rot, inv: new THREE.Matrix4().compose(pos, rot, one).invert(), shape };
+  });
+}
+
 /**
  * Collisions avec le décor : index spatial des éléments, poussée hors des cases occupées,
  * hauteur du sol porteur, et tracé de rayon pour la caméra.
@@ -45,8 +54,8 @@ export class DecorCollider {
     this.reset(bodies);
   }
 
-  /** Objets du jeu posés en plus du décor pour la durée d'une run (pompes à bière...). */
-  private extra: DecorBody[] = [];
+  /** Objets du jeu posés en plus du décor pour la durée d'une run, par famille (pompes, coffres...). */
+  private extra = new Map<string, DecorBody[]>();
 
   /** Remplace tout le décor (nouvelle planète) ; les joueurs et la horde gardent la même référence. */
   reset(bodies: DecorBody[]) {
@@ -54,15 +63,15 @@ export class DecorCollider {
     this.reindex();
   }
 
-  /** Remplace les objets du jeu posés en plus du décor (vide : il n'en reste aucun). */
-  setExtra(bodies: DecorBody[]) {
-    this.extra = bodies;
+  /** Remplace les objets d'une famille posés en plus du décor (vide : il n'en reste aucun). */
+  setExtra(family: string, bodies: DecorBody[]) {
+    this.extra.set(family, bodies);
     this.reindex();
   }
 
   private reindex() {
     this.buckets.clear();
-    for (const b of [...this.bodies, ...this.extra]) {
+    for (const b of [...this.bodies, ...[...this.extra.values()].flat()]) {
       const r = b.shape.radius;
       const lo = this.tmp.copy(b.pos).subScalar(r).divideScalar(CELL).floor();
       const hi = this.lp.copy(b.pos).addScalar(r).divideScalar(CELL).floor();

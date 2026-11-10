@@ -1,3 +1,4 @@
+import type { ItemCard } from './chests';
 import { LUCK, RARITIES, type UpgradeDef } from '../config/upgrades';
 import type { Weapon, WeaponId } from '../weapons/weapon';
 import type { SynergyId } from './synergies';
@@ -10,7 +11,7 @@ export type NewWeaponCard = { kind: 'weapon'; weaponId: WeaponId; synergies: Syn
 /** Bonus de stat d'une pompe à bière : sa rareté (index dans RARITIES), sa valeur (déjà multipliée), la qualité de la pompe. */
 export type StatCard = { kind: 'stat'; stat: StatId; value: number; rarity: number; tier: PumpTier };
 /** Une carte proposée : level-up (amélioration, nouvelle arme) ou pompe (bonus de stat). */
-export type Card = UpgradeCard | NewWeaponCard | StatCard;
+export type Card = UpgradeCard | NewWeaponCard | StatCard | ItemCard;
 
 /** Tire un tier de rareté selon la LUCK (les tiers hauts gagnent du poids, plafonné). */
 export function rollTier(luck: number) {

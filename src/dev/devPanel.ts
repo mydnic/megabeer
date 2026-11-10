@@ -20,6 +20,7 @@ export interface DevApi {
   giveXp(amount: number): void;
   levelUp(): void;
   heal(): void;
+  giveCoins(amount: number): void;
   /** Armes qu'on peut donner, et donner l'une d'elles (si l'arsenal a une place). */
   weapons: readonly string[];
   giveWeapon(id: string): void;
@@ -52,6 +53,7 @@ export function createDevPanel(api: DevApi) {
       <label><input data-k="god" type="checkbox"> godmode</label>
       <br><input data-k="xp" type="number" value="25" min="1" style="width:5em"> <button data-a="xp">+XP</button> <button data-a="level">+1 niveau</button>
       <br><select data-k="weapon">${api.weapons.map((w) => `<option>${w}</option>`).join('')}</select> <button data-a="weapon">Donner l'arme</button>
+      <br><button data-a="coins">+50 capsules</button>
       <br><button data-a="heal">Soigner</button> <button data-a="die">Mourir</button>
     </fieldset>
     <fieldset><legend>Monde</legend>
@@ -70,6 +72,7 @@ export function createDevPanel(api: DevApi) {
     xp: () => api.giveXp(num('xp')),
     level: () => api.levelUp(),
     heal: () => api.heal(),
+    coins: () => api.giveCoins(50),
     weapon: () => api.giveWeapon(q<HTMLSelectElement>('weapon').value),
     die: () => api.die(),
     skip60: () => api.skipTime(60),

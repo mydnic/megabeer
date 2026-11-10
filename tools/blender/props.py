@@ -11,6 +11,9 @@ Variantes (--variant) :
 - fut : le grand tonneau du KayKit Dungeon (Bois, Cerclage), pour le Fût qui roule.
 - gueuze : la bouteille fine du Fantasy Props MegaKit (Verre, Bouchon), pour la Gueuze.
 - pompe : le fût sur chevalet du KayKit Dungeon (Bois, Cerclage), pour les pompes à bière.
+- coffre : le coffre du KayKit Dungeon (Bois, Ferrure), couvercle gardé à part (il s'ouvre en jeu), pour les coffres.
+
+Un modèle en plusieurs morceaux (coffre et son couvercle) garde ses morceaux et leur hiérarchie.
 
 Usage (Blender 5.2) :
   blender -b --factory-startup --disable-autoexec -P tools/blender/props.py -- --lib C:/Users/mydnic/Desktop/MODELS
@@ -73,26 +76,25 @@ VARIANTS = {
             ('Bois', {}),
         ],
     },
+    'coffre': {
+        'src': 'decor/kaykit_dungeon/gltf/chest.gltf',
+        # Ferrures et serrure grises (peu saturées), recolorées selon la rareté par le jeu ; le reste en bois
+        'rules': [
+            ('Ferrure', {'max_sat': 0.3}),
+            ('Bois', {}),
+        ],
+    },
 }
 variant = VARIANTS[args.variant]
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.import_scene.gltf(filepath=os.path.join(args.lib, variant['src']))
-obj = next(o for o in bpy.data.objects if o.type == 'MESH')
-mesh = obj.data
-img = next(n.image for n in mesh.materials[0].node_tree.nodes if n.type == 'TEX_IMAGE' and n.image)
-W, H = img.size
-px = img.pixels[:]
-uv = mesh.uv_layers.active.data
-zs = [v.co.z for v in mesh.vertices]
-z0, z1 = min(zs), max(zs)
-
 names = [name for name, _ in variant['rules']]
-mesh.materials.clear()
+mats = []
 for name in names:
     m = bpy.data.materials.new(name)
     m.use_nodes = True
-    mesh.materials.append(m)
+    mats.append(m)
 
 
 def saturation(poly):
@@ -103,14 +105,25 @@ def saturation(poly):
     return colorsys.rgb_to_hsv(*px[k:k + 3])[1]
 
 
-for p in mesh.polygons:
-    height = (p.center.z - z0) / (z1 - z0)
-    s = saturation(p)
-    for i, (_, rule) in enumerate(variant['rules']):
-        if s <= rule.get('max_sat', 1) and height >= rule.get('min_height', 0):
-            p.material_index = i
-            break
-
-counts = {n: sum(1 for p in mesh.polygons if p.material_index == i) for i, n in enumerate(names)}
+counts = {n: 0 for n in names}
+for obj in [o for o in bpy.data.objects if o.type == 'MESH']:
+    mesh = obj.data
+    img = next(n.image for n in mesh.materials[0].node_tree.nodes if n.type == 'TEX_IMAGE' and n.image)
+    W, H = img.size
+    px = img.pixels[:]
+    uv = mesh.uv_layers.active.data
+    zs = [v.co.z for v in mesh.vertices]
+    z0, z1 = min(zs), max(zs)
+    mesh.materials.clear()
+    for m in mats:
+        mesh.materials.append(m)
+    for p in mesh.polygons:
+        height = (p.center.z - z0) / max(1e-6, z1 - z0)
+        s = saturation(p)
+        for i, (_, rule) in enumerate(variant['rules']):
+            if s <= rule.get('max_sat', 1) and height >= rule.get('min_height', 0):
+                p.material_index = i
+                counts[names[i]] += 1
+                break
 bpy.ops.export_scene.gltf(filepath=args.out, export_format='GLB', export_cameras=False, export_lights=False)
 print('Objet exporté :', args.variant, args.out, '| faces par matériau :', counts)

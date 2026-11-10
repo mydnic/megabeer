@@ -1,8 +1,9 @@
+import { ITEMS } from '../config/items';
 import { LEVEL_UP_SCREEN as L, RARITIES } from '../config/upgrades';
 import { cardText, statCardText, type Card } from '../game/levelUpCards';
 import { PUMP_TIERS, STAT_BONUSES } from '../config/pumps';
 import { SYNERGIES, WEAPON_INFO } from '../config/weapons';
-import { pumpIcon, weaponIcon } from './icons';
+import { pumpIcon, weaponIcon, chestIcon } from './icons';
 
 const CSS = `
 .lu { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -111,6 +112,14 @@ export function createLevelUpScreen(onPick: (card: Card) => void, onHover: () =>
           d.style.setProperty('--c', r.color);
           d.innerHTML = `${key}<div class="lu-tier">${r.name}</div>${pumpIcon('lu-bottle', PUMP_TIERS[c.tier].color)}
             <div class="lu-name">${label[0].toUpperCase()}${label.slice(1)}</div><div class="lu-eff">${statCardText(c)}</div>`;
+        } else if (c.kind === 'item') {
+          // Objet de coffre : cadre et nom de la rareté du coffre, son nom et son effet
+          const r = RARITIES[c.rarity];
+          const def = ITEMS[c.item];
+          d.className = `lu-card t${c.rarity}${i === 0 ? ' sel' : ''}`;
+          d.style.setProperty('--c', r.color);
+          d.innerHTML = `${key}<div class="lu-tier">${r.name}</div>${chestIcon('lu-bottle', parseInt(r.color.slice(1), 16))}
+            <div class="lu-name">${def.name}</div><div class="lu-eff">${statCardText({ kind: 'stat', stat: def.stat, value: c.value, rarity: c.rarity, tier: 'bronze' })}</div>`;
         } else {
           const r = RARITIES[c.tier];
           d.className = `lu-card t${c.tier}${i === 0 ? ' sel' : ''}`;
