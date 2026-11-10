@@ -78,10 +78,10 @@ Fait et validé dans la feature 7 :
    Fait aussi : 100 coffres (sol plat, collision, touche d'action E / bouton X, prix 5 +3 par coffre, rareté
    à l'ouverture, 1 objet parmi 3), premier lot de 8 objets à stat (`config/items.ts`), DEV « +50 capsules ».
    **Validé par l'utilisateur le 2026-11-10** (capsules à 30 %). Fait ensuite : ouverture façon lootbox dans le HUD
-   (événement `chestRevealing`, `ui/chestReveal.ts`, cadence partagée avec les sons par `revealSchedule`), à valider.
+   (événement `chestRevealing`, `ui/chestReveal.ts`, cadence partagée avec les sons par `revealSchedule`), validé.
    Mini-carte : le relief suit la rotation de la caméra sans à-coups (corrigé). Puis : nouveau coffre dessiné
    (`chestSvg`), cartes qui sortent du coffre ouvert posé dessous, une icône par objet (validé), objets affichés
-   dans le HUD sous les armes (`ui/itemHud.ts`), à valider. Reste : objets
+   dans le HUD sous les armes (`ui/itemHud.ts`) (tout validé par l'utilisateur le 2026-11-10). Reste : objets
    à effets spéciaux un par un, poubelles, coffre piégé. Son de la bière qui coule : « Beer service 2 » de BigSoundBank (CC0, choisi par l'utilisateur),
    joué d'un bloc pendant le remplissage, repris au niveau de la pinte, coupé en fondu hors de la zone. Reste : sons du
    remplissage et de la pompe pleine, collision du fût (on le traverse), nombre de pompes (passé à 20, demande de l'utilisateur)
