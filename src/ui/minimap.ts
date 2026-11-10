@@ -35,7 +35,8 @@ export function createMinimap() {
   document.body.appendChild(canvas);
   const ctx = canvas.getContext('2d')!;
 
-  // Relief : petite image recalculée quelques fois par seconde, agrandie avec lissage
+  // Relief : petite image recalculée quelques fois par seconde dans un repère fixe (le « nord » du
+  // point où elle a été faite), puis tournée et décalée à chaque image : elle suit la caméra sans à-coups
   const N = M.terrainResolution;
   const terrain = document.createElement('canvas');
   terrain.width = terrain.height = N;
@@ -46,25 +47,34 @@ export function createMinimap() {
   let terrainAge = Infinity;
 
   const up = new THREE.Vector3(), fwd = new THREE.Vector3(), right = new THREE.Vector3();
+  // Repère de l'image du relief : sa verticale (centre), son haut (nord) et sa droite
+  const tUp = new THREE.Vector3(), tFwd = new THREE.Vector3(), tRight = new THREE.Vector3();
+  const WY = new THREE.Vector3(0, 1, 0), WX = new THREE.Vector3(1, 0, 0);
+  const span = M.range * M.terrainMargin; // demi-côté de l'image du relief (m)
   const d = new THREE.Vector3(), axis = new THREE.Vector3(), q = new THREE.Quaternion();
   const px = size * dpr, R = px / 2;
   const scale = R / M.range; // pixels par mètre
 
-  /** Point de la planète en (x à droite, y devant) m autour du joueur, sur la sphère unité. */
+  /** Point de la planète en (x à droite, y vers le nord) m autour du centre de l'image, sur la sphère unité. */
   function dirAt(x: number, y: number, out: THREE.Vector3) {
     const dist = Math.hypot(x, y);
-    if (dist < 1e-6) return out.copy(up);
-    axis.copy(right).multiplyScalar(x).addScaledVector(fwd, y).cross(up).normalize().negate();
-    return out.copy(up).applyQuaternion(q.setFromAxisAngle(axis, dist / PLANET_RADIUS));
+    if (dist < 1e-6) return out.copy(tUp);
+    axis.copy(tRight).multiplyScalar(x).addScaledVector(tFwd, y).cross(tUp).normalize().negate();
+    return out.copy(tUp).applyQuaternion(q.setFromAxisAngle(axis, dist / PLANET_RADIUS));
   }
 
   const toMap = (p: THREE.Vector3) => toMapCoords(up, fwd, right, p);
 
   function drawTerrain() {
+    // Nouveau repère : centré sur le joueur, haut vers le nord du monde
+    tUp.copy(up);
+    const ref = Math.abs(tUp.dot(WY)) > 0.95 ? WX : WY;
+    tFwd.copy(ref).addScaledVector(tUp, -ref.dot(tUp)).normalize();
+    tRight.crossVectors(tFwd, tUp).normalize();
     const data = img.data;
     for (let j = 0; j < N; j++) {
       for (let i = 0; i < N; i++) {
-        const x = ((i + 0.5) / N * 2 - 1) * M.range, y = (1 - (j + 0.5) / N * 2) * M.range;
+        const x = ((i + 0.5) / N * 2 - 1) * span, y = (1 - (j + 0.5) / N * 2) * span;
         const h = heightAt(dirAt(x, y, d));
         const t = THREE.MathUtils.clamp((h + relief) / (2 * relief), 0, 1);
         c.copy(low).lerp(high, t);
@@ -103,7 +113,13 @@ export function createMinimap() {
       ctx.save();
       ctx.beginPath(); ctx.arc(R, R, R, 0, Math.PI * 2); ctx.clip();
       ctx.imageSmoothingEnabled = true;
-      ctx.drawImage(terrain, 0, 0, px, px);
+      // Le relief, ramené dans le repère de la caméra : décalé de là où il a été fait, tourné vers son nord
+      const o = toMap(tUp), n = d.copy(tFwd).addScaledVector(up, -tFwd.dot(up));
+      ctx.save();
+      ctx.translate(R + o.x * scale, R - o.y * scale);
+      ctx.rotate(Math.atan2(n.dot(right), n.dot(fwd)));
+      ctx.drawImage(terrain, -span * scale, -span * scale, 2 * span * scale, 2 * span * scale);
+      ctx.restore();
 
       // Coffres encore fermés dans le disque : petits carrés bruns
       const cs = M.chestSize * dpr;

@@ -25,6 +25,8 @@ export const MINIMAP = {
   range: 80,
   terrainResolution: 56,
   terrainHz: 8,
+  /** L'image du relief déborde du disque de ce facteur : ses bords restent cachés quand elle tourne et glisse. */
+  terrainMargin: 1.25,
   rockFrom: 14,
   rockBlend: 10,
   pumpDot: 6,
