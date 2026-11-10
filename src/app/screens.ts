@@ -8,6 +8,7 @@ import { loadSettings, saveSettings } from '../core/settings';
 import type { Game } from '../game/game';
 import { createAlcoholHud } from '../ui/alcoholHud';
 import { createPumpGauge } from '../ui/pumpGauge';
+import { createMinimap } from '../ui/minimap';
 import { createDeathBanner } from '../ui/deathBanner';
 import { createEventBanner } from '../ui/eventBanner';
 import { createHealthHud } from '../ui/healthHud';
@@ -42,6 +43,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   const healthHud = createHealthHud(game.health);
   const alcoholHud = createAlcoholHud(game.progression);
   const pumpGauge = createPumpGauge();
+  const minimap = createMinimap();
   const runHud = createRunHud();
   const banner = createEventBanner();
   const weaponHud = createWeaponHud();
@@ -50,6 +52,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
     alcoholHud.setVisible(v);
     runHud.setVisible(v);
     weaponHud.setVisible(v);
+    minimap.setVisible(v);
   };
   const icons = new Map<WeaponId, string>();
   const slots = (): WeaponSlot[] => {
@@ -142,6 +145,8 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
       alcoholHud.update();
       if (game.phase === 'run' && !game.frozen) pumpGauge.update(game.pumps.focus, game.pumps.filling);
       else pumpGauge.hide();
+      const pl = game.player;
+      minimap.update(realDt, pl.pos, pl.facing, pl.camFwd, game.pumps.list);
       runHud.update(game.runTime, game.kills);
       weaponHud.update(slots());
       if (game.phase === 'dead') deathBanner.update(game.deadTime, game.runTime, game.kills);
