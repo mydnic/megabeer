@@ -12,8 +12,7 @@ export const PUMP_GAUGE = { outHint: 'Reviens près de la pompe !' } as const;
 /**
  * Mini-carte (en bas à droite) : diamètre (px), rayon montré autour du joueur (m), finesse et
  * fréquence de l'image du relief, hauteur où le relief devient roche (m) et fondu (m), taille des
- * points de pompe et de la flèche du joueur (px), nombre de pompes pleines hors du disque montrées
- * en flèche au bord, couleurs.
+ * points de pompe et de la flèche du joueur (px), couleurs.
  */
 export const MINIMAP = {
   size: 170,
@@ -24,8 +23,7 @@ export const MINIMAP = {
   rockBlend: 10,
   pumpDot: 6,
   playerArrow: 9,
-  edgeArrows: 3,
-  colors: { low: 0x3d6b2e, high: 0x9ccc5a, rock: 0x8a8478, usedPump: 0x5a5550, player: 0xfff4dc },
+  colors: { low: 0x3d6b2e, high: 0x9ccc5a, rock: 0x8a8478, player: 0xfff4dc },
 } as const;
 
 /** Bandeau « Synergie : ... ! » quand une synergie s'active : durée d'affichage (s). */

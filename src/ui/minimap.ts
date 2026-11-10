@@ -17,8 +17,8 @@ const hex = (c: number) => `#${c.toString(16).padStart(6, '0')}`;
 /**
  * Mini-carte : disque vu du dessus, centré sur le Buveur et tourné comme la caméra (le haut du disque
  * = devant la caméra). Le relief en teintes (creux sombres, collines claires, montagnes grises), les
- * pompes en points de leur couleur (grises une fois vidées), le Buveur en flèche au centre. Les pompes
- * pleines les plus proches hors du disque sont des flèches sur le bord. Toute la planète est connue
+ * pompes encore pleines en points de leur couleur, le Buveur en flèche au centre. Seul ce qui tient
+ * dans le disque est montré : ni pompes vidées, ni flèches vers le lointain. Toute la planète est connue
  * (pas de brouillard, choix de l'utilisateur le 2026-11-10).
  */
 export function createMinimap() {
@@ -104,23 +104,15 @@ export function createMinimap() {
       ctx.imageSmoothingEnabled = true;
       ctx.drawImage(terrain, 0, 0, px, px);
 
-      // Pompes : dans le disque, un point ; pleines et hors du disque, les plus proches en flèche au bord
-      const outside: { x: number; y: number; dist: number; color: string }[] = [];
+      // Pompes encore pleines dans le disque, en point de leur couleur ; rien d'autre (vidées ou trop loin)
       for (const p of pumps) {
+        if (p.used) continue;
         const m = toMap(p.pos);
-        const color = hex(p.used ? M.colors.usedPump : PUMP_TIERS[p.tier].color);
-        if (m.dist <= M.range * 0.92) {
-          ctx.beginPath();
-          ctx.arc(R + m.x * scale, R - m.y * scale, M.pumpDot * dpr, 0, Math.PI * 2);
-          ctx.fillStyle = color; ctx.fill();
-          ctx.lineWidth = 2 * dpr; ctx.strokeStyle = '#1a120c'; ctx.stroke();
-        } else if (!p.used) outside.push({ ...m, color });
-      }
-      outside.sort((a, b) => a.dist - b.dist);
-      for (const o of outside.slice(0, M.edgeArrows)) {
-        const a = Math.atan2(o.x, o.y);
-        const r = R - M.pumpDot * 1.6 * dpr;
-        arrow(R + Math.sin(a) * r, R - Math.cos(a) * r, a, M.pumpDot * 1.3 * dpr, o.color);
+        if (m.dist > M.range * 0.92) continue;
+        ctx.beginPath();
+        ctx.arc(R + m.x * scale, R - m.y * scale, M.pumpDot * dpr, 0, Math.PI * 2);
+        ctx.fillStyle = hex(PUMP_TIERS[p.tier].color); ctx.fill();
+        ctx.lineWidth = 2 * dpr; ctx.strokeStyle = '#1a120c'; ctx.stroke();
       }
 
       // Le Buveur au centre, tourné dans sa direction de marche
