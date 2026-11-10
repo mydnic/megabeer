@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { CHESTS } from '../../src/config/chests';
-import { ITEMS, type ItemDef } from '../../src/config/items';
+import { ITEMS, type ItemDef, type ItemStatId } from '../../src/config/items';
 import { RARITIES } from '../../src/config/upgrades';
 import { PLANET_RADIUS } from '../../src/config/world';
 import { rollItemCards, type ItemCard } from '../../src/game/chests';
@@ -108,14 +108,14 @@ describe('Les coffres', () => {
     t.game.coins = 100;
     standNear(t, t.game.chests.list[0], 1.8);
     open(t);
-    const card = (t.game.offer as ItemCard[]).find((c) => 'stat' in ITEMS[c.item]) ?? (t.game.offer as ItemCard[])[0];
+    const card = (t.game.offer as ItemCard[])[0];
     const def: ItemDef = ITEMS[card.item];
-    const stat = def.stat;
-    const read = () => (!stat ? 0 : stat === 'maxHp' ? t.game.health.max : t.game.stats[stat]);
+    const [stat, base] = (Object.entries(def.stats ?? {})[0] ?? []) as [ItemStatId | undefined, number | undefined];
+    const read = () => (!stat ? 0 : stat === 'maxHp' ? t.game.health.max : (t.game.stats as unknown as Record<string, number>)[stat]);
     const before = read();
     t.game.pickCard(card);
     // Objet à stat : la stat monte ; objet à effet spécial : l'effet est actif
-    if (stat) expect(read()).toBeCloseTo(before + card.value, 5);
+    if (stat) expect(read()).toBeCloseTo(before + base! * card.mult, 5);
     else expect(t.game.effects.has(def.effect!)).toBe(true);
     expect(t.game.items).toEqual([{ item: card.item, rarity: card.rarity }]);
     expect(t.game.frozen).toBe(false);
@@ -125,9 +125,9 @@ describe('Les coffres', () => {
     for (let r = 0; r < RARITIES.length; r++) {
       for (let i = 0; i < 50; i++) {
         for (const c of rollItemCards(r, 3)) {
-          const def = ITEMS[c.item] as { value: number; fixed?: boolean; minRarity?: number };
+          const def: ItemDef = ITEMS[c.item];
           expect(r).toBeGreaterThanOrEqual(def.minRarity ?? 0);
-          expect(c.value).toBeCloseTo(def.fixed ? def.value : def.value * RARITIES[r].mult, 5);
+          expect(c.mult).toBeCloseTo(def.fixed ? 1 : RARITIES[r].mult, 5);
         }
       }
     }

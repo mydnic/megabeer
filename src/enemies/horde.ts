@@ -59,7 +59,7 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
       z.knockVel.multiplyScalar(Math.exp(-dt / H.knockDecay));
     }
     // Mort, sonné ou en train de sortir de terre : ni marche ni coup
-    if (z.dead || z.stagger > 0 || z.rise > 0) { z.walkSpeed = 0; return; }
+    if (z.dead || z.stagger > 0 || z.rise > 0 || z.frozen > 0) { z.walkSpeed = 0; return; }
     want.subVectors(target, z.pos);
     want.addScaledVector(up, -want.dot(up));
     const dist = want.length();
@@ -128,13 +128,13 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
     // Avance dans la direction du regard (il tourne, il ne glisse pas de côté)
     want.normalize();
     const align = Math.max(0, z.facing.dot(want));
-    let speed = z.def.speed * z.speedMul * align;
+    let speed = z.def.speed * z.speedMul * z.slowMul * align;
     // Contournement : bloqué contre un mur au pas précédent, il longe l'obstacle quelque temps
     if (z.detour > 0) {
       z.detour -= dt;
       side.crossVectors(up, want).multiplyScalar(z.detourSide);
       want.lerp(side, M.detourBlend).normalize();
-      speed = z.def.speed * z.speedMul;
+      speed = z.def.speed * z.speedMul * z.slowMul;
     }
     before.copy(z.pos);
     z.pos.addScaledVector(want, speed * dt);

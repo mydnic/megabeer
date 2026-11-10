@@ -38,6 +38,10 @@ export class PlayerController {
   /** Événements de la dernière mise à jour, pour l'animation et les sons. */
   events = { jumped: false, landed: false, landSpeed: 0 };
 
+  /** Hauteur de saut (x1 au départ, objets) et sauts en l'air autorisés (Ressort de canapé). */
+  jumpMul = 1;
+  airJumps = 0;
+  private airJumpsLeft = 0;
   private jumpBuffer = 0;
   private airTime = 0;
   private up = new THREE.Vector3();
@@ -166,10 +170,18 @@ export class PlayerController {
     // Saut (mémoire d'appui + tolérance après un rebord)
     this.jumpBuffer = Math.max(0, this.jumpBuffer - dt);
     this.airTime = this.onGround ? 0 : this.airTime + dt;
+    if (this.onGround) this.airJumpsLeft = this.airJumps;
+    const speed = P.jumpSpeed * Math.sqrt(Math.max(0.1, this.jumpMul));
     if (this.jumpBuffer > 0 && (this.onGround || this.airTime < COYOTE) && this.vr <= 0) {
-      this.vr = P.jumpSpeed;
+      this.vr = speed;
       this.onGround = false;
       this.airTime = COYOTE;
+      this.jumpBuffer = 0;
+      this.events.jumped = true;
+    } else if (input.jumpPressed && !this.onGround && this.airTime >= COYOTE && this.airJumpsLeft > 0) {
+      // Double saut : en l'air, un nouvel appui relance vers le haut
+      this.airJumpsLeft--;
+      this.vr = speed;
       this.jumpBuffer = 0;
       this.events.jumped = true;
     }

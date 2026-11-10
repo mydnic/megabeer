@@ -273,6 +273,201 @@ const ITEM_ICONS: Record<ItemId, (cls: string) => string> = {
 <path d="M50 34c3-1 6 1 6 4s-1 4 0 6-2 6-5 5-4-3-5-5 0-8 4-10z" transform="rotate(30 52 42)"/></g>
 <path d="M46 16l3 2M50 22l2 1" stroke="#a87048" stroke-width="1.5" stroke-linecap="round"/>
 <path d="M14 24l2 26" stroke="#fff6" stroke-width="2.5" stroke-linecap="round"/>`),
+  // Énorme pinte, flèches d'agrandissement
+  pinteXXL: (cls) => svg64(cls, `
+<path d="M14 14h36l-4 46H18z" ${PINT('#e8a01c')}/>
+<path d="M11 11c0-4 4-6 7-6 3-3 8-3 11 0 3-3 8-3 11 0 4-1 11 1 11 6 1 3-1 6-4 6H15c-3 0-5-3-4-6z" ${PINT('#fff4dc')}/>
+<path d="M20 22l2 32" stroke="#fff8" stroke-width="3" stroke-linecap="round"/>
+<path d="M4 34l6-6v4h4M60 34l-6-6v4h-4" stroke="${K}" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`),
+  // Kebab dans son pain, sauce blanche
+  kebab: (cls) => svg64(cls, `
+<path d="M8 40c0-16 10-28 24-28s24 12 24 28c-6 10-42 10-48 0z" ${PINT('#e6b36a')}/>
+<path d="M14 36c4-12 10-18 18-18s14 6 18 18" fill="#8a4a22" stroke="${K}" stroke-width="2.5"/>
+<path d="M18 30c3-3 6-2 8 0M30 24c3-2 6-1 8 1M36 31c3-2 6-1 8 2" stroke="#5aa83a" stroke-width="3" stroke-linecap="round" fill="none"/>
+<path d="M17 37c5 2 25 2 30 0" stroke="#fff4dc" stroke-width="4" stroke-linecap="round"/>
+<path d="M12 44c6 6 34 6 40 0" stroke="#fff6" stroke-width="2.5" fill="none" stroke-linecap="round"/>`),
+  // Petit verre à shot renversé d'un coup, gouttes
+  culSec: (cls) => svg64(cls, `
+<g transform="rotate(-35 32 34)"><path d="M20 18h24l-4 32H24z" ${PINT('#c9ccd1')}/>
+<path d="M22 22h20l-1.5 12h-17z" fill="#e8a01c"/><path d="M25 22l2 24" stroke="#fff8" stroke-width="2.5" stroke-linecap="round"/></g>
+<circle cx="50" cy="16" r="3" fill="#e8a01c" stroke="${K}" stroke-width="2"/><circle cx="56" cy="26" r="2.2" fill="#e8a01c" stroke="${K}" stroke-width="1.8"/>
+<path d="M8 50l6-2M6 42l6 0" stroke="#ffc93a" stroke-width="2.5" stroke-linecap="round"/>`),
+  // Briquet et sa flamme
+  briquet: (cls) => svg64(cls, `
+<path d="M32 4c6 6 10 11 10 17 0 6-4 9-10 9s-10-3-10-9c0-4 3-6 5-10 1 4 3 5 5 5 0-5-2-8 0-12z" fill="#ff8a2a" stroke="${K}" stroke-width="2.5" stroke-linejoin="round"/>
+<path d="M32 16c3 3 4 6 4 8 0 3-2 4-4 4s-4-1-4-4c0-3 3-5 4-8z" fill="#ffd45a"/>
+<path d="M20 32h24v8H20z" fill="#c9ccd1" stroke="${K}" stroke-width="2.5"/>
+<rect x="18" y="40" width="28" height="20" rx="4" fill="#d23b2a" stroke="${K}" stroke-width="3"/>
+<path d="M22 44v12" stroke="#fff6" stroke-width="2.5" stroke-linecap="round"/>`),
+  // Canette verte « 0,0 % » et goutte de soin
+  sansAlcool: (cls) => svg64(cls, `
+<path d="M14 12c0-2 2-4 4-4h20c2 0 4 2 4 4v44c0 2-2 4-4 4H18c-2 0-4-2-4-4z" ${PINT('#4fb84a')}/>
+<path d="M14 26h28v16H14z" fill="#fff4dc" stroke="${K}" stroke-width="2"/>
+<text x="28" y="38" text-anchor="middle" font-family="Lilita One, system-ui" font-size="10" fill="#2f7a2c">0,0%</text>
+<path d="M18 46v8" stroke="#fff6" stroke-width="2.5" stroke-linecap="round"/>
+<path d="M50 30c4 5 7 9 7 13a7 7 0 0 1-14 0c0-4 3-8 7-13z" fill="#e2453a" stroke="${K}" stroke-width="2.5"/>
+<path d="M50 38v8M46 42h8" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>`),
+  // Bonnet rouge à pompon blanc
+  bonnet: (cls) => svg64(cls, `
+<path d="M10 46C12 26 24 10 42 12c6 1 10 6 12 12-8-4-14-2-16 4 6 4 8 10 8 18z" ${PINT('#d23b2a')}/>
+<path d="M6 44h44v12H6z" fill="#fff4dc" stroke="${K}" stroke-width="3" stroke-linejoin="round" rx="5"/>
+<circle cx="56" cy="26" r="6" fill="#fff4dc" stroke="${K}" stroke-width="2.5"/>
+<path d="M18 36c2-8 8-16 16-18" stroke="#fff5" stroke-width="3" fill="none" stroke-linecap="round"/>`),
+  // Seau à glace argenté, glaçons qui dépassent
+  seauAGlace: (cls) => svg64(cls, `
+<path d="M14 18l6-6 10 2 8-6 8 4 4 8z" fill="#bfe6ff" stroke="${K}" stroke-width="2.5" stroke-linejoin="round"/>
+<path d="M8 22h48l-6 36H14z" ${PINT('#c9ccd1')}/>
+<path d="M8 22h48" stroke="${K}" stroke-width="5"/>
+<path d="M12 32h40M14 46h36" stroke="#9aa0a8" stroke-width="2"/>
+<path d="M4 30c-2 4 0 8 4 8M60 30c2 4 0 8-4 8" stroke="${K}" stroke-width="2.5" fill="none"/>
+<path d="M16 28l2 24" stroke="#fff8" stroke-width="3" stroke-linecap="round"/>`),
+  // Tireuse de fût avec manomètre
+  pression: (cls) => svg64(cls, `
+<path d="M12 22c0-8 40-8 40 0v32c0 6-40 6-40 0z" ${PINT('#8a5230')}/>
+<path d="M12 30c6 3 34 3 40 0M12 46c6 3 34 3 40 0" stroke="#6a6e75" stroke-width="4" fill="none"/>
+<circle cx="32" cy="14" r="10" fill="#fff4dc" stroke="${K}" stroke-width="3"/>
+<path d="M32 14l5-5" stroke="#d23b2a" stroke-width="3" stroke-linecap="round"/>
+<path d="M25 12h2M32 7v2M39 12h-2" stroke="${K}" stroke-width="2" stroke-linecap="round"/>`),
+  // Tête qui tourne : poche de glace sur le front
+  gueuleDeBois: (cls) => svg64(cls, `
+<circle cx="32" cy="36" r="22" ${PINT('#f0b48c')}/>
+<path d="M14 22c4-10 32-12 38-2-6 4-30 6-38 2z" ${PINT('#5bb8e8')}/>
+<path d="M22 38l6 4M28 38l-6 4M36 38l6 4M42 38l-6 4" stroke="${K}" stroke-width="2.5" stroke-linecap="round"/>
+<path d="M26 50c4-3 8-3 12 0" stroke="${K}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+<path d="M54 8c2 2 0 4 2 6M8 10c-2 2 0 4-2 6" stroke="#ffc93a" stroke-width="2.5" fill="none" stroke-linecap="round"/>`),
+  // Gant de boxe rouge
+  gantsVideur: (cls) => svg64(cls, `
+<path d="M14 30c0-14 8-24 22-24 12 0 18 8 18 18 0 8-4 14-10 16H20c-4-2-6-5-6-10z" ${PINT('#d23b2a')}/>
+<path d="M14 30c-6-2-8 6-4 10 3 3 8 2 10 0" ${PINT('#d23b2a')}/>
+<path d="M18 40h28v14H18z" fill="#fff4dc" stroke="${K}" stroke-width="3" stroke-linejoin="round"/>
+<path d="M22 14c4-4 10-5 14-4" stroke="#fff6" stroke-width="3" fill="none" stroke-linecap="round"/>`),
+  // Lunettes rondes avec reflet
+  lunettes: (cls) => svg64(cls, `
+<path d="M4 26l6-6M60 26l-6-6" stroke="${K}" stroke-width="3" stroke-linecap="round"/>
+<circle cx="19" cy="34" r="12" fill="#bfe6ff" stroke="${K}" stroke-width="3.5"/>
+<circle cx="45" cy="34" r="12" fill="#bfe6ff" stroke="${K}" stroke-width="3.5"/>
+<path d="M31 32c0-3 2-4 1-4M33 32c0-3-2-4-1-4" stroke="${K}" stroke-width="3"/><path d="M29 31h6" stroke="${K}" stroke-width="3"/>
+<path d="M13 30l6-4M39 30l6-4" stroke="#fff" stroke-width="3" stroke-linecap="round"/>`),
+  // Écharpe de supporter rayée
+  echarpe: (cls) => svg64(cls, `
+<path d="M8 14c14-6 34-6 48 0v10c-14-6-34-6-48 0z" ${PINT('#d23b2a')}/>
+<path d="M40 22l4 34h-12l-2-32z" ${PINT('#d23b2a')}/>
+<path d="M18 11v10M28 9v10M48 11v10M33 30l9-1M34 40l9-1" stroke="#fff4dc" stroke-width="4"/>
+<path d="M32 56v5M36 56v5M40 56v5" stroke="${K}" stroke-width="2.5" stroke-linecap="round"/>`),
+  // Cochonnet en bois et boule de pétanque
+  cochonnet: (cls) => svg64(cls, `
+<circle cx="24" cy="38" r="18" ${PINT('#9aa0a8')}/>
+<path d="M10 30c8 4 20 4 28 0M8 42c8 4 24 4 32 0" stroke="#6a6e75" stroke-width="2.5" fill="none"/>
+<path d="M14 26c3-4 6-6 10-6" stroke="#fff8" stroke-width="3" fill="none" stroke-linecap="round"/>
+<circle cx="50" cy="20" r="8" fill="#ffc93a" stroke="${K}" stroke-width="3"/>
+<circle cx="47.5" cy="17.5" r="2" fill="#fff8"/>`),
+  // Bouteille qui titube, traits de déséquilibre
+  demarche: (cls) => svg64(cls, `
+<g transform="rotate(18 32 36)"><path d="M28 6h8v12c0 3 8 6 8 14v24c0 2-2 4-4 4H24c-2 0-4-2-4-4V32c0-8 8-11 8-14z" ${PINT('#4b8a3a')}/>
+<path d="M20 34h24v10H20z" fill="#fff4dc" stroke="${K}" stroke-width="2"/></g>
+<path d="M6 20c3-2 5 2 8 0M4 32c3-2 5 2 8 0M52 46c3-2 5 2 8 0" stroke="#cdbfa6" stroke-width="2.5" fill="none" stroke-linecap="round"/>`),
+  // Ressort de canapé
+  ressort: (cls) => svg64(cls, `
+<path d="M10 56h44" stroke="${K}" stroke-width="4" stroke-linecap="round"/>
+<path d="M18 52c0-4 28-4 28-8s-28-4-28-8 28-4 28-8-28-4-28-8 28-4 28-8" stroke="#c9ccd1" stroke-width="5" fill="none" stroke-linecap="round"/>
+<path d="M18 52c0-4 28-4 28-8s-28-4-28-8 28-4 28-8-28-4-28-8 28-4 28-8" stroke="${K}" stroke-width="1.5" fill="none" opacity=".5"/>
+<path d="M8 10l6 4M56 10l-6 4M32 2v6" stroke="#ffc93a" stroke-width="3" stroke-linecap="round"/>`),
+  // Deux pintes, la seconde dorée qui brille
+  secondeTournee: (cls) => svg64(cls, `
+<path d="M8 22h20l-2 34H10z" ${PINT('#9a6a3a')}/>
+<path d="M30 16h26l-3 42H33z" ${PINT('#ffc93a')}/>
+<path d="M28 13c0-3 3-5 6-5 2-2 6-2 8 0 2-2 6-2 8 0 4 0 8 2 7 6z" ${PINT('#fff4dc')}/>
+<path d="M36 22l2 30" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+<path d="M58 4l2 4 4 2-4 2-2 4-2-4-4-2 4-2z" fill="#fff" stroke="${K}" stroke-width="1.5"/>`),
+  // Carte de fidélité tamponnée
+  carteFidelite: (cls) => svg64(cls, `
+<rect x="4" y="14" width="56" height="36" rx="6" ${PINT('#f3e6cf')}/>
+<path d="M4 22h56" stroke="#d23b2a" stroke-width="6"/>
+<g fill="#e8a01c" stroke="${K}" stroke-width="2"><circle cx="14" cy="36" r="5"/><circle cx="26" cy="36" r="5"/><circle cx="38" cy="36" r="5"/></g>
+<circle cx="50" cy="36" r="5" fill="none" stroke="${K}" stroke-width="2" stroke-dasharray="3 2"/>`),
+  // Trois glaçons
+  glacons: (cls) => svg64(cls, `
+<g fill="#bfe6ff" stroke="${K}" stroke-width="3" stroke-linejoin="round">
+<path d="M8 30l14-6 12 6v14l-14 6-12-6z"/><path d="M30 34l14-6 12 6v14l-14 6-12-6z"/><path d="M18 12l14-6 12 6v14l-14 6-12-6z"/></g>
+<path d="M12 34l8-3M34 38l8-3M22 16l8-3" stroke="#fff" stroke-width="3" stroke-linecap="round"/>`),
+  // Cloche du dernier service et horloge
+  lastOrder: (cls) => svg64(cls, `
+<path d="M14 46c0-20 6-32 18-32s18 12 18 32z" ${PINT('#ffc93a')}/>
+<path d="M8 46h48v6H8z" fill="#c9771a" stroke="${K}" stroke-width="3" stroke-linejoin="round"/>
+<circle cx="32" cy="10" r="4" fill="#c9771a" stroke="${K}" stroke-width="2.5"/>
+<circle cx="32" cy="56" r="4" fill="#5c6168" stroke="${K}" stroke-width="2.5"/>
+<path d="M22 40c0-10 3-16 8-20" stroke="#fff8" stroke-width="3" fill="none" stroke-linecap="round"/>
+<path d="M4 20l6 4M60 20l-6 4" stroke="#d23b2a" stroke-width="3" stroke-linecap="round"/>`),
+  // Ardoise noire avec traits à la craie
+  ardoise: (cls) => svg64(cls, `
+<rect x="6" y="8" width="52" height="46" rx="4" fill="#8a5230" stroke="${K}" stroke-width="3"/>
+<rect x="11" y="13" width="42" height="36" fill="#2d3236" stroke="${K}" stroke-width="2"/>
+<path d="M16 20v12M20 20v12M24 20v12M28 20v12M14 30l16-8M36 22h12M36 30h8M16 40h28" stroke="#f3e6cf" stroke-width="2.2" stroke-linecap="round"/>`),
+  // Juke-box arrondi, notes
+  jukeBox: (cls) => svg64(cls, `
+<path d="M12 58V26c0-12 9-20 20-20s20 8 20 20v32z" ${PINT('#d23b2a')}/>
+<path d="M18 30c0-8 6-14 14-14s14 6 14 14v8H18z" fill="#ffc93a" stroke="${K}" stroke-width="2.5"/>
+<path d="M18 44h28v10H18z" fill="#2d3236" stroke="${K}" stroke-width="2.5"/>
+<path d="M22 49h20" stroke="#5bb8e8" stroke-width="3"/>
+<path d="M54 10v10a3 3 0 1 1-2-3V10l6-2v8a3 3 0 1 1-2-3" stroke="${K}" stroke-width="2" fill="#fff4dc"/>`),
+  // Bretelles croisées
+  bretelles: (cls) => svg64(cls, `
+<path d="M14 6l8 0 24 52h-8zM50 6h-8L18 58h8z" ${PINT('#d23b2a')}/>
+<rect x="9" y="2" width="18" height="8" rx="2" fill="#c9ccd1" stroke="${K}" stroke-width="2.5"/>
+<rect x="37" y="2" width="18" height="8" rx="2" fill="#c9ccd1" stroke="${K}" stroke-width="2.5"/>
+<rect x="15" y="54" width="14" height="8" rx="2" fill="#c9ccd1" stroke="${K}" stroke-width="2.5"/>
+<rect x="35" y="54" width="14" height="8" rx="2" fill="#c9ccd1" stroke="${K}" stroke-width="2.5"/>`),
+  // Casquette avec deux canettes et pailles
+  casquette: (cls) => svg64(cls, `
+<path d="M10 44c0-14 10-22 22-22s22 8 22 22z" ${PINT('#3f7fc0')}/>
+<path d="M30 44h30c0 4-4 6-8 6H30z" ${PINT('#2d5f94')}/>
+<rect x="6" y="18" width="10" height="16" rx="2" fill="#d23b2a" stroke="${K}" stroke-width="2.5"/>
+<rect x="48" y="18" width="10" height="16" rx="2" fill="#4fb84a" stroke="${K}" stroke-width="2.5"/>
+<path d="M14 30c6 6 12 8 16 2M50 30c-6 6-12 8-16 2" stroke="#fff4dc" stroke-width="2.5" fill="none"/>`),
+  // Paire de tongs
+  tongs: (cls) => svg64(cls, `
+<path d="M12 8c8 0 12 10 12 24s-2 26-10 26S4 46 4 32 6 8 12 8z" ${PINT('#4aa8ff')}/>
+<path d="M44 8c8 0 12 10 12 24s-2 26-10 26-10-12-10-26 2-24 8-24z" ${PINT('#4aa8ff')}/>
+<path d="M14 16L8 30M14 16l8 12M46 16l-6 12M46 16l8 12" stroke="#ffc93a" stroke-width="3.5" stroke-linecap="round"/>`),
+  // Sifflet d'arbitre et son cordon
+  sifflet: (cls) => svg64(cls, `
+<path d="M8 8c10 6 18 14 22 22" stroke="#d23b2a" stroke-width="3" fill="none"/>
+<path d="M26 28h26v12H40a12 12 0 1 1-14-12z" ${PINT('#c9ccd1')}/>
+<circle cx="28" cy="42" r="5" fill="#2d3236" stroke="${K}" stroke-width="2"/>
+<path d="M54 22l6-4M56 30h6" stroke="#ffc93a" stroke-width="3" stroke-linecap="round"/>`),
+  // Paille rayée dans un verre
+  paille: (cls) => svg64(cls, `
+<path d="M14 24h32l-4 34H18z" ${PINT('#d23b2a')}/>
+<path d="M14 24h32l-1 8H15z" fill="#fff4dc" opacity=".6"/>
+<path d="M34 50L46 6l8 2" stroke="#fff4dc" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M36 42l2-8M40 28l2-8M44 14l1-4" stroke="#d23b2a" stroke-width="5"/>
+<path d="M19 30l2 22" stroke="#fff8" stroke-width="2.5" stroke-linecap="round"/>`),
+  // Fourchette qui pique une frite
+  piqueAssiette: (cls) => svg64(cls, `
+<path d="M22 4v14M28 4v14M34 4v14M20 16c0 6 16 6 16 0" stroke="#c9ccd1" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+<path d="M28 22v36" stroke="#c9ccd1" stroke-width="6" stroke-linecap="round"/>
+<path d="M28 22v36" stroke="${K}" stroke-width="1.5" opacity=".4"/>
+<path d="M40 10l14 4-8 36-10-2z" fill="#ffc93a" stroke="${K}" stroke-width="2.5" stroke-linejoin="round"/>`),
+  // Porte-monnaie à fermoir, capsule qui dépasse
+  porteMonnaie: (cls) => svg64(cls, `
+<ellipse cx="34" cy="16" rx="8" ry="3.4" fill="#d42a2a" stroke="${K}" stroke-width="2"/>
+<path d="M8 28c0-6 4-10 10-10h28c6 0 10 4 10 10v20c0 6-4 10-10 10H18c-6 0-10-4-10-10z" ${PINT('#8a5230')}/>
+<path d="M8 30h48" stroke="${K}" stroke-width="3"/>
+<circle cx="26" cy="22" r="4" fill="#ffc93a" stroke="${K}" stroke-width="2"/><circle cx="38" cy="22" r="4" fill="#ffc93a" stroke="${K}" stroke-width="2"/>
+<path d="M14 36v14" stroke="#fff5" stroke-width="3" stroke-linecap="round"/>`),
+  // Tabouret de bar, plaque « réservé »
+  tabouret: (cls) => svg64(cls, `
+<ellipse cx="32" cy="14" rx="20" ry="7" ${PINT('#d23b2a')}/>
+<path d="M18 20l-6 40M46 20l6 40M24 20l-2 40M40 20l2 40" stroke="#5c6168" stroke-width="4" stroke-linecap="round"/>
+<path d="M14 44h36" stroke="#5c6168" stroke-width="4"/>
+<rect x="18" y="26" width="28" height="11" rx="2" fill="#fff4dc" stroke="${K}" stroke-width="2"/>
+<path d="M22 31.5h20" stroke="#d23b2a" stroke-width="2.5"/>`),
+  // Bon de réduction découpé, « -% »
+  bonReduction: (cls) => svg64(cls, `
+<path d="M6 14h52v36H6z" ${PINT('#4fb84a')}/>
+<path d="M6 14h52v36H6z" fill="none" stroke="#fff4dc" stroke-width="2" stroke-dasharray="4 3" transform="translate(4 4) scale(.875)"/>
+<text x="32" y="40" text-anchor="middle" font-family="Lilita One, system-ui" font-size="18" fill="#fff4dc" stroke="${K}" stroke-width="1">-%</text>
+<path d="M54 6l6 6-4 4M2 54l6-2" stroke="#cdbfa6" stroke-width="2.5" stroke-linecap="round"/>`),
 };
 
 export const itemIcon = (id: ItemId, cls: string) => ITEM_ICONS[id](cls);

@@ -124,7 +124,7 @@ export function createBottleWeapon(ctx: WeaponContext, id: BottleWeaponId, name:
     for (const z of ctx.zombies()) {
       if (!z.targetable || b.hits.includes(z) || z.pos.distanceToSquared(b.pos) > 9) continue;
       if (segToZombie(prev, b.pos, z) < W.radius * mods.size + W.zombieRadius) {
-        const crit = Math.random() < W.critChance + mods.critChance;
+        const crit = Math.random() < W.critChance + mods.critChance + ctx.stats.critChance;
         const dmg = W.damage * mods.damage * (crit ? W.critMult + mods.critMult : 1);
         ctx.hitZombie(weapon, z, dmg, crit, b.pos, b.vel, W.knock * mods.knock);
         b.hits.push(z);
@@ -158,7 +158,7 @@ export function createBottleWeapon(ctx: WeaponContext, id: BottleWeaponId, name:
       // Geste accéléré quand la cadence monte (un geste complet tient dans l'intervalle)
       const rate = Math.min(W.maxGestureRate, Math.max(1, W.gestureDuration / interval));
       ctx.rig.gesture(rate);
-      const n = 1 + s.extraProjectiles + mods.projectiles;
+      const n = 1 + s.volleyBonus() + mods.projectiles;
       const first = W.releaseDelay / rate;
       // Rafale : les bouteilles d'une volée partent à la suite, l'écart se resserre avec la cadence
       const gap = Math.min(W.volleyGap, interval / (n + 1));

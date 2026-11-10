@@ -25,11 +25,10 @@ import { activeSynergies, synergiesCompletedBy, type SynergyId } from './synergi
 import { Pumps, rollStatCards, type Pump } from './pumps';
 import { Chests, rollItemCards, type Chest } from './chests';
 import { CHESTS } from '../config/chests';
-import { ITEMS, ITEM_EFFECTS, type ItemDef, type ItemId } from '../config/items';
+import { ITEMS, ITEM_EFFECTS, ITEM_STAT_CAPS, type ItemDef, type ItemId, type ItemStatId } from '../config/items';
 import { ItemEffects } from './itemEffects';
 import { rollTier } from './levelUpCards';
 import { PUMPS } from '../config/pumps';
-import type { StatId } from '../config/pumps';
 import { BASE_SPEED } from '../config/world';
 import { PLAYER_STATS } from '../config/player';
 import { Loadout } from './loadout';
@@ -82,8 +81,8 @@ export type GameEvents = {
   weaponExploded: { weapon: Weapon; pos: THREE.Vector3; radius: number };
   /** Une pompe à bière est pleine : le jeu se fige et propose ses bonus de stat. */
   pumpFilled: { pump: Pump; cards: Card[] };
-  /** Un bonus de stat est appliqué (pompe à bière). */
-  statGained: { stat: StatId; value: number };
+  /** Un bonus de stat est appliqué (pompe à bière, objet). */
+  statGained: { stat: ItemStatId; value: number };
   /** Coffre payé : sa rareté se révèle pendant `duration` s (jeu figé), avant l'écran de choix. */
   chestRevealing: { chest: Chest; rarity: number; duration: number };
   /** Coffre ouvert (payé `price`) : sa rareté et les objets proposés. */
@@ -91,7 +90,19 @@ export type GameEvents = {
   /** Touche d'action sur un coffre sans assez de capsules. */
   chestDenied: { chest: Chest; price: number; coins: number };
   /** Objet pris dans un coffre. */
-  itemGained: { item: ItemId; rarity: number; value: number };
+  itemGained: { item: ItemId; rarity: number; mult: number };
+  /** Glaçons ou Sifflet : un ennemi gèle (ou est étourdi) `time` s. */
+  zombieFrozen: { zombie: Zombie; time: number };
+  /** Démarche de pochtron : le joueur esquive le coup de `zombie`. */
+  playerDodged: { zombie: Zombie };
+  /** Sifflet d'arbitre : les ennemis à moins de `radius` m de `at` sont étourdis. */
+  whistleBlown: { at: THREE.Vector3; radius: number };
+  /** Juke-box (niveau gagné) ou Seconde tournée : une onde repousse les ennemis autour de `at`. */
+  shockwave: { at: THREE.Vector3; radius: number };
+  /** Seconde tournée : le joueur revient à la vie avec `hp` PV. */
+  revived: { hp: number };
+  /** Bonnet du Père Noël : un coffre gratuit apparaît. */
+  freeChestSpawned: { chest: Chest };
   /** Cendrier : un ennemi tué explose en `at` (blesse les ennemis dans `radius`, jamais le joueur). */
   itemExploded: { zombie: Zombie; at: THREE.Vector3; radius: number };
   /** Mousse épaisse : le bouclier est prêt. */
@@ -161,6 +172,8 @@ export class Game {
   readonly coinDrops: ReturnType<typeof createXpDrops>;
   /** Pièces en poche (monnaie de la run, perdue à la fin). */
   coins = 0;
+  /** Fraction de capsule gagnée en plus (Porte-monnaie), pas encore entière. */
+  private coinFrac = 0;
   private rollCoin: () => boolean;
   /** Projectiles des ennemis tireurs en vol. */
   readonly shots = createEnemyShots();
@@ -299,7 +312,7 @@ export class Game {
     if (!this.offer?.includes(card)) return;
     this.offer = null;
     if (card.kind === 'stat') this.applyStatBonus(card.stat, card.value);
-    else if (card.kind === 'item') this.gainItem(card.item, card.rarity, card.value);
+    else if (card.kind === 'item') this.gainItem(card.item, card.rarity, card.mult);
     else {
       if (card.kind === 'weapon') this.equip(card.weaponId);
       else applyCard(card);
@@ -336,14 +349,17 @@ export class Game {
     this.horde.update(dt);
     this.shots.update(dt, (s) => this.shotLanded(s));
     this.health.update(dt);
-    if (this.phase === 'run' && this.health.dead) this.die();
+    if (this.phase === 'run' && this.health.dead) {
+      if (this.effects.revives > 0) this.revive();
+      else this.die();
+    }
     if (this.phase === 'run' && !this.arriving) {
       this.runTime += dt;
       if (!frozen) {
         this.director.update(dt, this.runTime, this.mods.count);
         this.mechanic.update(dt);
         // Pompes à bière : pleine, elle fige le jeu et propose ses bonus
-        const full = this.pumps.update(dt, p.pos);
+        const full = this.pumps.update(dt, p.pos, this.stats.pumpSpeed);
         if (full) {
           const cards = rollStatCards(full.tier, PUMPS.choices, this.stats.luck);
           this.offer = cards;
@@ -353,12 +369,7 @@ export class Game {
         this.chests.update(p.pos);
         if (input.actionPressed && this.chests.focus && !this.offer) this.openChest(this.chests.focus);
       }
-      // Effets d'objets à minuterie (bouclier de mousse, happy hour)
-      const fx = this.effects.update(dt);
-      if (fx.shieldUp) this.events.emit('foamShieldUp', {});
-      if (fx.happyStart) this.events.emit('happyHourStarted', { duration: this.effects.happyLeft });
-      if (fx.happyEnd) this.events.emit('happyHourEnded', {});
-      this.stats.rateMul = this.effects.rateMul;
+      if (!frozen) this.updateItemEffects(dt);
       this.loadout.update(dt);
       this.events.emit('tick', { dt });
     }
@@ -370,8 +381,12 @@ export class Game {
       if (this.effects.healPerXp > 0) this.health.heal(this.effects.healPerXp);
     });
     this.coinDrops.update(dt, this.chest, this.phase === 'run' ? this.stats.pickupRange : 0, (v) => {
-      this.coins += v;
-      this.events.emit('coinsCollected', { amount: v, total: this.coins });
+      // Porte-monnaie : la part en plus s'accumule, une capsule entière à la fois
+      this.coinFrac += v * (this.stats.coinGain - 1);
+      const extra = Math.floor(this.coinFrac);
+      this.coinFrac -= extra;
+      this.coins += v + extra;
+      this.events.emit('coinsCollected', { amount: v + extra, total: this.coins });
     });
     return dt;
   }
@@ -389,13 +404,15 @@ export class Game {
    * Bonus de stat (pompe à bière) : ajouté à la stat du joueur. PV max : la vie monte d'autant ;
    * vitesse : appliquée au déplacement.
    */
-  applyStatBonus(stat: StatId, value: number) {
+  applyStatBonus(stat: ItemStatId, value: number) {
     if (stat === 'maxHp') {
       this.health.max += value;
       this.health.heal(value);
     } else {
-      this.stats[stat] += value;
+      (this.stats as unknown as Record<ItemStatId, number>)[stat] += value;
       if (stat === 'moveSpeed') this.player.speed = BASE_SPEED * this.stats.moveSpeed;
+      if (stat === 'jumpHeight') this.player.jumpMul = 1 + this.stats.jumpHeight;
+      if (stat === 'chestDiscount') this.chests.discount = this.stats.discount;
     }
     this.events.emit('statGained', { stat, value });
   }
@@ -404,22 +421,25 @@ export class Game {
    * Le joueur prend un objet (carte de coffre, outils de dev) : rangé dans ses objets, sa stat ou son
    * effet s'applique. `value` : effet à cette rareté (par défaut celui de la config).
    */
-  gainItem(item: ItemId, rarity: number, value?: number) {
+  gainItem(item: ItemId, rarity: number, mult?: number) {
     const def: ItemDef = ITEMS[item];
-    const v = value ?? (def.fixed ? def.value : def.value * RARITIES[rarity].mult);
+    const m = mult ?? (def.fixed ? 1 : RARITIES[rarity].mult);
     this.items.push({ item, rarity });
-    if (def.stat) this.applyStatBonus(def.stat, v);
-    else if (def.effect) this.effects.add(def.effect, v);
-    this.events.emit('itemGained', { item, rarity, value: v });
+    for (const [stat, v] of Object.entries(def.stats ?? {}) as [ItemStatId, number][]) this.applyStatBonus(stat, v * m);
+    if (def.effect) this.effects.add(def.effect, (def.value ?? 0) * m);
+    if (def.effect === 'doubleJump') this.player.airJumps = Math.round(this.effects.power.doubleJump);
+    this.events.emit('itemGained', { item, rarity, mult: m });
   }
 
   /** Paie et ouvre un coffre : la rareté se révèle, le jeu se fige sur 3 objets de cette rareté. */
   private openChest(chest: Chest) {
-    const price = this.chests.price;
+    // Bon de réduction : parfois gratuit
+    const lucky = this.effects.freeChestChance > 0 && this.random() < this.effects.freeChestChance;
+    const price = lucky ? 0 : this.chests.priceOf(chest);
     if (this.coins < price) { this.events.emit('chestDenied', { chest, price, coins: this.coins }); return; }
     this.coins -= price;
     chest.opened = true;
-    this.chests.opened++;
+    if (!chest.free) this.chests.opened++;
     const rarity = rollTier(this.stats.luck);
     const cards = rollItemCards(rarity, CHESTS.choices);
     const duration = CHESTS.revealTime + CHESTS.revealPerRarity * rarity;
@@ -472,8 +492,10 @@ export class Game {
    */
   hitZombie(z: Zombie, damage: number, crit: boolean, impact: THREE.Vector3, vel: THREE.Vector3, weapon: Weapon | null = null, knock = 1) {
     if (z.intangible) return false; // un fantôme intouchable : le coup le traverse
-    // Stat Dégâts du joueur : toutes ses armes
-    if (weapon) damage *= this.stats.damage;
+    // Stat Dégâts du joueur : toutes ses armes ; objets qui visent certains ennemis
+    if (weapon) damage *= this.stats.damage * this.itemDamageMul(z);
+    knock *= this.stats.knockback;
+    const hpBefore = Math.max(0, z.hp);
     // Synergies actives : une arme marque le zombie (sonné), une autre lui fait plus de dégâts pendant ce temps
     const synergies = this.activeSynergies().map((s) => SYNERGIES[s]);
     let combo = false;
@@ -490,7 +512,8 @@ export class Game {
       if (this.rollCoin()) this.coinDrops.drop(z.pos, COINS.value);
       else this.xp.drop(z.pos, z.def.xp);
     }
-    for (const S of synergies) if (!killed && weapon?.id === S.marker) z.dazed = S.duration;
+    for (const S of synergies) if (!killed && weapon?.id === S.marker) z.dazed = S.duration * this.stats.duration;
+    if (weapon) this.afterWeaponHit(z, Math.min(damage, hpBefore), killed);
     this.events.emit('zombieHit', { weapon, zombie: z, damage, crit, killed, hpAfter: z.hp, impact: impact.clone(), dir, shielded: shield > 0, combo });
     // Un kamikaze tué explose sur place
     if (killed && z.def.kamikaze) this.explode(z, true);
@@ -508,11 +531,104 @@ export class Game {
   private ashExplode(z: Zombie) {
     const E = ITEM_EFFECTS.explodeOnKill;
     const at = z.pos.clone();
-    this.events.emit('itemExploded', { zombie: z, at, radius: E.radius });
+    this.events.emit('itemExploded', { zombie: z, at, radius: E.radius * this.stats.size });
     const damage = E.damage * this.stats.damage * spawnCurveAt(this.runTime).hpMul * this.mods.hp;
+    const radius = E.radius * this.stats.size;
     for (const o of this.horde.alive()) {
-      if (o === z || !o.targetable || o.pos.distanceTo(at) > E.radius) continue;
+      if (o === z || !o.targetable || o.pos.distanceTo(at) > radius) continue;
       this.hitZombie(o, damage, false, o.pos, o.pos.clone().sub(at));
+    }
+  }
+
+  /** Multiplicateur de dégâts des objets sur ce zombie (Gants de videur, Lunettes, Last order). */
+  private itemDamageMul(z: Zombie) {
+    const P = this.effects.power;
+    let mul = 1;
+    if (P.closeDamage > 0 && z.pos.distanceTo(this.player.pos) < ITEM_EFFECTS.closeDamage.range) mul += P.closeDamage;
+    if (P.eliteDamage > 0 && z.def.hp >= ITEM_EFFECTS.eliteDamage.minHp) mul += P.eliteDamage;
+    if (P.lowHpDamage > 0 && this.health.ratio < ITEM_EFFECTS.lowHpDamage.below) mul += P.lowHpDamage;
+    return mul;
+  }
+
+  /** Après un coup d'arme : vol de vie, ralenti (Seau à glace), gel (Glaçons). */
+  private afterWeaponHit(z: Zombie, dealt: number, killed: boolean) {
+    if (this.stats.steal > 0 && dealt > 0) this.health.heal(dealt * this.stats.steal);
+    if (killed) return;
+    const slow = this.effects.slow;
+    if (slow > 0) {
+      z.slowMul = Math.min(z.slowMul, 1 - slow);
+      z.slowTime = ITEM_EFFECTS.slowOnHit.time * this.stats.duration;
+    }
+    const freeze = this.effects.freezeChance;
+    if (freeze > 0 && this.random() < freeze) this.freeze(z, ITEM_EFFECTS.freezeChance.time * this.stats.duration);
+  }
+
+  /** Gèle (ou étourdit) un zombie `time` s : il ne bouge plus, ne frappe plus. */
+  private freeze(z: Zombie, time: number) {
+    if (z.dead) return;
+    z.frozen = Math.max(z.frozen, time);
+    this.events.emit('zombieFrozen', { zombie: z, time });
+  }
+
+  /** Onde autour du joueur : repousse les ennemis à moins de `radius` m. */
+  private shockwave(radius: number, knock: number) {
+    const at = this.player.pos.clone();
+    this.events.emit('shockwave', { at, radius });
+    for (const o of this.horde.alive()) {
+      if (!o.targetable || o.pos.distanceTo(at) > radius) continue;
+      const dir = o.pos.clone().sub(at);
+      const up = this.tmp.copy(o.pos).normalize();
+      dir.addScaledVector(up, -dir.dot(up));
+      if (dir.lengthSq() < 1e-6) dir.copy(this.player.facing);
+      o.damage(0, dir.normalize(), knock);
+    }
+  }
+
+  /** Seconde tournée : le joueur revient avec une part de ses PV, invulnérable un instant, l'onde repousse. */
+  private revive() {
+    const R = ITEM_EFFECTS.revive;
+    this.effects.revives--;
+    this.health.hp = Math.max(1, Math.min(this.health.max, this.health.max * ITEMS.secondeTournee.value));
+    this.health.invuln = R.invuln;
+    this.effects.owed = 0;
+    this.events.emit('revived', { hp: this.health.hp });
+    this.shockwave(R.radius * this.stats.size, R.knock);
+  }
+
+  /** Effets d'objets qui vivent à chaque pas : minuteries, régénération, Écharpe, ardoise. */
+  private updateItemEffects(dt: number) {
+    const fx = this.effects.update(dt, this.stats.duration);
+    if (fx.shieldUp) this.events.emit('foamShieldUp', {});
+    if (fx.happyStart) this.events.emit('happyHourStarted', { duration: this.effects.happyLeft });
+    if (fx.happyEnd) this.events.emit('happyHourEnded', {});
+    this.stats.rateMul = this.effects.rateMul;
+    this.stats.extraShotChance = this.effects.extraShotChance;
+    // Ardoise du bar : la part de la dette qui tombe maintenant
+    if (fx.owedNow > 0 && !this.cheats.god) this.health.hp = Math.max(0, this.health.hp - fx.owedNow);
+    // Régénération ; Casquette à bière : en plus quand le joueur ne bouge pas
+    let regen = this.stats.regen;
+    if (this.effects.power.standRegen > 0 && this.player.velocity.length() < ITEM_EFFECTS.standRegen.still) regen += this.effects.power.standRegen;
+    if (regen > 0) this.health.heal(regen * dt);
+    // Écharpe de supporter : entouré, il court plus vite (et prend l'armure en plus)
+    if (this.effects.has('crowdBoost')) {
+      const C = ITEM_EFFECTS.crowdBoost;
+      let n = 0;
+      for (const o of this.horde.alive()) if (o.pos.distanceTo(this.player.pos) < C.radius && ++n >= C.count) break;
+      this.effects.crowded = n >= C.count;
+      this.player.speed = BASE_SPEED * this.stats.moveSpeed * (this.effects.crowded ? 1 + this.effects.power.crowdBoost : 1);
+    }
+    // Sifflet d'arbitre : étourdit les ennemis proches
+    if (fx.whistle) {
+      const W = ITEM_EFFECTS.whistle, radius = W.radius * this.stats.size;
+      this.events.emit('whistleBlown', { at: this.player.pos.clone(), radius });
+      for (const o of this.horde.alive()) {
+        if (o.targetable && o.pos.distanceTo(this.player.pos) < radius) this.freeze(o, this.effects.power.whistle * this.stats.duration);
+      }
+    }
+    // Bonnet du Père Noël : un coffre gratuit tombe près du joueur
+    if (fx.freeChest) {
+      const chest = this.chests.addFree(this.player.pos, this.player.facing, ITEM_EFFECTS.freeChest.dist);
+      if (chest) this.events.emit('freeChestSpawned', { chest });
     }
   }
 
@@ -536,6 +652,10 @@ export class Game {
   addXp(amount: number) {
     const gained = this.progression.add(amount);
     for (let i = 0; i < gained; i++) this.events.emit('levelGained', { level: this.progression.level - gained + 1 + i });
+    if (gained > 0 && this.effects.has('levelUpWave') && this.phase === 'run') {
+      const W = ITEM_EFFECTS.levelUpWave;
+      this.shockwave(W.radius * this.stats.size, W.knock * this.effects.power.levelUpWave);
+    }
   }
 
   // ------------------------------------------------------------------ interne
@@ -547,11 +667,28 @@ export class Game {
 
   /** Le joueur encaisse un coup de `z` (au contact ou à distance), venant de la direction `dir`. */
   private hurtPlayer(z: Zombie, dir: THREE.Vector3, baseDamage: number) {
-    const damage = baseDamage * this.mods.damage;
+    let damage = baseDamage * this.mods.damage;
     // Mousse épaisse : le bouclier absorbe le coup entier (puis courte invulnérabilité, comme un coup)
     if (!this.cheats.god && this.health.invuln <= 0 && !this.health.dead && this.effects.absorb()) {
       this.health.invuln = PLAYER_STATS.invulnTime;
       this.events.emit('foamShieldPopped', { zombie: z });
+      return;
+    }
+    // Démarche de pochtron : il titube, le coup passe à côté
+    if (!this.cheats.god && this.health.invuln <= 0 && !this.health.dead && this.stats.dodgeChance > 0 && this.random() < this.stats.dodgeChance) {
+      this.health.invuln = PLAYER_STATS.invulnTime;
+      this.events.emit('playerDodged', { zombie: z });
+      return;
+    }
+    // Armure (Gueule de bois, Écharpe entouré) : PV retirés de chaque coup, jamais sous le minimum
+    const armor = this.stats.armor + (this.effects.crowded ? ITEM_EFFECTS.crowdBoost.armor : 0);
+    if (armor > 0) damage = Math.max(ITEM_STAT_CAPS.minHitDamage, damage - armor);
+    // Ardoise du bar : le coup est noté, payé sur quelques secondes
+    if (this.effects.has('damageSpread') && !this.cheats.god && this.health.invuln <= 0 && !this.health.dead) {
+      this.health.damage(0);
+      this.effects.owe(damage);
+      this.events.emit('playerHurt', { zombie: z, dir, damage, hp: this.health.hp, blocked: false });
+      this.player.knock(dir, ZOMBIE_ATTACK.knockSpeed, ZOMBIE_ATTACK.knockLift, ZOMBIE_ATTACK.knockDecay);
       return;
     }
     // Invulnérable juste après un coup : ni dégâts ni recul (pas d'enchaînement de coups)
@@ -659,6 +796,9 @@ export class Game {
     this.chests.clear();
     this.items.length = 0;
     this.effects.reset();
+    this.coinFrac = 0;
+    this.player.jumpMul = 1;
+    this.player.airJumps = 0;
     this.loadout.reset();
     this.horde.clear();
     this.horde.setPassive(false);

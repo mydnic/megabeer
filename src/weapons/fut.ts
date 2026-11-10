@@ -79,7 +79,7 @@ export function createFut(ctx: WeaponContext): Weapon {
       d.addScaledVector(up, -d.dot(up));
       if (Math.abs(d.dot(b.axis)) > halfLen || Math.abs(d.dot(b.fwd)) > halfDepth) continue;
       b.hits.push(z);
-      const crit = Math.random() < F.critChance + mods.critChance;
+      const crit = Math.random() < F.critChance + mods.critChance + ctx.stats.critChance;
       const dmg = F.damage * mods.damage * (crit ? F.critMult + mods.critMult : 1);
       ctx.hitZombie(weapon, z, dmg, crit, b.pos, vel.copy(b.fwd).multiplyScalar(F.speed), F.knock * mods.knock);
     }
@@ -102,7 +102,7 @@ export function createFut(ctx: WeaponContext): Weapon {
       up.copy(ctx.playerPos()).normalize();
       const aim = d.subVectors(target.pos, ctx.playerPos());
       aim.addScaledVector(up, -aim.dot(up)).normalize();
-      const n = 1 + ctx.stats.extraProjectiles + mods.projectiles;
+      const n = 1 + ctx.stats.volleyBonus() + mods.projectiles;
       for (let k = 0; k < n; k++) {
         const a = (k - (n - 1) / 2) * F.spread;
         launch(lead.copy(aim).applyAxisAngle(up, a));

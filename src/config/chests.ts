@@ -5,6 +5,8 @@
 export const CHESTS = {
   /** Coffres posés sur la planète à chaque run (« une bonne centaine », demande de l'utilisateur). */
   count: 100,
+  /** Coffres gratuits en plus (Bonnet du Père Noël), au plus. */
+  extraMax: 40,
   /** Distance mini au départ, entre coffres et aux pompes (m, au sol), essais de placement. */
   minFromSpawn: 12,
   minSpacing: 10,

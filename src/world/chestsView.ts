@@ -37,7 +37,7 @@ export async function createChestsView(scene: THREE.Scene) {
     // Géométrie dans le repère du coffre (corps) ou de la charnière (couvercle)
     const g = m.geometry.clone().applyMatrix4(lid ? lidInv.clone().multiply(m.matrixWorld) : toChest.clone().multiply(m.matrixWorld));
     const mat = (m.material as THREE.Material).name.startsWith('Ferrure') ? iron : wood;
-    const mesh = new THREE.InstancedMesh(g, mat, CHESTS.count);
+    const mesh = new THREE.InstancedMesh(g, mat, CHESTS.count + CHESTS.extraMax);
     mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     mesh.frustumCulled = false;
     mesh.castShadow = true;

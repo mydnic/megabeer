@@ -80,16 +80,15 @@ export function statCardText(c: StatCard) {
 /** Effet d'une carte d'objet, en clair (sa valeur à la rareté tirée). */
 export function itemCardText(c: ItemCard) {
   const def: ItemDef = ITEMS[c.item];
-  if (def.stat) return statCardText({ kind: 'stat', stat: def.stat, value: c.value, rarity: c.rarity, tier: 'bronze' });
-  const num = (v: number) => String(Math.round(v * 100) / 100).replace('.', ',');
-  const H = ITEM_EFFECTS.happyHour;
-  switch (def.effect) {
-    case 'explodeOnKill': return `${num(c.value * 100)} % des ennemis tués explosent`;
-    case 'foamShield': return `Un bouclier absorbe 1 coup toutes les ${Math.round(1 / c.value)} s`;
-    case 'happyHour': return `Toutes les ${H.every} s : attaque x${H.rate} pendant ${num(c.value)} s`;
-    case 'healOnXp': return `Chaque goutte d'XP soigne ${num(c.value)} PV`;
-    default: return '';
-  }
+  const values: Record<string, number> = {};
+  for (const [k, v] of Object.entries(def.stats ?? {})) values[k] = v * c.mult;
+  const v = (def.value ?? 0) * c.mult;
+  values.v = v;
+  // Période (s) : bouclier de mousse (recharges par seconde), coffre du Bonnet
+  if (def.effect === 'foamShield') values.every = Math.round(1 / v);
+  if (def.effect === 'freeChest') values.every = Math.round(ITEM_EFFECTS.freeChest.every / v);
+  const num = (n: number) => String(Math.round(n * 100) / 100).replace('.', ',');
+  return def.text.replace(/\{(\w+)(%?)\}/g, (_, k: string, pct: string) => (pct ? `${num(values[k] * 100)} %` : num(values[k])));
 }
 
 /** Applique une amélioration à son arme (améliorations additives, l'arme monte d'un niveau). */

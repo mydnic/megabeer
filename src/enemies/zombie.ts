@@ -61,6 +61,11 @@ export class Zombie {
   incoming = 0;
   /** Sonné par une synergie (Black and Tan) : temps restant (s). Il ne l'arrête pas, c'est une marque. */
   dazed = 0;
+  /** Ralenti (Seau à glace) : multiplicateur de vitesse et temps restant (s). */
+  slowMul = 1;
+  slowTime = 0;
+  /** Gelé ou étourdi (Glaçons, Sifflet) : temps restant (s) ; il ne bouge ni ne frappe, son animation s'arrête. */
+  frozen = 0;
   /** Brique Invocateur : temps avant la prochaine invocation (s), et temps restant du geste en cours (s). */
   summonTimer = 0;
   casting = 0;
@@ -166,7 +171,7 @@ export class Zombie {
     const rate = this.state === 'walk' ? THREE.MathUtils.clamp(this.walkSpeed / animAt, 0.3, V.maxWalkRate) : this.animSpeed;
     const c = this.kind.clips[this.state];
     const before = (this.time % c.duration) / c.duration;
-    this.time += dt * rate;
+    this.time += dt * rate * (this.frozen > 0 ? 0 : 1);
     this.prevTime += dt * this.animSpeed;
     this.fade = Math.min(1, this.fade + dt / V.fade);
     this.stateTime += dt;
@@ -175,6 +180,8 @@ export class Zombie {
     this.throwTimer = Math.max(0, this.throwTimer - dt);
     this.summonTimer = Math.max(0, this.summonTimer - dt);
     this.dazed = Math.max(0, this.dazed - dt);
+    this.frozen = Math.max(0, this.frozen - dt);
+    if ((this.slowTime = Math.max(0, this.slowTime - dt)) === 0) this.slowMul = 1;
     if (this.rise > 0 && !this.dead) {
       this.rise = Math.max(0, this.rise - dt);
       this.sink = (this.rise / SPAWN.riseTime) ** 2 * SPAWN.riseDepth;

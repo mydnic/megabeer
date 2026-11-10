@@ -69,7 +69,7 @@ export class Pumps {
   clear() { this.list.length = 0; this.focus = null; this.filling = false; this.collider.setExtra('pumps', []); }
 
   /** Remplit (ou vide) chaque pompe ; renvoie celle qui vient d'être pleine, s'il y en a une. */
-  update(dt: number, playerPos: THREE.Vector3): Pump | null {
+  update(dt: number, playerPos: THREE.Vector3, fillMul = 1): Pump | null {
     let full: Pump | null = null;
     let best = Infinity;
     this.focus = null;
@@ -79,7 +79,7 @@ export class Pumps {
       const d = p.pos.angleTo(playerPos) * PLANET_RADIUS;
       const near = d < P.radius;
       if ((near || p.fill > 0) && d < P.radius * P.gaugeRange && d < best) { best = d; this.focus = p; this.filling = near; }
-      p.fill = near ? Math.min(1, p.fill + dt / P.fillTime) : Math.max(0, p.fill - dt * P.drainPerSecond);
+      p.fill = near ? Math.min(1, p.fill + dt * fillMul / P.fillTime) : Math.max(0, p.fill - dt * P.drainPerSecond);
       if (p.fill >= 1 && !full) { p.used = true; full = p; }
     }
     return full;

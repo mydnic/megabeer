@@ -29,7 +29,7 @@ export function createGueuze(ctx: WeaponContext): Weapon {
    */
   function groups(n: number) {
     const from = ctx.playerPos();
-    const radius = G.radius * mods.radius;
+    const radius = G.radius * mods.radius * ctx.stats.size;
     const inRange = ctx.zombies().filter((z) => z.targetable && z.pos.distanceTo(from) < G.range);
     const alive = inRange.filter((z) => z.incoming < z.hp);
     const near = (alive.length ? alive : inRange)
@@ -98,11 +98,11 @@ export function createGueuze(ctx: WeaponContext): Weapon {
 
   /** Explosion : dégâts et recul (vers l'extérieur) à tous les zombies dans le rayon. */
   function explode(b: Grenade) {
-    const radius = G.radius * mods.radius;
+    const radius = G.radius * mods.radius * ctx.stats.size;
     ctx.explode(weapon, b.pos, radius);
     for (const z of ctx.zombies()) {
       if (!z.targetable || z.pos.distanceTo(b.pos) > radius) continue;
-      const crit = Math.random() < G.critChance + mods.critChance;
+      const crit = Math.random() < G.critChance + mods.critChance + ctx.stats.critChance;
       const dmg = G.damage * mods.damage * (crit ? G.critMult + mods.critMult : 1);
       push.subVectors(z.pos, b.pos);
       ctx.hitZombie(weapon, z, dmg, crit, z.pos, vel.copy(push).setLength(1), G.knock);
@@ -118,7 +118,7 @@ export function createGueuze(ctx: WeaponContext): Weapon {
     update(dt: number) {
       timer -= dt;
       if (timer > 0) return;
-      const n = 1 + ctx.stats.extraProjectiles + mods.projectiles;
+      const n = 1 + ctx.stats.volleyBonus() + mods.projectiles;
       const targets = groups(n);
       if (!targets.length) return;
       timer = G.cooldown / (ctx.stats.fireRate * mods.rate);
