@@ -65,8 +65,8 @@ export const PUMP_LOOK = {
    * Zone de remplissage : sphère très discrète du rayon PUMPS.radius, centrée sur le pied du fût,
    * dont seuls les bords luisent (liseré) ; plus visible quand le joueur est dedans.
    */
-  zoneOpacity: 0.12,
-  zoneOpacityInside: 0.24,
+  zoneOpacity: 0.08,
+  zoneOpacityInside: 0.18,
   zoneRim: 2.2,
   /** Pinte-jauge : hauteur au-dessus du sol (m), taille du verre (m), épaisseur de mousse (m), couleurs. */
   pintAbove: 4,
