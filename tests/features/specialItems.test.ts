@@ -58,7 +58,27 @@ describe('Objets à effet spécial', () => {
     // Il revient au bout de 1 / valeur secondes
     t.noSpawns();
     expect(t.playUntil(() => t.events('foamShieldUp').length > 0, 1 / ITEMS.mousseEpaisse.value + 1)).toBe(true);
-    expect(t.game.effects.shield).toBe(true);
+    expect(t.game.effects.shieldsUp).toBe(1);
+  });
+
+  it('Mousse épaisse prise deux fois : deux bulles, chacune avec sa recharge', () => {
+    const t = arena();
+    t.game.cheats.god = false;
+    t.game.loadout.weapons[0].mods.range = 0;
+    t.game.gainItem('mousseEpaisse', 0);
+    t.game.gainItem('mousseEpaisse', 0);
+    expect(t.game.effects.shieldsUp).toBe(2);
+    const hp = t.game.health.hp;
+    const z = t.game.spawnZombie('novice', t.inFront(1.2), toward(t).negate())!;
+    // Deux coups de suite absorbés, sans perdre de PV
+    expect(t.playUntil(() => t.events('foamShieldPopped').length >= 2, 8)).toBe(true);
+    expect(t.game.health.hp).toBe(hp);
+    expect(t.game.effects.shieldsUp).toBe(0);
+    // Chacune revient de son côté : deux recharges
+    t.game.hitZombie(z, 9999, false, z.pos, toward(t));
+    t.noSpawns();
+    expect(t.playUntil(() => t.game.effects.shieldsUp === 2, 1 / ITEMS.mousseEpaisse.value + 2)).toBe(true);
+    expect(t.events('foamShieldUp')).toHaveLength(2);
   });
 
   it("Happy hour : toutes les 60 s, la cadence double pendant quelques secondes", () => {

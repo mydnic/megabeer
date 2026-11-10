@@ -176,13 +176,21 @@ describe('Tous les objets', () => {
     expect(t.events('zombieFrozen').some((f) => f.zombie === near)).toBe(true);
   });
 
-  it('Juke-box : un niveau gagné repousse les ennemis proches', () => {
+  it('Juke-box : toutes les quelques secondes, une onde blesse et repousse les ennemis proches', () => {
     const t = arena();
+    t.game.loadout.weapons[0].mods.range = 0; // seule l'onde touche le zombie
     t.game.gainItem('jukeBox', 0);
-    const z = t.game.spawnZombie('zombie', t.inFront(3), facing(t).negate())!;
+    t.play(ITEM_EFFECTS.musicWave.every - 0.2);
+    expect(t.events('shockwave')).toHaveLength(0);
+    const z = t.game.spawnZombie('tonnelier', t.inFront(3), facing(t).negate())!;
+    const hp = z.hp;
+    t.play(0.3);
+    expect(t.events('shockwave')).toHaveLength(1);
+    expect(z.hp).toBeLessThan(hp);
+    expect(z.knockVel.dot(facing(t))).toBeGreaterThan(0);
+    // Un niveau gagné ne déclenche plus rien
     t.game.addXp(t.game.progression.next);
     expect(t.events('shockwave')).toHaveLength(1);
-    expect(z.knockVel.dot(facing(t))).toBeGreaterThan(0);
   });
 
   it('Seconde tournée : à la mort, le joueur revient une fois, puis meurt pour de bon', () => {

@@ -168,7 +168,7 @@ function frame(now: number) {
   ice.update(dt);
   gift.update(dt);
   rings.update(realDt);
-  foamShield.sync(realDt, game.phase === 'run' && game.effects.shield, player.renderPos);
+  foamShield.sync(realDt, game.phase === 'run' ? game.effects.shieldsUp : 0, player.renderPos);
   gueuzeBurst.update(dt);
   damageNumbers.update(realDt);
   pint.update(dt);

@@ -100,17 +100,19 @@ describe('Les zombies arrivent', () => {
     expect(late.hp).toBeGreaterThan(late.def.hp * 3);
   });
 
-  it('un zombie distancé ressort de terre devant le joueur', () => {
+  it('un zombie distancé reste derrière et continue de poursuivre le joueur (pas de téléportation)', () => {
     const t = observe();
     t.noSpawns();
-    const z = t.game.spawnZombie('zombie', t.inFront(-(SPAWN.recycleDist + 15)), t.game.player.facing.clone())!;
-    t.play(1 / 60);
+    const far = SPAWN.maxDist * 2;
+    const z = t.game.spawnZombie('zombie', t.inFront(-far), t.game.player.facing.clone())!;
+    const d0 = groundDist(z.pos, t.game.player.pos);
+    t.play(1);
     const d = groundDist(z.pos, t.game.player.pos);
-    expect(d).toBeLessThan(SPAWN.maxDist * 1.05);
-    expect(z.rise).toBeGreaterThan(0);
-    // Devant : du côté où le Buveur regarde
+    expect(d).toBeGreaterThan(d0 - z.def.speed * 1.5);
+    expect(d).toBeLessThan(d0);
+    // Toujours derrière le Buveur
     const toZ = z.pos.clone().sub(t.game.player.pos).normalize();
-    expect(toZ.dot(t.game.player.facing)).toBeGreaterThan(0);
+    expect(toZ.dot(t.game.player.facing)).toBeLessThan(0);
   });
 
   it("n'arrivent ni pendant la pause, ni pendant le choix des cartes, ni après la mort", () => {

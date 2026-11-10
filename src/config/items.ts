@@ -13,7 +13,7 @@ export type ItemStatId =
 /** Effets spéciaux (un déclencheur et un effet), réglés dans ITEM_EFFECTS. */
 export type EffectId =
   | 'explodeOnKill' | 'foamShield' | 'happyHour' | 'healOnXp' | 'slowOnHit' | 'freezeChance' | 'closeDamage'
-  | 'eliteDamage' | 'crowdBoost' | 'extraShotChance' | 'lowHpDamage' | 'damageSpread' | 'levelUpWave'
+  | 'eliteDamage' | 'crowdBoost' | 'extraShotChance' | 'lowHpDamage' | 'damageSpread' | 'musicWave'
   | 'standRegen' | 'whistle' | 'revive' | 'freeChest' | 'freeChestChance' | 'doubleJump';
 
 export type ItemDef = {
@@ -47,8 +47,9 @@ export type ItemDef = {
  * - extraShotChance (Cochonnet) : chance qu'une volée lance un projectile de plus.
  * - lowHpDamage (Last order) : dégâts en plus sous `below` des PV max.
  * - damageSpread (Ardoise du bar) : les dégâts reçus tombent sur `v` s au lieu d'un coup.
- * - levelUpWave (Juke-box) : chaque niveau gagné repousse les ennemis dans `radius` m (stat Taille),
- *   recul multiplié par `v`.
+ * - musicWave (Juke-box) : toutes les `every` s, une onde part du joueur et touche les ennemis à moins
+ *   de `radius` m (stat Taille) : `v` dégâts (qui suivent les PV des ennemis au fil de la run et la stat
+ *   Dégâts) et un recul `knock` (stat Recul).
  * - standRegen (Casquette à bière) : PV par seconde quand le joueur ne bouge pas.
  * - whistle (Sifflet d'arbitre) : toutes les `every` s, étourdit `v` s les ennemis à moins de `radius` m.
  * - revive (Seconde tournée) : une fois par exemplaire, revient à la mort avec `v` des PV max,
@@ -68,7 +69,7 @@ export const ITEM_EFFECTS = {
   crowdBoost: { count: 15, radius: 7, armor: 2 },
   extraShotChance: { max: 1 },
   lowHpDamage: { below: 0.3 },
-  levelUpWave: { radius: 9, knock: 4 },
+  musicWave: { every: 10, radius: 7, knock: 3 },
   standRegen: { still: 0.3 },
   whistle: { every: 15, radius: 7 },
   revive: { invuln: 2, radius: 8, knock: 5 },
@@ -120,7 +121,7 @@ export const ITEMS = {
   lastOrder: { name: 'Last order', effect: 'lowHpDamage', value: 0.2, text: `+{v%} dégâts sous ${E.lowHpDamage.below * 100} % PV` },
   ardoise: { name: 'Ardoise du bar', effect: 'damageSpread', value: 3, text: 'Les dégâts reçus sont étalés sur {v} s' },
   mousseEpaisse: { name: 'Mousse épaisse', effect: 'foamShield', value: 0.05, text: 'Un bouclier absorbe 1 coup toutes les {every} s' },
-  jukeBox: { name: 'Juke-box', effect: 'levelUpWave', value: 1, text: 'Chaque niveau gagné repousse les ennemis' },
+  jukeBox: { name: 'Juke-box', effect: 'musicWave', value: 8, text: `Toutes les ${E.musicWave.every} s, une onde fait {v} dégâts et repousse` },
   bretelles: { name: 'Bretelles', stats: { maxHp: 10, moveSpeed: 0.03 }, text: '+{maxHp} PV max et +{moveSpeed%} vitesse' },
   casquette: { name: 'Casquette à bière', effect: 'standRegen', value: 2, text: '+{v} PV par seconde sans bouger' },
   tongs: { name: 'Tongs', stats: { moveSpeed: 0.1, jumpHeight: -0.1 }, text: '+{moveSpeed%} vitesse, saut moins haut' },

@@ -2,7 +2,7 @@ import { ITEM_EFFECTS as E, type EffectId } from '../config/items';
 
 const NONE = (): Record<EffectId, number> => ({
   explodeOnKill: 0, foamShield: 0, happyHour: 0, healOnXp: 0, slowOnHit: 0, freezeChance: 0, closeDamage: 0,
-  eliteDamage: 0, crowdBoost: 0, extraShotChance: 0, lowHpDamage: 0, damageSpread: 0, levelUpWave: 0,
+  eliteDamage: 0, crowdBoost: 0, extraShotChance: 0, lowHpDamage: 0, damageSpread: 0, musicWave: 0,
   standRegen: 0, whistle: 0, revive: 0, freeChest: 0, freeChestChance: 0, doubleJump: 0,
 });
 
@@ -14,14 +14,17 @@ const NONE = (): Record<EffectId, number> => ({
 export class ItemEffects {
   /** Puissance de chaque effet (0 : objet absent). */
   readonly power = NONE();
-  /** Mousse épaisse : bouclier prêt et recharge en cours (0 à 1). */
-  shield = false;
-  shieldCharge = 0;
+  /**
+   * Mousse épaisse : une bulle par exemplaire, chacune avec sa recharge (bulles par seconde, selon sa
+   * rareté), prête ou en recharge (0 à 1).
+   */
+  readonly shields: { rate: number; ready: boolean; charge: number }[] = [];
   /** Happy hour : temps avant la prochaine (s) et temps restant de celle en cours (s). */
   happyIn = 0;
   happyLeft = 0;
-  /** Sifflet et Bonnet : temps avant le prochain (s). */
+  /** Sifflet, Juke-box et Bonnet : temps avant le prochain (s). */
   whistleIn = 0;
+  musicIn = 0;
   freeChestIn = 0;
   /** Seconde tournée : retours à la vie restants. */
   revives = 0;
@@ -37,11 +40,13 @@ export class ItemEffects {
     this.power[effect] += value;
     // Seconde tournée : un retour à la vie par exemplaire
     if (effect === 'revive') this.revives++;
+    // Mousse épaisse : chaque exemplaire apporte sa bulle, qui arrive pleine
+    if (effect === 'foamShield') this.shields.push({ rate: value, ready: true, charge: 0 });
     if (!first) return;
-    // Premier exemplaire : le bouclier arrive plein, les minuteries démarrent un cycle complet
-    if (effect === 'foamShield') this.shield = true;
+    // Premier exemplaire : les minuteries démarrent un cycle complet
     if (effect === 'happyHour') this.happyIn = E.happyHour.every;
     if (effect === 'whistle') this.whistleIn = E.whistle.every;
+    if (effect === 'musicWave') this.musicIn = E.musicWave.every;
     if (effect === 'freeChest') this.freeChestIn = this.freeChestEvery;
   }
 
@@ -56,11 +61,19 @@ export class ItemEffects {
   get freeChestChance() { return Math.min(E.freeChestChance.max, this.power.freeChestChance); }
   get freeChestEvery() { return E.freeChest.every / Math.max(1, this.power.freeChest); }
 
-  /** Le bouclier absorbe un coup : renvoie true s'il était prêt (il repart en recharge). */
+  /** Mousse épaisse : nombre de bulles prêtes. */
+  get shieldsUp() { return this.shields.reduce((n, s) => n + (s.ready ? 1 : 0), 0); }
+
+  /**
+   * Une bulle absorbe un coup : renvoie true si l'une était prête. C'est celle qui se recharge le plus
+   * vite qui éclate (elle reviendra la première).
+   */
   absorb() {
-    if (!this.shield) return false;
-    this.shield = false;
-    this.shieldCharge = 0;
+    let best: (typeof this.shields)[number] | null = null;
+    for (const s of this.shields) if (s.ready && (!best || s.rate > best.rate)) best = s;
+    if (!best) return false;
+    best.ready = false;
+    best.charge = 0;
     return true;
   }
 
@@ -72,10 +85,11 @@ export class ItemEffects {
 
   /** Avance les minuteries (`duration` : stat Durée) ; renvoie ce qui vient de se passer. */
   update(dt: number, duration: number) {
-    let shieldUp = false, happyStart = false, happyEnd = false, whistle = false, freeChest = false;
-    if (this.power.foamShield > 0 && !this.shield) {
-      this.shieldCharge += this.power.foamShield * dt;
-      if (this.shieldCharge >= 1) { this.shield = true; this.shieldCharge = 0; shieldUp = true; }
+    let shieldUp = false, happyStart = false, happyEnd = false, whistle = false, music = false, freeChest = false;
+    for (const s of this.shields) {
+      if (s.ready) continue;
+      s.charge += s.rate * dt;
+      if (s.charge >= 1) { s.ready = true; s.charge = 0; shieldUp = true; }
     }
     if (this.power.happyHour > 0) {
       if (this.happyLeft > 0 && (this.happyLeft -= dt) <= 0) { this.happyLeft = 0; happyEnd = true; }
@@ -86,6 +100,7 @@ export class ItemEffects {
       }
     }
     if (this.power.whistle > 0 && (this.whistleIn -= dt) <= 0) { this.whistleIn += E.whistle.every; whistle = true; }
+    if (this.power.musicWave > 0 && (this.musicIn -= dt) <= 0) { this.musicIn += E.musicWave.every; music = true; }
     if (this.power.freeChest > 0 && (this.freeChestIn -= dt) <= 0) { this.freeChestIn += this.freeChestEvery; freeChest = true; }
     // Ardoise : ce qui tombe pendant ce pas
     let owedNow = 0;
@@ -93,14 +108,13 @@ export class ItemEffects {
       owedNow = Math.min(this.owed, this.owedRate * dt);
       this.owed -= owedNow;
     }
-    return { shieldUp, happyStart, happyEnd, whistle, freeChest, owedNow };
+    return { shieldUp, happyStart, happyEnd, whistle, music, freeChest, owedNow };
   }
 
   reset() {
     Object.assign(this.power, NONE());
-    this.shield = false;
-    this.shieldCharge = 0;
-    this.happyIn = this.happyLeft = this.whistleIn = this.freeChestIn = 0;
+    this.shields.length = 0;
+    this.happyIn = this.happyLeft = this.whistleIn = this.musicIn = this.freeChestIn = 0;
     this.revives = 0;
     this.owed = this.owedRate = 0;
     this.crowded = false;

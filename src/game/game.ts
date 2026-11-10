@@ -570,8 +570,8 @@ export class Game {
     this.events.emit('zombieFrozen', { zombie: z, time });
   }
 
-  /** Onde autour du joueur : repousse les ennemis à moins de `radius` m. */
-  private shockwave(radius: number, knock: number) {
+  /** Onde autour du joueur : repousse les ennemis à moins de `radius` m (et les blesse de `damage`). */
+  private shockwave(radius: number, knock: number, damage = 0) {
     const at = this.player.pos.clone();
     this.events.emit('shockwave', { at, radius });
     for (const o of this.horde.alive()) {
@@ -580,7 +580,9 @@ export class Game {
       const up = this.tmp.copy(o.pos).normalize();
       dir.addScaledVector(up, -dir.dot(up));
       if (dir.lengthSq() < 1e-6) dir.copy(this.player.facing);
-      o.damage(0, dir.normalize(), knock);
+      dir.normalize();
+      if (damage > 0) this.hitZombie(o, damage, false, o.pos, dir, null, knock);
+      else o.damage(0, dir, knock);
     }
   }
 
@@ -625,6 +627,12 @@ export class Game {
         if (o.targetable && o.pos.distanceTo(this.player.pos) < radius) this.freeze(o, this.effects.power.whistle * this.stats.duration);
       }
     }
+    // Juke-box : une onde de musique blesse et repousse les ennemis proches
+    if (fx.music) {
+      const M = ITEM_EFFECTS.musicWave;
+      const damage = this.effects.power.musicWave * this.stats.damage * spawnCurveAt(this.runTime).hpMul * this.mods.hp;
+      this.shockwave(M.radius * this.stats.size, M.knock, damage);
+    }
     // Bonnet du Père Noël : un coffre gratuit tombe près du joueur
     if (fx.freeChest) {
       const chest = this.chests.addFree(this.player.pos, this.player.facing, ITEM_EFFECTS.freeChest.dist);
@@ -652,10 +660,6 @@ export class Game {
   addXp(amount: number) {
     const gained = this.progression.add(amount);
     for (let i = 0; i < gained; i++) this.events.emit('levelGained', { level: this.progression.level - gained + 1 + i });
-    if (gained > 0 && this.effects.has('levelUpWave') && this.phase === 'run') {
-      const W = ITEM_EFFECTS.levelUpWave;
-      this.shockwave(W.radius * this.stats.size, W.knock * this.effects.power.levelUpWave);
-    }
   }
 
   // ------------------------------------------------------------------ interne

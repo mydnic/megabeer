@@ -107,6 +107,8 @@ export const FOAM_POP = {
  */
 export const FOAM_SHIELD_LOOK = {
   radius: 1.25, height: 1.0, color: 0xfff4dc, opacity: 0.6, rim: 2.5, growTime: 0.35, breathe: 3, breatheAmount: 0.03,
+  /** Plusieurs bulles prêtes (une par Mousse épaisse) : chacune plus large de `layerGap` m, au plus `maxLayers` visibles. */
+  layerGap: 0.22, maxLayers: 5,
 } as const;
 
 /** Glaçons, Sifflet : éclats de glace quand un ennemi gèle. */

@@ -33,8 +33,6 @@ export const SPAWN = {
   tries: 8,
   /** Marge autour du corps pour le test du décor (m). */
   clearance: 0.6,
-  /** Zombie distancé au-delà de cette distance (m) : il ressort de terre sur l'anneau, devant le joueur. */
-  recycleDist: 60,
   /** Sortie de terre : durée (s) pendant laquelle il émerge du sol, immobile, et profondeur de départ (m). */
   riseTime: 0.9,
   riseDepth: 1.8,

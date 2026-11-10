@@ -63,7 +63,6 @@ export class SpawnDirector {
   /** Avance de `dt` secondes de jeu, au temps de run `runTime`. */
   update(dt: number, runTime: number, countMul: number) {
     this.rate = spawnCurveAt(runTime).perSecond * countMul;
-    this.recycle();
     if (!this.enabled) return;
     this.budget += this.rate * dt;
     while (this.budget >= 1) {
@@ -100,17 +99,6 @@ export class SpawnDirector {
   private spawnAt(dir: THREE.Vector3, enemy: EnemyId) {
     const facing = this.d.player.pos.clone().sub(dir.clone().multiplyScalar(PLANET_RADIUS));
     return this.d.spawn(enemy, dir, facing);
-  }
-
-  /** Zombies distancés : ils ressortent de terre sur l'anneau, devant le joueur. */
-  private recycle() {
-    const p = this.d.player.pos;
-    for (const z of this.d.zombies()) {
-      if (z.dead || z.pos.distanceTo(p) < SPAWN.recycleDist) continue;
-      if (!this.place(this.at, true)) continue;
-      z.pos.copy(this.at).setLength(PLANET_RADIUS + heightAt(this.at));
-      z.emerge();
-    }
   }
 
   /** Cherche un point libre sur l'anneau d'apparition (direction depuis le centre de la planète). */
