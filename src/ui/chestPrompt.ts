@@ -35,7 +35,7 @@ export function createChestPrompt(capsule: string) {
     update(cost: number | null, coins: number) {
       el.classList.toggle('on', cost !== null);
       if (cost === null) return;
-      priceText.textContent = String(cost);
+      priceText.textContent = cost === 0 ? 'Gratuit' : String(cost);
       price.classList.toggle('poor', coins < cost);
     },
     /** Il manque des capsules : le rappel tremble. */

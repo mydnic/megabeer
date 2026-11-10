@@ -120,6 +120,8 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
     banner.pulse();
     banner.hideAfter(duration);
   });
+  game.events.on('revived', () => { banner.show('Seconde tournée !', 'Tu reviens à la vie'); banner.pulse(); banner.hideAfter(2.5); });
+  game.events.on('freeChestSpawned', () => { banner.show('Coffre gratuit !', 'Le Bonnet du Père Noël en a posé un près de toi'); banner.hideAfter(2.5); });
   game.events.on('died', () => banner.clear());
   game.events.on('home', () => banner.clear());
   game.events.on('levelUpOffered', ({ level, cards }) => levelUp.show(level, cards));
@@ -170,7 +172,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
       const pl = game.player;
       minimap.update(realDt, pl.pos, pl.facing, pl.camFwd, game.pumps.list, game.chests.list);
       const chest = game.phase === 'run' && !game.frozen ? game.chests.focus : null;
-      chestPrompt.update(chest ? game.chests.price : null, game.coins);
+      chestPrompt.update(chest ? game.chests.priceOf(chest) : null, game.coins);
       runHud.update(game.runTime, game.kills, game.coins);
       weaponHud.update(slots());
       itemHud.update(game.items);

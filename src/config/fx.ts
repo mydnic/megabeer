@@ -109,6 +109,27 @@ export const FOAM_SHIELD_LOOK = {
   radius: 1.25, height: 1.0, color: 0xfff4dc, opacity: 0.6, rim: 2.5, growTime: 0.35, breathe: 3, breatheAmount: 0.03,
 } as const;
 
+/** Glaçons, Sifflet : éclats de glace quand un ennemi gèle. */
+export const ICE_SHARDS = {
+  max: 600, perBurst: 10, size: 0.09, speed: 3.5, forward: 0, upward: 3, spin: 12, life: 0.7,
+  color: 0xbfe6ff, glow: 0.8,
+} as const satisfies ShardLook;
+
+/** Coffre gratuit du Bonnet : pluie d'étincelles dorées à son arrivée. */
+export const GIFT_SPARKS = {
+  max: 200, perBurst: 40, size: 0.07, speed: 5, forward: 0, upward: 6, spin: 0, life: 1.0,
+  color: 0xffc93a, glow: 1.2, shape: 'drop',
+} as const satisfies ShardLook;
+
+/**
+ * Ondes au sol (Sifflet, Juke-box, Seconde tournée) : épaisseur de l'anneau (part du rayon), opacité,
+ * durée (s), hauteur au-dessus du sol (m), couleur de chaque onde.
+ */
+export const RING_WAVE = {
+  thickness: 0.12, opacity: 0.8, life: 0.55, lift: 0.15,
+  colors: { whistle: 0xffffff, shockwave: 0xffc93a, revive: 0xfff4dc },
+} as const;
+
 /** Éclats du tonneau qui vole en morceaux. */
 export const BARREL_SHARDS = {
   max: 300,

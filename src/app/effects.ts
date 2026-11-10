@@ -14,6 +14,8 @@ import { GUEUZE_BLAST } from '../config/weapons';
 import type { createShards } from '../fx/shards';
 import type { createDamageNumbers } from '../ui/damageNumbers';
 import { jitter } from './sounds';
+import { RING_WAVE } from '../config/fx';
+import type { createRingWaveView } from '../fx/ringWaveView';
 
 type Deps = {
   buveur: BuveurVisual;
@@ -37,6 +39,10 @@ type Deps = {
   ash: ReturnType<typeof createShards>;
   embers: ReturnType<typeof createShards>;
   foam: ReturnType<typeof createShards>;
+  /** Glaçons : éclats de glace ; Bonnet : étincelles dorées ; ondes au sol. */
+  ice: ReturnType<typeof createShards>;
+  gift: ReturnType<typeof createShards>;
+  rings: ReturnType<typeof createRingWaveView>;
   damageNumbers: ReturnType<typeof createDamageNumbers>;
 };
 
@@ -108,6 +114,23 @@ export function wireEffects(game: Game, d: Deps) {
     up.copy(game.player.pos).normalize();
     d.foam.burst(numPos.copy(game.player.pos).addScaledVector(up, 1.0), still);
     rig.shake(HIT_FEEDBACK.shake * 0.5, HIT_FEEDBACK.shakeAmplitude, HIT_FEEDBACK.shakeDecay);
+  });
+  // Glaçons, Sifflet : la glace éclate autour de l'ennemi gelé
+  game.events.on('zombieFrozen', ({ zombie }) => {
+    up.copy(zombie.pos).normalize();
+    d.ice.burst(numPos.copy(zombie.pos).addScaledVector(up, 1.2), still);
+  });
+  // Ondes au sol
+  game.events.on('whistleBlown', ({ at, radius }) => d.rings.spawn(at, radius, RING_WAVE.colors.whistle));
+  game.events.on('shockwave', ({ at, radius }) => d.rings.spawn(at, radius, RING_WAVE.colors.shockwave));
+  game.events.on('revived', () => {
+    d.rings.spawn(game.player.pos, 4, RING_WAVE.colors.revive);
+    rig.shake(HIT_FEEDBACK.shake, HIT_FEEDBACK.shakeAmplitude, HIT_FEEDBACK.shakeDecay);
+  });
+  // Bonnet : le coffre gratuit arrive dans une pluie d'étincelles
+  game.events.on('freeChestSpawned', ({ chest }) => {
+    up.copy(chest.pos).normalize();
+    d.gift.burst(numPos.copy(chest.pos).addScaledVector(up, 1), still);
   });
   // Squelettes du Prieur : la terre gicle à leurs pieds quand ils sortent
   game.events.on('summoned', ({ skeletons }) => {

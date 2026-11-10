@@ -105,6 +105,18 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
   game.events.on('foamShieldUp', () => audio.play(I.foamUp.sample, I.foamUp.volume, I.foamUp.rate * jitter(0.05)));
   game.events.on('foamShieldPopped', () => audio.play(I.foamPop.sample, I.foamPop.volume, I.foamPop.rate * jitter(0.05)));
   game.events.on('happyHourStarted', () => audio.play(I.happyHour.sample, I.happyHour.volume, I.happyHour.rate, 0, 'ui'));
+  let lastFreeze = 0;
+  game.events.on('zombieFrozen', ({ zombie }) => {
+    const now = performance.now() / 1000, k = near(zombie.pos);
+    if (k <= 0 || now - lastFreeze < I.freeze.minGap) return;
+    lastFreeze = now;
+    audio.play(I.freeze.sample, I.freeze.volume * k, I.freeze.rate * jitter(0.1));
+  });
+  game.events.on('whistleBlown', () => audio.play(I.whistle.sample, I.whistle.volume, I.whistle.rate));
+  game.events.on('shockwave', () => audio.play(I.shockwave.sample, I.shockwave.volume, I.shockwave.rate * jitter(0.05)));
+  game.events.on('playerDodged', () => audio.whoosh(I.dodge.volume));
+  game.events.on('revived', () => audio.play(I.revive.sample, I.revive.volume, I.revive.rate, 0, 'ui'));
+  game.events.on('freeChestSpawned', () => audio.play(I.freeChest.sample, I.freeChest.volume, I.freeChest.rate));
   // La Gueuze explose : verre qui éclate et souffle sourd
   game.events.on('weaponExploded', ({ pos }) => {
     const S = GUEUZE_BLAST.sound, k = near(pos, S.hearDist);

@@ -14,7 +14,8 @@ import { createBottleView } from './weapons/bottleView';
 import { createEnemyShotsView } from './enemies/enemyShotsView';
 import { createShards } from './fx/shards';
 import { createFoamShieldView } from './fx/foamShieldView';
-import { BARREL_SHARDS, EARTH_CLODS, GUEUZE_BURST, ASH_BURST, EMBERS, FOAM_POP, SHIELD_SPARKS, STOUT_SPLASH, WINE_BURST } from './config/fx';
+import { createRingWaveView } from './fx/ringWaveView';
+import { BARREL_SHARDS, EARTH_CLODS, GUEUZE_BURST, ASH_BURST, EMBERS, FOAM_POP, ICE_SHARDS, GIFT_SPARKS, SHIELD_SPARKS, STOUT_SPLASH, WINE_BURST } from './config/fx';
 import { CANETTE_LOOK, FUT_LOOK, GUEUZE_LOOK, STOUT_LOOK } from './config/weapons';
 import type { WeaponId } from './weapons/weapon';
 import { createKamikazeView } from './enemies/kamikazeView';
@@ -101,6 +102,9 @@ const gueuzeBurst = createShards(scene, groundAt, GUEUZE_BURST);
 const ash = createShards(scene, groundAt, ASH_BURST);
 const embers = createShards(scene, groundAt, EMBERS);
 const foam = createShards(scene, groundAt, FOAM_POP);
+const ice = createShards(scene, groundAt, ICE_SHARDS);
+const gift = createShards(scene, groundAt, GIFT_SPARKS);
+const rings = createRingWaveView(scene);
 const foamShield = createFoamShieldView(scene);
 const damageNumbers = createDamageNumbers(camera);
 const pint = new PintProp(scene, { verre: new THREE.Color(), biere: new THREE.Color(), mousse: new THREE.Color() }, (p, r) => game.player.supportAt(p, r));
@@ -115,7 +119,7 @@ wireSounds(game, audio, buveur);
 wireMusic(game, audio, music, 'abbaye');
 
 // --- Effets, interface, journal de run
-const effects = wireEffects(game, { buveur, rig, pint, pipeline, audio, shards, wine, wood, sparks, earth, stoutSplash, gueuzeBurst, ash, embers, foam, damageNumbers });
+const effects = wireEffects(game, { buveur, rig, pint, pipeline, audio, shards, wine, wood, sparks, earth, stoutSplash, gueuzeBurst, ash, embers, foam, ice, gift, rings, damageNumbers });
 const screens = wireScreens(game, { planet, canvas: renderer.domElement, audio });
 const runLog = createRunLog();
 let fps = 0;
@@ -161,6 +165,9 @@ function frame(now: number) {
   ash.update(dt);
   embers.update(dt);
   foam.update(dt);
+  ice.update(dt);
+  gift.update(dt);
+  rings.update(realDt);
   foamShield.sync(realDt, game.phase === 'run' && game.effects.shield, player.renderPos);
   gueuzeBurst.update(dt);
   damageNumbers.update(realDt);

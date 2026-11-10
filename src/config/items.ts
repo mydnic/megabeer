@@ -123,7 +123,7 @@ export const ITEMS = {
   jukeBox: { name: 'Juke-box', effect: 'levelUpWave', value: 1, text: 'Chaque niveau gagné repousse les ennemis' },
   bretelles: { name: 'Bretelles', stats: { maxHp: 10, moveSpeed: 0.03 }, text: '+{maxHp} PV max et +{moveSpeed%} vitesse' },
   casquette: { name: 'Casquette à bière', effect: 'standRegen', value: 2, text: '+{v} PV par seconde sans bouger' },
-  tongs: { name: 'Tongs', stats: { moveSpeed: 0.1, jumpHeight: -0.2 }, text: '+{moveSpeed%} vitesse, saut moins haut' },
+  tongs: { name: 'Tongs', stats: { moveSpeed: 0.1, jumpHeight: -0.1 }, text: '+{moveSpeed%} vitesse, saut moins haut' },
   sifflet: { name: "Sifflet d'arbitre", effect: 'whistle', value: 1, text: `Toutes les ${E.whistle.every} s, étourdit les ennemis proches {v} s` },
   paille: { name: 'Paille', stats: { lifeSteal: 0.015 }, text: '+{lifeSteal%} vol de vie' },
   piqueAssiette: { name: 'Pique-assiette', stats: { lifeSteal: 0.01, damage: 0.04 }, text: '+{lifeSteal%} vol de vie et +{damage%} dégâts' },
