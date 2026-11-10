@@ -68,7 +68,7 @@ Fait et validé dans la feature 7 :
    l'équilibrage serait faussé). Ordre proposé : pompe à bière, puis Pièces et poubelles, puis fûts et
    premiers objets passifs, puis mini-carte. **Pompe à bière : checkpoint 1 fait, à faire valider**
    (placement, remplissage, choix de 3 bonus de stat, modèle, faisceau, pinte-jauge). Reste : sons du
-   remplissage et de la pompe pleine, collision du fût (on le traverse), nombre et distance des pompes
+   remplissage et de la pompe pleine, collision du fût (on le traverse), nombre de pompes (passé à 20, demande de l'utilisateur)
    (6 sur une planète d'environ 1 080 m de tour : la plus proche peut être à 190 m).
 3. **Ensuite : caler la run de 10 min** (fin de feature 7), à partir des journaux de run de
    l'utilisateur (`logs/runs/`). Ses premières parties (2026-11-09) n'ont pas été enregistrées : le

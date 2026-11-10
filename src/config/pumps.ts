@@ -3,9 +3,9 @@
 
 export const PUMPS = {
   /** Pompes posées sur la planète à chaque run, distance mini au point de départ et entre elles (m, au sol). */
-  count: 6,
+  count: 20,
   minFromSpawn: 25,
-  minSpacing: 35,
+  minSpacing: 25,
   /** Essais de placement (positions tirées au hasard, écartées si trop près ou dans le décor). */
   placementTries: 400,
   /** Rayon où le Buveur remplit la pinte (m, au sol), temps pour la remplir (s), vidange quand il s'éloigne (part par s). */
