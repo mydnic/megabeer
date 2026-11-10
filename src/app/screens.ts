@@ -26,6 +26,7 @@ import { createRunHud } from '../ui/runHud';
 import { toRow } from '../ui/statFormat';
 import { createWeaponHud, type WeaponSlot } from '../ui/weaponHud';
 import { createItemHud } from '../ui/itemHud';
+import { ITEM_EFFECTS } from '../config/items';
 import type { WeaponId } from '../weapons/weapon';
 import type { Planet } from './planet';
 import { jitter } from './sounds';
@@ -112,6 +113,12 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
     banner.show(`Synergie : ${S.name} !`, S.pitch);
     banner.pulse();
     banner.hideAfter(SYNERGY_BANNER.duration);
+  });
+  // Happy hour : bandeau le temps qu'elle dure
+  game.events.on('happyHourStarted', ({ duration }) => {
+    banner.show('Happy hour !', `Vitesse d'attaque x${ITEM_EFFECTS.happyHour.rate} pendant ${Math.round(duration)} s`);
+    banner.pulse();
+    banner.hideAfter(duration);
   });
   game.events.on('died', () => banner.clear());
   game.events.on('home', () => banner.clear());

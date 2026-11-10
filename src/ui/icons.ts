@@ -233,6 +233,46 @@ const ITEM_ICONS: Record<ItemId, (cls: string) => string> = {
 <path d="M34 19c0-3 3-4 5-4 2-2 5-2 7 0 2-2 6-2 8 0 3 0 6 2 5 5H35z" ${PINT('#fff4dc')}/>
 <path d="M40 26l1.5 24" stroke="#fff8" stroke-width="2.2" stroke-linecap="round"/></g>
 <circle cx="32" cy="9" r="3" fill="#fff4dc" stroke="${K}" stroke-width="2"/><circle cx="25" cy="4.5" r="2" fill="#fff4dc" stroke="${K}" stroke-width="1.5"/><circle cx="39" cy="4.5" r="2" fill="#fff4dc" stroke="${K}" stroke-width="1.5"/>`),
+  // Cendrier en verre épais, cigarette posée qui fume, étincelle
+  cendrier: (cls) => svg64(cls, `
+<path d="M6 38c0 9 12 16 26 16s26-7 26-16v-4H6z" fill="#7fa7b8" stroke="${K}" stroke-width="3" stroke-linejoin="round"/>
+<ellipse cx="32" cy="34" rx="26" ry="11" fill="#a9cbd8" stroke="${K}" stroke-width="3"/>
+<ellipse cx="32" cy="35" rx="16" ry="6" fill="#5b6e78" stroke="${K}" stroke-width="2.5"/>
+<path d="M8 31h8M48 31h8" stroke="${K}" stroke-width="3" stroke-linecap="round"/>
+<path d="M30 33l22-9" stroke="#f3e6cf" stroke-width="5" stroke-linecap="round"/>
+<path d="M30 33l22-9" stroke="${K}" stroke-width="1.5" opacity=".35"/>
+<path d="M47 26l5-2" stroke="#d27a2a" stroke-width="5" stroke-linecap="round"/>
+<path d="M53 22c-3-4 3-6 0-10s3-6 1-9" stroke="#cdbfa6" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+<path d="M12 44c4 3 10 5 16 5" stroke="#fff8" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+<path d="M14 14l3 5M8 20l5 2M22 9l1 5" stroke="#ff7a2a" stroke-width="2.5" stroke-linecap="round"/>`),
+  // Bouclier de mousse : une grosse bulle de mousse bordée, bulles dedans
+  mousseEpaisse: (cls) => svg64(cls, `
+<path d="M32 4l22 8v16c0 15-10 26-22 32C20 54 10 43 10 28V12z" fill="#fff4dc" stroke="${K}" stroke-width="3" stroke-linejoin="round"/>
+<path d="M32 10l16 6v12c0 11-7 19-16 24-9-5-16-13-16-24V16z" fill="#f3d9a0"/>
+<g fill="#fff8f0" stroke="${K}" stroke-width="2"><circle cx="25" cy="24" r="5"/><circle cx="37" cy="21" r="4"/><circle cx="33" cy="33" r="6"/><circle cx="24" cy="38" r="3"/><circle cx="41" cy="34" r="3"/></g>
+<path d="M14 14l6-2" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+<circle cx="23.5" cy="22.5" r="1.5" fill="#fff"/><circle cx="31.5" cy="31" r="1.8" fill="#fff"/>`),
+  // Happy hour : horloge de bar, aiguilles sur l'heure de l'apéro, pinte devant
+  happyHour: (cls) => svg64(cls, `
+<circle cx="28" cy="28" r="23" fill="#ffc93a" stroke="${K}" stroke-width="3"/>
+<circle cx="28" cy="28" r="17" fill="#fff4dc" stroke="${K}" stroke-width="2.5"/>
+<path d="M28 13v3M43 28h-3M28 43v-3M13 28h3" stroke="${K}" stroke-width="2.5" stroke-linecap="round"/>
+<path d="M28 28V18M28 28l8 5" stroke="${K}" stroke-width="3" stroke-linecap="round"/>
+<circle cx="28" cy="28" r="2.5" fill="#d23b2a" stroke="${K}" stroke-width="1.5"/>
+<path d="M40 34h18l-2 26H42z" fill="#e8a01c" stroke="${K}" stroke-width="3" stroke-linejoin="round"/>
+<path d="M38 32c0-3 3-4 5-4 2-2 5-2 7 0 2-2 6-2 8 0 2 0 4 2 3 5H39z" fill="#fff4dc" stroke="${K}" stroke-width="2.5" stroke-linejoin="round"/>
+<path d="M44 38l1 18" stroke="#fff8" stroke-width="2" stroke-linecap="round"/>`),
+  // Sachet de cacahuètes ouvert, cacahuètes qui en sortent
+  cacahuetes: (cls) => svg64(cls, `
+<path d="M10 20l4-12h28l4 12-2 38H12z" fill="#d23b2a" stroke="${K}" stroke-width="3" stroke-linejoin="round"/>
+<path d="M14 8l4 12h26" stroke="#9e1f16" stroke-width="2.5" fill="none"/>
+<path d="M16 30h24v14H16z" fill="#ffc93a" stroke="${K}" stroke-width="2.5"/>
+<path d="M21 37c0-3 3-4 5-3s4 0 5-1 4 1 3 4-3 4-5 3-4 0-5 1-3-1-3-4z" fill="#c98a4a" stroke="${K}" stroke-width="1.5"/>
+<g fill="#e0b07a" stroke="${K}" stroke-width="2.2">
+<path d="M44 12c3-2 7-1 8 2s0 5 2 7-1 7-5 6-5-3-7-4-3-5 0-8z"/>
+<path d="M50 34c3-1 6 1 6 4s-1 4 0 6-2 6-5 5-4-3-5-5 0-8 4-10z" transform="rotate(30 52 42)"/></g>
+<path d="M46 16l3 2M50 22l2 1" stroke="#a87048" stroke-width="1.5" stroke-linecap="round"/>
+<path d="M14 24l2 26" stroke="#fff6" stroke-width="2.5" stroke-linecap="round"/>`),
 };
 
 export const itemIcon = (id: ItemId, cls: string) => ITEM_ICONS[id](cls);

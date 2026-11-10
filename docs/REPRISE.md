@@ -81,7 +81,8 @@ Fait et validé dans la feature 7 :
    (événement `chestRevealing`, `ui/chestReveal.ts`, cadence partagée avec les sons par `revealSchedule`), validé.
    Mini-carte : le relief suit la rotation de la caméra sans à-coups (corrigé). Puis : nouveau coffre dessiné
    (`chestSvg`), cartes qui sortent du coffre ouvert posé dessous, une icône par objet (validé), objets affichés
-   dans le HUD sous les armes (`ui/itemHud.ts`) (tout validé par l'utilisateur le 2026-11-10). Reste : objets
+   dans le HUD sous les armes (`ui/itemHud.ts`) (tout validé par l'utilisateur le 2026-11-10). Puis : premier lot d'objets à effet
+   (Cendrier, Mousse épaisse, Happy hour, Sachet de cacahuètes ; `game/itemEffects.ts`, DEV « Donner l'objet »), à valider. Reste : autres objets
    à effets spéciaux un par un, poubelles, coffre piégé. Son de la bière qui coule : « Beer service 2 » de BigSoundBank (CC0, choisi par l'utilisateur),
    joué d'un bloc pendant le remplissage, repris au niveau de la pinte, coupé en fondu hors de la zone. Reste : sons du
    remplissage et de la pompe pleine, collision du fût (on le traverse), nombre de pompes (passé à 20, demande de l'utilisateur)

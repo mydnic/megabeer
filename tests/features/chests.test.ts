@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { CHESTS } from '../../src/config/chests';
-import { ITEMS } from '../../src/config/items';
+import { ITEMS, type ItemDef } from '../../src/config/items';
 import { RARITIES } from '../../src/config/upgrades';
 import { PLANET_RADIUS } from '../../src/config/world';
 import { rollItemCards, type ItemCard } from '../../src/game/chests';
@@ -108,12 +108,15 @@ describe('Les coffres', () => {
     t.game.coins = 100;
     standNear(t, t.game.chests.list[0], 1.8);
     open(t);
-    const card = (t.game.offer as ItemCard[]).find((c) => ITEMS[c.item].stat === 'damage') ?? (t.game.offer as ItemCard[])[0];
-    const stat = ITEMS[card.item].stat;
-    const before = stat === 'maxHp' ? t.game.health.max : t.game.stats[stat];
+    const card = (t.game.offer as ItemCard[]).find((c) => 'stat' in ITEMS[c.item]) ?? (t.game.offer as ItemCard[])[0];
+    const def: ItemDef = ITEMS[card.item];
+    const stat = def.stat;
+    const read = () => (!stat ? 0 : stat === 'maxHp' ? t.game.health.max : t.game.stats[stat]);
+    const before = read();
     t.game.pickCard(card);
-    const now = stat === 'maxHp' ? t.game.health.max : t.game.stats[stat];
-    expect(now).toBeCloseTo(before + card.value, 5);
+    // Objet à stat : la stat monte ; objet à effet spécial : l'effet est actif
+    if (stat) expect(read()).toBeCloseTo(before + card.value, 5);
+    else expect(t.game.effects.has(def.effect!)).toBe(true);
     expect(t.game.items).toEqual([{ item: card.item, rarity: card.rarity }]);
     expect(t.game.frozen).toBe(false);
   });

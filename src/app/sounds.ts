@@ -96,6 +96,15 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
   game.events.on('projectileHitGround', ({ weapon }) => {
     if (weapon.id === 'fut') audio.play(FUT_SOUND.burst.sample, FUT_SOUND.burst.volume, FUT_SOUND.burst.pitch * jitter(0.08));
   });
+  // Objets à effet
+  const I = AUDIO.items;
+  game.events.on('itemExploded', ({ at }) => {
+    const k = near(at, I.ash.hearDist);
+    if (k > 0) audio.play(I.ash.sample, I.ash.volume * k, I.ash.rate * jitter(0.1));
+  });
+  game.events.on('foamShieldUp', () => audio.play(I.foamUp.sample, I.foamUp.volume, I.foamUp.rate * jitter(0.05)));
+  game.events.on('foamShieldPopped', () => audio.play(I.foamPop.sample, I.foamPop.volume, I.foamPop.rate * jitter(0.05)));
+  game.events.on('happyHourStarted', () => audio.play(I.happyHour.sample, I.happyHour.volume, I.happyHour.rate, 0, 'ui'));
   // La Gueuze explose : verre qui éclate et souffle sourd
   game.events.on('weaponExploded', ({ pos }) => {
     const S = GUEUZE_BLAST.sound, k = near(pos, S.hearDist);

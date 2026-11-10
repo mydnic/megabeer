@@ -22,6 +22,8 @@ export class PlayerStats {
   /** Multiplicateur de la vitesse de déplacement (stat Vitesse). */
   moveSpeed!: number;
   attackSpeed!: number;
+  /** Multiplicateur passager de la cadence (Happy hour), posé par le jeu à chaque pas. */
+  rateMul!: number;
   extraProjectiles!: number;
   pickupRange!: number;
   xpGain!: number;
@@ -34,11 +36,15 @@ export class PlayerStats {
     this.damage = 1;
     this.moveSpeed = 1;
     this.attackSpeed = PLAYER_STATS.attackSpeed;
+    this.rateMul = 1;
     this.extraProjectiles = PLAYER_STATS.extraProjectiles;
     this.pickupRange = XP_DROPS.pickupRange;
     this.xpGain = 1;
     this.luck = 0;
   }
+
+  /** Cadence effective des armes : vitesse d'attaque et effets passagers. Les armes lisent celle-ci. */
+  get fireRate() { return this.attackSpeed * this.rateMul; }
 
   /** Lignes de stats pour l'écran de pause. */
   lines(): StatLine[] {

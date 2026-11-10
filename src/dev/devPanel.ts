@@ -24,6 +24,10 @@ export interface DevApi {
   /** Armes qu'on peut donner, et donner l'une d'elles (si l'arsenal a une place). */
   weapons: readonly string[];
   giveWeapon(id: string): void;
+  /** Objets de coffre qu'on peut donner, à la rareté choisie (index dans les raretés). */
+  items: readonly string[];
+  rarities: readonly string[];
+  giveItem(id: string, rarity: number): void;
   die(): void;
   cheats: { god: boolean };
   toggleCombatMusic(): string;
@@ -53,6 +57,7 @@ export function createDevPanel(api: DevApi) {
       <label><input data-k="god" type="checkbox"> godmode</label>
       <br><input data-k="xp" type="number" value="25" min="1" style="width:5em"> <button data-a="xp">+XP</button> <button data-a="level">+1 niveau</button>
       <br><select data-k="weapon">${api.weapons.map((w) => `<option>${w}</option>`).join('')}</select> <button data-a="weapon">Donner l'arme</button>
+      <br><select data-k="item">${api.items.map((w) => `<option>${w}</option>`).join('')}</select> <select data-k="rarity">${api.rarities.map((r, i) => `<option value="${i}">${r}</option>`).join('')}</select> <button data-a="item">Donner l'objet</button>
       <br><button data-a="coins">+50 capsules</button>
       <br><button data-a="heal">Soigner</button> <button data-a="die">Mourir</button>
     </fieldset>
@@ -74,6 +79,7 @@ export function createDevPanel(api: DevApi) {
     heal: () => api.heal(),
     coins: () => api.giveCoins(50),
     weapon: () => api.giveWeapon(q<HTMLSelectElement>('weapon').value),
+    item: () => api.giveItem(q<HTMLSelectElement>('item').value, num('rarity')),
     die: () => api.die(),
     skip60: () => api.skipTime(60),
     skip300: () => api.skipTime(300),

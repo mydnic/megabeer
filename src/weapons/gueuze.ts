@@ -121,7 +121,7 @@ export function createGueuze(ctx: WeaponContext): Weapon {
       const n = 1 + ctx.stats.extraProjectiles + mods.projectiles;
       const targets = groups(n);
       if (!targets.length) return;
-      timer = G.cooldown / (ctx.stats.attackSpeed * mods.rate);
+      timer = G.cooldown / (ctx.stats.fireRate * mods.rate);
       ctx.rig.gesture(1);
       // Visée à hauteur de poitrine : sur un zombie, elle entre dans son corps au lieu de frôler ses pieds
       for (const to of targets) launch(to.addScaledVector(up.copy(to).normalize(), G.aimHeight));

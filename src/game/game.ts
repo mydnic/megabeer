@@ -4,7 +4,7 @@ import { ENEMIES, ROSTERS, type EnemyId } from '../config/enemies';
 import { ZOMBIE_ATTACK, type ZombieModel } from '../config/zombies';
 import { ARRIVAL } from '../config/player';
 import { DEATH } from '../config/buveur';
-import { LEVEL_UP_SCREEN } from '../config/upgrades';
+import { LEVEL_UP_SCREEN, RARITIES } from '../config/upgrades';
 import type { InputState } from '../core/input';
 import { createHorde } from '../enemies/horde';
 import type { Zombie, ZombieTimings } from '../enemies/zombie';
@@ -25,7 +25,8 @@ import { activeSynergies, synergiesCompletedBy, type SynergyId } from './synergi
 import { Pumps, rollStatCards, type Pump } from './pumps';
 import { Chests, rollItemCards, type Chest } from './chests';
 import { CHESTS } from '../config/chests';
-import { ITEMS, type ItemId } from '../config/items';
+import { ITEMS, ITEM_EFFECTS, type ItemDef, type ItemId } from '../config/items';
+import { ItemEffects } from './itemEffects';
 import { rollTier } from './levelUpCards';
 import { PUMPS } from '../config/pumps';
 import type { StatId } from '../config/pumps';
@@ -91,6 +92,15 @@ export type GameEvents = {
   chestDenied: { chest: Chest; price: number; coins: number };
   /** Objet pris dans un coffre. */
   itemGained: { item: ItemId; rarity: number; value: number };
+  /** Cendrier : un ennemi tué explose en `at` (blesse les ennemis dans `radius`, jamais le joueur). */
+  itemExploded: { zombie: Zombie; at: THREE.Vector3; radius: number };
+  /** Mousse épaisse : le bouclier est prêt. */
+  foamShieldUp: Record<string, never>;
+  /** Mousse épaisse : le bouclier absorbe un coup de `zombie`. */
+  foamShieldPopped: { zombie: Zombie };
+  /** Happy hour : vitesse d'attaque multipliée pendant `duration` s. */
+  happyHourStarted: { duration: number };
+  happyHourEnded: Record<string, never>;
   /** Une synergie s'active : toutes ses armes sont maintenant équipées. */
   synergyActivated: { id: SynergyId };
   /** Un diviseur tué se sépare : `children` sortent de son corps. */
@@ -116,6 +126,8 @@ export type GameDeps = {
   map?: MapId;
   /** Tirage « cet ennemi tué lâche une capsule au lieu de l'XP » (par défaut : la chance de la config). */
   rollCoin?: () => boolean;
+  /** Hasard des effets d'objets (0 à 1, par défaut Math.random). */
+  random?: () => number;
 };
 
 /** Aucune entrée : joueur immobile (accueil, mort, pause, chute d'arrivée). */
@@ -141,6 +153,9 @@ export class Game {
   readonly chests: Chests;
   /** Objets pris pendant la run (dans l'ordre). */
   readonly items: { item: ItemId; rarity: number }[] = [];
+  /** Effets spéciaux des objets pris (Cendrier, Mousse épaisse...). */
+  readonly effects = new ItemEffects();
+  private random: () => number;
   readonly xp: ReturnType<typeof createXpDrops>;
   /** Capsules (Pièces) au sol. */
   readonly coinDrops: ReturnType<typeof createXpDrops>;
@@ -202,6 +217,7 @@ export class Game {
     this.xp = createXpDrops(groundAt);
     this.coinDrops = createXpDrops(groundAt, COIN_DROPS);
     this.rollCoin = deps.rollCoin ?? (() => Math.random() < COINS.dropChance);
+    this.random = deps.random ?? Math.random;
     this.director = new SpawnDirector({
       player, collider: deps.collider, zombies: () => this.horde.zombies,
       roster: ROSTERS[deps.map ?? 'abbaye'],
@@ -283,11 +299,7 @@ export class Game {
     if (!this.offer?.includes(card)) return;
     this.offer = null;
     if (card.kind === 'stat') this.applyStatBonus(card.stat, card.value);
-    else if (card.kind === 'item') {
-      this.items.push({ item: card.item, rarity: card.rarity });
-      this.applyStatBonus(ITEMS[card.item].stat, card.value);
-      this.events.emit('itemGained', { item: card.item, rarity: card.rarity, value: card.value });
-    }
+    else if (card.kind === 'item') this.gainItem(card.item, card.rarity, card.value);
     else {
       if (card.kind === 'weapon') this.equip(card.weaponId);
       else applyCard(card);
@@ -341,12 +353,22 @@ export class Game {
         this.chests.update(p.pos);
         if (input.actionPressed && this.chests.focus && !this.offer) this.openChest(this.chests.focus);
       }
+      // Effets d'objets à minuterie (bouclier de mousse, happy hour)
+      const fx = this.effects.update(dt);
+      if (fx.shieldUp) this.events.emit('foamShieldUp', {});
+      if (fx.happyStart) this.events.emit('happyHourStarted', { duration: this.effects.happyLeft });
+      if (fx.happyEnd) this.events.emit('happyHourEnded', {});
+      this.stats.rateMul = this.effects.rateMul;
       this.loadout.update(dt);
       this.events.emit('tick', { dt });
     }
     this.loadout.updateProjectiles(dt);
     this.chest.copy(p.renderPos).addScaledVector(p.upDir, 1.0);
-    this.xp.update(dt, this.chest, this.phase === 'run' ? this.stats.pickupRange : 0, (v) => this.collectXp(v * this.stats.xpGain));
+    this.xp.update(dt, this.chest, this.phase === 'run' ? this.stats.pickupRange : 0, (v) => {
+      this.collectXp(v * this.stats.xpGain);
+      // Sachet de cacahuètes : chaque goutte d'XP soigne un peu
+      if (this.effects.healPerXp > 0) this.health.heal(this.effects.healPerXp);
+    });
     this.coinDrops.update(dt, this.chest, this.phase === 'run' ? this.stats.pickupRange : 0, (v) => {
       this.coins += v;
       this.events.emit('coinsCollected', { amount: v, total: this.coins });
@@ -376,6 +398,19 @@ export class Game {
       if (stat === 'moveSpeed') this.player.speed = BASE_SPEED * this.stats.moveSpeed;
     }
     this.events.emit('statGained', { stat, value });
+  }
+
+  /**
+   * Le joueur prend un objet (carte de coffre, outils de dev) : rangé dans ses objets, sa stat ou son
+   * effet s'applique. `value` : effet à cette rareté (par défaut celui de la config).
+   */
+  gainItem(item: ItemId, rarity: number, value?: number) {
+    const def: ItemDef = ITEMS[item];
+    const v = value ?? (def.fixed ? def.value : def.value * RARITIES[rarity].mult);
+    this.items.push({ item, rarity });
+    if (def.stat) this.applyStatBonus(def.stat, v);
+    else if (def.effect) this.effects.add(def.effect, v);
+    this.events.emit('itemGained', { item, rarity, value: v });
   }
 
   /** Paie et ouvre un coffre : la rareté se révèle, le jeu se fige sur 3 objets de cette rareté. */
@@ -461,7 +496,24 @@ export class Game {
     if (killed && z.def.kamikaze) this.explode(z, true);
     // Un diviseur tué se sépare en petits
     if (killed && z.def.splitter) this.split(z);
+    // Cendrier : parfois, l'ennemi tué explose (pas un kamikaze, qui explose déjà)
+    if (killed && !z.def.kamikaze && this.effects.explodeChance > 0 && this.random() < this.effects.explodeChance) this.ashExplode(z);
     return killed;
+  }
+
+  /**
+   * Cendrier : l'ennemi tué explose, les ennemis autour encaissent (dégâts qui suivent les PV des
+   * ennemis au fil de la run et la stat Dégâts). Le joueur n'est jamais touché.
+   */
+  private ashExplode(z: Zombie) {
+    const E = ITEM_EFFECTS.explodeOnKill;
+    const at = z.pos.clone();
+    this.events.emit('itemExploded', { zombie: z, at, radius: E.radius });
+    const damage = E.damage * this.stats.damage * spawnCurveAt(this.runTime).hpMul * this.mods.hp;
+    for (const o of this.horde.alive()) {
+      if (o === z || !o.targetable || o.pos.distanceTo(at) > E.radius) continue;
+      this.hitZombie(o, damage, false, o.pos, o.pos.clone().sub(at));
+    }
   }
 
   /** Brique Diviseur : les petits sortent du corps, en cercle, tournés vers l'extérieur. */
@@ -496,6 +548,12 @@ export class Game {
   /** Le joueur encaisse un coup de `z` (au contact ou à distance), venant de la direction `dir`. */
   private hurtPlayer(z: Zombie, dir: THREE.Vector3, baseDamage: number) {
     const damage = baseDamage * this.mods.damage;
+    // Mousse épaisse : le bouclier absorbe le coup entier (puis courte invulnérabilité, comme un coup)
+    if (!this.cheats.god && this.health.invuln <= 0 && !this.health.dead && this.effects.absorb()) {
+      this.health.invuln = PLAYER_STATS.invulnTime;
+      this.events.emit('foamShieldPopped', { zombie: z });
+      return;
+    }
     // Invulnérable juste après un coup : ni dégâts ni recul (pas d'enchaînement de coups)
     const took = !this.cheats.god && this.health.damage(damage);
     this.events.emit('playerHurt', { zombie: z, dir, damage, hp: this.health.hp, blocked: !took });
@@ -600,6 +658,7 @@ export class Game {
     this.pumps.clear();
     this.chests.clear();
     this.items.length = 0;
+    this.effects.reset();
     this.loadout.reset();
     this.horde.clear();
     this.horde.setPassive(false);

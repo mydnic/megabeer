@@ -33,6 +33,10 @@ type Deps = {
   stoutSplash: ReturnType<typeof createShards>;
   /** Gueuze qui explose : gerbe de bière framboise. */
   gueuzeBurst: ReturnType<typeof createShards>;
+  /** Cendrier : cendres et braises ; Mousse épaisse : la bulle qui éclate. */
+  ash: ReturnType<typeof createShards>;
+  embers: ReturnType<typeof createShards>;
+  foam: ReturnType<typeof createShards>;
   damageNumbers: ReturnType<typeof createDamageNumbers>;
 };
 
@@ -91,6 +95,19 @@ export function wireEffects(game: Game, d: Deps) {
     shards.burst(numPos, still);
     const B = GUEUZE_BLAST, k = 1 - pos.distanceTo(game.player.pos) / B.shakeDist;
     if (k > 0) rig.shake(B.shake * k, B.shakeAmplitude, B.shakeDecay);
+  });
+  // Cendrier : l'ennemi tué part en cendres et en braises
+  game.events.on('itemExploded', ({ at }) => {
+    up.copy(at).normalize();
+    numPos.copy(at).addScaledVector(up, 0.9);
+    d.ash.burst(numPos, still);
+    d.embers.burst(numPos, still);
+  });
+  // Mousse épaisse : la bulle éclate en gouttes de mousse, petit recul de caméra
+  game.events.on('foamShieldPopped', () => {
+    up.copy(game.player.pos).normalize();
+    d.foam.burst(numPos.copy(game.player.pos).addScaledVector(up, 1.0), still);
+    rig.shake(HIT_FEEDBACK.shake * 0.5, HIT_FEEDBACK.shakeAmplitude, HIT_FEEDBACK.shakeDecay);
   });
   // Squelettes du Prieur : la terre gicle à leurs pieds quand ils sortent
   game.events.on('summoned', ({ skeletons }) => {

@@ -1,6 +1,6 @@
 import { ITEMS } from '../config/items';
 import { LEVEL_UP_SCREEN as L, RARITIES } from '../config/upgrades';
-import { cardText, statCardText, type Card } from '../game/levelUpCards';
+import { cardText, itemCardText, statCardText, type Card } from '../game/levelUpCards';
 import { PUMP_TIERS, STAT_BONUSES } from '../config/pumps';
 import { SYNERGIES, WEAPON_INFO } from '../config/weapons';
 import { pumpIcon, weaponIcon, itemIcon, chestSvg } from './icons';
@@ -139,7 +139,7 @@ export function createLevelUpScreen(onPick: (card: Card) => void, onHover: () =>
           d.className = `lu-card t${c.rarity}`;
           d.style.setProperty('--c', r.color);
           d.innerHTML = `${key}<div class="lu-tier">${r.name}</div>${itemIcon(c.item, 'lu-item')}
-            <div class="lu-name">${def.name}</div><div class="lu-eff">${statCardText({ kind: 'stat', stat: def.stat, value: c.value, rarity: c.rarity, tier: 'bronze' })}</div>`;
+            <div class="lu-name">${def.name}</div><div class="lu-eff">${itemCardText(c)}</div>`;
         } else {
           const r = RARITIES[c.tier];
           d.className = `lu-card t${c.tier}`;

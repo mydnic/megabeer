@@ -143,7 +143,7 @@ export function createBottleWeapon(ctx: WeaponContext, id: BottleWeaponId, name:
     projectiles,
     update(dt: number) {
       const s = ctx.stats;
-      const interval = W.cooldown / (s.attackSpeed * mods.rate);
+      const interval = W.cooldown / (s.fireRate * mods.rate);
       // Lâchers en attente (volée en cours)
       for (let i = pending.length - 1; i >= 0; i--) {
         pending[i].t -= dt;

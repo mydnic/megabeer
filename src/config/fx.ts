@@ -82,6 +82,33 @@ export const GUEUZE_BURST = {
   shape: 'drop',
 } as const satisfies ShardLook;
 
+/** Cendrier : un ennemi tué explose en nuage de cendres grises... */
+export const ASH_BURST = {
+  max: 1200, perBurst: 70, size: 0.13, speed: 6, forward: 0, upward: 4, spin: 6, life: 1.0,
+  color: 0x6e6a66, glow: 0.05, shape: 'drop',
+} as const satisfies ShardLook;
+
+/** ...et en braises orange qui retombent. */
+export const EMBERS = {
+  max: 600, perBurst: 26, size: 0.05, speed: 7, forward: 0, upward: 6, spin: 0, life: 1.2,
+  color: 0xff7a2a, glow: 1.2, shape: 'drop',
+} as const satisfies ShardLook;
+
+/** Mousse épaisse : la bulle qui éclate quand elle absorbe un coup. */
+export const FOAM_POP = {
+  max: 400, perBurst: 60, size: 0.1, speed: 5, forward: 0, upward: 3, spin: 0, life: 0.7,
+  color: 0xfff4dc, glow: 0.4, shape: 'drop',
+} as const satisfies ShardLook;
+
+/**
+ * Bulle du bouclier de mousse autour du Buveur : rayon (m), hauteur de son centre au-dessus des
+ * pieds, couleur, opacité du bord (`rim` : plus grand = bord plus fin), temps pour gonfler (s),
+ * respiration (rad/s, amplitude).
+ */
+export const FOAM_SHIELD_LOOK = {
+  radius: 1.25, height: 1.0, color: 0xfff4dc, opacity: 0.6, rim: 2.5, growTime: 0.35, breathe: 3, breatheAmount: 0.03,
+} as const;
+
 /** Éclats du tonneau qui vole en morceaux. */
 export const BARREL_SHARDS = {
   max: 300,

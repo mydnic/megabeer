@@ -3,6 +3,7 @@ import { LUCK, RARITIES, type UpgradeDef } from '../config/upgrades';
 import type { Weapon, WeaponId } from '../weapons/weapon';
 import type { SynergyId } from './synergies';
 import { STAT_BONUSES, type PumpTier, type StatId } from '../config/pumps';
+import { ITEMS, ITEM_EFFECTS, type ItemDef } from '../config/items';
 
 /** Amélioration d'une arme équipée, avec sa rareté. */
 export type UpgradeCard = { kind: 'upgrade'; weapon: Weapon; upgrade: UpgradeDef; tier: number };
@@ -74,6 +75,21 @@ export function statCardText(c: StatCard) {
   if (def.kind === 'percent') return `+${Math.round(c.value * 100)} % ${def.label}`;
   if (def.kind === 'meters') return `+${num(c.value)} m ${def.label}`;
   return `+${num(c.value)} ${def.label}`;
+}
+
+/** Effet d'une carte d'objet, en clair (sa valeur à la rareté tirée). */
+export function itemCardText(c: ItemCard) {
+  const def: ItemDef = ITEMS[c.item];
+  if (def.stat) return statCardText({ kind: 'stat', stat: def.stat, value: c.value, rarity: c.rarity, tier: 'bronze' });
+  const num = (v: number) => String(Math.round(v * 100) / 100).replace('.', ',');
+  const H = ITEM_EFFECTS.happyHour;
+  switch (def.effect) {
+    case 'explodeOnKill': return `${num(c.value * 100)} % des ennemis tués explosent`;
+    case 'foamShield': return `Un bouclier absorbe 1 coup toutes les ${Math.round(1 / c.value)} s`;
+    case 'happyHour': return `Toutes les ${H.every} s : attaque x${H.rate} pendant ${num(c.value)} s`;
+    case 'healOnXp': return `Chaque goutte d'XP soigne ${num(c.value)} PV`;
+    default: return '';
+  }
 }
 
 /** Applique une amélioration à son arme (améliorations additives, l'arme monte d'un niveau). */

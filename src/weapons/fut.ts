@@ -96,7 +96,7 @@ export function createFut(ctx: WeaponContext): Weapon {
       if (timer > 0) return;
       const target = pickTarget(ctx.zombies(), ctx.playerPos(), F.range, TARGETING.spread);
       if (!target) return;
-      timer = F.cooldown / (ctx.stats.attackSpeed * mods.rate);
+      timer = F.cooldown / (ctx.stats.fireRate * mods.rate);
       ctx.rig.gesture(1);
       // Cap vers la cible, dans le plan du sol ; les fûts en plus partent en éventail autour
       up.copy(ctx.playerPos()).normalize();

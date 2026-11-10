@@ -28,16 +28,16 @@ export const FPS = 60;
  * `coins` : un ennemi tué lâche-t-il une capsule au lieu de son XP ? « never » par défaut (les tests
  * d'XP restent exacts), « always », ou « real » (la vraie chance de la config).
  */
-export function createTestGame(seed = 1, opts: { coins?: 'never' | 'always' | 'real' } = {}) {
+export function createTestGame(seed = 1, opts: { coins?: 'never' | 'always' | 'real'; random?: () => number } = {}) {
   setTerrainSeed(seed);
   const collider = new DecorCollider([], PLAYER_PHYSICS.stepHeight, PLAYER_PHYSICS.headClearance);
   const kinds = Object.fromEntries((Object.keys(ZOMBIE_MODELS) as ZombieModel[]).map((m) => [m, TEST_ZOMBIE_TIMINGS])) as Record<ZombieModel, ZombieTimings>;
   const coins = opts.coins ?? 'never';
-  const game = new Game({ zombieKinds: kinds, collider, rollCoin: coins === 'real' ? undefined : () => coins === 'always' });
+  const game = new Game({ zombieKinds: kinds, collider, rollCoin: coins === 'real' ? undefined : () => coins === 'always', random: opts.random });
 
   /** Tous les événements reçus, dans l'ordre. */
   const log: { type: keyof GameEvents; payload: unknown }[] = [];
-  const types: (keyof GameEvents)[] = ['runStarted', 'landed', 'zombieSpawned', 'playerHurt', 'zombieHit', 'projectileHitGround', 'xpCollected', 'levelGained', 'levelUpOffered', 'cardPicked', 'paused', 'resumed', 'died', 'runEnded', 'home', 'bellToll', 'bellsLanding', 'bellsSurgeEnded', 'enemyThrow', 'enemyShotLanded', 'kamikazeArmed', 'enemyExploded', 'summonCast', 'summoned', 'enemySplit', 'synergyActivated', 'weaponExploded', 'pumpFilled', 'statGained', 'coinsCollected', 'chestRevealing', 'chestOpened', 'chestDenied', 'itemGained'];
+  const types: (keyof GameEvents)[] = ['runStarted', 'landed', 'zombieSpawned', 'playerHurt', 'zombieHit', 'projectileHitGround', 'xpCollected', 'levelGained', 'levelUpOffered', 'cardPicked', 'paused', 'resumed', 'died', 'runEnded', 'home', 'bellToll', 'bellsLanding', 'bellsSurgeEnded', 'enemyThrow', 'enemyShotLanded', 'kamikazeArmed', 'enemyExploded', 'summonCast', 'summoned', 'enemySplit', 'synergyActivated', 'weaponExploded', 'pumpFilled', 'statGained', 'coinsCollected', 'chestRevealing', 'chestOpened', 'chestDenied', 'itemGained', 'itemExploded', 'foamShieldUp', 'foamShieldPopped', 'happyHourStarted', 'happyHourEnded'];
   for (const t of types) game.events.on(t, (payload) => log.push({ type: t, payload }));
 
   const api = {
