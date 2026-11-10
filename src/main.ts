@@ -15,7 +15,9 @@ import { createEnemyShotsView } from './enemies/enemyShotsView';
 import { createShards } from './fx/shards';
 import { createFoamShieldView } from './fx/foamShieldView';
 import { createRingWaveView } from './fx/ringWaveView';
-import { BARREL_SHARDS, EARTH_CLODS, GUEUZE_BURST, ASH_BURST, EMBERS, FOAM_POP, ICE_SHARDS, GIFT_SPARKS, SHIELD_SPARKS, STOUT_SPLASH, WINE_BURST } from './config/fx';
+import { createSprites } from './fx/sprites';
+import { createVfx } from './fx/vfx';
+import { BARREL_SHARDS, EARTH_CLODS, GUEUZE_BURST, ASH_BURST, EMBERS, FOAM_POP, ICE_SHARDS, GIFT_SPARKS, SHIELD_SPARKS, STOUT_SPLASH, VFX, WINE_BURST } from './config/fx';
 import { CANETTE_LOOK, FUT_LOOK, GUEUZE_LOOK, STOUT_LOOK } from './config/weapons';
 import type { WeaponId } from './weapons/weapon';
 import { createKamikazeView } from './enemies/kamikazeView';
@@ -105,6 +107,8 @@ const foam = createShards(scene, groundAt, FOAM_POP);
 const ice = createShards(scene, groundAt, ICE_SHARDS);
 const gift = createShards(scene, groundAt, GIFT_SPARKS);
 const rings = createRingWaveView(scene);
+const sprites = createSprites(scene);
+const vfx = createVfx(scene, sprites);
 const foamShield = createFoamShieldView(scene);
 const damageNumbers = createDamageNumbers(camera);
 const pint = new PintProp(scene, { verre: new THREE.Color(), biere: new THREE.Color(), mousse: new THREE.Color() }, (p, r) => game.player.supportAt(p, r));
@@ -119,7 +123,7 @@ wireSounds(game, audio, buveur);
 wireMusic(game, audio, music, 'abbaye');
 
 // --- Effets, interface, journal de run
-const effects = wireEffects(game, { buveur, rig, pint, pipeline, audio, shards, wine, wood, sparks, earth, stoutSplash, gueuzeBurst, ash, embers, foam, ice, gift, rings, damageNumbers });
+const effects = wireEffects(game, { buveur, rig, pint, pipeline, audio, shards, wine, wood, sparks, earth, stoutSplash, gueuzeBurst, ash, embers, foam, ice, gift, rings, sprites, vfx, damageNumbers });
 const screens = wireScreens(game, { planet, canvas: renderer.domElement, audio });
 const runLog = createRunLog();
 let fps = 0;
@@ -167,7 +171,18 @@ function frame(now: number) {
   foam.update(dt);
   ice.update(dt);
   gift.update(dt);
-  rings.update(realDt);
+  rings.update(dt);
+  // Traînées des projectiles, scintillement des gouttes et des capsules au sol (figés avec le jeu)
+  if (dt > 0) {
+    for (const id of Object.keys(bottleViews) as WeaponId[]) {
+      const color = VFX.trail.colors[id];
+      if (color !== undefined) for (const b of projectiles(id)) if (b.active) vfx.trail(b.pos, color, VFX.trail.size * b.size);
+    }
+    vfx.twinkle(game.xp.drops, VFX.colors.xp, dt, VFX.twinkleRate);
+    vfx.twinkle(game.coinDrops.drops, VFX.colors.coin, dt, VFX.twinkleRate * 0.5);
+  }
+  sprites.update(dt);
+  vfx.update(dt);
   foamShield.sync(realDt, game.phase === 'run' ? game.effects.shieldsUp : 0, player.renderPos);
   gueuzeBurst.update(dt);
   damageNumbers.update(realDt);
@@ -199,7 +214,7 @@ function frame(now: number) {
 requestAnimationFrame(frame);
 
 if (import.meta.env.DEV) {
-  Object.assign(window, { __game: { game, player: game.player, rig, camera, buveur, sky, heightAt, THREE, pipeline, renderer, planet, decor: planet.decor, scene, music, horde: game.horde, health: game.health, progression: game.progression, playerStats: game.stats, canette: game.loadout.weapons[0], setTimeScale: (k: number) => { game.devTimeScale = k; } } });
+  Object.assign(window, { __game: { game, vfx, sprites, rings, player: game.player, rig, camera, buveur, sky, heightAt, THREE, pipeline, renderer, planet, decor: planet.decor, scene, music, horde: game.horde, health: game.health, progression: game.progression, playerStats: game.stats, canette: game.loadout.weapons[0], setTimeScale: (k: number) => { game.devTimeScale = k; } } });
   const { wireDevTools } = await import('./app/devTools');
   await wireDevTools(game, { music, runLog, seed: () => planet.seed });
 }

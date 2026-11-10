@@ -160,6 +160,41 @@ export const EARTH_CLODS = {
   glow: 0,
 } as const satisfies ShardLook;
 
+/** Particules face à la caméra (fx/sprites.ts) : réserve de particules lumineuses et de bouffées de fumée. */
+export const SPRITE_FX = { maxLights: 1600, maxSmoke: 600 } as const;
+
+/** Look d'une explosion : éclair, braises, fumée (claire et sombre), nombre de braises et de bouffées. */
+export type ExplosionLook = { flash: number; ember: number; smoke: number; smokeDark: number; embers: number; puffs: number };
+
+/**
+ * Recettes d'effets visuels (fx/vfx.ts). Tailles en mètres, durées en secondes ; `intensity` au-dessus
+ * de 1 déborde dans le bloom.
+ */
+export const VFX = {
+  /** Éclat d'un coup qui porte, et coup critique (étoile, anneau, étincelles). */
+  hit: { color: 0xfff1c4, size: 1.3, life: 0.13, intensity: 1.5 },
+  crit: { color: 0xffa23a, size: 2.8, life: 0.24, intensity: 2.4, sparks: 7 },
+  /** Ennemi tué : bouffées de fumée claire à `height` m du sol, petit éclair. */
+  kill: { smoke: 0xe2dcc8, flash: 0xfff4dc, puffs: 5, height: 0.9 },
+  /** Poussière soulevée (atterrissage, fût qui éclate, projectile au sol). */
+  dust: { color: 0xcdbf9a },
+  /** Traînée des projectiles du joueur : couleur par arme (absente : pas de traînée). */
+  trail: { size: 0.42, life: 0.17, intensity: 0.55, colors: { canette: 0xffe9a8, stout: 0xd8a070, gueuze: 0xff7a9a } as Record<string, number> },
+  /** Colonne de lumière (niveau gagné, coffre, pompe, Happy hour) : rayon, hauteur, durée, opacité, étincelles, réserve. */
+  beam: { radius: 1.1, height: 9, life: 1.1, opacity: 0.85, sparkles: 14, max: 6 },
+  /** Explosions. */
+  gueuze: { flash: 0xffc0d0, ember: 0xff5a7a, smoke: 0xf2a0b4, smokeDark: 0xa8405e, embers: 14, puffs: 9 } as ExplosionLook,
+  wine: { flash: 0xffd0c0, ember: 0xd23b4a, smoke: 0x9a3a4e, smokeDark: 0x5a1e2e, embers: 16, puffs: 11 } as ExplosionLook,
+  ash: { flash: 0xffd28a, ember: 0xff7a2a, smoke: 0x8a8580, smokeDark: 0x4a4644, embers: 12, puffs: 8 } as ExplosionLook,
+  glass: { flash: 0xe8fff0, ember: 0xbfe6c8, smoke: 0xd8dccc, smokeDark: 0xa8ac9c, embers: 6, puffs: 4 } as ExplosionLook,
+  /** Couleurs : niveau gagné, soin, coup reçu, gel, mousse, invocation, capsules, gouttes d'XP. */
+  colors: { level: 0xffd45a, hurt: 0xff4a3a, ice: 0xa8e4ff, foam: 0xfff4dc, summon: 0x8a5ac8, coin: 0xff6a5a, xp: 0xffd45a, happy: 0xffc93a },
+  /** Scintillement des gouttes d'XP et des capsules au sol (étoiles par seconde). */
+  twinkleRate: 9,
+  /** Étincelles quand le joueur ramasse de l'XP ou des capsules : écart mini entre deux (s). */
+  pickupGap: 0.07,
+} as const;
+
 /** Chiffres de dégâts flottants. */
 export const DAMAGE_NUMBERS = {
   enabled: true,
