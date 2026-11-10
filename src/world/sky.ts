@@ -74,7 +74,7 @@ export function createSky(scene: THREE.Scene) {
           vec3 day = mix(uHorizonDay, uZenithDay, t);
           vec3 night = mix(uHorizonNight, uZenithNight, t);
           vec3 c = mix(night, day, uDay);
-          float glow = pow(1.0 - abs(h), 5.0) * pow(max(0.0, dot(d, uSunDir)) * 0.5 + 0.5, 3.0);
+          float glow = pow(max(0.0, 1.0 - abs(h)), 5.0) * pow(max(0.0, dot(d, uSunDir)) * 0.5 + 0.5, 3.0);
           c = mix(c, uGlow, glow * uDusk);
           gl_FragColor = vec4(c, 1.0);
           #include <colorspace_fragment>

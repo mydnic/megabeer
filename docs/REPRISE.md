@@ -164,6 +164,12 @@ sa vue dans `src/enemies/`, ses tests dans `tests/features/`.
 
 ## Pièges déjà rencontrés
 
+- **Flash noir d'une image sur tout l'écran** : un seul pixel NaN dans l'image HDR, que le halo (bloom)
+  étale partout. Cause trouvée le 2026-11-10 : `pow(1.0 - abs(dot(...)), k)` dans le liseré de la foule
+  (`render/vat.ts`), le dôme des pompes et le ciel ; face pile vers la caméra, |dot| dépasse 1 d'un
+  arrondi et pow() d'un négatif vaut NaN (même multiplié par 0). Toujours `pow(max(0.0, ...), k)`.
+  Pour traquer : lire le plus petit niveau du bloom (`renderTargetsVertical`) à chaque image et y
+  chercher un non-fini, puis cacher des objets (`layers.mask = 0`) par moitiés.
 - **`yarn` tout court plante** sur cette machine (il cherche un `.yarn/releases/yarn-1.22.22.cjs`
   absent) : toujours passer par `corepack yarn ...`.
 - Un ancien serveur de dev peut rester ouvert sur 5173 après une session : le nouveau part alors sur

@@ -16,7 +16,7 @@ function zoneMaterial() {
     vertexShader: `varying vec3 vN; varying vec3 vV;
       void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }`,
     fragmentShader: `uniform vec3 uColor; uniform float uOpacity; uniform float uRim; varying vec3 vN; varying vec3 vV;
-      void main() { float rim = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), uRim); gl_FragColor = vec4(uColor, rim * uOpacity); }`,
+      void main() { float rim = pow(max(0.0, 1.0 - abs(dot(normalize(vN), normalize(vV)))), uRim); gl_FragColor = vec4(uColor, rim * uOpacity); }`,
     transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending,
   });
 }

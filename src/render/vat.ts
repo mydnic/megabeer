@@ -67,8 +67,9 @@ export function patchVat(material: THREE.Material, key: string, flash = 0, fade 
       shader.fragmentShader = shader.fragmentShader
         .replace('#include <common>', '#include <common>\nvarying float vVatGlow;')
         .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
-  // Liseré : plus fort là où la surface fuit le regard (bords de la silhouette)
-  float vatRim = pow(1.0 - abs(dot(normalize(vViewPosition), normal)), ${rim.toFixed(2)});
+  // Liseré : plus fort là où la surface fuit le regard (bords de la silhouette). max() : face pile vers
+  // la caméra, l'arrondi donne |dot| > 1 et pow() d'un négatif vaut NaN, que le halo étale sur tout l'écran
+  float vatRim = pow(max(0.0, 1.0 - abs(dot(normalize(vViewPosition), normal))), ${rim.toFixed(2)});
   totalEmissiveRadiance += ${c} * vVatGlow * vatRim;`);
     }
     if (fade) {
