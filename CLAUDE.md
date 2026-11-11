@@ -37,7 +37,15 @@ yarn dev        # http://localhost:5173
 yarn build      # tsc --noEmit puis vite build : à lancer après chaque changement
 yarn test       # tests fonctionnels (vitest, Node, sans navigateur) : à lancer après chaque changement
 yarn deploy     # build + wrangler deploy (seulement sur demande)
+node tools/bench/run.mjs          # banc de mesure du noyau en fin de partie (ms par image) ; --prof : profil CPU
 ```
+
+**Performances** : la fin de partie (des centaines d'ennemis et de projectiles) ne doit pas ralentir. Avant et
+après tout changement dans la horde, les armes ou les effets, lancer le banc (`node tools/bench/run.mjs`, puis
+`node tools/bench/top.mjs` après `--prof` pour voir les fonctions les plus chères). En jeu, F3 affiche le temps
+par partie de l'image (noyau, interface, vues, effets, monde, rendu). Règles : ne jamais parcourir toute la
+horde pour chaque projectile ou chaque coup (passer par `horde.near` / `ctx.zombiesNear`), pas d'allocation
+dans les boucles par image, un seul dessin instancié par type d'objet.
 
 **Tests fonctionnels** (`tests/features/*.test.ts`) : des user stories ("une bouteille s'écrase
 sur le premier zombie", "le level-up fige le jeu et propose 3 cartes") qui pilotent le noyau `Game`
@@ -82,7 +90,7 @@ recopie son état à chaque image. Ne jamais remettre de logique de jeu dans `ma
   formes `P` `C` `E` `R`, pinte, capsule, étincelle) ; armes, pompe, coffre et capsule dans `ui/icons.ts`, une
   icône par objet de coffre dans `ui/itemIcons.ts`. Toute nouvelle icône passe par ce kit.
 - `enemies/` : les ennemis sont des fiches (`config/enemies.ts` : `ENEMIES` et le roster de chaque map),
-  `zombie.ts` et `horde.ts` (simulation, briques Tireur, Kamikaze, Fantôme, Protecteur, Invocateur et Diviseur ; les armes visent
+  `zombie.ts` et `horde.ts` (simulation, index spatial des zombies `horde.near`, briques Tireur, Kamikaze, Fantôme, Protecteur, Invocateur et Diviseur ; les armes visent
   `z.targetable`), `hordeView.ts` et `zombieLibrary.ts`
   (rendu, modèles et animations pré-calculées ; accepte aussi les personnages Kenney à pièces animées
   sans squelette, et les modèles translucides), `enemyShotsView.ts` et `kamikazeView.ts` (marques au sol `fx/groundMarks.ts`, qui
@@ -106,8 +114,9 @@ recopie son état à chaque image. Ne jamais remettre de logique de jeu dans `ma
 - `player/` : `controller.ts` (déplacement sur la sphère, saut, collisions décor),
   `cameraRig.ts` (caméra orbitale qui glisse vers le perso au lieu de traverser le sol),
   `buveurVisual.ts` (animations, squash/stretch, événements sonores), `footIK.ts`, `beerSplash.ts`.
-- `render/` : `pipeline.ts` (RenderPass, GTAO, contours, bloom, profondeur de champ, étalonnage,
-  ACES), `characterOutline.ts`, `materials.ts`.
+- `render/` : `pipeline.ts` (RenderPass, GTAO, contours, bloom, profondeur de champ qui réutilise la profondeur
+  du GTAO, étalonnage, ACES), `characterOutline.ts`, `materials.ts`, `adaptiveResolution.ts` (la résolution de
+  la scène baisse seule quand la carte graphique sature, réglages `RENDER.adaptive`).
 - `audio/` : `audio.ts` (Web Audio, bus sfx/ambiance/musique, échantillons Kenney),
   `ambience.ts` (vent, oiseaux, chouette synthétisés), `music.ts` (menu, puis un morceau
   au hasard de `music/<map>/` par run ; `startBoss(id)` / `endBoss()` jouent un morceau de

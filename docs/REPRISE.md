@@ -42,6 +42,10 @@ en jeu refaits en autonomie (détail dans le journal du GDD, ligne « Refonte vi
 tag git `avant-refonte-visuelle`. Réglages des effets : `VFX` dans `config/fx.ts`. En dev, `__game.vfx`,
 `__game.sprites` et `__game.rings` permettent de lancer un effet depuis la console.
 
+**Performances de fin de partie (2026-11-11)** : noyau et rendu optimisés (détail dans le journal du GDD, ligne
+« Performances de fin de partie »). Banc de mesure : `node tools/bench/run.mjs` (référence : 2 à 3 ms par image selon les passages
+pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en jeu : temps par partie de l'image.
+
 **Prochaine étape :**
 1. **La Stout est terminée et validée** (2026-11-09) : l'arme, la carte « nouvelle arme » au level-up et
    la synergie Black and Tan avec son affichage partout. Son évolution (Imperial Stout) attend l'objet
@@ -184,6 +188,13 @@ de `src/enemies/zombieLibrary.ts`), sa brique éventuelle dans `src/enemies/hord
 sa vue dans `src/enemies/`, ses tests dans `tests/features/`.
 
 ## Pièges déjà rencontrés
+
+- **Mesurer les performances dans le panneau Browser** : s'il est masqué, les images ne tournent presque plus et
+  les mesures n'ont aucun sens. L'afficher d'abord (`show_pane preview`). Et un `import('/src/config/...')` depuis
+  la console peut renvoyer une autre copie du module que celle du jeu (après un rechargement à chaud) : modifier
+  la config ainsi ne change rien, passer par les objets de `window.__game`.
+- **Deux lumières qui projettent des ombres** (soleil et lune) : chacune redessine toute la scène. Celle qui est
+  éteinte ne recalcule plus ses ombres (`shadow.autoUpdate`, dans `world/sky.ts`).
 
 - **Écran tout noir après un effet** : même cause que le flash noir ci-dessous (un NaN étalé par le bloom), retrouvée
   le 2026-11-10 dans la colonne de lumière (`pow(1.0 - vUv.y, k)` : l'uv interpolé dépasse 1 d'un arrondi). Dans

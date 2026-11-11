@@ -19,6 +19,13 @@ export const RENDER = {
   /** Étalonnage (appliqué avant le tone mapping). */
   grade: { saturation: 1.12, contrast: 1.06, lift: [0.004, 0.006, 0.014] as const, gain: [1.05, 1.0, 0.93] as const, vignette: 0.32 },
   /** Ombres : taille de la carte, zone couverte autour du joueur, flou des bords. */
+  /**
+   * Résolution adaptative (render/adaptiveResolution.ts) : sous `lowFps` images par seconde en moyenne sur `window` s,
+   * si le calcul du jeu prend moins de `cpuShare` de l'image (donc la carte graphique sature), la résolution de la
+   * scène baisse de `step`, jusqu'à `minScale` ; au-dessus de `highFps` pendant `calmWindows` fenêtres, elle
+   * remonte d'un cran. `cooldown` : temps d'attente après un changement (s).
+   */
+  adaptive: { enabled: true, window: 1, lowFps: 45, highFps: 57, cpuShare: 0.6, step: 0.1, minScale: 0.6, cooldown: 2, calmWindows: 5 },
   /** `minIntensity` : sous cette intensité, l'astre ne recalcule plus ses ombres (invisibles de toute façon). */
   shadow: { mapSize: 4096, extent: 40, softness: 3.5, bias: -0.0004, normalBias: 0.05, minIntensity: 0.02 },
 } as const;

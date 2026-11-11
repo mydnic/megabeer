@@ -31,6 +31,7 @@ import { BuveurVisual } from './player/buveurVisual';
 import { CameraRig } from './player/cameraRig';
 import { PintProp } from './player/pintProp';
 import { Pipeline } from './render/pipeline';
+import { createAdaptiveResolution } from './render/adaptiveResolution';
 import { createSky } from './world/sky';
 import { createClouds } from './world/clouds';
 import { heightAt } from './world/terrain';
@@ -57,6 +58,8 @@ const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(CAMERA.fov, innerWidth / innerHeight, 0.1, 1200);
 const pipeline = new Pipeline(renderer, scene, camera);
 pipeline.setSize(innerWidth, innerHeight);
+// La résolution de la scène baisse seule si la carte graphique ne suit pas
+const adaptive = createAdaptiveResolution(renderer, () => pipeline.setSize(innerWidth, innerHeight));
 addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
@@ -128,6 +131,7 @@ const screens = wireScreens(game, { planet, canvas: renderer.domElement, audio }
 const runLog = createRunLog();
 let fps = 0;
 wireRunLog(game, runLog, () => ({ seed: planet.seed, fps }));
+game.events.on('home', () => adaptive.reset());
 
 // --- Debug (F3)
 const debugEl = document.getElementById('debug')!;
@@ -213,6 +217,7 @@ function frame(now: number) {
   lap('monde');
   if (game.phase !== 'home') pipeline.render();
   lap('rendu');
+  if (game.phase === 'run') adaptive.update(realDt, cost.noyau + cost.interface + cost.vues + cost.effets + cost.monde + cost.rendu);
 
   fpsAcc += dt; fpsN++;
   if (fpsAcc > 0.5) { fps = fpsN / fpsAcc; fpsAcc = 0; fpsN = 0; }
@@ -221,7 +226,7 @@ function frame(now: number) {
     debugEl.textContent = [
       `FPS ${fps.toFixed(0)}   triangles ${renderer.info.render.triangles.toLocaleString('fr')}`,
       `Altitude ${heightAt(player.upDir).toFixed(1)}   au sol ${player.onGround ? 'oui' : 'non'}`,
-      `ms par image : ${(Object.keys(cost) as (keyof typeof cost)[]).map((k) => `${k} ${cost[k].toFixed(1)}`).join('  ')}`,
+      `ms par image : ${(Object.keys(cost) as (keyof typeof cost)[]).map((k) => `${k} ${cost[k].toFixed(1)}`).join('  ')}   résolution ${Math.round(adaptive.scale * 100)} %`,
       'ZQSD bouger, Espace sauter, souris caméra (clic), molette zoom, F3 masquer',
     ].join('\n');
   }
@@ -230,7 +235,7 @@ function frame(now: number) {
 requestAnimationFrame(frame);
 
 if (import.meta.env.DEV) {
-  Object.assign(window, { __game: { game, cost, vfx, sprites, rings, player: game.player, rig, camera, buveur, sky, heightAt, THREE, pipeline, renderer, planet, decor: planet.decor, scene, music, horde: game.horde, health: game.health, progression: game.progression, playerStats: game.stats, canette: game.loadout.weapons[0], setTimeScale: (k: number) => { game.devTimeScale = k; } } });
+  Object.assign(window, { __game: { game, cost, adaptive, vfx, sprites, rings, player: game.player, rig, camera, buveur, sky, heightAt, THREE, pipeline, renderer, planet, decor: planet.decor, scene, music, horde: game.horde, health: game.health, progression: game.progression, playerStats: game.stats, canette: game.loadout.weapons[0], setTimeScale: (k: number) => { game.devTimeScale = k; } } });
   const { wireDevTools } = await import('./app/devTools');
   await wireDevTools(game, { music, runLog, seed: () => planet.seed });
 }
