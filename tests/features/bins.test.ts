@@ -34,9 +34,9 @@ function standAt(t: ReturnType<typeof createTestGame>, at: THREE.Vector3, d: num
   return side;
 }
 
-/** Fonce sur la poubelle depuis 3 m (touche avant). */
+/** Le Buveur arrive au contact de la poubelle (posé tout près, il avance : rien entre eux). */
 function runInto(t: ReturnType<typeof createTestGame>, bin: { pos: THREE.Vector3; broken: boolean }) {
-  standAt(t, bin.pos, 3);
+  standAt(t, bin.pos, 1.3);
   return t.playUntil(() => bin.broken, 3, { moveY: 1 });
 }
 
@@ -72,12 +72,11 @@ describe('Les poubelles', () => {
     const bin = t.game.bins.list[0];
     runInto(t, bin);
     expect(t.events('binBroken')[0].loot).toBe('coins');
-    const n = t.game.coinDrops.drops.length;
-    expect(n).toBeGreaterThanOrEqual(BINS.coins.min);
-    expect(n).toBeLessThanOrEqual(BINS.coins.max);
-    // Ramassées en restant là
+    // Ramassées en restant là (certaines le sont dès leur chute, sous les pieds du Buveur)
     t.play(2);
-    expect(t.game.coins).toBe(n);
+    expect(t.game.coinDrops.drops).toHaveLength(0);
+    expect(t.game.coins).toBeGreaterThanOrEqual(BINS.coins.min);
+    expect(t.game.coins).toBeLessThanOrEqual(BINS.coins.max);
   });
 
   it('rarement un cornet de frites, qui soigne quand on le ramasse', () => {
