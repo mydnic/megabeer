@@ -44,6 +44,8 @@ export function createBottleWeapon(ctx: WeaponContext, id: BottleWeaponId, name:
   const prev = new THREE.Vector3();
   const a0 = new THREE.Vector3(), a1 = new THREE.Vector3();
 
+  /** Zombies proches de la bouteille en vol (réserve réutilisée). */
+  const around: Zombie[] = [];
   /** Zombies déjà visés par la volée en cours (une cible différente par bouteille). */
   const volley = new Set<Zombie>();
 
@@ -121,7 +123,7 @@ export function createBottleWeapon(ctx: WeaponContext, id: BottleWeaponId, name:
    * épuisé, ou éclat au sol. Renvoie false si la bouteille disparaît.
    */
   function fly(b: Bottle) {
-    for (const z of ctx.zombies()) {
+    for (const z of ctx.zombiesNear(b.pos, 3, around)) {
       if (!z.targetable || b.hits.includes(z) || z.pos.distanceToSquared(b.pos) > 9) continue;
       if (segToZombie(prev, b.pos, z) < W.radius * mods.size + W.zombieRadius) {
         const crit = Math.random() < W.critChance + mods.critChance + ctx.stats.critChance;

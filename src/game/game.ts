@@ -184,6 +184,8 @@ export class Game {
   readonly mechanic: MapMechanic;
   /** Triches des outils de dev (toujours faux en jeu normal). */
   readonly cheats = { god: false };
+  /** Zombies proches du joueur (réserve réutilisée par les effets d'objets). */
+  private readonly around: Zombie[] = [];
 
   phase: Phase = 'home';
   /** Difficulté de la run (Sobre / Pompette / Bourré). */
@@ -243,6 +245,7 @@ export class Game {
     const self = this;
     this.weaponCtx = {
       zombies: () => this.horde.zombies,
+      zombiesNear: (p, r, out) => this.horde.near(p, r, out),
       playerPos: () => player.pos,
       stats: this.stats,
       rig: defaultRig(player),
@@ -450,6 +453,14 @@ export class Game {
   /** Synergies actives (toutes leurs armes équipées). */
   activeSynergies() { return activeSynergies((id) => this.loadout.has(id)); }
 
+  /** Fiches des synergies actives : recalculées seulement quand l'arsenal change (lu à chaque coup). */
+  private synergyCache: { n: number; defs: (typeof SYNERGIES)[SynergyId][] } = { n: -1, defs: [] };
+  private synergyDefs() {
+    const n = this.loadout.version;
+    if (this.synergyCache.n !== n) this.synergyCache = { n, defs: this.activeSynergies().map((s) => SYNERGIES[s]) };
+    return this.synergyCache.defs;
+  }
+
   /**
    * Équipe une arme (carte de level-up, outils de dev) ; annonce les synergies qu'elle active.
    * Renvoie null si l'arsenal est plein ou si elle est déjà là.
@@ -497,7 +508,7 @@ export class Game {
     knock *= this.stats.knockback;
     const hpBefore = Math.max(0, z.hp);
     // Synergies actives : une arme marque le zombie (sonné), une autre lui fait plus de dégâts pendant ce temps
-    const synergies = this.activeSynergies().map((s) => SYNERGIES[s]);
+    const synergies = this.synergyDefs();
     let combo = false;
     for (const S of synergies) if (weapon?.id === S.boosted && z.dazed > 0) { damage *= S.mult; combo = true; }
     // Dans le halo d'un porte-reliques : dégâts réduits
@@ -534,7 +545,8 @@ export class Game {
     this.events.emit('itemExploded', { zombie: z, at, radius: E.radius * this.stats.size });
     const damage = E.damage * this.stats.damage * spawnCurveAt(this.runTime).hpMul * this.mods.hp;
     const radius = E.radius * this.stats.size;
-    for (const o of this.horde.alive()) {
+    // Copie : un coup peut en déclencher d'autres (explosions en chaîne) qui refont la recherche
+    for (const o of this.horde.near(at, radius, [])) {
       if (o === z || !o.targetable || o.pos.distanceTo(at) > radius) continue;
       this.hitZombie(o, damage, false, o.pos, o.pos.clone().sub(at));
     }
@@ -574,7 +586,7 @@ export class Game {
   private shockwave(radius: number, knock: number, damage = 0) {
     const at = this.player.pos.clone();
     this.events.emit('shockwave', { at, radius });
-    for (const o of this.horde.alive()) {
+    for (const o of this.horde.near(at, radius, [])) {
       if (!o.targetable || o.pos.distanceTo(at) > radius) continue;
       const dir = o.pos.clone().sub(at);
       const up = this.tmp.copy(o.pos).normalize();
@@ -615,7 +627,7 @@ export class Game {
     if (this.effects.has('crowdBoost')) {
       const C = ITEM_EFFECTS.crowdBoost;
       let n = 0;
-      for (const o of this.horde.alive()) if (o.pos.distanceTo(this.player.pos) < C.radius && ++n >= C.count) break;
+      for (const o of this.horde.near(this.player.pos, C.radius, this.around)) if (o.pos.distanceTo(this.player.pos) < C.radius && ++n >= C.count) break;
       this.effects.crowded = n >= C.count;
       this.player.speed = BASE_SPEED * this.stats.moveSpeed * (this.effects.crowded ? 1 + this.effects.power.crowdBoost : 1);
     }
@@ -623,7 +635,7 @@ export class Game {
     if (fx.whistle) {
       const W = ITEM_EFFECTS.whistle, radius = W.radius * this.stats.size;
       this.events.emit('whistleBlown', { at: this.player.pos.clone(), radius });
-      for (const o of this.horde.alive()) {
+      for (const o of this.horde.near(this.player.pos, radius, this.around)) {
         if (o.targetable && o.pos.distanceTo(this.player.pos) < radius) this.freeze(o, this.effects.power.whistle * this.stats.duration);
       }
     }

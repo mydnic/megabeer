@@ -82,9 +82,12 @@ export function createGueuze(ctx: WeaponContext): Weapon {
     b.active = true;
   }
 
+  /** Zombies proches d'une bouteille en vol, et zombies pris dans une explosion (réserves réutilisées). */
+  const around: Zombie[] = [], blasted: Zombie[] = [];
+
   /** La bouteille est-elle dans le corps d'un zombie (cylindre debout sur ses pieds) ? */
   function touchesZombie(p: THREE.Vector3) {
-    for (const z of ctx.zombies()) {
+    for (const z of ctx.zombiesNear(p, 3, around)) {
       if (!z.targetable || z.pos.distanceToSquared(p) > 9) continue;
       dlt.subVectors(p, z.pos);
       up.copy(z.pos).normalize();
@@ -100,7 +103,7 @@ export function createGueuze(ctx: WeaponContext): Weapon {
   function explode(b: Grenade) {
     const radius = G.radius * mods.radius * ctx.stats.size;
     ctx.explode(weapon, b.pos, radius);
-    for (const z of ctx.zombies()) {
+    for (const z of ctx.zombiesNear(b.pos, radius, blasted)) {
       if (!z.targetable || z.pos.distanceTo(b.pos) > radius) continue;
       const crit = Math.random() < G.critChance + mods.critChance + ctx.stats.critChance;
       const dmg = G.damage * mods.damage * (crit ? G.critMult + mods.critMult : 1);

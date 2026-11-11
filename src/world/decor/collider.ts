@@ -12,6 +12,8 @@ export type DecorBody = {
   shape: GridShape;
   /** Grand modèle courbé sur la sphère (voir bendToSphere) : repère local par projection. */
   bend?: Bend;
+  /** Numéro de la dernière recherche qui l'a vu (un corps à cheval sur plusieurs cases n'est rendu qu'une fois). */
+  seen?: number;
 };
 
 /**
@@ -47,7 +49,7 @@ export class DecorCollider {
   private tmp = new THREE.Vector3();
   private lp = new THREE.Vector3();
   private push = new THREE.Vector3();
-  private seen = new Set<DecorBody>();
+  private query = 0;
   private found: DecorBody[] = [];
 
   constructor(public bodies: DecorBody[], readonly step: number, readonly clearance: number) {
@@ -90,21 +92,25 @@ export class DecorCollider {
 
   /** Éléments dont la zone touche la sphère (p, r). */
   near(p: THREE.Vector3, r: number): DecorBody[] {
-    this.seen.clear();
-    this.found.length = 0;
-    const lo = this.tmp.copy(p).subScalar(r).divideScalar(CELL).floor();
-    const x0 = lo.x, y0 = lo.y, z0 = lo.z;
-    const hi = this.tmp.copy(p).addScalar(r).divideScalar(CELL).floor();
-    for (let x = x0; x <= hi.x; x++) for (let y = y0; y <= hi.y; y++) for (let z = z0; z <= hi.z; z++) {
+    // Appelée pour chaque zombie à chaque pas : pas d'allocation, pas de Set
+    const found = this.found;
+    found.length = 0;
+    if (!this.buckets.size) return found;
+    const q = ++this.query;
+    const x0 = Math.floor((p.x - r) / CELL), y0 = Math.floor((p.y - r) / CELL), z0 = Math.floor((p.z - r) / CELL);
+    const x1 = Math.floor((p.x + r) / CELL), y1 = Math.floor((p.y + r) / CELL), z1 = Math.floor((p.z + r) / CELL);
+    for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) for (let z = z0; z <= z1; z++) {
       const list = this.buckets.get(this.key(x, y, z));
       if (!list) continue;
-      for (const b of list) {
-        if (this.seen.has(b)) continue;
-        this.seen.add(b);
-        if (b.pos.distanceToSquared(p) < (b.shape.radius + r) ** 2) this.found.push(b);
+      for (let i = 0; i < list.length; i++) {
+        const b = list[i];
+        if (b.seen === q) continue;
+        b.seen = q;
+        const rr = b.shape.radius + r;
+        if (b.pos.distanceToSquared(p) < rr * rr) found.push(b);
       }
     }
-    return this.found;
+    return found;
   }
 
   private toLocal(b: DecorBody, p: THREE.Vector3) {

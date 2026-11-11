@@ -83,7 +83,13 @@ export class Zombie {
   private up = new THREE.Vector3();
   private tmp = new THREE.Vector3();
 
+  /** Fiche de l'ennemi (PV, vitesse, dégâts, XP, briques) et modèle 3D affiché. */
+  readonly def: EnemyDef;
+  readonly model: EnemyDef['model'];
+
   constructor(readonly kind: ZombieTimings, readonly enemy: EnemyId) {
+    this.def = ENEMIES[enemy];
+    this.model = this.def.model;
     this.hp = ENEMIES[enemy].hp;
     const T = (ENEMIES[enemy] as EnemyDef).thrower;
     if (T) this.throwTimer = Math.random() * T.firstDelay;
@@ -108,10 +114,6 @@ export class Zombie {
   /** Peut être visé et touché par les armes. */
   get targetable() { return !this.dead && !this.intangible; }
 
-  /** Fiche de l'ennemi (PV, vitesse, dégâts, XP, briques). */
-  get def(): EnemyDef { return ENEMIES[this.enemy]; }
-  /** Modèle 3D affiché. */
-  get model() { return ENEMIES[this.enemy].model; }
 
   play(state: ZombieState, force = false) {
     if (this.state === state && !force) return;

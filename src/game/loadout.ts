@@ -14,6 +14,9 @@ export class Loadout {
     this.reset();
   }
 
+  /** Change à chaque fois que l'arsenal change (pour ce qui en dépend : synergies actives). */
+  version = 0;
+
   get full() { return this.weapons.length >= this.max; }
 
   has(id: WeaponId) { return this.weapons.some((w) => w.id === id); }
@@ -23,12 +26,14 @@ export class Loadout {
     if (this.full || this.has(id)) return null;
     const w = WEAPON_FACTORIES[id](this.ctx);
     this.weapons.push(w);
+    this.version++;
     return w;
   }
 
   /** Nouvelle run : seule l'arme de départ, sans amélioration. */
   reset() {
     this.weapons.length = 0;
+    this.version++;
     this.add(this.starting);
   }
 

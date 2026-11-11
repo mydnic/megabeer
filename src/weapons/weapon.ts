@@ -21,6 +21,12 @@ export interface ThrowRig {
 /** Ce qu'une arme peut lire et déclencher dans le jeu (elle ne connaît rien d'autre). */
 export interface WeaponContext {
   zombies(): readonly Zombie[];
+  /**
+   * Zombies debout près de `p` : remplit `out` avec des candidats (ceux dont la case de la grille touche
+   * la sphère de rayon `r`) et le renvoie. À filtrer par la distance exacte. Bien plus rapide que de
+   * parcourir `zombies()` pour un projectile en vol.
+   */
+  zombiesNear(p: THREE.Vector3, r: number, out: Zombie[]): Zombie[];
   playerPos(): THREE.Vector3;
   stats: PlayerStats;
   rig: ThrowRig;

@@ -12,6 +12,10 @@ import { Zombie, type ZombieTimings } from './zombie';
  * sur la sphère (dans le plan tangent), collage au sol et au décor, glissement le long des murs,
  * écartement entre zombies, corps solides, coups portés au joueur.
  */
+/** Index spatial : taille d'une case (m), et nombre de cases au-delà duquel on parcourt toute la horde. */
+const INDEX_CELL = 3;
+const INDEX_MAX_CELLS = 125;
+
 export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: PlayerController, decor?: DecorCollider) {
   const zombies: Zombie[] = [];
   const tmp = new THREE.Vector3();
@@ -20,6 +24,53 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
   const before = new THREE.Vector3();
   const side = new THREE.Vector3();
   const push = new THREE.Vector3();
+
+  /**
+   * Index spatial des zombies debout : une grille de cases de INDEX_CELL m, refaite à la fin de chaque
+   * pas (et complétée à chaque apparition). Les armes et les effets y cherchent leurs voisins au lieu
+   * de parcourir toute la horde : c'est ce qui tient la fin de partie (des centaines de projectiles
+   * contre des centaines d'ennemis).
+   */
+  const index = new Map<number, Zombie[]>();
+  /** Protecteurs debout (porte-reliques) : consultés à chaque coup. */
+  const protectors: Zombie[] = [];
+  /** Case d'une coordonnée, et clé unique d'une case (10 bits par axe : la planète tient largement dedans). */
+  const cellOf = (v: number, cell: number) => Math.floor(v / cell) + 512;
+  const keyOf = (x: number, y: number, z: number) => (x << 20) | (y << 10) | z;
+  function addToIndex(z: Zombie) {
+    const k = keyOf(cellOf(z.pos.x, INDEX_CELL), cellOf(z.pos.y, INDEX_CELL), cellOf(z.pos.z, INDEX_CELL));
+    let list = index.get(k);
+    if (!list) { list = []; index.set(k, list); }
+    list.push(z);
+    if (z.def.protector) protectors.push(z);
+  }
+  function reindex() {
+    // Les cases quittées restent vides dans la table : on la vide quand elle a trop grossi
+    if (index.size > INDEX_MAX_CELLS * 40) index.clear();
+    for (const list of index.values()) list.length = 0;
+    protectors.length = 0;
+    for (const z of zombies) if (!z.dead) addToIndex(z);
+  }
+  /**
+   * Remplit `out` avec les zombies debout dont la case touche la sphère (`p`, `r`) : des candidats, à
+   * filtrer par la distance exacte. Rayon trop grand pour la grille : toute la horde.
+   */
+  function near(p: THREE.Vector3, r: number, out: Zombie[]) {
+    out.length = 0;
+    const x0 = cellOf(p.x - r, INDEX_CELL), x1 = cellOf(p.x + r, INDEX_CELL);
+    const y0 = cellOf(p.y - r, INDEX_CELL), y1 = cellOf(p.y + r, INDEX_CELL);
+    const z0 = cellOf(p.z - r, INDEX_CELL), z1 = cellOf(p.z + r, INDEX_CELL);
+    if ((x1 - x0 + 1) * (y1 - y0 + 1) * (z1 - z0 + 1) > INDEX_MAX_CELLS) {
+      for (const z of zombies) if (!z.dead) out.push(z);
+      return out;
+    }
+    for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) for (let z = z0; z <= z1; z++) {
+      const list = index.get(keyOf(x, y, z));
+      if (list) for (let i = 0; i < list.length; i++) if (!list[i].dead) out.push(list[i]);
+    }
+    return out;
+  }
+  const around: Zombie[] = [];
 
   /** Recolle un point au sol (relief ou dessus de décor franchissable), en gardant sa direction. */
   function snap(p: THREE.Vector3) {
@@ -46,6 +97,7 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
     const n = tmp.copy(z.pos).normalize();
     z.facing.copy(facing).addScaledVector(n, -facing.dot(n)).normalize();
     zombies.push(z);
+    addToIndex(z);
     api.onSpawn?.(z);
     return z;
   }
@@ -138,7 +190,8 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
     }
     before.copy(z.pos);
     z.pos.addScaledVector(want, speed * dt);
-    settle(z);
+    // Poussé hors du décor tout de suite (pour mesurer s'il est bloqué) ; il est reposé au sol une fois, après l'écartement
+    if (!z.def.ghost) decor?.resolve(z.pos, M.radius);
     // Mesure de l'avancée réelle : presque rien = bloqué, on lance un contournement
     const moved = tmp.subVectors(z.pos, before).length();
     if (speed > 0.5 && moved < speed * dt * M.stuckRatio && z.detour <= 0) {
@@ -151,45 +204,54 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
     if (z.state === 'attack' || z.stateTime > V.minStateTime) z.play(next);
   }
 
-  // Grille de hachage pour l'écartement (seuls les voisins de case sont testés)
+  // Grille pour l'écartement (seuls les voisins de case sont testés). Chaque paire de cases voisines n'est
+  // visitée qu'une fois : la case elle-même et la moitié « avant » de ses 26 voisines.
   const grid = new Map<number, number[]>();
-  const cellKey = (x: number, y: number, z: number) => ((x * 73856093) ^ (y * 19349663) ^ (z * 83492791)) | 0;
+  const HALF: [number, number, number][] = [];
+  for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) {
+    if (dx > 0 || (dx === 0 && (dy > 0 || (dy === 0 && dz > 0)))) HALF.push([dx, dy, dz]);
+  }
 
   /** Écarte les zombies trop proches entre eux, et du joueur (les corps sont solides). */
   function separate() {
     const minD = M.radius * 2, cell = minD;
+    if (grid.size > 8192) grid.clear();
     for (const list of grid.values()) list.length = 0;
-    zombies.forEach((z, i) => {
-      if (z.dead) return; // les corps ne gênent personne
-      const k = cellKey(Math.floor(z.pos.x / cell), Math.floor(z.pos.y / cell), Math.floor(z.pos.z / cell));
+    const minD2 = minD * minD;
+    for (let i = 0; i < zombies.length; i++) {
+      const z = zombies[i];
+      if (z.dead) continue; // les corps ne gênent personne
+      const k = keyOf(cellOf(z.pos.x, cell), cellOf(z.pos.y, cell), cellOf(z.pos.z, cell));
       let list = grid.get(k);
       if (!list) { list = []; grid.set(k, list); }
       list.push(i);
-    });
-    for (let i = 0; i < zombies.length; i++) {
-      const a = zombies[i];
-      if (a.dead) continue;
-      const cx = Math.floor(a.pos.x / cell), cy = Math.floor(a.pos.y / cell), cz = Math.floor(a.pos.z / cell);
-      for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) {
-        const list = grid.get(cellKey(cx + dx, cy + dy, cz + dz));
-        if (!list) continue;
-        for (const j of list) {
-          if (j <= i) continue;
-          const b = zombies[j];
-          push.subVectors(a.pos, b.pos);
-          const d = push.length();
-          if (d >= minD || d < 1e-5) continue;
-          push.multiplyScalar((minD - d) / d * 0.5);
-          a.pos.add(push); b.pos.sub(push);
-        }
+    }
+    const apart = (a: Zombie, b: Zombie) => {
+      const dx = a.pos.x - b.pos.x, dy = a.pos.y - b.pos.y, dz = a.pos.z - b.pos.z;
+      const d2 = dx * dx + dy * dy + dz * dz;
+      if (d2 >= minD2 || d2 < 1e-10) return;
+      const d = Math.sqrt(d2), k = (minD - d) / d * 0.5;
+      a.pos.x += dx * k; a.pos.y += dy * k; a.pos.z += dz * k;
+      b.pos.x -= dx * k; b.pos.y -= dy * k; b.pos.z -= dz * k;
+    };
+    for (const [key, list] of grid) {
+      const n = list.length;
+      if (!n) continue;
+      // Dans la case
+      for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) apart(zombies[list[i]], zombies[list[j]]);
+      // Avec la moitié avant des cases voisines
+      const cx = key >> 20, cy = (key >> 10) & 1023, cz = key & 1023;
+      for (const [dx, dy, dz] of HALF) {
+        const other = grid.get(keyOf(cx + dx, cy + dy, cz + dz));
+        if (!other || !other.length) continue;
+        for (let i = 0; i < n; i++) for (let j = 0; j < other.length; j++) apart(zombies[list[i]], zombies[other[j]]);
       }
     }
     // Le joueur est repoussé hors des corps (sur le plan tangent)
     const pr = M.radius + M.playerRadius;
-    for (const z of zombies) {
-      if (z.dead) continue;
+    up.copy(player.pos).normalize();
+    for (const z of near(player.pos, pr + 0.5, around)) {
       push.subVectors(player.pos, z.pos);
-      up.copy(player.pos).normalize();
       push.addScaledVector(up, -push.dot(up));
       const d = push.length();
       if (d >= pr || d < 1e-5) continue;
@@ -204,7 +266,7 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
     /** Joueur mort : plus de coups, ils se rassemblent autour du corps. */
     setPassive(v: boolean) { passive = v; },
     /** Retire tous les zombies (nouvelle run). */
-    clear() { zombies.length = 0; },
+    clear() { zombies.length = 0; reindex(); },
     update(dt: number) {
       for (const z of zombies) step(z, dt, player.pos);
       separate();
@@ -237,18 +299,24 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
         }
       }
       // Corps entièrement enfoncés : retirés
-      for (let i = zombies.length - 1; i >= 0; i--) if (zombies[i].gone) zombies.splice(i, 1);
+      let kept = 0;
+      for (let i = 0; i < zombies.length; i++) if (!zombies[i].gone) zombies[kept++] = zombies[i];
+      zombies.length = kept;
+      reindex();
     },
+    /** Zombies debout près d'un point : voir l'index spatial plus haut. */
+    near,
     /**
      * Brique Protecteur : part des dégâts retirée à `z` (0 si aucun halo d'un autre protecteur
      * debout ne le couvre ; les halos ne se cumulent pas).
      */
     shieldOf(z: Zombie) {
       let best = 0;
-      for (const p of zombies) {
+      for (const p of protectors) {
         const P = p.def.protector;
         if (!P || p === z || p.dead || P.reduction <= best) continue;
-        if (p.pos.angleTo(z.pos) * PLANET_RADIUS < P.radius) best = P.reduction;
+        // Distance en ligne droite : à cette échelle, elle vaut la distance au sol
+        if (p.pos.distanceToSquared(z.pos) < P.radius * P.radius) best = P.reduction;
       }
       return best;
     },

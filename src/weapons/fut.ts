@@ -68,12 +68,15 @@ export function createFut(ctx: WeaponContext): Weapon {
     b.active = true;
   }
 
+  /** Zombies proches du fût (réserve réutilisée). */
+  const around: Zombie[] = [];
+
   /** Écrase les zombies dans l'empreinte du fût couché (sa longueur en travers, son diamètre le long de la route). */
   function crush(b: Barrel) {
     const halfLen = (F.length * b.size) / 2 + F.zombieRadius;
     const halfDepth = F.radius * b.size + F.zombieRadius;
     up.copy(b.dir);
-    for (const z of ctx.zombies()) {
+    for (const z of ctx.zombiesNear(b.pos, 4 * b.size, around)) {
       if (!z.targetable || b.hits.includes(z) || z.pos.distanceToSquared(b.pos) > 16 * b.size * b.size) continue;
       d.subVectors(z.pos, b.pos);
       d.addScaledVector(up, -d.dot(up));
