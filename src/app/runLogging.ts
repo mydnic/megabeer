@@ -35,6 +35,7 @@ export function wireRunLog(game: Game, runLog: ReturnType<typeof createRunLog>, 
     else runLog.event('cardPicked', `${card.weapon.id}:${card.upgrade.id}`, RARITIES[card.tier].id, card.weapon.mods.level);
   });
   game.events.on('chestTrapped', ({ price, hit, zombies }) => runLog.event('chestTrap', price, hit ? 1 : 0, zombies.length));
+  game.events.on('lastCallRung', ({ source, pulled }) => runLog.event('lastCall', source, pulled));
   game.events.on('binBroken', ({ by, loot }) => runLog.event('bin', by, loot));
   game.events.on('snackEaten', ({ heal, hp }) => runLog.event('snack', heal, Math.round(hp)));
   game.events.on('chestOpened', ({ price, rarity, cards }) => runLog.event('chest', price, RARITIES[rarity].id, ...cards.map((c) => (c.kind === 'item' ? c.item : ''))));

@@ -4,6 +4,7 @@ import { PUMP_TIERS } from '../config/pumps';
 import { PLANET, PLANET_RADIUS } from '../config/world';
 import type { Pump } from '../game/pumps';
 import type { Chest } from '../game/chests';
+import type { CallBell } from '../game/lastCall';
 import { heightAt } from '../world/terrain';
 import { toMapCoords } from '../world/mapProjection';
 
@@ -101,7 +102,7 @@ export function createMinimap() {
   return {
     setVisible(v: boolean) { canvas.classList.toggle('on', v); },
     /** Chaque image : position du joueur, sa direction, l'avant de la caméra, les pompes. */
-    update(dt: number, playerPos: THREE.Vector3, facing: THREE.Vector3, camFwd: THREE.Vector3, pumps: readonly Pump[], chests: readonly Chest[]) {
+    update(dt: number, playerPos: THREE.Vector3, facing: THREE.Vector3, camFwd: THREE.Vector3, pumps: readonly Pump[], chests: readonly Chest[], bells: readonly CallBell[] = []) {
       if (!canvas.classList.contains('on')) return;
       up.copy(playerPos).normalize();
       fwd.copy(camFwd).addScaledVector(up, -camFwd.dot(up)).normalize();
@@ -141,6 +142,17 @@ export function createMinimap() {
         ctx.beginPath();
         ctx.arc(R + m.x * scale, R - m.y * scale, M.pumpDot * dpr, 0, Math.PI * 2);
         ctx.fillStyle = hex(PUMP_TIERS[p.tier].color); ctx.fill();
+        ctx.lineWidth = 2 * dpr; ctx.strokeStyle = '#1a120c'; ctx.stroke();
+      }
+
+      // Cloches du Dernier service pas encore sonnées : toujours là, posées au bord du disque quand elles sont loin
+      for (const b of bells) {
+        if (b.rung) continue;
+        const m = toMap(b.pos);
+        const k = m.dist > M.range * 0.9 ? (M.range * 0.9) / m.dist : 1;
+        ctx.beginPath();
+        ctx.arc(R + m.x * k * scale, R - m.y * k * scale, M.bellDot * dpr, 0, Math.PI * 2);
+        ctx.fillStyle = hex(M.colors.bell); ctx.fill();
         ctx.lineWidth = 2 * dpr; ctx.strokeStyle = '#1a120c'; ctx.stroke();
       }
 

@@ -20,15 +20,20 @@ const CSS = `
 
 /**
  * Rappel près d'un coffre fermé : « [E / X] Ouvrir le coffre » et son prix en capsules (barré et gris
- * s'il en manque). Tremble quand on appuie sans pouvoir payer.
+ * s'il en manque). Tremble quand on appuie sans pouvoir payer. Sans `capsule`, rappel sans prix (`text` :
+ * l'action, par exemple sonner une cloche).
  */
-export function createChestPrompt(capsule: string) {
-  const style = document.createElement('style');
-  style.textContent = CSS;
-  document.head.appendChild(style);
+let styled = false;
+export function createChestPrompt(capsule: string | null, text: string = P.open) {
+  if (!styled) {
+    styled = true;
+    const style = document.createElement('style');
+    style.textContent = CSS;
+    document.head.appendChild(style);
+  }
   const el = document.createElement('div');
   el.className = 'chp';
-  el.innerHTML = `<div class="chp-key">${P.key} / ${P.pad}</div><div>${P.open}</div><div class="chp-price">${capsule}<span></span></div>`;
+  el.innerHTML = `<div class="chp-key">${P.key} / ${P.pad}</div><div>${text}</div>` + (capsule ? `<div class="chp-price">${capsule}<span></span></div>` : '<div class="chp-price" style="display:none"><span></span></div>');
   document.body.appendChild(el);
   const price = el.querySelector<HTMLElement>('.chp-price')!;
   const priceText = price.querySelector('span')!;

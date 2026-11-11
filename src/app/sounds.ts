@@ -52,6 +52,11 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
     audio.play(T.wood, T.woodVolume, T.woodRate * jitter(0.05));
     audio.play(T.boom, T.boomVolume, T.boomRate * jitter(0.05));
   });
+  // Dernier service : la cloche sonne trois fois
+  game.events.on('lastCallRung', () => {
+    const C = AUDIO.lastCall;
+    for (let i = 0; i < C.count; i++) setTimeout(() => audio.play(C.sample, C.volume, C.rate + C.step * i, 0, 'ui'), i * C.gap * 1000);
+  });
   // Poubelle cassée : tôle qui claque ; snack mangé : croquant
   game.events.on('binBroken', ({ bin }) => {
     const B = AUDIO.bin, k = near(bin.pos, B.hearDist);

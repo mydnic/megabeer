@@ -79,7 +79,8 @@ recopie son état à chaque image. Ne jamais remettre de logique de jeu dans `ma
 - `game/` : `game.ts` (**le jeu** : phases accueil / run / mort, arrivée, combat, XP, level-up,
   pause ; `step(dt, input)` ; événements `GameEvents`), `playerStats.ts`, `loadout.ts` (armes
   équipées, 4 max), `levelUpCards.ts` (tirage sur les armes équipées), `pumps.ts`, `chests.ts` (coffres, dont les
-  piégés), `bins.ts` (poubelles cassées au contact ou par les armes, grille pour les projectiles), `spawnDirector.ts` (arrivée des zombies et
+  piégés), `bins.ts` (poubelles cassées au contact ou par les armes, grille pour les projectiles), `lastCall.ts` (Dernier
+  service : cloches qui ramènent toute l'XP et les capsules), `spawnDirector.ts` (arrivée des zombies et
   montée en difficulté, courbe dans `config/spawn.ts`), `mechanics/` (mécanique propre à chaque map, interface
   `MapMechanic` et registre : Abbaye = les cloches), `emitter.ts`.
 - `weapons/` : `weapon.ts` (**interface `Weapon`** et `WeaponContext`), `registry.ts`, une arme
@@ -102,7 +103,7 @@ recopie son état à chaque image. Ne jamais remettre de logique de jeu dans `ma
   d'impact, critique, ennemi tué, explosion, poussière, colonne de lumière, traînée), réglées dans `VFX`
   (`config/fx.ts`) et branchées sur les événements dans `app/effects.ts`. Elles s'allègent seules quand l'écran
   est chargé (`VFX.crowd`). `fx/ringWaveView.ts` : ondes au sol. `pickups/` : `xpDrops.ts` (gouttes d'XP, capsules et snacks partagent ce vol) + `xpDropsView.ts`, `coinDropsView.ts`,
-  `snackDropsView.ts`. Poubelles : `world/binsView.ts` (couvercle qui s'envole, corps qui se couche).
+  `snackDropsView.ts`, `bellDropsView.ts`. Cloches : `world/lastCallView.ts`. Poubelles : `world/binsView.ts` (couvercle qui s'envole, corps qui se couche).
 - `app/` : l'application navigateur branchée sur le noyau, une responsabilité par fichier :
   `planet.ts` (seed, relief, décor, chargement), `screens.ts` (accueil, HUD, pause, level-up,
   mort), `effects.ts` (impacts, caméra, séquence de mort), `sounds.ts` (sons et musique),
@@ -139,7 +140,7 @@ BD/aquarelle, Valheim, style anime, herbe dense.
 (prépare le Moine de `MONK.blend` pour la foule : textures en un atlas, un seul matériau, animations
 renommées comme les zombies ; `--variant` : lanceur, pelerin (bure rouge, tonneau sans fond autour du ventre) ou tonnelier (bure ardoise, gros tonneau qui roule devant lui, mains dessus), tonneau donné par `--barrel` ; source dans `Desktop/MODELS/personnages/kelgar_monk`) génèrent les GLB
 de `src/assets/models/`, comme `tools/blender/kaykit.py` (personnages KayKit : pièces retirées, recolorés, objet
-en main, animations du Rig_Medium ; sources lues dans `Desktop/MODELS`). `tools/blender/monsters.py` (monstres Quaternius
+en main, animations du Rig_Medium ; sources lues dans `Desktop/MODELS`). `tools/blender/cloche.py` (cloche du Dernier service, avec ou sans potence). `tools/blender/monsters.py` (monstres Quaternius
 à couleurs unies, rangées dans une palette). Outils communs dans `crowd_utils.py`.
 Pas plus de 3 ennemis sur le même corps de base. Ne pas éditer les GLB à la main : modifier le script et relancer.
 

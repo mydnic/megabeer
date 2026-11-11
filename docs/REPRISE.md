@@ -93,7 +93,14 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    dans le HUD sous les armes (`ui/itemHud.ts`) (tout validé par l'utilisateur le 2026-11-10). Puis : premier lot d'objets à effet
    (Cendrier, Mousse épaisse, Happy hour, Sachet de cacahuètes ; `game/itemEffects.ts`, DEV « Donner l'objet ») validé ;
    puis tous les autres objets faits en autonomie (42 sur 48, voir GDD : interprétations et 6 objets en attente de leur
-   système), à valider en jeu. **Poubelles et coffre piégé faits et validés par l'utilisateur le 2026-11-11** : 150 poubelles
+   système), à valider en jeu. **Dernier service fait le 2026-11-11, à valider en jeu** (checkpoint 1 de « ramasser
+   tout ce qui traîne ») : 4 grandes cloches sur la planète (faisceau doré, points sur la mini-carte, au bord quand elles
+   sont loin), sonnées à E / X, et une clochette rare lâchée par les ennemis (`bellDropChance`, la Chance l'augmente) :
+   toute l'XP et les capsules glissent le long du sol jusqu'au Buveur (`pullAll` de `pickups/xpDrops.ts`). Réglages
+   `config/lastCall.ts`, DEV « Clochette devant ». Tests : `createTestGame(seed, { bellDrops: 'always' })`. **Checkpoint
+   suivant : les Tournées du bar** (bonus temporaires de 15 s lâchés par les ennemis, vitesse, bouclier... à thème de bar ;
+   proposer la liste à l'utilisateur, il ne veut pas une copie de Megabonk). Ensuite seulement : caler la run de 10 min.
+   **Poubelles et coffre piégé faits et validés par l'utilisateur le 2026-11-11** : 150 poubelles
    (modèle « Trashcan » de Poly by Google fourni par l'utilisateur, `props.py --variant poubelle`), cassées au contact
    ou par une arme (projectile, impact au sol, explosion) ; butin XP / capsules / rarement un cornet de frites (+20 PV,
    premier snack, `props.py --variant frites`). Coffre piégé (8 %) : couvercle qui tressaute et coffre qui rougit,

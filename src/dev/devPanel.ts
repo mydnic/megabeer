@@ -24,6 +24,8 @@ export interface DevApi {
   /** Pose une poubelle, ou un coffre piégé, devant le joueur. */
   placeBin(): void;
   placeTrap(): void;
+  /** Lâche une clochette du Dernier service devant le joueur. */
+  dropBell(): void;
   /** Armes qu'on peut donner, et donner l'une d'elles (si l'arsenal a une place). */
   weapons: readonly string[];
   giveWeapon(id: string): void;
@@ -63,6 +65,7 @@ export function createDevPanel(api: DevApi) {
       <br><select data-k="item">${api.items.map((w) => `<option>${w}</option>`).join('')}</select> <select data-k="rarity">${api.rarities.map((r, i) => `<option value="${i}">${r}</option>`).join('')}</select> <button data-a="item">Donner l'objet</button>
       <br><button data-a="coins">+50 capsules</button>
       <br><button data-a="bin">Poubelle devant</button> <button data-a="trap">Coffre piégé devant</button>
+      <br><button data-a="bell">Clochette devant</button>
       <br><button data-a="heal">Soigner</button> <button data-a="die">Mourir</button>
     </fieldset>
     <fieldset><legend>Monde</legend>
@@ -84,6 +87,7 @@ export function createDevPanel(api: DevApi) {
     coins: () => api.giveCoins(50),
     bin: () => api.placeBin(),
     trap: () => api.placeTrap(),
+    bell: () => api.dropBell(),
     weapon: () => api.giveWeapon(q<HTMLSelectElement>('weapon').value),
     item: () => api.giveItem(q<HTMLSelectElement>('item').value, num('rarity')),
     die: () => api.die(),

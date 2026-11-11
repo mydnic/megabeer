@@ -26,6 +26,8 @@ import { createDazedView } from './enemies/dazedView';
 import { createPumpsView } from './world/pumpsView';
 import { createChestsView } from './world/chestsView';
 import { createBinsView } from './world/binsView';
+import { createLastCallView } from './world/lastCallView';
+import { createBellDropsView } from './pickups/bellDropsView';
 import { createSnackDropsView } from './pickups/snackDropsView';
 import { createDamageNumbers } from './ui/damageNumbers';
 import { createRunLog } from './dev/runLog';
@@ -103,6 +105,8 @@ const dazedView = createDazedView(scene);
 const pumpsView = await createPumpsView(scene);
 const chestsView = await createChestsView(scene);
 const binsView = await createBinsView(scene);
+const lastCallView = await createLastCallView(scene);
+const bellView = await createBellDropsView(scene);
 const snackView = await createSnackDropsView(scene);
 const sparks = createShards(scene, groundAt, SHIELD_SPARKS);
 const earth = createShards(scene, groundAt, EARTH_CLODS);
@@ -182,6 +186,8 @@ function frame(now: number) {
   chestsView.sync(game.chests.list);
   binsView.sync(game.bins.list, dt);
   snackView.sync(game.snackDrops.drops);
+  lastCallView.sync(game.lastCall.list);
+  bellView.sync(game.bellDrops.drops);
   lap('vues');
   shards.update(dt);
   wine.update(dt);
@@ -204,6 +210,7 @@ function frame(now: number) {
     }
     vfx.twinkle(game.xp.drops, VFX.colors.xp, dt, VFX.twinkleRate);
     vfx.twinkle(game.coinDrops.drops, VFX.colors.coin, dt, VFX.twinkleRate * 0.5);
+    vfx.twinkle(game.bellDrops.drops, VFX.colors.level, dt, VFX.twinkleRate * 4);
   }
   sprites.update(dt);
   vfx.update(dt);

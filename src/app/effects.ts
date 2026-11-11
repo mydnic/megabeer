@@ -154,6 +154,13 @@ export function wireEffects(game: Game, d: Deps) {
     vfx.dust(bin.pos, 6, 0.5, 3);
     vfx.pop(numPos, VC.bin, 1.4);
   });
+  // Dernier service : colonne de lumière sur la cloche (ou le Buveur) et onde dorée autour du Buveur
+  game.events.on('lastCallRung', ({ at }) => {
+    vfx.beam(at, VC.level, 1.6, 16, 1.6);
+    d.rings.spawn(game.player.pos, 9, VC.level);
+    vfx.pop(chest(1.4), VC.level, 3);
+    vfx.sparkle(game.player.pos, VC.level, 12, 1.2, 4);
+  });
   // Snack mangé : petites étoiles dorées
   game.events.on('snackEaten', () => { vfx.sparkle(game.player.pos, VC.snack, 6, 0.6, 2.5); vfx.pop(chest(1.2), VC.snack, 1.6); });
   // Coffre piégé : il saute dans une explosion rouge, la terre gicle sous les ennemis qui sortent

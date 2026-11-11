@@ -26,6 +26,8 @@ import { Pumps, rollStatCards, type Pump } from './pumps';
 import { Chests, rollItemCards, type Chest } from './chests';
 import { CHEST_TRAP, CHESTS } from '../config/chests';
 import { Bins, type Bin } from './bins';
+import { LastCall, bellDropChance, type CallBell } from './lastCall';
+import { BELL_DROPS, LAST_CALL } from '../config/lastCall';
 import { BINS, SNACK, SNACK_DROPS } from '../config/bins';
 import { ITEMS, ITEM_EFFECTS, ITEM_STAT_CAPS, type ItemDef, type ItemId, type ItemStatId } from '../config/items';
 import { ItemEffects } from './itemEffects';
@@ -98,6 +100,11 @@ export type GameEvents = {
   chestTrapped: { chest: Chest; price: number; at: THREE.Vector3; radius: number; hit: boolean; zombies: Zombie[] };
   /** Une poubelle se casse (`by` : le joueur au contact ou une arme) et lâche son butin. */
   binBroken: { bin: Bin; by: 'player' | 'weapon'; loot: BinLoot };
+  /**
+   * Dernier service : une cloche sonne (`source` : une grande cloche de la planète, ou une clochette
+   * ramassée) ; `pulled` gouttes et capsules partent vers le Buveur.
+   */
+  lastCallRung: { source: 'bell' | 'drop'; at: THREE.Vector3; bell: CallBell | null; pulled: number };
   /** Le joueur ramasse un snack : `heal` PV rendus, `hp` après. */
   snackEaten: { heal: number; hp: number };
   /** Touche d'action sur un coffre sans assez de capsules. */
@@ -152,6 +159,8 @@ export type GameDeps = {
   rollCoin?: () => boolean;
   /** Hasard des effets d'objets et du butin des poubelles (0 à 1, par défaut Math.random). */
   random?: () => number;
+  /** Tirage « cet ennemi tué lâche une clochette » (par défaut : la chance de la config et la Chance du joueur). */
+  rollBell?: () => boolean;
   /** Poubelles posées par run (par défaut celles de la config ; 0 dans la plupart des tests). */
   binCount?: number;
   /** Chance qu'un coffre soit piégé (par défaut celle de la config). */
@@ -181,6 +190,10 @@ export class Game {
   readonly chests: Chests;
   /** Poubelles de la run (exploration). */
   readonly bins = new Bins();
+  /** Grandes cloches du Dernier service, et clochettes au sol. */
+  readonly lastCall: LastCall;
+  readonly bellDrops: ReturnType<typeof createXpDrops>;
+  private rollBell: () => boolean;
   /** Snacks au sol (soin). */
   readonly snackDrops: ReturnType<typeof createXpDrops>;
   private readonly binCount: number;
@@ -256,6 +269,9 @@ export class Game {
     this.xp = createXpDrops(groundAt);
     this.coinDrops = createXpDrops(groundAt, COIN_DROPS);
     this.snackDrops = createXpDrops(groundAt, SNACK_DROPS);
+    this.bellDrops = createXpDrops(groundAt, BELL_DROPS);
+    this.lastCall = new LastCall(deps.collider);
+    this.rollBell = deps.rollBell ?? (() => Math.random() < bellDropChance(this.stats.luck));
     this.binCount = deps.binCount ?? BINS.count;
     this.trapChance = deps.trapChance ?? CHEST_TRAP.chance;
     this.rollCoin = deps.rollCoin ?? (() => Math.random() < COINS.dropChance);
@@ -311,7 +327,8 @@ export class Game {
     this.player.reset(spawn.dir, spawn.facing);
     this.pumps.place(spawn.dir);
     this.chests.place(spawn.dir, this.pumps.list.map((p) => p.pos), this.trapChance);
-    this.bins.place(spawn.dir, this.chests.list.map((c) => c.pos), this.pumps.list.map((p) => p.pos), this.binCount);
+    this.lastCall.place(spawn.dir, this.chests.list.map((c) => c.pos), this.pumps.list.map((p) => p.pos));
+    this.bins.place(spawn.dir, [...this.chests.list.map((c) => c.pos), ...this.lastCall.list.map((b) => b.pos)], this.pumps.list.map((p) => p.pos), this.binCount);
     const landing = this.player.pos.clone();
     this.player.drop(ARRIVAL.height, ARRIVAL.speed);
     this.arriving = true;
@@ -405,7 +422,9 @@ export class Game {
         }
         // Coffres : celui à portée s'ouvre à la touche d'action, s'il y a de quoi payer
         this.chests.update(p.pos);
+        this.lastCall.update(p.pos);
         if (input.actionPressed && this.chests.focus && !this.offer) this.openChest(this.chests.focus);
+        else if (input.actionPressed && this.lastCall.focus && !this.offer) this.ringBell(this.lastCall.focus);
         // Poubelles : le Buveur qui passe dessus la casse
         const bin = this.bins.touching(p.pos);
         if (bin) this.breakBin(bin, 'player');
@@ -437,6 +456,7 @@ export class Game {
       this.coins += v + extra;
       this.events.emit('coinsCollected', { amount: v + extra, total: this.coins });
     });
+    this.bellDrops.update(dt, this.chest, this.phase === 'run' ? this.stats.pickupRange : 0, () => this.pullAll('drop', null));
     this.snackDrops.update(dt, this.chest, this.phase === 'run' ? this.stats.pickupRange : 0, (v) => {
       const heal = v * SNACK.heal;
       this.health.heal(heal);
@@ -533,6 +553,19 @@ export class Game {
     this.events.emit('chestTrapped', { chest, price, at, radius: T.radius, hit, zombies });
   }
 
+  /** Sonne une grande cloche du Dernier service (une seule fois chacune). */
+  private ringBell(bell: CallBell) {
+    bell.rung = true;
+    this.pullAll('bell', bell);
+  }
+
+  /** Dernier service : toute l'XP et toutes les capsules de la planète partent vers le Buveur (pas les snacks). */
+  private pullAll(source: 'bell' | 'drop', bell: CallBell | null) {
+    const L = LAST_CALL;
+    const pulled = this.xp.pullAll(L.pullStart, L.pullAccel, L.pullMax) + this.coinDrops.pullAll(L.pullStart, L.pullAccel, L.pullMax);
+    this.events.emit('lastCallRung', { source, at: (bell ? bell.pos : this.player.pos).clone(), bell, pulled });
+  }
+
   /** Casse une poubelle : elle lâche de l'XP, des capsules ou, rarement, un snack. */
   private breakBin(bin: Bin, by: 'player' | 'weapon') {
     if (bin.broken) return;
@@ -620,6 +653,8 @@ export class Game {
       // Parfois une capsule (Pièces) à la place de la goutte d'XP
       if (this.rollCoin()) this.coinDrops.drop(z.pos, COINS.value);
       else this.xp.drop(z.pos, z.def.xp);
+      // Rarement, une clochette du Dernier service en plus
+      if (this.rollBell()) this.bellDrops.drop(z.pos, 1);
     }
     for (const S of synergies) if (!killed && weapon?.id === S.marker) z.dazed = S.duration * this.stats.duration;
     if (weapon) this.afterWeaponHit(z, Math.min(damage, hpBefore), killed);
@@ -910,6 +945,8 @@ export class Game {
     this.chests.clear();
     this.bins.clear();
     this.snackDrops.clear();
+    this.lastCall.clear();
+    this.bellDrops.clear();
     this.items.length = 0;
     this.effects.reset();
     this.coinFrac = 0;

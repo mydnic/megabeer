@@ -10,6 +10,7 @@ import { createAlcoholHud } from '../ui/alcoholHud';
 import { createPumpGauge } from '../ui/pumpGauge';
 import { createMinimap } from '../ui/minimap';
 import { createChestPrompt } from '../ui/chestPrompt';
+import { LAST_CALL_TEXT } from '../config/lastCall';
 import { createChestReveal, revealSchedule } from '../ui/chestReveal';
 import { capsuleIcon } from '../ui/icons';
 import { RARITIES } from '../config/upgrades';
@@ -51,6 +52,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   const pumpGauge = createPumpGauge();
   const minimap = createMinimap();
   const chestPrompt = createChestPrompt(capsuleIcon());
+  const bellPrompt = createChestPrompt(null, LAST_CALL_TEXT.prompt);
   const chestReveal = createChestReveal();
   const runHud = createRunHud();
   const banner = createEventBanner();
@@ -122,6 +124,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   });
   game.events.on('revived', () => { banner.show('Seconde tournée !', 'Tu reviens à la vie'); banner.pulse(); banner.hideAfter(2.5); });
   game.events.on('freeChestSpawned', () => { banner.show('Coffre gratuit !', 'Le Bonnet du Père Noël en a posé un près de toi'); banner.hideAfter(2.5); });
+  game.events.on('lastCallRung', () => { banner.show(LAST_CALL_TEXT.banner, LAST_CALL_TEXT.sub); banner.pulse(); banner.hideAfter(2.5); });
   game.events.on('died', () => banner.clear());
   game.events.on('home', () => banner.clear());
   game.events.on('levelUpOffered', ({ level, cards }) => levelUp.show(level, cards));
@@ -170,9 +173,10 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
       if (game.phase === 'run' && !game.frozen) pumpGauge.update(game.pumps.focus, game.pumps.filling);
       else pumpGauge.hide();
       const pl = game.player;
-      minimap.update(realDt, pl.pos, pl.facing, pl.camFwd, game.pumps.list, game.chests.list);
+      minimap.update(realDt, pl.pos, pl.facing, pl.camFwd, game.pumps.list, game.chests.list, game.lastCall.list);
       const chest = game.phase === 'run' && !game.frozen ? game.chests.focus : null;
       chestPrompt.update(chest ? game.chests.priceOf(chest) : null, game.coins);
+      bellPrompt.update(!chest && game.phase === 'run' && !game.frozen && game.lastCall.focus ? 0 : null, game.coins);
       runHud.update(game.runTime, game.kills, game.coins);
       weaponHud.update(slots());
       itemHud.update(game.items);

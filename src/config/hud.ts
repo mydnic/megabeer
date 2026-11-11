@@ -54,7 +54,9 @@ export const MINIMAP = {
   playerArrow: 9,
   /** Côté du carré d'un coffre (px). */
   chestSize: 7,
-  colors: { low: 0x3d6b2e, high: 0x9ccc5a, rock: 0x8a8478, player: 0xfff4dc, chest: 0xb07038 },
+  colors: { low: 0x3d6b2e, high: 0x9ccc5a, rock: 0x8a8478, player: 0xfff4dc, chest: 0xb07038, bell: 0xffd45a },
+  /** Cloches du Dernier service : rayon du point (px), toujours affichées (au bord quand elles sont loin). */
+  bellDot: 7,
 } as const;
 
 /** Bandeau « Synergie : ... ! » quand une synergie s'active : durée d'affichage (s). */

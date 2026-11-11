@@ -74,6 +74,12 @@ export async function wireDevTools(game: Game, d: {
       game.bins.add(p.pos.clone().addScaledVector(p.facing, 4));
       runLog.event('dev', 'bin');
     },
+    dropBell() {
+      if (!inRun()) return;
+      const p = game.player;
+      game.bellDrops.drop(p.pos.clone().addScaledVector(p.facing, 7), 1);
+      runLog.event('dev', 'bell');
+    },
     placeTrap() {
       if (!inRun()) return;
       // Un coffre du Bonnet, rendu payant et piégé

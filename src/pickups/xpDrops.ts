@@ -1,5 +1,7 @@
 ﻿import * as THREE from 'three';
 import { XP_DROPS } from '../config/xp';
+import { heightAt } from '../world/terrain';
+import { PLANET_RADIUS } from '../config/world';
 
 /** Réglages de vol d'un objet à ramasser (gouttes d'XP, capsules...). */
 export type DropMotion = {
@@ -11,6 +13,8 @@ export type DropMotion = {
 export type XpDrop = {
   pos: THREE.Vector3; base: THREE.Vector3; speed: number; value: number;
   size: number; phase: number; flying: boolean; age: number;
+  /** Aspirée de loin (Dernier service) : vitesse le long du sol (m/s), 0 sinon. */
+  pull: number;
 };
 
 /**
@@ -20,7 +24,8 @@ export type XpDrop = {
  */
 export function createXpDrops(groundAt: (p: THREE.Vector3) => number, X: DropMotion = XP_DROPS) {
   const drops: XpDrop[] = [];
-  const up = new THREE.Vector3(), tmp = new THREE.Vector3();
+  const up = new THREE.Vector3(), tmp = new THREE.Vector3(), aim = new THREE.Vector3(), axis = new THREE.Vector3();
+  let pullAccel = 0, pullMax = 0;
 
   return {
     drops: drops as readonly XpDrop[],
@@ -34,7 +39,7 @@ export function createXpDrops(groundAt: (p: THREE.Vector3) => number, X: DropMot
       off.addScaledVector(up, -off.dot(up));
       const base = at.clone().add(off);
       base.setLength(groundAt(base));
-      drops.push({ pos: base.clone().addScaledVector(up, X.hover), base, speed: X.startSpeed, value, size, phase: Math.random() * 6.28, flying: false, age: 0 });
+      drops.push({ pos: base.clone().addScaledVector(up, X.hover), base, speed: X.startSpeed, value, size, phase: Math.random() * 6.28, flying: false, age: 0, pull: 0 });
     },
     /**
      * Avance les gouttes. `target` = point d'aspiration (le torse du joueur), `range` = rayon de
@@ -45,6 +50,25 @@ export function createXpDrops(groundAt: (p: THREE.Vector3) => number, X: DropMot
         const d = drops[i];
         d.age += dt;
         if (!d.flying && d.pos.distanceTo(target) < range) d.flying = true;
+        if (!d.flying && d.pull > 0) {
+          // Aspirée de loin : elle glisse le long du sol vers le joueur (grand cercle), à hauteur de lévitation
+          d.pull = Math.min(pullMax, d.pull + pullAccel * dt);
+          up.copy(d.pos).normalize();
+          aim.copy(target).normalize();
+          const angle = up.angleTo(aim);
+          const step = (d.pull * dt) / d.pos.length();
+          if (angle > 1e-5) {
+            axis.crossVectors(up, aim);
+            // Pile à l'opposé : n'importe quel axe perpendiculaire
+            if (axis.lengthSq() < 1e-12) axis.set(1, 0, 0).cross(up);
+            up.applyAxisAngle(axis.normalize(), Math.min(step, angle));
+          }
+          d.pos.copy(up).multiplyScalar(PLANET_RADIUS_OF(up) + X.hover);
+          d.base.copy(up).multiplyScalar(PLANET_RADIUS_OF(up));
+          // Arrivée près du joueur : l'aspiration normale prend le relais
+          if (step >= angle || d.pos.distanceTo(target) < Math.max(range, 2)) d.flying = true;
+          continue;
+        }
         if (d.flying) {
           tmp.subVectors(target, d.pos);
           const dist = tmp.length();
@@ -60,7 +84,20 @@ export function createXpDrops(groundAt: (p: THREE.Vector3) => number, X: DropMot
         }
       }
     },
+    /**
+     * Dernier service : toutes les gouttes au sol partent vers le joueur en glissant le long du sol, de
+     * plus en plus vite (`start`, `accel`, `max` en m/s). Renvoie le nombre de gouttes aspirées.
+     */
+    pullAll(start: number, accel: number, max: number) {
+      pullAccel = accel; pullMax = max;
+      let n = 0;
+      for (const d of drops) if (!d.flying) { d.pull = Math.max(d.pull, start); n++; }
+      return n;
+    },
     clear() { drops.length = 0; },
   };
 }
+
+/** Rayon du sol (relief seul, sans le décor) sous une direction. */
+const PLANET_RADIUS_OF = (dir: THREE.Vector3) => PLANET_RADIUS + heightAt(dir);
 export type XpDrops = ReturnType<typeof createXpDrops>;

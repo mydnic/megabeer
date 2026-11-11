@@ -102,6 +102,8 @@ export const AUDIO = {
   chest: { open: 'impactWood_heavy', openVolume: 0.7, openRate: 1.1, deny: 'impactPlate_light', denyVolume: 0.5, denyRate: 0.8 },
   /** Coffre piégé : le bois éclate et un souffle sourd. */
   trap: { wood: 'impactWood_heavy', woodVolume: 0.9, woodRate: 0.8, boom: 'impactSoft_heavy', boomVolume: 0.9, boomRate: 0.55 },
+  /** Dernier service : trois coups de cloche, de plus en plus aigus, espacés de `gap` s. */
+  lastCall: { sample: 'impactBell_heavy', volume: 0.8, rate: 0.9, step: 0.12, gap: 0.22, count: 3 },
   /** Poubelle cassée : tôle qui claque (atténuée avec la distance, m) ; snack mangé : croquant. */
   bin: { sample: 'impactMetal_heavy', volume: 0.55, rate: 1.1, hearDist: 30 },
   snack: { sample: 'impactPunch_medium', volume: 0.5, rate: 1.6 },
