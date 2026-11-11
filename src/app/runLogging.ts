@@ -23,7 +23,7 @@ export function wireRunLog(game: Game, runLog: ReturnType<typeof createRunLog>, 
     runLog.hit(w, zombie.enemy, damage, hpAfter, crit);
     if (killed) runLog.kill(w, zombie.enemy);
   });
-  game.events.on('playerHurt', ({ zombie, damage, hp, blocked }) => runLog.hurt(zombie.enemy, damage, hp, blocked));
+  game.events.on('playerHurt', ({ zombie, damage, hp, blocked }) => runLog.hurt(zombie?.enemy ?? 'piege', damage, hp, blocked));
   game.events.on('xpCollected', ({ amount }) => runLog.xp(amount));
   game.events.on('levelGained', ({ level }) => runLog.levelUp(level));
   game.events.on('levelUpOffered', ({ cards }) => runLog.event('cardsOffered', ...cards.map((c) => c.kind === 'weapon' ? `nouvelle:${c.weaponId}` : c.kind === 'stat' ? `stat:${c.stat}` : c.kind === 'item' ? `objet:${c.item}` : `${c.weapon.id}:${c.upgrade.id}:${RARITIES[c.tier].id}`)));
@@ -34,6 +34,9 @@ export function wireRunLog(game: Game, runLog: ReturnType<typeof createRunLog>, 
     else if (card.kind === 'item') runLog.event('itemPicked', card.item, RARITIES[card.rarity].id, card.mult);
     else runLog.event('cardPicked', `${card.weapon.id}:${card.upgrade.id}`, RARITIES[card.tier].id, card.weapon.mods.level);
   });
+  game.events.on('chestTrapped', ({ price, hit, zombies }) => runLog.event('chestTrap', price, hit ? 1 : 0, zombies.length));
+  game.events.on('binBroken', ({ by, loot }) => runLog.event('bin', by, loot));
+  game.events.on('snackEaten', ({ heal, hp }) => runLog.event('snack', heal, Math.round(hp)));
   game.events.on('chestOpened', ({ price, rarity, cards }) => runLog.event('chest', price, RARITIES[rarity].id, ...cards.map((c) => (c.kind === 'item' ? c.item : ''))));
   game.events.on('chestDenied', ({ price, coins }) => runLog.event('chestDenied', price, coins));
   game.events.on('bellsLanding', ({ enemy }) => runLog.event('bells', enemy));

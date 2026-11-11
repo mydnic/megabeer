@@ -10,8 +10,8 @@ import { randomDir } from './pumps';
 
 const X = new THREE.Vector3(1, 0, 0), Y = new THREE.Vector3(0, 1, 0);
 
-/** Un coffre posé sur la planète : ses pieds, et s'il a déjà été ouvert. */
-export type Chest = { pos: THREE.Vector3; opened: boolean; free?: boolean };
+/** Un coffre posé sur la planète : ses pieds, s'il a déjà été ouvert, s'il est gratuit ou piégé. */
+export type Chest = { pos: THREE.Vector3; opened: boolean; free?: boolean; trapped?: boolean };
 
 /** Carte d'objet (coffre) : l'objet, sa rareté, l'effet qui en découle. */
 export type ItemCard = { kind: 'item'; item: ItemId; rarity: number; mult: number };
@@ -60,8 +60,11 @@ export class Chests {
     return null;
   }
 
-  /** Nouvelle run : pose les coffres loin de `spawnDir` et des points `avoid` (les pompes). */
-  place(spawnDir: THREE.Vector3, avoid: readonly THREE.Vector3[]) {
+  /**
+   * Nouvelle run : pose les coffres loin de `spawnDir` et des points `avoid` (les pompes). Chacun est
+   * piégé avec la chance `trapChance`.
+   */
+  place(spawnDir: THREE.Vector3, avoid: readonly THREE.Vector3[], trapChance = 0) {
     this.clear();
     const dir = new THREE.Vector3();
     const far = (a: THREE.Vector3, b: THREE.Vector3, d: number) => a.angleTo(b) * PLANET_RADIUS >= d;
@@ -74,7 +77,7 @@ export class Chests {
       if (!this.flat(dir)) continue;
       // Hors du décor : le point à hauteur de taille doit être libre
       if (this.collider.occupied(this.tmp.copy(dir).multiplyScalar(pos.length() + 0.6), 1)) continue;
-      this.list.push({ pos, opened: false });
+      this.list.push({ pos, opened: false, trapped: Math.random() < trapChance });
     }
     this.collider.setExtra('chests', groundBodies(this.list.map((c) => c.pos), boxShape(C.body.halfX, C.body.halfZ, C.body.height)));
   }

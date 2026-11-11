@@ -127,6 +127,20 @@ export const GIFT_SPARKS = {
  * Ondes au sol (Sifflet, Juke-box, Seconde tournée) : épaisseur de l'anneau (part du rayon), opacité,
  * durée (s), hauteur au-dessus du sol (m), couleur de chaque onde.
  */
+/** Poubelle cassée : éclats de tôle grise et papiers qui volent. */
+export const TIN_SHARDS = {
+  max: 200,
+  perBurst: 12,
+  size: 0.14,
+  speed: 5,
+  forward: 0,
+  upward: 5,
+  spin: 20,
+  life: 1.1,
+  color: 0x9aa1a6,
+  glow: 0.1,
+} as const satisfies ShardLook;
+
 export const RING_WAVE = {
   thickness: 0.12, opacity: 0.8, life: 0.55, lift: 0.15,
   colors: { whistle: 0xffffff, shockwave: 0xffc93a, revive: 0xfff4dc },
@@ -189,8 +203,10 @@ export const VFX = {
   wine: { flash: 0xffd0c0, ember: 0xd23b4a, smoke: 0x9a3a4e, smokeDark: 0x5a1e2e, embers: 16, puffs: 11 } as ExplosionLook,
   ash: { flash: 0xffd28a, ember: 0xff7a2a, smoke: 0x8a8580, smokeDark: 0x4a4644, embers: 10, puffs: 5 } as ExplosionLook,
   glass: { flash: 0xe8fff0, ember: 0xbfe6c8, smoke: 0xd8dccc, smokeDark: 0xa8ac9c, embers: 6, puffs: 4 } as ExplosionLook,
+  /** Coffre piégé : éclair rouge, braises, fumée sombre. */
+  trap: { flash: 0xffb0a0, ember: 0xff3322, smoke: 0x6a5a58, smokeDark: 0x3a2a2a, embers: 18, puffs: 9 } as ExplosionLook,
   /** Couleurs : niveau gagné, soin, coup reçu, gel, mousse, invocation, capsules, gouttes d'XP. */
-  colors: { level: 0xffd45a, hurt: 0xff4a3a, ice: 0xa8e4ff, foam: 0xfff4dc, summon: 0x8a5ac8, coin: 0xff6a5a, xp: 0xffd45a, happy: 0xffc93a },
+  colors: { level: 0xffd45a, hurt: 0xff4a3a, ice: 0xa8e4ff, foam: 0xfff4dc, summon: 0x8a5ac8, coin: 0xff6a5a, xp: 0xffd45a, happy: 0xffc93a, snack: 0xf2c94c, bin: 0xd8d2c0 },
   /** Scintillement des gouttes d'XP et des capsules au sol (étoiles par seconde). */
   twinkleRate: 9,
   /** Étincelles quand le joueur ramasse de l'XP ou des capsules : écart mini entre deux (s). */

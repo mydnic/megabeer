@@ -3,7 +3,7 @@ Prépare un objet du décor (KayKit, Kenney : couleurs tirées d'une texture atl
 quelques matériaux nommés, à couleur unie, que le jeu colore depuis sa config (bottleView.ts lit
 une couleur par nom de matériau, comme pour la bouteille de la Stout).
 
-Une face va dans un matériau selon la couleur de la texture sous elle (saturation) et sa hauteur.
+Une face va dans un matériau selon la couleur de la texture sous elle (saturation, teinte) et sa hauteur.
 
 Variantes (--variant) :
 - stout : la bouteille trapue étiquetée du KayKit Dungeon (Verre, Etiquette, Bouchon), pour la Stout.
@@ -12,6 +12,9 @@ Variantes (--variant) :
 - gueuze : la bouteille fine du Fantasy Props MegaKit (Verre, Bouchon), pour la Gueuze.
 - pompe : le fût sur chevalet du KayKit Dungeon (Bois, Cerclage), pour les pompes à bière.
 - coffre : le coffre du KayKit Dungeon (Bois, Ferrure), couvercle gardé à part (il s'ouvre en jeu), pour les coffres.
+- poubelle : la poubelle de rue « Trashcan » de Poly by Google (Couvercle, Corps : le couvercle s'envole quand elle
+  casse), source `Trashcan by Poly by Google - fw6F3liNvHQ.glb` à la racine de la bibliothèque.
+- frites : le cornet de frites du Kenney Food Kit (Frites, Cornet), le snack de soin.
 
 Un modèle en plusieurs morceaux (coffre et son couvercle) garde ses morceaux et leur hiérarchie.
 
@@ -31,6 +34,9 @@ ap.add_argument('--lib', required=True)
 ap.add_argument('--variant', required=True)
 ap.add_argument('--out', required=True)
 args = ap.parse_args(sys.argv[sys.argv.index('--') + 1:])
+
+# Bas du couvercle de la poubelle (part de la hauteur de l'objet)
+MIN_LID = 0.8
 
 VARIANTS = {
     'stout': {
@@ -84,6 +90,22 @@ VARIANTS = {
             ('Bois', {}),
         ],
     },
+    'poubelle': {
+        'src': 'Trashcan by Poly by Google - fw6F3liNvHQ.glb',
+        # Une seule texture grise : le couvercle est le haut de la poubelle (rebord compris), le reste le corps
+        'rules': [
+            ('Couvercle', {'min_height': MIN_LID}),
+            ('Corps', {}),
+        ],
+    },
+    'frites': {
+        'src': 'decor/kenney_food_kit/glb/fries.glb',
+        # Les frites jaunes (teinte de la texture), le reste le cornet rouge
+        'rules': [
+            ('Frites', {'min_hue': 0.08, 'max_hue': 0.22}),
+            ('Cornet', {}),
+        ],
+    },
 }
 variant = VARIANTS[args.variant]
 
@@ -97,12 +119,12 @@ for name in names:
     mats.append(m)
 
 
-def saturation(poly):
+def hsv(poly):
     u = sum(uv[i].uv[0] for i in poly.loop_indices) / poly.loop_total
     v = sum(uv[i].uv[1] for i in poly.loop_indices) / poly.loop_total
     x, y = min(W - 1, int(u % 1 * W)), min(H - 1, int(v % 1 * H))
     k = (y * W + x) * 4
-    return colorsys.rgb_to_hsv(*px[k:k + 3])[1]
+    return colorsys.rgb_to_hsv(*px[k:k + 3])
 
 
 counts = {n: 0 for n in names}
@@ -119,9 +141,9 @@ for obj in [o for o in bpy.data.objects if o.type == 'MESH']:
         mesh.materials.append(m)
     for p in mesh.polygons:
         height = (p.center.z - z0) / max(1e-6, z1 - z0)
-        s = saturation(p)
+        h, s, _ = hsv(p)
         for i, (_, rule) in enumerate(variant['rules']):
-            if s <= rule.get('max_sat', 1) and height >= rule.get('min_height', 0):
+            if s <= rule.get('max_sat', 1) and height >= rule.get('min_height', 0) and rule.get('min_hue', 0) <= h <= rule.get('max_hue', 1):
                 p.material_index = i
                 counts[names[i]] += 1
                 break

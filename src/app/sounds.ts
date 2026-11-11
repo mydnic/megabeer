@@ -47,6 +47,17 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
       if (e.rarity >= R.bellFrom) setTimeout(() => audio.play(R.bell, R.bellVolume, R.bellRate, 0, 'ui'), (e.rarity + 1) * R.gap * 1000);
     }, burst * 1000);
   });
+  game.events.on('chestTrapped', () => {
+    const T = AUDIO.trap;
+    audio.play(T.wood, T.woodVolume, T.woodRate * jitter(0.05));
+    audio.play(T.boom, T.boomVolume, T.boomRate * jitter(0.05));
+  });
+  // Poubelle cassée : tôle qui claque ; snack mangé : croquant
+  game.events.on('binBroken', ({ bin }) => {
+    const B = AUDIO.bin, k = near(bin.pos, B.hearDist);
+    if (k > 0) audio.play(B.sample, B.volume * k, B.rate * jitter(0.08));
+  });
+  game.events.on('snackEaten', () => audio.play(AUDIO.snack.sample, AUDIO.snack.volume, AUDIO.snack.rate * jitter(0.06), 0, 'ui'));
   game.events.on('chestDenied', () => audio.play(AUDIO.chest.deny, AUDIO.chest.denyVolume, AUDIO.chest.denyRate, 0, 'ui'));
   // Capsule ramassée : tintement de métal aigu
   let lastCoin = -1;

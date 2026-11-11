@@ -47,6 +47,8 @@ type Deps = {
   /** Glaçons : éclats de glace ; Bonnet : étincelles dorées ; ondes au sol. */
   ice: ReturnType<typeof createShards>;
   gift: ReturnType<typeof createShards>;
+  /** Poubelle cassée : éclats de tôle. */
+  tin: ReturnType<typeof createShards>;
   rings: ReturnType<typeof createRingWaveView>;
   /** Particules lumineuses et recettes d'effets (éclats, explosions, colonnes de lumière). */
   sprites: Sprites;
@@ -144,6 +146,27 @@ export function wireEffects(game: Game, d: Deps) {
     up.copy(zombie.pos).normalize();
     d.ice.burst(numPos.copy(zombie.pos).addScaledVector(up, 1.2), still);
     vfx.pop(numPos, VC.ice, 1.5);
+  });
+  // Poubelle cassée : tôle et poussière, petit éclat
+  game.events.on('binBroken', ({ bin }) => {
+    up.copy(bin.pos).normalize();
+    d.tin.burst(numPos.copy(bin.pos).addScaledVector(up, 0.6), still);
+    vfx.dust(bin.pos, 6, 0.5, 3);
+    vfx.pop(numPos, VC.bin, 1.4);
+  });
+  // Snack mangé : petites étoiles dorées
+  game.events.on('snackEaten', () => { vfx.sparkle(game.player.pos, VC.snack, 6, 0.6, 2.5); vfx.pop(chest(1.2), VC.snack, 1.6); });
+  // Coffre piégé : il saute dans une explosion rouge, la terre gicle sous les ennemis qui sortent
+  game.events.on('chestTrapped', ({ at, radius, zombies }) => {
+    up.copy(at).normalize();
+    numPos.copy(at).addScaledVector(up, 0.7);
+    d.wood.burst(numPos, still);
+    d.embers.burst(numPos, still);
+    vfx.explosion(numPos, radius, VFX.trap);
+    d.rings.spawn(at, radius, VFX.trap.ember);
+    for (const z of zombies) { earth.burst(numPos.copy(z.pos).setLength(z.pos.length() + 0.1), still); vfx.dust(z.pos, 4, 0.5, 2.5); }
+    const B = GUEUZE_BLAST;
+    rig.shake(B.shake * 1.2, B.shakeAmplitude, B.shakeDecay);
   });
   // Ondes au sol
   game.events.on('whistleBlown', ({ at, radius }) => { d.rings.spawn(at, radius, RING_WAVE.colors.whistle); vfx.pop(chest(1.4), RING_WAVE.colors.whistle, 2); });

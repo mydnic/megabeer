@@ -21,6 +21,9 @@ export interface DevApi {
   levelUp(): void;
   heal(): void;
   giveCoins(amount: number): void;
+  /** Pose une poubelle, ou un coffre piégé, devant le joueur. */
+  placeBin(): void;
+  placeTrap(): void;
   /** Armes qu'on peut donner, et donner l'une d'elles (si l'arsenal a une place). */
   weapons: readonly string[];
   giveWeapon(id: string): void;
@@ -59,6 +62,7 @@ export function createDevPanel(api: DevApi) {
       <br><select data-k="weapon">${api.weapons.map((w) => `<option>${w}</option>`).join('')}</select> <button data-a="weapon">Donner l'arme</button>
       <br><select data-k="item">${api.items.map((w) => `<option>${w}</option>`).join('')}</select> <select data-k="rarity">${api.rarities.map((r, i) => `<option value="${i}">${r}</option>`).join('')}</select> <button data-a="item">Donner l'objet</button>
       <br><button data-a="coins">+50 capsules</button>
+      <br><button data-a="bin">Poubelle devant</button> <button data-a="trap">Coffre piégé devant</button>
       <br><button data-a="heal">Soigner</button> <button data-a="die">Mourir</button>
     </fieldset>
     <fieldset><legend>Monde</legend>
@@ -78,6 +82,8 @@ export function createDevPanel(api: DevApi) {
     level: () => api.levelUp(),
     heal: () => api.heal(),
     coins: () => api.giveCoins(50),
+    bin: () => api.placeBin(),
+    trap: () => api.placeTrap(),
     weapon: () => api.giveWeapon(q<HTMLSelectElement>('weapon').value),
     item: () => api.giveItem(q<HTMLSelectElement>('item').value, num('rarity')),
     die: () => api.die(),

@@ -100,6 +100,11 @@ export const AUDIO = {
   /** Roulette de l'ouverture : un tic par changement de couleur, de plus en plus aigu. */
   revealTick: { sample: 'impactPlate_light', volume: 0.35, rate: 1.3, rise: 0.9 },
   chest: { open: 'impactWood_heavy', openVolume: 0.7, openRate: 1.1, deny: 'impactPlate_light', denyVolume: 0.5, denyRate: 0.8 },
+  /** Coffre piégé : le bois éclate et un souffle sourd. */
+  trap: { wood: 'impactWood_heavy', woodVolume: 0.9, woodRate: 0.8, boom: 'impactSoft_heavy', boomVolume: 0.9, boomRate: 0.55 },
+  /** Poubelle cassée : tôle qui claque (atténuée avec la distance, m) ; snack mangé : croquant. */
+  bin: { sample: 'impactMetal_heavy', volume: 0.55, rate: 1.1, hearDist: 30 },
+  snack: { sample: 'impactPunch_medium', volume: 0.5, rate: 1.6 },
   /** Capsule (Pièce) ramassée : petit tintement métallique aigu. */
   coin: { sample: 'impactMetal_light', volume: 0.45, rate: 1.9, minGap: 0.05 },
   /** Fondu de l'ambiance quand une partie commence ou finit (constante de temps, s). */

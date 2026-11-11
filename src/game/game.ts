@@ -24,7 +24,9 @@ import { SYNERGIES } from '../config/weapons';
 import { activeSynergies, synergiesCompletedBy, type SynergyId } from './synergies';
 import { Pumps, rollStatCards, type Pump } from './pumps';
 import { Chests, rollItemCards, type Chest } from './chests';
-import { CHESTS } from '../config/chests';
+import { CHEST_TRAP, CHESTS } from '../config/chests';
+import { Bins, type Bin } from './bins';
+import { BINS, SNACK, SNACK_DROPS } from '../config/bins';
 import { ITEMS, ITEM_EFFECTS, ITEM_STAT_CAPS, type ItemDef, type ItemId, type ItemStatId } from '../config/items';
 import { ItemEffects } from './itemEffects';
 import { rollTier } from './levelUpCards';
@@ -39,6 +41,8 @@ import { MAP_MECHANICS, type MapId, type MapMechanic } from './mechanics/mechani
 export type Phase = 'home' | 'run' | 'dead';
 export type Spawn = { dir: THREE.Vector3; facing: THREE.Vector3 };
 export type RunEnd = 'mort' | 'abandon';
+/** Ce que lâche une poubelle cassée. */
+export type BinLoot = 'xp' | 'coins' | 'snack';
 
 /** Tout ce que le noyau annonce. L'affichage, les sons, le HUD et le journal de run s'y abonnent. */
 export type GameEvents = {
@@ -46,8 +50,8 @@ export type GameEvents = {
   runStarted: { spawn: Spawn; landing: THREE.Vector3 };
   landed: { pos: THREE.Vector3 };
   zombieSpawned: { zombie: Zombie };
-  /** Un zombie frappe le joueur ; `blocked` : ignoré (invulnérabilité ou godmode). */
-  playerHurt: { zombie: Zombie; dir: THREE.Vector3; damage: number; hp: number; blocked: boolean };
+  /** Le joueur encaisse un coup (d'un zombie, ou null : un piège) ; `blocked` : ignoré (invulnérabilité ou godmode). */
+  playerHurt: { zombie: Zombie | null; dir: THREE.Vector3; damage: number; hp: number; blocked: boolean };
   /** Un zombie encaisse un coup (arme null : coup sans arme, ex. outils de dev). */
   /** `combo` : dégâts multipliés par une synergie (une canette sur un zombie sonné par la Stout). */
   zombieHit: { weapon: Weapon | null; zombie: Zombie; damage: number; crit: boolean; killed: boolean; hpAfter: number; impact: THREE.Vector3; dir: THREE.Vector3; shielded: boolean; combo: boolean };
@@ -87,14 +91,23 @@ export type GameEvents = {
   chestRevealing: { chest: Chest; rarity: number; duration: number };
   /** Coffre ouvert (payé `price`) : sa rareté et les objets proposés. */
   chestOpened: { chest: Chest; price: number; rarity: number; cards: Card[] };
+  /**
+   * Coffre piégé payé : il explose en `at` (rayon `radius`, `hit` : le joueur était dedans) et libère
+   * des ennemis (`zombies`). Pas d'objet.
+   */
+  chestTrapped: { chest: Chest; price: number; at: THREE.Vector3; radius: number; hit: boolean; zombies: Zombie[] };
+  /** Une poubelle se casse (`by` : le joueur au contact ou une arme) et lâche son butin. */
+  binBroken: { bin: Bin; by: 'player' | 'weapon'; loot: BinLoot };
+  /** Le joueur ramasse un snack : `heal` PV rendus, `hp` après. */
+  snackEaten: { heal: number; hp: number };
   /** Touche d'action sur un coffre sans assez de capsules. */
   chestDenied: { chest: Chest; price: number; coins: number };
   /** Objet pris dans un coffre. */
   itemGained: { item: ItemId; rarity: number; mult: number };
   /** Glaçons ou Sifflet : un ennemi gèle (ou est étourdi) `time` s. */
   zombieFrozen: { zombie: Zombie; time: number };
-  /** Démarche de pochtron : le joueur esquive le coup de `zombie`. */
-  playerDodged: { zombie: Zombie };
+  /** Démarche de pochtron : le joueur esquive le coup de `zombie` (null : un piège). */
+  playerDodged: { zombie: Zombie | null };
   /** Sifflet d'arbitre : les ennemis à moins de `radius` m de `at` sont étourdis. */
   whistleBlown: { at: THREE.Vector3; radius: number };
   /** Juke-box (niveau gagné) ou Seconde tournée : une onde repousse les ennemis autour de `at`. */
@@ -107,8 +120,8 @@ export type GameEvents = {
   itemExploded: { zombie: Zombie; at: THREE.Vector3; radius: number };
   /** Mousse épaisse : le bouclier est prêt. */
   foamShieldUp: Record<string, never>;
-  /** Mousse épaisse : le bouclier absorbe un coup de `zombie`. */
-  foamShieldPopped: { zombie: Zombie };
+  /** Mousse épaisse : le bouclier absorbe un coup de `zombie` (null : un piège). */
+  foamShieldPopped: { zombie: Zombie | null };
   /** Happy hour : vitesse d'attaque multipliée pendant `duration` s. */
   happyHourStarted: { duration: number };
   happyHourEnded: Record<string, never>;
@@ -137,8 +150,12 @@ export type GameDeps = {
   map?: MapId;
   /** Tirage « cet ennemi tué lâche une capsule au lieu de l'XP » (par défaut : la chance de la config). */
   rollCoin?: () => boolean;
-  /** Hasard des effets d'objets (0 à 1, par défaut Math.random). */
+  /** Hasard des effets d'objets et du butin des poubelles (0 à 1, par défaut Math.random). */
   random?: () => number;
+  /** Poubelles posées par run (par défaut celles de la config ; 0 dans la plupart des tests). */
+  binCount?: number;
+  /** Chance qu'un coffre soit piégé (par défaut celle de la config). */
+  trapChance?: number;
 };
 
 /** Aucune entrée : joueur immobile (accueil, mort, pause, chute d'arrivée). */
@@ -162,6 +179,13 @@ export class Game {
   /** Pompes à bière de la run (exploration). */
   readonly pumps: Pumps;
   readonly chests: Chests;
+  /** Poubelles de la run (exploration). */
+  readonly bins = new Bins();
+  /** Snacks au sol (soin). */
+  readonly snackDrops: ReturnType<typeof createXpDrops>;
+  private readonly binCount: number;
+  private readonly trapChance: number;
+  private readonly binsHit: Bin[] = [];
   /** Objets pris pendant la run (dans l'ordre). */
   readonly items: { item: ItemId; rarity: number }[] = [];
   /** Effets spéciaux des objets pris (Cendrier, Mousse épaisse...). */
@@ -231,6 +255,9 @@ export class Game {
     this.horde.onSpawn = (zombie) => this.events.emit('zombieSpawned', { zombie });
     this.xp = createXpDrops(groundAt);
     this.coinDrops = createXpDrops(groundAt, COIN_DROPS);
+    this.snackDrops = createXpDrops(groundAt, SNACK_DROPS);
+    this.binCount = deps.binCount ?? BINS.count;
+    this.trapChance = deps.trapChance ?? CHEST_TRAP.chance;
     this.rollCoin = deps.rollCoin ?? (() => Math.random() < COINS.dropChance);
     this.random = deps.random ?? Math.random;
     this.director = new SpawnDirector({
@@ -251,9 +278,16 @@ export class Game {
       rig: defaultRig(player),
       groundAt,
       hitZombie: (weapon, z, damage, crit, impact, vel, knock) => { self.hitZombie(z, damage, crit, impact, vel, weapon, knock); },
-      hitGround: (weapon, pos, vel) => this.events.emit('projectileHitGround', { weapon, pos, vel }),
+      hitGround: (weapon, pos, vel) => {
+        const bin = this.bins.at(pos);
+        if (bin) this.breakBin(bin, 'weapon');
+        this.events.emit('projectileHitGround', { weapon, pos, vel });
+      },
       blocked: (p, margin) => deps.collider.occupied(p, margin),
-      explode: (weapon, pos, radius) => this.events.emit('weaponExploded', { weapon, pos: pos.clone(), radius }),
+      explode: (weapon, pos, radius) => {
+        this.events.emit('weaponExploded', { weapon, pos: pos.clone(), radius });
+        for (const bin of this.bins.within(pos, radius, this.binsHit)) this.breakBin(bin, 'weapon');
+      },
     };
     this.loadout = new Loadout(this.weaponCtx, deps.startingWeapon ?? 'canette');
     this.mechanic = MAP_MECHANICS[deps.map ?? 'abbaye'](this);
@@ -276,7 +310,8 @@ export class Game {
     this.phase = 'run';
     this.player.reset(spawn.dir, spawn.facing);
     this.pumps.place(spawn.dir);
-    this.chests.place(spawn.dir, this.pumps.list.map((p) => p.pos));
+    this.chests.place(spawn.dir, this.pumps.list.map((p) => p.pos), this.trapChance);
+    this.bins.place(spawn.dir, this.chests.list.map((c) => c.pos), this.pumps.list.map((p) => p.pos), this.binCount);
     const landing = this.player.pos.clone();
     this.player.drop(ARRIVAL.height, ARRIVAL.speed);
     this.arriving = true;
@@ -371,12 +406,23 @@ export class Game {
         // Coffres : celui à portée s'ouvre à la touche d'action, s'il y a de quoi payer
         this.chests.update(p.pos);
         if (input.actionPressed && this.chests.focus && !this.offer) this.openChest(this.chests.focus);
+        // Poubelles : le Buveur qui passe dessus la casse
+        const bin = this.bins.touching(p.pos);
+        if (bin) this.breakBin(bin, 'player');
       }
       if (!frozen) this.updateItemEffects(dt);
       this.loadout.update(dt);
       this.events.emit('tick', { dt });
     }
     this.loadout.updateProjectiles(dt);
+    // Poubelles : un projectile qui passe dedans la casse (il continue sa route)
+    if (dt > 0 && this.bins.list.length) {
+      for (const w of this.loadout.weapons) for (const b of w.projectiles) {
+        if (!b.active) continue;
+        const bin = this.bins.at(b.pos);
+        if (bin) this.breakBin(bin, 'weapon');
+      }
+    }
     this.chest.copy(p.renderPos).addScaledVector(p.upDir, 1.0);
     this.xp.update(dt, this.chest, this.phase === 'run' ? this.stats.pickupRange : 0, (v) => {
       this.collectXp(v * this.stats.xpGain);
@@ -390,6 +436,11 @@ export class Game {
       this.coinFrac -= extra;
       this.coins += v + extra;
       this.events.emit('coinsCollected', { amount: v + extra, total: this.coins });
+    });
+    this.snackDrops.update(dt, this.chest, this.phase === 'run' ? this.stats.pickupRange : 0, (v) => {
+      const heal = v * SNACK.heal;
+      this.health.heal(heal);
+      this.events.emit('snackEaten', { heal, hp: this.health.hp });
     });
     return dt;
   }
@@ -443,11 +494,58 @@ export class Game {
     this.coins -= price;
     chest.opened = true;
     if (!chest.free) this.chests.opened++;
+    if (chest.trapped) { this.springTrap(chest, price); return; }
     const rarity = rollTier(this.stats.luck);
     const cards = rollItemCards(rarity, CHESTS.choices);
     const duration = CHESTS.revealTime + CHESTS.revealPerRarity * rarity;
     this.reveal = { chest, price, rarity, cards, left: duration };
     this.events.emit('chestRevealing', { chest, rarity, duration });
+  }
+
+  /**
+   * Coffre piégé : il explose (le joueur dans le rayon encaisse, repoussé) et des ennemis sortent de terre
+   * en cercle autour de lui. Les capsules payées sont perdues.
+   */
+  private springTrap(chest: Chest, price: number) {
+    const T = CHEST_TRAP;
+    const at = chest.pos.clone();
+    const p = this.player.pos;
+    const hit = p.angleTo(at) * PLANET_RADIUS < T.radius;
+    if (hit) {
+      const dir = p.clone().sub(at);
+      const up = this.tmp.copy(p).normalize();
+      dir.addScaledVector(up, -dir.dot(up));
+      if (dir.lengthSq() < 1e-6) dir.copy(this.player.facing).negate();
+      this.hurtPlayer(null, dir.normalize(), T.damage);
+    }
+    const up = at.clone().normalize();
+    const fwd = new THREE.Vector3().crossVectors(up, Math.abs(up.y) < 0.9 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0)).normalize();
+    const side = new THREE.Vector3().crossVectors(up, fwd);
+    const zombies: Zombie[] = [];
+    for (let i = 0; i < T.count; i++) {
+      const a = (i / T.count) * Math.PI * 2;
+      const out = fwd.clone().multiplyScalar(Math.cos(a)).addScaledVector(side, Math.sin(a));
+      const z = this.spawnZombie(T.enemy as EnemyId, at.clone().addScaledVector(out, T.ring), out);
+      if (!z) continue;
+      z.emerge();
+      zombies.push(z);
+    }
+    this.events.emit('chestTrapped', { chest, price, at, radius: T.radius, hit, zombies });
+  }
+
+  /** Casse une poubelle : elle lâche de l'XP, des capsules ou, rarement, un snack. */
+  private breakBin(bin: Bin, by: 'player' | 'weapon') {
+    if (bin.broken) return;
+    bin.broken = true;
+    const L = BINS.loot;
+    const r = this.random() * (L.xp + L.coins + L.snack);
+    const loot: BinLoot = r < L.xp ? 'xp' : r < L.xp + L.coins ? 'coins' : 'snack';
+    if (loot === 'xp') for (let i = 0; i < BINS.xp.drops; i++) this.xp.drop(bin.pos, BINS.xp.value);
+    else if (loot === 'coins') {
+      const n = BINS.coins.min + Math.min(BINS.coins.max - BINS.coins.min, Math.floor(this.random() * (BINS.coins.max - BINS.coins.min + 1)));
+      for (let i = 0; i < n; i++) this.coinDrops.drop(bin.pos, COINS.value);
+    } else this.snackDrops.drop(bin.pos, 1);
+    this.events.emit('binBroken', { bin, by, loot });
   }
 
   /** Synergies actives (toutes leurs armes équipées). */
@@ -681,8 +779,8 @@ export class Game {
     this.addXp(amount);
   }
 
-  /** Le joueur encaisse un coup de `z` (au contact ou à distance), venant de la direction `dir`. */
-  private hurtPlayer(z: Zombie, dir: THREE.Vector3, baseDamage: number) {
+  /** Le joueur encaisse un coup de `z` (au contact ou à distance ; null : un piège), venant de la direction `dir`. */
+  private hurtPlayer(z: Zombie | null, dir: THREE.Vector3, baseDamage: number) {
     let damage = baseDamage * this.mods.damage;
     // Mousse épaisse : le bouclier absorbe le coup entier (puis courte invulnérabilité, comme un coup)
     if (!this.cheats.god && this.health.invuln <= 0 && !this.health.dead && this.effects.absorb()) {
@@ -810,6 +908,8 @@ export class Game {
     this.player.speed = BASE_SPEED;
     this.pumps.clear();
     this.chests.clear();
+    this.bins.clear();
+    this.snackDrops.clear();
     this.items.length = 0;
     this.effects.reset();
     this.coinFrac = 0;

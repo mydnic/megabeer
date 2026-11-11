@@ -66,6 +66,6 @@ describe('Le Prieur', () => {
     const { t } = duel(S.range - 2);
     t.game.cheats.god = false;
     t.playUntil(() => t.events('summoned').length > 0, S.firstDelay + S.cast + 1);
-    expect(t.playUntil(() => t.events('playerHurt').some((h) => h.zombie.enemy === S.enemy && !h.blocked), 15)).toBe(true);
+    expect(t.playUntil(() => t.events('playerHurt').some((h) => h.zombie?.enemy === S.enemy && !h.blocked), 15)).toBe(true);
   });
 });

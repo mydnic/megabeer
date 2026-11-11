@@ -17,7 +17,7 @@ import { createFoamShieldView } from './fx/foamShieldView';
 import { createRingWaveView } from './fx/ringWaveView';
 import { createSprites } from './fx/sprites';
 import { createVfx } from './fx/vfx';
-import { BARREL_SHARDS, EARTH_CLODS, GUEUZE_BURST, ASH_BURST, EMBERS, FOAM_POP, ICE_SHARDS, GIFT_SPARKS, SHIELD_SPARKS, STOUT_SPLASH, VFX, WINE_BURST } from './config/fx';
+import { BARREL_SHARDS, TIN_SHARDS, EARTH_CLODS, GUEUZE_BURST, ASH_BURST, EMBERS, FOAM_POP, ICE_SHARDS, GIFT_SPARKS, SHIELD_SPARKS, STOUT_SPLASH, VFX, WINE_BURST } from './config/fx';
 import { CANETTE_LOOK, FUT_LOOK, GUEUZE_LOOK, STOUT_LOOK } from './config/weapons';
 import type { WeaponId } from './weapons/weapon';
 import { createKamikazeView } from './enemies/kamikazeView';
@@ -25,6 +25,8 @@ import { createProtectorView } from './enemies/protectorView';
 import { createDazedView } from './enemies/dazedView';
 import { createPumpsView } from './world/pumpsView';
 import { createChestsView } from './world/chestsView';
+import { createBinsView } from './world/binsView';
+import { createSnackDropsView } from './pickups/snackDropsView';
 import { createDamageNumbers } from './ui/damageNumbers';
 import { createRunLog } from './dev/runLog';
 import { BuveurVisual } from './player/buveurVisual';
@@ -100,6 +102,8 @@ const protectorView = createProtectorView(scene);
 const dazedView = createDazedView(scene);
 const pumpsView = await createPumpsView(scene);
 const chestsView = await createChestsView(scene);
+const binsView = await createBinsView(scene);
+const snackView = await createSnackDropsView(scene);
 const sparks = createShards(scene, groundAt, SHIELD_SPARKS);
 const earth = createShards(scene, groundAt, EARTH_CLODS);
 const stoutSplash = createShards(scene, groundAt, STOUT_SPLASH);
@@ -108,6 +112,7 @@ const ash = createShards(scene, groundAt, ASH_BURST);
 const embers = createShards(scene, groundAt, EMBERS);
 const foam = createShards(scene, groundAt, FOAM_POP);
 const ice = createShards(scene, groundAt, ICE_SHARDS);
+const tin = createShards(scene, groundAt, TIN_SHARDS);
 const gift = createShards(scene, groundAt, GIFT_SPARKS);
 const rings = createRingWaveView(scene);
 const sprites = createSprites(scene);
@@ -126,7 +131,7 @@ wireSounds(game, audio, buveur);
 wireMusic(game, audio, music, 'abbaye');
 
 // --- Effets, interface, journal de run
-const effects = wireEffects(game, { buveur, rig, pint, pipeline, audio, shards, wine, wood, sparks, earth, stoutSplash, gueuzeBurst, ash, embers, foam, ice, gift, rings, sprites, vfx, damageNumbers });
+const effects = wireEffects(game, { buveur, rig, pint, pipeline, audio, shards, wine, wood, sparks, earth, stoutSplash, gueuzeBurst, ash, embers, foam, ice, gift, tin, rings, sprites, vfx, damageNumbers });
 const screens = wireScreens(game, { planet, canvas: renderer.domElement, audio });
 const runLog = createRunLog();
 let fps = 0;
@@ -175,6 +180,8 @@ function frame(now: number) {
   dazedView.sync(game.horde.zombies);
   pumpsView.sync(game.pumps.list, game.pumps.filling ? game.pumps.focus : null);
   chestsView.sync(game.chests.list);
+  binsView.sync(game.bins.list, dt);
+  snackView.sync(game.snackDrops.drops);
   lap('vues');
   shards.update(dt);
   wine.update(dt);
@@ -187,6 +194,7 @@ function frame(now: number) {
   foam.update(dt);
   ice.update(dt);
   gift.update(dt);
+  tin.update(dt);
   rings.update(dt);
   // Traînées des projectiles, scintillement des gouttes et des capsules au sol (figés avec le jeu)
   if (dt > 0) {

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { CHEST_LOOK as L, CHESTS } from '../config/chests';
+import { CHEST_LOOK as L, CHEST_TRAP as T, CHESTS } from '../config/chests';
 import type { Chest } from '../game/chests';
 import { characterMaterial, LAYER_CHARACTER } from '../render/materials';
 
@@ -11,7 +11,8 @@ type Part = { mesh: THREE.InstancedMesh; lid: boolean };
 
 /**
  * Rendu des coffres : le coffre du KayKit Dungeon (bois, ferrures), un seul dessin par pièce pour la
- * centaine de coffres. Le couvercle pivote sur sa charnière à l'ouverture.
+ * centaine de coffres. Le couvercle pivote sur sa charnière à l'ouverture. Un coffre piégé se trahit :
+ * de temps en temps, son couvercle tressaute et le coffre rougit.
  */
 export async function createChestsView(scene: THREE.Scene) {
   const gltf = await new GLTFLoader().loadAsync(Object.values(urls)[0]);
@@ -43,6 +44,8 @@ export async function createChestsView(scene: THREE.Scene) {
     mesh.castShadow = true;
     mesh.layers.set(LAYER_CHARACTER);
     mesh.count = 0;
+    // Teinte par coffre (blanche : couleur normale ; rouge : le piège qui se trahit)
+    mesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array((CHESTS.count + CHESTS.extraMax) * 3).fill(1), 3);
     scene.add(mesh);
     parts.push({ mesh, lid });
   });
@@ -50,6 +53,7 @@ export async function createChestsView(scene: THREE.Scene) {
   const Y = new THREE.Vector3(0, 1, 0), X = new THREE.Vector3(1, 0, 0);
   const place = new THREE.Matrix4(), q = new THREE.Quaternion(), one = new THREE.Vector3(1, 1, 1), up = new THREE.Vector3();
   const lidM = new THREE.Matrix4(), turn = new THREE.Matrix4();
+  const tint = new THREE.Color(), WHITE = new THREE.Color(1, 1, 1), RED = new THREE.Color(T.glow);
   // Moment où chaque coffre a été vu ouvert (animation du couvercle)
   const openedAt = new Map<Chest, number>();
   const clock = new THREE.Clock();
@@ -68,11 +72,26 @@ export async function createChestsView(scene: THREE.Scene) {
           k = Math.min(1, (t - openedAt.get(c)!) / L.lidTime);
           k = 1 - (1 - k) * (1 - k);
         }
-        turn.makeRotationAxis(X, L.lidOpen * k);
+        let angle = L.lidOpen * k, glow = 0;
+        if (c.trapped && !c.opened) {
+          // Chaque coffre piégé à son rythme : le couvercle tressaute, le coffre rougit, puis plus rien
+          const phase = (t + i * 0.73) % T.every;
+          if (phase < T.shakeTime) {
+            const fade = 1 - phase / T.shakeTime;
+            angle = -T.shake * Math.abs(Math.sin(phase * 38)) * fade;
+            glow = fade;
+          }
+        }
+        turn.makeRotationAxis(X, angle);
         lidM.copy(place).multiply(hinge).multiply(turn);
-        for (const p of parts) p.mesh.setMatrixAt(i, p.lid ? lidM : place);
+        tint.copy(WHITE).lerp(RED, glow * 0.7);
+        for (const p of parts) { p.mesh.setMatrixAt(i, p.lid ? lidM : place); p.mesh.setColorAt(i, tint); }
       });
-      for (const p of parts) { p.mesh.count = chests.length; p.mesh.instanceMatrix.needsUpdate = true; }
+      for (const p of parts) {
+        p.mesh.count = chests.length;
+        p.mesh.instanceMatrix.needsUpdate = true;
+        p.mesh.instanceColor!.needsUpdate = true;
+      }
     },
   };
 }

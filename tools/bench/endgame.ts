@@ -13,7 +13,7 @@ import { createTestGame } from '../../tests/support/testGame';
 const ZOMBIES = Number(process.env.BENCH_ZOMBIES ?? 800);
 const FRAMES = Number(process.env.BENCH_FRAMES ?? 600);
 
-const t = createTestGame(7, { coins: 'real' });
+const t = createTestGame(7, { coins: 'real', bins: true, traps: 'real' });
 t.startRunAndLand();
 const g = t.game;
 g.cheats.god = true;

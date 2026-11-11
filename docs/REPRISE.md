@@ -93,7 +93,13 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    dans le HUD sous les armes (`ui/itemHud.ts`) (tout validé par l'utilisateur le 2026-11-10). Puis : premier lot d'objets à effet
    (Cendrier, Mousse épaisse, Happy hour, Sachet de cacahuètes ; `game/itemEffects.ts`, DEV « Donner l'objet ») validé ;
    puis tous les autres objets faits en autonomie (42 sur 48, voir GDD : interprétations et 6 objets en attente de leur
-   système), à valider en jeu. Reste, poubelles, coffre piégé. Son de la bière qui coule : « Beer service 2 » de BigSoundBank (CC0, choisi par l'utilisateur),
+   système), à valider en jeu. **Poubelles et coffre piégé faits le 2026-11-11, à valider en jeu** : 150 poubelles
+   (modèle « Trashcan » de Poly by Google fourni par l'utilisateur, `props.py --variant poubelle`), cassées au contact
+   ou par une arme (projectile, impact au sol, explosion) ; butin XP / capsules / rarement un cornet de frites (+20 PV,
+   premier snack, `props.py --variant frites`). Coffre piégé (8 %) : couvercle qui tressaute et coffre qui rougit,
+   payé il explose (15 PV) et libère 8 zombies, capsules perdues. Réglages `config/bins.ts`, `CHEST_TRAP`. DEV :
+   « Poubelle devant », « Coffre piégé devant ». Tests : `createTestGame(seed, { bins: true, traps: 'always' })`
+   (sans poubelles ni pièges par défaut). Son de la bière qui coule : « Beer service 2 » de BigSoundBank (CC0, choisi par l'utilisateur),
    joué d'un bloc pendant le remplissage, repris au niveau de la pinte, coupé en fondu hors de la zone. Reste : sons du
    remplissage et de la pompe pleine, collision du fût (on le traverse), nombre de pompes (passé à 20, demande de l'utilisateur)
    (6 sur une planète d'environ 1 080 m de tour : la plus proche peut être à 190 m).

@@ -68,6 +68,21 @@ export async function wireDevTools(game: Game, d: {
     giveItem(id, rarity) { if (inRun()) { game.gainItem(id as ItemId, rarity); runLog.event('dev', 'item', id, rarity); } },
     heal() { if (inRun()) { game.health.reset(); runLog.event('dev', 'heal'); } },
     giveCoins(n) { if (inRun()) { game.coins += n; runLog.event('dev', 'coins', n); } },
+    placeBin() {
+      if (!inRun()) return;
+      const p = game.player;
+      game.bins.add(p.pos.clone().addScaledVector(p.facing, 4));
+      runLog.event('dev', 'bin');
+    },
+    placeTrap() {
+      if (!inRun()) return;
+      // Un coffre du Bonnet, rendu payant et piégé
+      const c = game.chests.addFree(game.player.pos, game.player.facing, 5);
+      if (!c) return;
+      c.free = false;
+      c.trapped = true;
+      runLog.event('dev', 'trap');
+    },
     die() {
       if (!inRun()) return;
       game.health.invuln = 0;

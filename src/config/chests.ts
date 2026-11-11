@@ -52,3 +52,25 @@ export const CHEST_PROMPT = {
   key: 'E',
   pad: 'X',
 } as const;
+
+/**
+ * Coffre piégé (GDD section 10) : rare, il trahit un détail (son couvercle tressaute, une lueur rouge
+ * sort de la fente). Payé, il explose (blesse le joueur proche) et libère des ennemis ; les capsules
+ * sont perdues.
+ */
+export const CHEST_TRAP = {
+  /** Chance qu'un coffre posé soit piégé (jamais un coffre gratuit). */
+  chance: 0.08,
+  /** Explosion : rayon (m), dégâts au joueur dedans. */
+  radius: 3.5,
+  damage: 15,
+  /** Ennemis libérés en cercle autour du coffre (ennemi de la config `ENEMIES`), à `ring` m. */
+  enemy: 'zombie',
+  count: 8,
+  ring: 2.2,
+  /** Indice (world/chestsView.ts) : toutes les `every` s, le couvercle tressaute (angle, rad, durée, s). */
+  every: 2.6,
+  shake: 0.16,
+  shakeTime: 0.45,
+  glow: 0xff3322,
+} as const;

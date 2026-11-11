@@ -67,6 +67,6 @@ describe('Le Frère cellérier', () => {
     const { t, cellerier } = duel(8);
     t.game.cheats.god = false;
     kill(t, cellerier);
-    expect(t.playUntil(() => t.events('playerHurt').some((h) => h.zombie.enemy === D.enemy && !h.blocked), 10)).toBe(true);
+    expect(t.playUntil(() => t.events('playerHurt').some((h) => h.zombie?.enemy === D.enemy && !h.blocked), 10)).toBe(true);
   });
 });

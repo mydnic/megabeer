@@ -26,18 +26,23 @@ export const FPS = 60;
  */
 /**
  * `coins` : un ennemi tué lâche-t-il une capsule au lieu de son XP ? « never » par défaut (les tests
- * d'XP restent exacts), « always », ou « real » (la vraie chance de la config).
+ * d'XP restent exacts), « always », ou « real » (la vraie chance de la config). `bins` : poser les poubelles
+ * (non par défaut : une arme qui en casse une lâcherait de l'XP). `traps` : coffres piégés (« never » par défaut).
  */
-export function createTestGame(seed = 1, opts: { coins?: 'never' | 'always' | 'real'; random?: () => number } = {}) {
+export function createTestGame(seed = 1, opts: { coins?: 'never' | 'always' | 'real'; random?: () => number; bins?: boolean; traps?: 'never' | 'always' | 'real' } = {}) {
   setTerrainSeed(seed);
   const collider = new DecorCollider([], PLAYER_PHYSICS.stepHeight, PLAYER_PHYSICS.headClearance);
   const kinds = Object.fromEntries((Object.keys(ZOMBIE_MODELS) as ZombieModel[]).map((m) => [m, TEST_ZOMBIE_TIMINGS])) as Record<ZombieModel, ZombieTimings>;
   const coins = opts.coins ?? 'never';
-  const game = new Game({ zombieKinds: kinds, collider, rollCoin: coins === 'real' ? undefined : () => coins === 'always', random: opts.random });
+  const traps = opts.traps ?? 'never';
+  const game = new Game({
+    zombieKinds: kinds, collider, rollCoin: coins === 'real' ? undefined : () => coins === 'always', random: opts.random,
+    binCount: opts.bins ? undefined : 0, trapChance: traps === 'real' ? undefined : traps === 'always' ? 1 : 0,
+  });
 
   /** Tous les événements reçus, dans l'ordre. */
   const log: { type: keyof GameEvents; payload: unknown }[] = [];
-  const types: (keyof GameEvents)[] = ['runStarted', 'landed', 'zombieSpawned', 'playerHurt', 'zombieHit', 'projectileHitGround', 'xpCollected', 'levelGained', 'levelUpOffered', 'cardPicked', 'paused', 'resumed', 'died', 'runEnded', 'home', 'bellToll', 'bellsLanding', 'bellsSurgeEnded', 'enemyThrow', 'enemyShotLanded', 'kamikazeArmed', 'enemyExploded', 'summonCast', 'summoned', 'enemySplit', 'synergyActivated', 'weaponExploded', 'pumpFilled', 'statGained', 'coinsCollected', 'chestRevealing', 'chestOpened', 'chestDenied', 'itemGained', 'itemExploded', 'foamShieldUp', 'foamShieldPopped', 'happyHourStarted', 'happyHourEnded', 'zombieFrozen', 'playerDodged', 'whistleBlown', 'shockwave', 'revived', 'freeChestSpawned'];
+  const types: (keyof GameEvents)[] = ['runStarted', 'landed', 'zombieSpawned', 'playerHurt', 'zombieHit', 'projectileHitGround', 'xpCollected', 'levelGained', 'levelUpOffered', 'cardPicked', 'paused', 'resumed', 'died', 'runEnded', 'home', 'bellToll', 'bellsLanding', 'bellsSurgeEnded', 'enemyThrow', 'enemyShotLanded', 'kamikazeArmed', 'enemyExploded', 'summonCast', 'summoned', 'enemySplit', 'synergyActivated', 'weaponExploded', 'pumpFilled', 'statGained', 'coinsCollected', 'chestRevealing', 'chestOpened', 'chestDenied', 'itemGained', 'itemExploded', 'foamShieldUp', 'foamShieldPopped', 'happyHourStarted', 'happyHourEnded', 'zombieFrozen', 'playerDodged', 'whistleBlown', 'shockwave', 'revived', 'freeChestSpawned', 'chestTrapped', 'binBroken', 'snackEaten'];
   for (const t of types) game.events.on(t, (payload) => log.push({ type: t, payload }));
 
   const api = {
