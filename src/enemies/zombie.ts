@@ -28,6 +28,9 @@ export class Zombie {
   state: ZombieState = 'idle';
   /** Multiplicateur de vitesse propre à ce zombie (ils ne marchent pas tous pareil). */
   readonly speedMul = 1 + (Math.random() * 2 - 1) * ZOMBIE_MOVE.speedJitter;
+  /** Élite (GDD section 11) : plus grand, plus fort, liseré de couleur ; `size` : échelle du corps et de sa portée. */
+  elite = false;
+  size = 1;
   /** Contournement d'obstacle en cours : temps restant et côté. */
   detour = 0;
   detourSide = 1;

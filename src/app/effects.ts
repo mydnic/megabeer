@@ -20,6 +20,7 @@ import { VFX } from '../config/fx';
 import { RARITIES } from '../config/upgrades';
 import { PUMP_TIERS } from '../config/pumps';
 import { TOURNEE_FX, TOURNEES } from '../config/tournees';
+import { ELITES } from '../config/elites';
 import type { Vfx } from '../fx/vfx';
 import type { Sprites } from '../fx/sprites';
 
@@ -161,6 +162,19 @@ export function wireEffects(game: Game, d: Deps) {
     d.rings.spawn(game.player.pos, 9, VC.level);
     vfx.pop(chest(1.4), VC.level, 3);
     vfx.sparkle(game.player.pos, VC.level, 12, 1.2, 4);
+  });
+  // Élite : il sort de terre dans un éclat rouge ; tué, son coffre tombe dans une pluie d'étincelles
+  game.events.on('eliteSpawned', ({ zombie }) => {
+    vfx.sparkle(zombie.pos, ELITES.color, 10, 1.2, 3);
+    d.rings.spawn(zombie.pos, 3, ELITES.color);
+  });
+  game.events.on('eliteKilled', ({ zombie, chest: c }) => {
+    up.copy(zombie.pos).normalize();
+    vfx.pop(numPos.copy(zombie.pos).addScaledVector(up, 1.5), ELITES.color, 4);
+    if (!c) return;
+    up.copy(c.pos).normalize();
+    d.gift.burst(numPos.copy(c.pos).addScaledVector(up, 1), still);
+    vfx.beam(c.pos, VC.level, 1.3, 11, 1.4);
   });
   // Tournée du bar ramassée : éclat et colonne de sa couleur ; la Tournée générale part en onde de bière
   game.events.on('tourneeTaken', ({ id }) => {

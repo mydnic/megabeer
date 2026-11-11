@@ -1,3 +1,4 @@
+import { ELITES } from '../config/elites';
 import * as THREE from 'three';
 import { kamikazeSwell } from './kamikazeView';
 import { PROTECTOR_LOOK as PL } from '../config/enemies';
@@ -112,7 +113,7 @@ export function createHordeView(scene: THREE.Scene, lib: ZombieLibrary) {
         if (z.gone) continue; // un kamikaze qui vient d'exploser
         if (camera) {
           ball.center.copy(z.pos);
-          ball.radius = V.cullMargin * z.kind.scale;
+          ball.radius = V.cullMargin * z.kind.scale * z.size;
           if (!frustum.intersectsSphere(ball)) continue;
         }
         const c = byModel.get(z.model)!;
@@ -120,11 +121,12 @@ export function createHordeView(scene: THREE.Scene, lib: ZombieLibrary) {
         up.copy(z.pos).normalize();
         right.crossVectors(up, z.facing).normalize();
         tmp.copy(z.pos).addScaledVector(up, -z.sink + hover(z));
-        basis.makeBasis(right, up, z.facing).scale(scaleV.setScalar(z.kind.scale * kamikazeSwell(z))).setPosition(tmp);
+        basis.makeBasis(right, up, z.facing).scale(scaleV.setScalar(z.kind.scale * z.size * kamikazeSwell(z))).setPosition(tmp);
         c.mesh.setMatrixAt(i, basis);
         z.animRows(c.anim.array as Float32Array, i * 4);
         if (c.fade) c.fade.setX(i, fadeOf(z));
-        c.glow.setX(i, shielded.has(z) ? PL.bodyGlow * pulse : 0);
+        // Liseré : doré pour un protégé ; un élite garde le sien (valeur négative : couleur des élites)
+        c.glow.setX(i, z.elite ? -ELITES.glow : shielded.has(z) ? PL.bodyGlow * pulse : 0);
       }
       for (const c of crowds) {
         c.mesh.instanceMatrix.clearUpdateRanges();

@@ -1,3 +1,4 @@
+import { ELITES } from '../config/elites';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
@@ -148,7 +149,7 @@ export async function loadZombieLibrary() {
       map: b.srcMat.map, color: b.srcMat.color, side: b.srcMat.side,
       ...(translucent ? { transparent: true, opacity: translucent.opacity, depthWrite: false } : {}),
     });
-    patchVat(material, translucent ? 'zombie-fade-glow' : 'zombie-glow', H.flashIntensity, !!translucent, new THREE.Color(PROTECTOR_LOOK.color), PROTECTOR_LOOK.rimPower);
+    patchVat(material, translucent ? 'zombie-fade-glow' : 'zombie-glow', H.flashIntensity, !!translucent, new THREE.Color(PROTECTOR_LOOK.color), PROTECTOR_LOOK.rimPower, new THREE.Color(ELITES.color));
     const depthMaterial = new THREE.MeshDepthMaterial();
     patchVat(depthMaterial, 'zombie-depth');
     lib[b.id] = { geometry: b.geometry, material, depthMaterial, scale: b.scale, clips, fade: !!translucent };

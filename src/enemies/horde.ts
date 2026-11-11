@@ -121,7 +121,7 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
     const dist = want.length();
     z.turnToward(target, dt);
     // Joueur mort : ils s'approchent du corps et restent plantés autour, sans frapper
-    if (passive && dist < V.attackRange + 0.3) {
+    if (passive && dist < V.attackRange * z.size + 0.3) {
       if (z.state !== 'attack' || z.attackDone) z.play('idle');
       return;
     }
@@ -163,7 +163,7 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
         z.throwing = false;
         z.play('idle');
       }
-      if (dist > V.attackRange + V.attackExit && dist <= T.range) {
+      if (dist > V.attackRange * z.size + V.attackExit && dist <= T.range) {
         z.walkSpeed = 0;
         if (z.state !== 'idle') z.play('idle');
         // Il lance une fois tourné vers le joueur
@@ -176,11 +176,11 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
       }
     }
     // Un coup commencé va au bout ; il enchaîne tant que le joueur reste un peu au-delà de la portée
-    if (z.state === 'attack' && (!z.attackDone || dist < V.attackRange + V.attackExit)) {
-      z.attackDone = z.attackDone && dist >= V.attackRange + V.attackExit;
+    if (z.state === 'attack' && (!z.attackDone || dist < V.attackRange * z.size + V.attackExit)) {
+      z.attackDone = z.attackDone && dist >= V.attackRange * z.size + V.attackExit;
       return;
     }
-    if (dist < V.attackRange && !K) { z.play('attack'); return; }
+    if (dist < V.attackRange * z.size && !K) { z.play('attack'); return; }
     // Avance dans la direction du regard (il tourne, il ne glisse pas de côté)
     want.normalize();
     const align = Math.max(0, z.facing.dot(want));
@@ -252,9 +252,10 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
       }
     }
     // Le joueur est repoussé hors des corps (sur le plan tangent)
-    const pr = M.radius + M.playerRadius;
     up.copy(player.pos).normalize();
-    for (const z of near(player.pos, pr + 0.5, around)) {
+    for (const z of near(player.pos, M.radius * 2 + M.playerRadius + 0.5, around)) {
+      // Corps à l'échelle (un élite est plus large)
+      const pr = M.radius * z.size + M.playerRadius;
       push.subVectors(player.pos, z.pos);
       push.addScaledVector(up, -push.dot(up));
       const d = push.length();
@@ -297,7 +298,7 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
         // Lancer : la bouteille part au moment du geste où le bras se détend
         if (z.throwing && z.hitNow && !z.dead && !passive) { api.onThrow?.(z); continue; }
         // Le coup porte si le joueur est encore à portée au moment où le bras arrive
-        if (!passive && !z.dead && z.hitNow && z.pos.distanceTo(player.pos) < ZOMBIE_ATTACK.reach) {
+        if (!passive && !z.dead && z.hitNow && z.pos.distanceTo(player.pos) < ZOMBIE_ATTACK.reach * z.size) {
           up.copy(player.pos).normalize();
           push.subVectors(player.pos, z.pos);
           push.addScaledVector(up, -push.dot(up));

@@ -30,6 +30,7 @@ import { LastCall, bellDropChance, type CallBell } from './lastCall';
 import { BELL_DROPS, LAST_CALL } from '../config/lastCall';
 import { Tournees, TOURNEE_IDS, rollTournee, tourneeDropChance } from './tournees';
 import { TOURNEE_FX, TOURNEES, type TourneeId } from '../config/tournees';
+import { ELITES } from '../config/elites';
 import { BINS, SNACK, SNACK_DROPS } from '../config/bins';
 import { ITEMS, ITEM_EFFECTS, ITEM_STAT_CAPS, type ItemDef, type ItemId, type ItemStatId } from '../config/items';
 import { ItemEffects } from './itemEffects';
@@ -107,6 +108,10 @@ export type GameEvents = {
    * ramassée) ; `pulled` gouttes et capsules partent vers le Buveur.
    */
   lastCallRung: { source: 'bell' | 'drop'; at: THREE.Vector3; bell: CallBell | null; pulled: number };
+  /** Un élite arrive dans la horde. */
+  eliteSpawned: { zombie: Zombie };
+  /** Un élite est tué : il laisse un coffre gratuit (null s'il n'y avait plus de place). */
+  eliteKilled: { zombie: Zombie; chest: Chest | null };
   /** Tournée du bar ramassée (`duration` : 0 si son effet est immédiat). */
   tourneeTaken: { id: TourneeId; duration: number };
   /** Fin d'une tournée qui durait. */
@@ -268,7 +273,7 @@ export class Game {
     this.horde = createHorde(deps.zombieKinds, player, deps.collider);
     this.pumps = new Pumps(deps.collider);
     this.chests = new Chests(deps.collider);
-    this.horde.onHit = (z, dir) => this.hurtPlayer(z, dir, z.def.damage);
+    this.horde.onHit = (z, dir) => this.hurtPlayer(z, dir, this.damageOf(z, z.def.damage));
     this.horde.onThrow = (z) => this.throwFrom(z);
     this.horde.onArm = (z) => {
       const K = z.def.kamikaze!;
@@ -295,6 +300,11 @@ export class Game {
       roster: ROSTERS[deps.map ?? 'abbaye'],
       spawn: (enemy, at, facing) => {
         const z = this.spawnZombie(enemy, at, facing);
+        z?.emerge();
+        return z;
+      },
+      spawnElite: (enemy, at, facing) => {
+        const z = this.spawnElite(enemy, at, facing);
         z?.emerge();
         return z;
       },
@@ -658,6 +668,20 @@ export class Game {
     this.events.emit('summoned', { zombie: z, skeletons });
   }
 
+  /** Fait apparaître un élite : l'ennemi en plus grand, avec plus de PV (et plus de dégâts, `damageOf`). */
+  spawnElite(enemy: EnemyId, at: THREE.Vector3, facing: THREE.Vector3) {
+    const z = this.spawnZombie(enemy, at, facing);
+    if (!z) return z;
+    z.elite = true;
+    z.size = ELITES.sizeMul;
+    z.hp = Math.round(z.hp * ELITES.hpMul);
+    this.events.emit('eliteSpawned', { zombie: z });
+    return z;
+  }
+
+  /** Dégâts d'un coup de `z` (un élite frappe plus fort). */
+  private damageOf(z: Zombie, base: number) { return z.elite ? base * ELITES.damageMul : base; }
+
   spawnZombie(enemy: EnemyId, at: THREE.Vector3, facing: THREE.Vector3) {
     const z = this.horde.spawn(enemy, at, facing);
     if (z) z.hp = Math.round(ENEMIES[enemy].hp * spawnCurveAt(this.runTime).hpMul * this.mods.hp);
@@ -699,6 +723,8 @@ export class Game {
     for (const S of synergies) if (!killed && weapon?.id === S.marker) z.dazed = S.duration * this.stats.duration;
     if (weapon) this.afterWeaponHit(z, Math.min(damage, hpBefore), killed);
     this.events.emit('zombieHit', { weapon, zombie: z, damage, crit, killed, hpAfter: z.hp, impact: impact.clone(), dir, shielded: shield > 0, combo });
+    // Un élite tué laisse un coffre gratuit
+    if (killed && z.elite) this.events.emit('eliteKilled', { zombie: z, chest: this.chests.addFreeAt(z.pos) });
     // Un kamikaze tué explose sur place
     if (killed && z.def.kamikaze) this.explode(z, true);
     // Un diviseur tué se sépare en petits
@@ -919,7 +945,7 @@ export class Game {
       const up = this.tmp.copy(p).normalize();
       dir.addScaledVector(up, -dir.dot(up));
       if (dir.lengthSq() < 1e-6) dir.copy(this.player.facing).negate();
-      this.hurtPlayer(z, dir.normalize(), K.damage);
+      this.hurtPlayer(z, dir.normalize(), this.damageOf(z, K.damage));
     }
     z.vanish();
     this.events.emit('enemyExploded', { zombie: z, at, radius: K.radius, killed, hit });
@@ -932,7 +958,7 @@ export class Game {
     const from = z.pos.clone().addScaledVector(up, 1.7).addScaledVector(z.facing, 0.3);
     const to = this.player.pos.clone().normalize();
     to.multiplyScalar(this.groundAt(to.clone().multiplyScalar(PLANET_RADIUS + 60)));
-    const shot = this.shots.launch(z, from, to, T, T.damage);
+    const shot = this.shots.launch(z, from, to, T, this.damageOf(z, T.damage));
     this.events.emit('enemyThrow', { shot });
   }
 

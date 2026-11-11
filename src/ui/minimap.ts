@@ -5,6 +5,7 @@ import { PLANET, PLANET_RADIUS } from '../config/world';
 import type { Pump } from '../game/pumps';
 import type { Chest } from '../game/chests';
 import type { CallBell } from '../game/lastCall';
+import type { Zombie } from '../enemies/zombie';
 import { heightAt } from '../world/terrain';
 import { toMapCoords } from '../world/mapProjection';
 
@@ -102,7 +103,7 @@ export function createMinimap() {
   return {
     setVisible(v: boolean) { canvas.classList.toggle('on', v); },
     /** Chaque image : position du joueur, sa direction, l'avant de la caméra, les pompes. */
-    update(dt: number, playerPos: THREE.Vector3, facing: THREE.Vector3, camFwd: THREE.Vector3, pumps: readonly Pump[], chests: readonly Chest[], bells: readonly CallBell[] = []) {
+    update(dt: number, playerPos: THREE.Vector3, facing: THREE.Vector3, camFwd: THREE.Vector3, pumps: readonly Pump[], chests: readonly Chest[], bells: readonly CallBell[] = [], zombies: readonly Zombie[] = []) {
       if (!canvas.classList.contains('on')) return;
       up.copy(playerPos).normalize();
       fwd.copy(camFwd).addScaledVector(up, -camFwd.dot(up)).normalize();
@@ -153,6 +154,17 @@ export function createMinimap() {
         ctx.beginPath();
         ctx.arc(R + m.x * k * scale, R - m.y * k * scale, M.bellDot * dpr, 0, Math.PI * 2);
         ctx.fillStyle = hex(M.colors.bell); ctx.fill();
+        ctx.lineWidth = 2 * dpr; ctx.strokeStyle = '#1a120c'; ctx.stroke();
+      }
+
+      // Élites vivants dans le disque : points rouges
+      for (const z of zombies) {
+        if (!z.elite || z.dead) continue;
+        const m = toMap(z.pos);
+        if (m.dist > M.range * 0.92) continue;
+        ctx.beginPath();
+        ctx.arc(R + m.x * scale, R - m.y * scale, M.eliteDot * dpr, 0, Math.PI * 2);
+        ctx.fillStyle = hex(M.colors.elite); ctx.fill();
         ctx.lineWidth = 2 * dpr; ctx.strokeStyle = '#1a120c'; ctx.stroke();
       }
 

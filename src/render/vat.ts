@@ -39,9 +39,10 @@ mat4 vatSkin(float row) {
  * `flash` : le matériau éclaire l'instance en blanc selon -aAnim.w (zombie touché).
  * `fade` : chaque instance multiplie son opacité par l'attribut `aFade` (matériau transparent).
  * `glow` : chaque instance a un liseré de lumière de cette couleur sur ses contours, d'intensité
- * l'attribut `aGlow` (ennemi qui reçoit un buff) ; `rim` règle sa finesse (plus grand : plus fin).
+ * l'attribut `aGlow` (ennemi qui reçoit un buff) ; `rim` règle sa finesse (plus grand : plus fin). `glow2` : couleur
+ * du liseré quand `aGlow` est négatif (élites).
  */
-export function patchVat(material: THREE.Material, key: string, flash = 0, fade = false, glow?: THREE.Color, rim = 2.5) {
+export function patchVat(material: THREE.Material, key: string, flash = 0, fade = false, glow?: THREE.Color, rim = 2.5, glow2?: THREE.Color) {
   const prev = material.onBeforeCompile;
   material.onBeforeCompile = (shader, renderer) => {
     prev?.call(material, shader, renderer);
@@ -62,6 +63,8 @@ export function patchVat(material: THREE.Material, key: string, flash = 0, fade 
     }
     if (glow) {
       const c = `vec3(${glow.r.toFixed(3)}, ${glow.g.toFixed(3)}, ${glow.b.toFixed(3)})`;
+      // aGlow négatif : liseré de la seconde couleur (les élites)
+      const c2 = glow2 ? `vec3(${glow2.r.toFixed(3)}, ${glow2.g.toFixed(3)}, ${glow2.b.toFixed(3)})` : c;
       vs = vs.replace('#include <common>', '#include <common>\nattribute float aGlow;\nvarying float vVatGlow;');
       vs = vs.replace('#include <begin_vertex>', '#include <begin_vertex>\n  vVatGlow = aGlow;');
       shader.fragmentShader = shader.fragmentShader
@@ -70,7 +73,7 @@ export function patchVat(material: THREE.Material, key: string, flash = 0, fade 
   // Liseré : plus fort là où la surface fuit le regard (bords de la silhouette). max() : face pile vers
   // la caméra, l'arrondi donne |dot| > 1 et pow() d'un négatif vaut NaN, que le halo étale sur tout l'écran
   float vatRim = pow(max(0.0, 1.0 - abs(dot(normalize(vViewPosition), normal))), ${rim.toFixed(2)});
-  totalEmissiveRadiance += ${c} * vVatGlow * vatRim;`);
+  totalEmissiveRadiance += (vVatGlow < 0.0 ? ${c2} : ${c}) * abs(vVatGlow) * vatRim;`);
     }
     if (fade) {
       vs = vs.replace('#include <common>', '#include <common>\nattribute float aFade;\nvarying float vVatFade;');

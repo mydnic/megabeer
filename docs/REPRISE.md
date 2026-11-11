@@ -98,6 +98,10 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    sont loin), sonnées à E / X, et une clochette rare lâchée par les ennemis (`bellDropChance`, la Chance l'augmente) :
    toute l'XP et les capsules glissent le long du sol jusqu'au Buveur (`pullAll` de `pickups/xpDrops.ts`). Réglages
    `config/lastCall.ts`, DEV « Clochette devant ». Tests : `createTestGame(seed, { bellDrops: 'always' })`.
+   **Élites classiques faites le 2026-11-11, à valider en jeu** (demande de l'utilisateur) : un ennemi du roster en
+   version x2 (taille, PV, dégâts), liseré rouge, un toutes les 45 s dès 1:00, coffre gratuit à sa mort (`config/elites.ts`,
+   `Game.spawnElite`, `Chests.addFreeAt`, DEV « Élite devant »). **En cours ensuite : le Frère Sonneur** (boss de 5:00), look
+   choisi : un ogre moine modélisé par script Blender (rig et animations comme `buveur.py`), à faire valider avant le code.
    **Tournées du bar faites le 2026-11-11, à valider en jeu** : 8 bonus lâchés par les ennemis (liste dans le journal du
    GDD), `game/tournees.ts`, `config/tournees.ts`, icônes `ui/tourneeIcons.ts` (aussi en texture au sol par
    `iconDataUrl`), HUD `ui/tourneeHud.ts`, DEV « Tournée devant ». Tests : `createTestGame(seed, { tournees: 'peket' })`,

@@ -52,6 +52,12 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
     audio.play(T.wood, T.woodVolume, T.woodRate * jitter(0.05));
     audio.play(T.boom, T.boomVolume, T.boomRate * jitter(0.05));
   });
+  // Élites
+  game.events.on('eliteSpawned', ({ zombie }) => {
+    const E = AUDIO.elite, k = near(zombie.pos, E.hearDist);
+    if (k > 0) audio.play(E.spawn, E.spawnVolume * k, E.spawnRate * jitter(0.05));
+  });
+  game.events.on('eliteKilled', ({ chest }) => { if (chest) audio.play(AUDIO.elite.chest, AUDIO.elite.chestVolume, AUDIO.elite.chestRate, 0, 'ui'); });
   // Tournées du bar
   game.events.on('tourneeTaken', () => {
     const T = AUDIO.tournee;

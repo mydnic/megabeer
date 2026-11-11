@@ -1,3 +1,4 @@
+import { ELITES } from '../config/elites';
 import * as THREE from 'three';
 import { PLANET_RADIUS } from '../config/world';
 import { SPAWN, SPAWN_CURVE } from '../config/spawn';
@@ -31,6 +32,8 @@ export type SpawnDirectorDeps = {
   roster: readonly RosterEntry[];
   /** Fait apparaître un zombie (PV réglés par le jeu selon le moment de la run). */
   spawn: (enemy: EnemyId, at: THREE.Vector3, facing: THREE.Vector3) => Zombie | undefined;
+  /** Fait apparaître un élite (version plus grande et plus forte de l'ennemi). */
+  spawnElite?: (enemy: EnemyId, at: THREE.Vector3, facing: THREE.Vector3) => Zombie | undefined;
 };
 
 /**
@@ -44,6 +47,8 @@ export class SpawnDirector {
   /** Arrivées par seconde en ce moment (pour le panneau DEV et le journal). */
   rate = 0;
   private budget = 0;
+  /** Temps avant le prochain élite (s). */
+  private eliteIn = 0;
   private readonly up = new THREE.Vector3();
   private readonly fwd = new THREE.Vector3();
   private readonly right = new THREE.Vector3();
@@ -58,12 +63,18 @@ export class SpawnDirector {
     this.budget = SPAWN.startCount * countMul;
   }
 
-  reset() { this.budget = 0; this.rate = 0; }
+  reset() { this.budget = 0; this.rate = 0; this.eliteIn = 0; }
 
   /** Avance de `dt` secondes de jeu, au temps de run `runTime`. */
   update(dt: number, runTime: number, countMul: number) {
     this.rate = spawnCurveAt(runTime).perSecond * countMul;
     if (!this.enabled) return;
+    // Élites : un ennemi déjà arrivé, en version élite, à intervalles réguliers
+    if (runTime >= ELITES.from && (this.eliteIn -= dt) <= 0 && this.d.spawnElite && this.place(this.at)) {
+      this.eliteIn = ELITES.every;
+      const enemy = this.pickEnemy(runTime);
+      this.d.spawnElite(enemy, this.at.clone(), this.d.player.pos.clone().sub(this.at.clone().multiplyScalar(PLANET_RADIUS)));
+    }
     this.budget += this.rate * dt;
     while (this.budget >= 1) {
       // Aucun point libre cette image (décor) : on réessaie à la suivante, sans accumuler de retard

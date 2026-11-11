@@ -61,6 +61,30 @@ export class Chests {
   }
 
   /**
+   * Coffre gratuit au plus près de `at` (un élite tombé) : sur place si c'est libre, sinon un peu autour.
+   * Renvoie null s'il n'y a plus de place.
+   */
+  addFreeAt(at: THREE.Vector3) {
+    if (this.list.filter((c) => c.free).length >= C.extraMax) return null;
+    const up = at.clone().normalize();
+    const side = new THREE.Vector3().crossVectors(up, Math.abs(up.y) < 0.9 ? Y : X).normalize();
+    const dir = new THREE.Vector3();
+    for (const dist of [0, 1.5, 3]) {
+      for (let i = 0; i < (dist ? 8 : 1); i++) {
+        const axis = side.clone().applyAxisAngle(up, (i / 8) * Math.PI * 2);
+        dir.copy(up).applyAxisAngle(axis, dist / PLANET_RADIUS);
+        const pos = dir.clone().multiplyScalar(PLANET_RADIUS + heightAt(dir));
+        if (this.collider.occupied(this.tmp.copy(dir).multiplyScalar(pos.length() + 0.6), 1)) continue;
+        const chest: Chest = { pos, opened: false, free: true };
+        this.list.push(chest);
+        this.collider.setExtra('chests', groundBodies(this.list.map((c) => c.pos), boxShape(C.body.halfX, C.body.halfZ, C.body.height)));
+        return chest;
+      }
+    }
+    return null;
+  }
+
+  /**
    * Nouvelle run : pose les coffres loin de `spawnDir` et des points `avoid` (les pompes). Chacun est
    * piégé avec la chance `trapChance`.
    */

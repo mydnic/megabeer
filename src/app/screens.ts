@@ -178,7 +178,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
       if (game.phase === 'run' && !game.frozen) pumpGauge.update(game.pumps.focus, game.pumps.filling);
       else pumpGauge.hide();
       const pl = game.player;
-      minimap.update(realDt, pl.pos, pl.facing, pl.camFwd, game.pumps.list, game.chests.list, game.lastCall.list);
+      minimap.update(realDt, pl.pos, pl.facing, pl.camFwd, game.pumps.list, game.chests.list, game.lastCall.list, game.horde.zombies);
       const chest = game.phase === 'run' && !game.frozen ? game.chests.focus : null;
       chestPrompt.update(chest ? game.chests.priceOf(chest) : null, game.coins);
       bellPrompt.update(!chest && game.phase === 'run' && !game.frozen && game.lastCall.focus ? 0 : null, game.coins);

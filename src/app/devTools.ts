@@ -83,6 +83,14 @@ export async function wireDevTools(game: Game, d: {
       game.tournees.drops.drop(p.pos.clone().addScaledVector(p.facing, 7), TOURNEE_IDS.indexOf(id as TourneeId));
       runLog.event('dev', 'tournee', id);
     },
+    spawnElite(model) {
+      if (!inRun()) return;
+      const p = game.player;
+      const id = (model === 'mix' ? models[Math.floor(Math.random() * models.length)] : model) as EnemyId;
+      const at = p.pos.clone().addScaledVector(p.facing, 9);
+      game.spawnElite(id, at, p.pos.clone().sub(at))?.emerge();
+      runLog.event('dev', 'elite', id);
+    },
     dropBell() {
       if (!inRun()) return;
       const p = game.player;

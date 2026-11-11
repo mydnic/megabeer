@@ -104,6 +104,8 @@ export const AUDIO = {
   trap: { wood: 'impactWood_heavy', woodVolume: 0.9, woodRate: 0.8, boom: 'impactSoft_heavy', boomVolume: 0.9, boomRate: 0.55 },
   /** Dernier service : trois coups de cloche, de plus en plus aigus, espacés de `gap` s. */
   lastCall: { sample: 'impactBell_heavy', volume: 0.8, rate: 0.9, step: 0.12, gap: 0.22, count: 3 },
+  /** Élite : grondement quand il arrive (entendu jusqu'à `hearDist` m), coffre qui tombe à sa mort. */
+  elite: { spawn: 'impactSoft_heavy', spawnVolume: 0.7, spawnRate: 0.5, hearDist: 45, chest: 'impactWood_heavy', chestVolume: 0.6, chestRate: 1.1 },
   /** Tournée du bar ramassée : verre qui tinte, puis une bulle ; fin d'une tournée : petit tintement grave. */
   tournee: { sample: 'impactGlass_light', volume: 0.7, rate: 1.3, bubble: 'bubble', bubbleVolume: 0.6, end: 'impactGlass_light', endVolume: 0.35, endRate: 0.7 },
   /** Poubelle cassée : tôle qui claque (atténuée avec la distance, m) ; snack mangé : croquant. */
