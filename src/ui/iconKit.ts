@@ -116,6 +116,16 @@ export const cap = (cx: number, cy: number, r: number, top = '#e2362e', skirt = 
 <path d="M5.500 7.600a6.500 2.800 0 0 1 4-1.700" stroke="#fff" stroke-opacity=".85" stroke-width="1.200" fill="none" stroke-linecap="round"/></g>`;
 };
 
+/**
+ * Icône autonome (ses dégradés dedans) en image : pour la dessiner hors de la page, par exemple en texture
+ * d'un objet 3D. `px` : taille de l'image.
+ */
+export const iconDataUrl = (body: string, px = 128) => {
+  const defs = DEFS.slice(DEFS.indexOf('<defs>'), DEFS.indexOf('</defs>') + 7);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="${px}" height="${px}">${defs}${body}</svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+};
+
 export const svg64 = (cls: string, body: string) => {
   ensureIconDefs();
   return `<svg viewBox="0 0 64 64" class="${cls}">${body}</svg>`;

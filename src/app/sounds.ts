@@ -52,6 +52,13 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
     audio.play(T.wood, T.woodVolume, T.woodRate * jitter(0.05));
     audio.play(T.boom, T.boomVolume, T.boomRate * jitter(0.05));
   });
+  // Tournées du bar
+  game.events.on('tourneeTaken', () => {
+    const T = AUDIO.tournee;
+    audio.play(T.sample, T.volume, T.rate * jitter(0.05), 0, 'ui');
+    setTimeout(() => audio.play(T.bubble, T.bubbleVolume, jitter(0.08), 0, 'ui'), 90);
+  });
+  game.events.on('tourneeEnded', () => audio.play(AUDIO.tournee.end, AUDIO.tournee.endVolume, AUDIO.tournee.endRate, 0, 'ui'));
   // Dernier service : la cloche sonne trois fois
   game.events.on('lastCallRung', () => {
     const C = AUDIO.lastCall;

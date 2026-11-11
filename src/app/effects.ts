@@ -19,6 +19,7 @@ import type { createRingWaveView } from '../fx/ringWaveView';
 import { VFX } from '../config/fx';
 import { RARITIES } from '../config/upgrades';
 import { PUMP_TIERS } from '../config/pumps';
+import { TOURNEE_FX, TOURNEES } from '../config/tournees';
 import type { Vfx } from '../fx/vfx';
 import type { Sprites } from '../fx/sprites';
 
@@ -160,6 +161,15 @@ export function wireEffects(game: Game, d: Deps) {
     d.rings.spawn(game.player.pos, 9, VC.level);
     vfx.pop(chest(1.4), VC.level, 3);
     vfx.sparkle(game.player.pos, VC.level, 12, 1.2, 4);
+  });
+  // Tournée du bar ramassée : éclat et colonne de sa couleur ; la Tournée générale part en onde de bière
+  game.events.on('tourneeTaken', ({ id }) => {
+    const color = TOURNEES[id].color;
+    vfx.pop(chest(1.3), color, 3);
+    vfx.beam(game.player.pos, color, 1.2, 10, 1.2);
+    vfx.sparkle(game.player.pos, color, 10, 1, 3);
+    if (id === 'generale') { d.rings.spawn(game.player.pos, TOURNEE_FX.generale.radius, color); rig.shake(HIT_FEEDBACK.shake, HIT_FEEDBACK.shakeAmplitude, HIT_FEEDBACK.shakeDecay); }
+    if (id === 'seau') d.rings.spawn(game.player.pos, TOURNEE_FX.seau.radius, color);
   });
   // Snack mangé : petites étoiles dorées
   game.events.on('snackEaten', () => { vfx.sparkle(game.player.pos, VC.snack, 6, 0.6, 2.5); vfx.pop(chest(1.2), VC.snack, 1.6); });

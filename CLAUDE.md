@@ -80,7 +80,8 @@ recopie son état à chaque image. Ne jamais remettre de logique de jeu dans `ma
   pause ; `step(dt, input)` ; événements `GameEvents`), `playerStats.ts`, `loadout.ts` (armes
   équipées, 4 max), `levelUpCards.ts` (tirage sur les armes équipées), `pumps.ts`, `chests.ts` (coffres, dont les
   piégés), `bins.ts` (poubelles cassées au contact ou par les armes, grille pour les projectiles), `lastCall.ts` (Dernier
-  service : cloches qui ramènent toute l'XP et les capsules), `spawnDirector.ts` (arrivée des zombies et
+  service : cloches qui ramènent toute l'XP et les capsules), `tournees.ts` (Tournées du bar : bonus de quelques
+  secondes lâchés par les ennemis, minuteries et multiplicateurs), `spawnDirector.ts` (arrivée des zombies et
   montée en difficulté, courbe dans `config/spawn.ts`), `mechanics/` (mécanique propre à chaque map, interface
   `MapMechanic` et registre : Abbaye = les cloches), `emitter.ts`.
 - `weapons/` : `weapon.ts` (**interface `Weapon`** et `WeaponContext`), `registry.ts`, une arme
@@ -90,7 +91,8 @@ recopie son état à chaque image. Ne jamais remettre de logique de jeu dans `ma
   et ses cartes, son icône (`ui/icons.ts`), son rendu, et ses tests. Rien d'autre à toucher.
   **Icônes** : un seul style (couleur, volume, contour épais) fourni par `ui/iconKit.ts` (dégradés partagés,
   formes `P` `C` `E` `R`, pinte, capsule, étincelle) ; armes, pompe, coffre et capsule dans `ui/icons.ts`, une
-  icône par objet de coffre dans `ui/itemIcons.ts`. Toute nouvelle icône passe par ce kit.
+  icône par objet de coffre dans `ui/itemIcons.ts`, une par tournée du bar dans `ui/tourneeIcons.ts` (`iconDataUrl` : la
+  même icône en texture 3D). Toute nouvelle icône passe par ce kit.
 - `enemies/` : les ennemis sont des fiches (`config/enemies.ts` : `ENEMIES` et le roster de chaque map),
   `zombie.ts` et `horde.ts` (simulation, index spatial des zombies `horde.near`, briques Tireur, Kamikaze, Fantôme, Protecteur, Invocateur et Diviseur ; les armes visent
   `z.targetable`), `hordeView.ts` et `zombieLibrary.ts`

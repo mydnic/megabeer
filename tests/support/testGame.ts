@@ -9,6 +9,7 @@ import { computeGridShape } from '../../src/world/decor/gridShape';
 import { randomSpawn } from '../../src/world/decor/layout';
 import { heightAt, setTerrainSeed } from '../../src/world/terrain';
 import { NO_INPUT } from '../../src/game/game';
+import type { TourneeId } from '../../src/config/tournees';
 
 /** Durées d'animation des zombies dans les tests (les vraies viennent des modèles 3D). */
 const clip = (duration: number) => ({ start: 0, frames: 1, duration });
@@ -28,9 +29,10 @@ export const FPS = 60;
  * `coins` : un ennemi tué lâche-t-il une capsule au lieu de son XP ? « never » par défaut (les tests
  * d'XP restent exacts), « always », ou « real » (la vraie chance de la config). `bins` : poser les poubelles
  * (non par défaut : une arme qui en casse une lâcherait de l'XP). `traps` : coffres piégés (« never » par défaut).
- * `bellDrops` : clochettes du Dernier service lâchées par les ennemis (« never » par défaut).
+ * `bellDrops` : clochettes du Dernier service lâchées par les ennemis (« never » par défaut). `tournees` : tournée
+ * lâchée par chaque ennemi tué (une tournée précise, « never » par défaut, ou « real »).
  */
-export function createTestGame(seed = 1, opts: { coins?: 'never' | 'always' | 'real'; random?: () => number; bins?: boolean; traps?: 'never' | 'always' | 'real'; bellDrops?: 'never' | 'always' | 'real' } = {}) {
+export function createTestGame(seed = 1, opts: { coins?: 'never' | 'always' | 'real'; random?: () => number; bins?: boolean; traps?: 'never' | 'always' | 'real'; bellDrops?: 'never' | 'always' | 'real'; tournees?: TourneeId | 'never' | 'real' } = {}) {
   setTerrainSeed(seed);
   const collider = new DecorCollider([], PLAYER_PHYSICS.stepHeight, PLAYER_PHYSICS.headClearance);
   const kinds = Object.fromEntries((Object.keys(ZOMBIE_MODELS) as ZombieModel[]).map((m) => [m, TEST_ZOMBIE_TIMINGS])) as Record<ZombieModel, ZombieTimings>;
@@ -39,12 +41,13 @@ export function createTestGame(seed = 1, opts: { coins?: 'never' | 'always' | 'r
   const game = new Game({
     zombieKinds: kinds, collider, rollCoin: coins === 'real' ? undefined : () => coins === 'always', random: opts.random,
     rollBell: opts.bellDrops === 'real' ? undefined : () => opts.bellDrops === 'always',
+    rollTournee: opts.tournees === 'real' ? undefined : () => (opts.tournees && opts.tournees !== 'never' && opts.tournees !== 'real' ? opts.tournees : null),
     binCount: opts.bins ? undefined : 0, trapChance: traps === 'real' ? undefined : traps === 'always' ? 1 : 0,
   });
 
   /** Tous les événements reçus, dans l'ordre. */
   const log: { type: keyof GameEvents; payload: unknown }[] = [];
-  const types: (keyof GameEvents)[] = ['runStarted', 'landed', 'zombieSpawned', 'playerHurt', 'zombieHit', 'projectileHitGround', 'xpCollected', 'levelGained', 'levelUpOffered', 'cardPicked', 'paused', 'resumed', 'died', 'runEnded', 'home', 'bellToll', 'bellsLanding', 'bellsSurgeEnded', 'enemyThrow', 'enemyShotLanded', 'kamikazeArmed', 'enemyExploded', 'summonCast', 'summoned', 'enemySplit', 'synergyActivated', 'weaponExploded', 'pumpFilled', 'statGained', 'coinsCollected', 'chestRevealing', 'chestOpened', 'chestDenied', 'itemGained', 'itemExploded', 'foamShieldUp', 'foamShieldPopped', 'happyHourStarted', 'happyHourEnded', 'zombieFrozen', 'playerDodged', 'whistleBlown', 'shockwave', 'revived', 'freeChestSpawned', 'chestTrapped', 'binBroken', 'snackEaten', 'lastCallRung'];
+  const types: (keyof GameEvents)[] = ['runStarted', 'landed', 'zombieSpawned', 'playerHurt', 'zombieHit', 'projectileHitGround', 'xpCollected', 'levelGained', 'levelUpOffered', 'cardPicked', 'paused', 'resumed', 'died', 'runEnded', 'home', 'bellToll', 'bellsLanding', 'bellsSurgeEnded', 'enemyThrow', 'enemyShotLanded', 'kamikazeArmed', 'enemyExploded', 'summonCast', 'summoned', 'enemySplit', 'synergyActivated', 'weaponExploded', 'pumpFilled', 'statGained', 'coinsCollected', 'chestRevealing', 'chestOpened', 'chestDenied', 'itemGained', 'itemExploded', 'foamShieldUp', 'foamShieldPopped', 'happyHourStarted', 'happyHourEnded', 'zombieFrozen', 'playerDodged', 'whistleBlown', 'shockwave', 'revived', 'freeChestSpawned', 'chestTrapped', 'binBroken', 'snackEaten', 'lastCallRung', 'tourneeTaken', 'tourneeEnded'];
   for (const t of types) game.events.on(t, (payload) => log.push({ type: t, payload }));
 
   const api = {

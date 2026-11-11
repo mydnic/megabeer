@@ -28,6 +28,8 @@ import { CHEST_TRAP, CHESTS } from '../config/chests';
 import { Bins, type Bin } from './bins';
 import { LastCall, bellDropChance, type CallBell } from './lastCall';
 import { BELL_DROPS, LAST_CALL } from '../config/lastCall';
+import { Tournees, TOURNEE_IDS, rollTournee, tourneeDropChance } from './tournees';
+import { TOURNEE_FX, TOURNEES, type TourneeId } from '../config/tournees';
 import { BINS, SNACK, SNACK_DROPS } from '../config/bins';
 import { ITEMS, ITEM_EFFECTS, ITEM_STAT_CAPS, type ItemDef, type ItemId, type ItemStatId } from '../config/items';
 import { ItemEffects } from './itemEffects';
@@ -105,6 +107,10 @@ export type GameEvents = {
    * ramassée) ; `pulled` gouttes et capsules partent vers le Buveur.
    */
   lastCallRung: { source: 'bell' | 'drop'; at: THREE.Vector3; bell: CallBell | null; pulled: number };
+  /** Tournée du bar ramassée (`duration` : 0 si son effet est immédiat). */
+  tourneeTaken: { id: TourneeId; duration: number };
+  /** Fin d'une tournée qui durait. */
+  tourneeEnded: { id: TourneeId };
   /** Le joueur ramasse un snack : `heal` PV rendus, `hp` après. */
   snackEaten: { heal: number; hp: number };
   /** Touche d'action sur un coffre sans assez de capsules. */
@@ -161,6 +167,8 @@ export type GameDeps = {
   random?: () => number;
   /** Tirage « cet ennemi tué lâche une clochette » (par défaut : la chance de la config et la Chance du joueur). */
   rollBell?: () => boolean;
+  /** Tirage « cet ennemi tué lâche une tournée » : laquelle, ou null (par défaut : chance de la config et Chance du joueur). */
+  rollTournee?: () => TourneeId | null;
   /** Poubelles posées par run (par défaut celles de la config ; 0 dans la plupart des tests). */
   binCount?: number;
   /** Chance qu'un coffre soit piégé (par défaut celle de la config). */
@@ -194,6 +202,10 @@ export class Game {
   readonly lastCall: LastCall;
   readonly bellDrops: ReturnType<typeof createXpDrops>;
   private rollBell: () => boolean;
+  /** Tournées du bar (bonus lâchés par les ennemis). */
+  readonly tournees: Tournees;
+  private rollTournee: () => TourneeId | null;
+  private readonly ended: TourneeId[] = [];
   /** Snacks au sol (soin). */
   readonly snackDrops: ReturnType<typeof createXpDrops>;
   private readonly binCount: number;
@@ -271,6 +283,8 @@ export class Game {
     this.snackDrops = createXpDrops(groundAt, SNACK_DROPS);
     this.bellDrops = createXpDrops(groundAt, BELL_DROPS);
     this.lastCall = new LastCall(deps.collider);
+    this.tournees = new Tournees(groundAt);
+    this.rollTournee = deps.rollTournee ?? (() => (Math.random() < tourneeDropChance(this.stats.luck) ? rollTournee(Math.random()) : null));
     this.rollBell = deps.rollBell ?? (() => Math.random() < bellDropChance(this.stats.luck));
     this.binCount = deps.binCount ?? BINS.count;
     this.trapChance = deps.trapChance ?? CHEST_TRAP.chance;
@@ -444,7 +458,7 @@ export class Game {
     }
     this.chest.copy(p.renderPos).addScaledVector(p.upDir, 1.0);
     this.xp.update(dt, this.chest, this.phase === 'run' ? this.stats.pickupRange : 0, (v) => {
-      this.collectXp(v * this.stats.xpGain);
+      this.collectXp(v * this.stats.xpGain * this.tournees.xpMul);
       // Sachet de cacahuètes : chaque goutte d'XP soigne un peu
       if (this.effects.healPerXp > 0) this.health.heal(this.effects.healPerXp);
     });
@@ -456,6 +470,7 @@ export class Game {
       this.coins += v + extra;
       this.events.emit('coinsCollected', { amount: v + extra, total: this.coins });
     });
+    this.tournees.drops.update(dt, this.chest, this.phase === 'run' ? this.stats.pickupRange : 0, (v) => this.takeTournee(TOURNEE_IDS[v]));
     this.bellDrops.update(dt, this.chest, this.phase === 'run' ? this.stats.pickupRange : 0, () => this.pullAll('drop', null));
     this.snackDrops.update(dt, this.chest, this.phase === 'run' ? this.stats.pickupRange : 0, (v) => {
       const heal = v * SNACK.heal;
@@ -553,6 +568,28 @@ export class Game {
     this.events.emit('chestTrapped', { chest, price, at, radius: T.radius, hit, zombies });
   }
 
+  /**
+   * Le joueur prend une tournée du bar (ramassée au sol, ou outils de dev) : effet immédiat ou minuterie
+   * (reprendre une tournée active relance sa durée sans cumuler).
+   */
+  takeTournee(id: TourneeId) {
+    if (this.phase !== 'run') return;
+    const fresh = this.tournees.start(id);
+    if (id === 'sousBock' && fresh) this.stats.luck += TOURNEE_FX.sousBock.luck;
+    if (id === 'fritesMayo') this.health.heal(TOURNEE_FX.fritesMayo.heal);
+    this.events.emit('tourneeTaken', { id, duration: TOURNEES[id].duration });
+    if (id === 'generale') {
+      const G = TOURNEE_FX.generale;
+      const damage = G.damage * this.stats.damage * spawnCurveAt(this.runTime).hpMul * this.mods.hp;
+      this.shockwave(G.radius, G.knock, damage);
+    } else if (id === 'seau') {
+      const S = TOURNEE_FX.seau;
+      for (const o of this.horde.near(this.player.pos, S.radius, [])) {
+        if (o.targetable && o.pos.distanceTo(this.player.pos) < S.radius) this.freeze(o, S.freeze);
+      }
+    }
+  }
+
   /** Sonne une grande cloche du Dernier service (une seule fois chacune). */
   private ringBell(bell: CallBell) {
     bell.rung = true;
@@ -635,7 +672,7 @@ export class Game {
   hitZombie(z: Zombie, damage: number, crit: boolean, impact: THREE.Vector3, vel: THREE.Vector3, weapon: Weapon | null = null, knock = 1) {
     if (z.intangible) return false; // un fantôme intouchable : le coup le traverse
     // Stat Dégâts du joueur : toutes ses armes ; objets qui visent certains ennemis
-    if (weapon) damage *= this.stats.damage * this.itemDamageMul(z);
+    if (weapon) damage *= this.stats.damage * this.itemDamageMul(z) * this.tournees.damageMul;
     knock *= this.stats.knockback;
     const hpBefore = Math.max(0, z.hp);
     // Synergies actives : une arme marque le zombie (sonné), une autre lui fait plus de dégâts pendant ce temps
@@ -655,6 +692,9 @@ export class Game {
       else this.xp.drop(z.pos, z.def.xp);
       // Rarement, une clochette du Dernier service en plus
       if (this.rollBell()) this.bellDrops.drop(z.pos, 1);
+      // Rarement, une tournée du bar
+      const tournee = this.rollTournee();
+      if (tournee) this.tournees.drops.drop(z.pos, TOURNEE_IDS.indexOf(tournee));
     }
     for (const S of synergies) if (!killed && weapon?.id === S.marker) z.dazed = S.duration * this.stats.duration;
     if (weapon) this.afterWeaponHit(z, Math.min(damage, hpBefore), killed);
@@ -745,6 +785,11 @@ export class Game {
   /** Effets d'objets qui vivent à chaque pas : minuteries, régénération, Écharpe, ardoise. */
   private updateItemEffects(dt: number) {
     const fx = this.effects.update(dt, this.stats.duration);
+    // Tournées du bar : celles qui finissent rendent ce qu'elles avaient prêté
+    for (const id of this.tournees.update(dt, this.ended)) {
+      if (id === 'sousBock') this.stats.luck -= TOURNEE_FX.sousBock.luck;
+      this.events.emit('tourneeEnded', { id });
+    }
     if (fx.shieldUp) this.events.emit('foamShieldUp', {});
     if (fx.happyStart) this.events.emit('happyHourStarted', { duration: this.effects.happyLeft });
     if (fx.happyEnd) this.events.emit('happyHourEnded', {});
@@ -753,7 +798,7 @@ export class Game {
     // Ardoise du bar : la part de la dette qui tombe maintenant
     if (fx.owedNow > 0 && !this.cheats.god) this.health.hp = Math.max(0, this.health.hp - fx.owedNow);
     // Régénération ; Casquette à bière : en plus quand le joueur ne bouge pas
-    let regen = this.stats.regen;
+    let regen = this.stats.regen + this.tournees.regen;
     if (this.effects.power.standRegen > 0 && this.player.velocity.length() < ITEM_EFFECTS.standRegen.still) regen += this.effects.power.standRegen;
     if (regen > 0) this.health.heal(regen * dt);
     // Écharpe de supporter : entouré, il court plus vite (et prend l'armure en plus)
@@ -762,8 +807,9 @@ export class Game {
       let n = 0;
       for (const o of this.horde.near(this.player.pos, C.radius, this.around)) if (o.pos.distanceTo(this.player.pos) < C.radius && ++n >= C.count) break;
       this.effects.crowded = n >= C.count;
-      this.player.speed = BASE_SPEED * this.stats.moveSpeed * (this.effects.crowded ? 1 + this.effects.power.crowdBoost : 1);
     }
+    // Vitesse : stat du joueur, Écharpe entouré, Péket
+    this.player.speed = BASE_SPEED * this.stats.moveSpeed * (this.effects.crowded ? 1 + this.effects.power.crowdBoost : 1) * this.tournees.speedMul;
     // Sifflet d'arbitre : étourdit les ennemis proches
     if (fx.whistle) {
       const W = ITEM_EFFECTS.whistle, radius = W.radius * this.stats.size;
@@ -817,6 +863,18 @@ export class Game {
   /** Le joueur encaisse un coup de `z` (au contact ou à distance ; null : un piège), venant de la direction `dir`. */
   private hurtPlayer(z: Zombie | null, dir: THREE.Vector3, baseDamage: number) {
     let damage = baseDamage * this.mods.damage;
+    // Casque à bière : rien ne passe, l'ennemi au contact rebondit
+    if (this.tournees.helmet && !this.health.dead) {
+      if (z && !z.dead) {
+        const push = z.pos.clone().sub(this.player.pos);
+        const up = this.tmp.copy(z.pos).normalize();
+        push.addScaledVector(up, -push.dot(up));
+        if (push.lengthSq() < 1e-6) push.copy(this.player.facing);
+        z.damage(0, push.normalize(), TOURNEE_FX.casque.knock);
+      }
+      this.events.emit('playerHurt', { zombie: z, dir, damage: 0, hp: this.health.hp, blocked: true });
+      return;
+    }
     // Mousse épaisse : le bouclier absorbe le coup entier (puis courte invulnérabilité, comme un coup)
     if (!this.cheats.god && this.health.invuln <= 0 && !this.health.dead && this.effects.absorb()) {
       this.health.invuln = PLAYER_STATS.invulnTime;
@@ -947,6 +1005,7 @@ export class Game {
     this.snackDrops.clear();
     this.lastCall.clear();
     this.bellDrops.clear();
+    this.tournees.clear();
     this.items.length = 0;
     this.effects.reset();
     this.coinFrac = 0;

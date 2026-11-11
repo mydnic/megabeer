@@ -7,6 +7,8 @@ import { PLANET_RADIUS } from '../config/world';
 export type DropMotion = {
   radius: number; hover: number; bob: number; bobSpeed: number;
   startSpeed: number; attract: number; maxSpeed: number; collectDist: number; max: number;
+  /** Durée de vie au sol (s) : au-delà, l'objet pas encore aspiré disparaît (par défaut : jamais). */
+  life?: number;
 };
 
 /** Une goutte de bière (XP) : position, point de chute, valeur, et son état d'aspiration. */
@@ -49,6 +51,7 @@ export function createXpDrops(groundAt: (p: THREE.Vector3) => number, X: DropMot
       for (let i = drops.length - 1; i >= 0; i--) {
         const d = drops[i];
         d.age += dt;
+        if (X.life !== undefined && d.age > X.life && !d.flying && d.pull <= 0) { drops.splice(i, 1); continue; }
         if (!d.flying && d.pos.distanceTo(target) < range) d.flying = true;
         if (!d.flying && d.pull > 0) {
           // Aspirée de loin : elle glisse le long du sol vers le joueur (grand cercle), à hauteur de lévitation

@@ -97,9 +97,11 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    tout ce qui traîne ») : 4 grandes cloches sur la planète (faisceau doré, points sur la mini-carte, au bord quand elles
    sont loin), sonnées à E / X, et une clochette rare lâchée par les ennemis (`bellDropChance`, la Chance l'augmente) :
    toute l'XP et les capsules glissent le long du sol jusqu'au Buveur (`pullAll` de `pickups/xpDrops.ts`). Réglages
-   `config/lastCall.ts`, DEV « Clochette devant ». Tests : `createTestGame(seed, { bellDrops: 'always' })`. **Checkpoint
-   suivant : les Tournées du bar** (bonus temporaires de 15 s lâchés par les ennemis, vitesse, bouclier... à thème de bar ;
-   proposer la liste à l'utilisateur, il ne veut pas une copie de Megabonk). Ensuite seulement : caler la run de 10 min.
+   `config/lastCall.ts`, DEV « Clochette devant ». Tests : `createTestGame(seed, { bellDrops: 'always' })`.
+   **Tournées du bar faites le 2026-11-11, à valider en jeu** : 8 bonus lâchés par les ennemis (liste dans le journal du
+   GDD), `game/tournees.ts`, `config/tournees.ts`, icônes `ui/tourneeIcons.ts` (aussi en texture au sol par
+   `iconDataUrl`), HUD `ui/tourneeHud.ts`, DEV « Tournée devant ». Tests : `createTestGame(seed, { tournees: 'peket' })`,
+   `game.takeTournee(id)`. Ensuite : caler la run de 10 min (l'utilisateur fait de vraies parties, je lis les journaux).
    **Poubelles et coffre piégé faits et validés par l'utilisateur le 2026-11-11** : 150 poubelles
    (modèle « Trashcan » de Poly by Google fourni par l'utilisateur, `props.py --variant poubelle`), cassées au contact
    ou par une arme (projectile, impact au sol, explosion) ; butin XP / capsules / rarement un cornet de frites (+20 PV,

@@ -8,6 +8,8 @@ import { ENEMIES, type EnemyId } from '../config/enemies';
 import type { createMusic } from '../audio/music';
 import type { createRunLog } from '../dev/runLog';
 import type { Game } from '../game/game';
+import { TOURNEE_IDS } from '../game/tournees';
+import type { TourneeId } from '../config/tournees';
 
 /**
  * Panneau DEV (yarn dev seulement, importé dynamiquement : absent du build). Toutes ses actions
@@ -73,6 +75,13 @@ export async function wireDevTools(game: Game, d: {
       const p = game.player;
       game.bins.add(p.pos.clone().addScaledVector(p.facing, 4));
       runLog.event('dev', 'bin');
+    },
+    tournees: TOURNEE_IDS,
+    dropTournee(id) {
+      if (!inRun()) return;
+      const p = game.player;
+      game.tournees.drops.drop(p.pos.clone().addScaledVector(p.facing, 7), TOURNEE_IDS.indexOf(id as TourneeId));
+      runLog.event('dev', 'tournee', id);
     },
     dropBell() {
       if (!inRun()) return;

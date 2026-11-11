@@ -27,6 +27,8 @@ import { createRunHud } from '../ui/runHud';
 import { toRow } from '../ui/statFormat';
 import { createWeaponHud, type WeaponSlot } from '../ui/weaponHud';
 import { createItemHud } from '../ui/itemHud';
+import { createTourneeHud } from '../ui/tourneeHud';
+import { TOURNEES } from '../config/tournees';
 import { ITEM_EFFECTS } from '../config/items';
 import type { WeaponId } from '../weapons/weapon';
 import type { Planet } from './planet';
@@ -58,12 +60,14 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   const banner = createEventBanner();
   const weaponHud = createWeaponHud();
   const itemHud = createItemHud();
+  const tourneeHud = createTourneeHud();
   const setHud = (v: boolean) => {
     healthHud.setVisible(v);
     alcoholHud.setVisible(v);
     runHud.setVisible(v);
     weaponHud.setVisible(v);
     itemHud.setVisible(v);
+    tourneeHud.setVisible(v);
     minimap.setVisible(v);
   };
   const icons = new Map<WeaponId, string>();
@@ -125,6 +129,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   game.events.on('revived', () => { banner.show('Seconde tournée !', 'Tu reviens à la vie'); banner.pulse(); banner.hideAfter(2.5); });
   game.events.on('freeChestSpawned', () => { banner.show('Coffre gratuit !', 'Le Bonnet du Père Noël en a posé un près de toi'); banner.hideAfter(2.5); });
   game.events.on('lastCallRung', () => { banner.show(LAST_CALL_TEXT.banner, LAST_CALL_TEXT.sub); banner.pulse(); banner.hideAfter(2.5); });
+  game.events.on('tourneeTaken', ({ id }) => { const T = TOURNEES[id]; banner.show(`${T.name} !`, T.text); banner.pulse(); banner.hideAfter(2); });
   game.events.on('died', () => banner.clear());
   game.events.on('home', () => banner.clear());
   game.events.on('levelUpOffered', ({ level, cards }) => levelUp.show(level, cards));
@@ -180,6 +185,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
       runHud.update(game.runTime, game.kills, game.coins);
       weaponHud.update(slots());
       itemHud.update(game.items);
+      tourneeHud.update((id) => game.tournees.left(id));
       if (game.phase === 'dead') deathBanner.update(game.deadTime, game.runTime, game.kills);
       // Espace ou bouton A : Jouer sur l'accueil, Continuer sur le bilan de mort
       if (input.jumpPressed) {
