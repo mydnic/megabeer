@@ -19,7 +19,8 @@ export const RENDER = {
   /** Étalonnage (appliqué avant le tone mapping). */
   grade: { saturation: 1.12, contrast: 1.06, lift: [0.004, 0.006, 0.014] as const, gain: [1.05, 1.0, 0.93] as const, vignette: 0.32 },
   /** Ombres : taille de la carte, zone couverte autour du joueur, flou des bords. */
-  shadow: { mapSize: 4096, extent: 40, softness: 3.5, bias: -0.0004, normalBias: 0.05 },
+  /** `minIntensity` : sous cette intensité, l'astre ne recalcule plus ses ombres (invisibles de toute façon). */
+  shadow: { mapSize: 4096, extent: 40, softness: 3.5, bias: -0.0004, normalBias: 0.05, minIntensity: 0.02 },
 } as const;
 
 /** Matériau par défaut du décor : plastique mat (aspect « maquette »). */

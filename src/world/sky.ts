@@ -34,6 +34,7 @@ export function createSky(scene: THREE.Scene) {
     l.shadow.bias = S.bias;
     l.shadow.normalBias = S.normalBias;
     l.shadow.radius = S.softness; // bords d'ombre doux
+    l.shadow.needsUpdate = true; // calculées au moins une fois, même si l'astre commence éteint
     scene.add(l, l.target);
     return l;
   };
@@ -158,6 +159,10 @@ export function createSky(scene: THREE.Scene) {
 
     sun.intensity = L.sunIntensity * day;
     moon.intensity = L.moonIntensity * (1 - day);
+    // Un astre éteint ne recalcule pas ses ombres : sinon toute la scène est dessinée une fois de plus pour rien
+    // (les deux ne brillent ensemble qu'à l'aube et au crépuscule)
+    sun.shadow.autoUpdate = sun.intensity > RENDER.shadow.minIntensity;
+    moon.shadow.autoUpdate = moon.intensity > RENDER.shadow.minIntensity;
     [sun, moon].forEach((l, i) => {
       const b = bases[i];
       const sx = Math.round(playerPos.dot(b.x) / texel) * texel;

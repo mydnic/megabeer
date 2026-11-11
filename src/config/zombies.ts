@@ -83,6 +83,12 @@ export const ZOMBIE_HURT = {
   corpseTime: 0.8,
   sinkTime: 1.0,
   sinkDepth: 1.2,
+  /**
+   * Corps au sol en même temps, au plus : au-delà (horde qui meurt en chaîne), les plus anciens morts depuis au
+   * moins `corpseMinTime` s disparaissent tout de suite. Chaque corps coûte autant à dessiner qu'un ennemi debout.
+   */
+  maxCorpses: 120,
+  corpseMinTime: 0.45,
   /** Recul plus fort sur le coup fatal (multiplicateur). */
   deathKnock: 1.6,
 } as const;
@@ -101,6 +107,8 @@ export const HIT_FEEDBACK = {
 export const ZOMBIE_VISUAL = {
   /** Place réservée au départ sur la carte graphique par modèle (elle double quand elle est pleine). */
   initialPerModel: 600,
+  /** Rayon (m, pour un modèle de taille 1) de la bulle testée contre le champ de la caméra : hors champ, l'ennemi n'est pas dessiné. */
+  cullMargin: 4,
   /** Images par seconde des animations pré-calculées pour la carte graphique. */
   bakeFps: 60,
   /** Clips du glTF utilisés pour chaque état (premier trouvé dans la liste). */

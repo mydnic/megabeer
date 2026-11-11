@@ -15,7 +15,8 @@ export function createShards(scene: THREE.Scene, groundAt: (p: THREE.Vector3) =>
   mesh.count = 0;
   scene.add(mesh);
 
-  type Shard = { pos: THREE.Vector3; vel: THREE.Vector3; rot: THREE.Quaternion; spin: THREE.Vector3; size: number; life: number; max: number };
+  /** `ground` : rayon du sol sous la gerbe, mesuré une fois à l'impact (les morceaux retombent à un mètre ou deux). */
+  type Shard = { pos: THREE.Vector3; vel: THREE.Vector3; rot: THREE.Quaternion; spin: THREE.Vector3; size: number; life: number; max: number; ground: number };
   const shards: Shard[] = [];
   const up = new THREE.Vector3(), tmp = new THREE.Vector3(), q = new THREE.Quaternion(), m = new THREE.Matrix4(), s = new THREE.Vector3();
 
@@ -23,6 +24,7 @@ export function createShards(scene: THREE.Scene, groundAt: (p: THREE.Vector3) =>
     /** Gerbe au point d'impact ; `dir` = direction du coup (les morceaux partent surtout vers l'avant). */
     burst(pos: THREE.Vector3, dir: THREE.Vector3) {
       up.copy(pos).normalize();
+      const ground = groundAt(pos);
       for (let i = 0; i < G.perBurst; i++) {
         if (shards.length >= G.max) shards.shift();
         const v = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().multiplyScalar(G.speed * (0.4 + Math.random() * 0.8));
@@ -30,7 +32,7 @@ export function createShards(scene: THREE.Scene, groundAt: (p: THREE.Vector3) =>
         shards.push({
           pos: pos.clone(), vel: v, rot: new THREE.Quaternion().random(),
           spin: new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(G.spin),
-          size: G.size * (0.5 + Math.random()), life: 0, max: G.life * (0.7 + Math.random() * 0.6),
+          size: G.size * (0.5 + Math.random()), life: 0, max: G.life * (0.7 + Math.random() * 0.6), ground,
         });
       }
     },
@@ -42,8 +44,8 @@ export function createShards(scene: THREE.Scene, groundAt: (p: THREE.Vector3) =>
         up.copy(p.pos).normalize();
         p.vel.addScaledVector(up, -PLAYER_PHYSICS.gravity * dt);
         p.pos.addScaledVector(p.vel, dt);
-        const g = groundAt(p.pos) + p.size * 0.3;
-        if (p.pos.length() < g) {
+        const g = p.ground + p.size * 0.3;
+        if (p.pos.lengthSq() < g * g) {
           p.pos.setLength(g);
           const vr = p.vel.dot(up);
           if (vr < 0) p.vel.addScaledVector(up, -vr * 1.35);

@@ -140,17 +140,28 @@ let last = performance.now();
 const focusPoint = new THREE.Vector3();
 const projectiles = (id: WeaponId) => game.loadout.weapons.filter((w) => w.id === id).flatMap((w) => w.projectiles);
 
+/**
+ * Temps passé dans chaque partie d'une image (ms, lissé), affiché par F3 : noyau (simulation), interface,
+ * vues (recopie de l'état vers la carte graphique), effets (particules), monde (caméra, ciel, décor), rendu.
+ */
+const cost = { noyau: 0, interface: 0, vues: 0, effets: 0, monde: 0, rendu: 0 };
+let mark = 0;
+const lap = (k: keyof typeof cost) => { const t = performance.now(); cost[k] += (t - mark - cost[k]) * 0.05; mark = t; };
+
 function frame(now: number) {
   const realDt = Math.min(0.1, (now - last) / 1000);
   last = now;
   renderer.info.reset();
   const input = readInput();
+  mark = performance.now();
   const dt = game.step(realDt, input);
+  lap('noyau');
   screens.update(realDt, input);
+  lap('interface');
 
   const player = game.player;
   buveur.update(dt, player);
-  hordeView.sync(game.horde.zombies);
+  hordeView.sync(game.horde.zombies, camera);
   xpView.sync(game.xp.drops);
   coinView.sync(game.coinDrops.drops);
   for (const id of Object.keys(bottleViews) as WeaponId[]) bottleViews[id].sync(projectiles(id));
@@ -160,6 +171,7 @@ function frame(now: number) {
   dazedView.sync(game.horde.zombies);
   pumpsView.sync(game.pumps.list, game.pumps.filling ? game.pumps.focus : null);
   chestsView.sync(game.chests.list);
+  lap('vues');
   shards.update(dt);
   wine.update(dt);
   wood.update(dt);
@@ -188,6 +200,7 @@ function frame(now: number) {
   damageNumbers.update(realDt);
   pint.update(dt);
   effects.update();
+  lap('effets');
 
   rig.update(realDt, input, player);
   sky.update(dt, player.renderPos, camera);
@@ -197,7 +210,9 @@ function frame(now: number) {
   // Mise au point de la profondeur de champ sur le perso
   pipeline.focusDistance = camera.position.distanceTo(focusPoint.copy(player.renderPos).addScaledVector(player.upDir, 1.1));
   // Accueil : écran séparé, le monde n'est pas rendu
+  lap('monde');
   if (game.phase !== 'home') pipeline.render();
+  lap('rendu');
 
   fpsAcc += dt; fpsN++;
   if (fpsAcc > 0.5) { fps = fpsN / fpsAcc; fpsAcc = 0; fpsN = 0; }
@@ -206,6 +221,7 @@ function frame(now: number) {
     debugEl.textContent = [
       `FPS ${fps.toFixed(0)}   triangles ${renderer.info.render.triangles.toLocaleString('fr')}`,
       `Altitude ${heightAt(player.upDir).toFixed(1)}   au sol ${player.onGround ? 'oui' : 'non'}`,
+      `ms par image : ${(Object.keys(cost) as (keyof typeof cost)[]).map((k) => `${k} ${cost[k].toFixed(1)}`).join('  ')}`,
       'ZQSD bouger, Espace sauter, souris caméra (clic), molette zoom, F3 masquer',
     ].join('\n');
   }
@@ -214,7 +230,7 @@ function frame(now: number) {
 requestAnimationFrame(frame);
 
 if (import.meta.env.DEV) {
-  Object.assign(window, { __game: { game, vfx, sprites, rings, player: game.player, rig, camera, buveur, sky, heightAt, THREE, pipeline, renderer, planet, decor: planet.decor, scene, music, horde: game.horde, health: game.health, progression: game.progression, playerStats: game.stats, canette: game.loadout.weapons[0], setTimeScale: (k: number) => { game.devTimeScale = k; } } });
+  Object.assign(window, { __game: { game, cost, vfx, sprites, rings, player: game.player, rig, camera, buveur, sky, heightAt, THREE, pipeline, renderer, planet, decor: planet.decor, scene, music, horde: game.horde, health: game.health, progression: game.progression, playerStats: game.stats, canette: game.loadout.weapons[0], setTimeScale: (k: number) => { game.devTimeScale = k; } } });
   const { wireDevTools } = await import('./app/devTools');
   await wireDevTools(game, { music, runLog, seed: () => planet.seed });
 }

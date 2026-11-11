@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { kamikazeSwell } from './kamikazeView';
 import { PROTECTOR_LOOK as PL } from '../config/enemies';
-import { PLANET_RADIUS } from '../config/world';
 import { ZOMBIE_MODELS, ZOMBIE_VISUAL as V, type ZombieModel } from '../config/zombies';
 import { LAYER_CHARACTER } from '../render/materials';
 import type { Zombie } from './zombie';
@@ -87,11 +86,13 @@ export function createHordeView(scene: THREE.Scene, lib: ZombieLibrary) {
     for (const z of zombies) {
       if (z.dead) continue;
       for (const p of protectors) {
-        if (p !== z && p.pos.angleTo(z.pos) * PLANET_RADIUS < p.def.protector!.radius) { shielded.add(z); break; }
+        const r = p.def.protector!.radius;
+        if (p !== z && p.pos.distanceToSquared(z.pos) < r * r) { shielded.add(z); break; }
       }
     }
   }
 
+  const frustum = new THREE.Frustum(), view = new THREE.Matrix4(), ball = new THREE.Sphere();
   const basis = new THREE.Matrix4();
   const right = new THREE.Vector3();
   const up = new THREE.Vector3();
@@ -100,13 +101,20 @@ export function createHordeView(scene: THREE.Scene, lib: ZombieLibrary) {
 
   return {
     /** Instances : matrice (repère local, taille du modèle) et lignes d'animation de chaque zombie. */
-    sync(zombies: readonly Zombie[]) {
+    sync(zombies: readonly Zombie[], camera?: THREE.Camera) {
       fit(zombies);
       findShielded(zombies);
+      // Hors du champ de la caméra (avec une marge, pour les ombres portées et le mouvement) : pas dessiné
+      if (camera) frustum.setFromProjectionMatrix(view.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
       const pulse = 1 + PL.bodyPulseAmount * Math.sin(clock.getElapsedTime() * PL.bodyPulse * Math.PI * 2);
       for (const c of crowds) c.mesh.count = 0;
       for (const z of zombies) {
         if (z.gone) continue; // un kamikaze qui vient d'exploser
+        if (camera) {
+          ball.center.copy(z.pos);
+          ball.radius = V.cullMargin * z.kind.scale;
+          if (!frustum.intersectsSphere(ball)) continue;
+        }
         const c = byModel.get(z.model)!;
         const i = c.mesh.count++;
         up.copy(z.pos).normalize();

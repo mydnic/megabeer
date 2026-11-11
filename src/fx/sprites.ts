@@ -102,7 +102,7 @@ function layer(scene: THREE.Scene, smoke: boolean, max: number) {
   mesh.layers.set(LAYER_SKY);
   mesh.renderOrder = smoke ? 3 : 4;
   scene.add(mesh);
-  return { geo, pos, color, data, list: [] as Particle[], max };
+  return { geo, pos, color, data, list: [] as Particle[], free: [] as Particle[], cursor: 0, max };
 }
 
 export function createSprites(scene: THREE.Scene) {
@@ -116,7 +116,7 @@ export function createSprites(scene: THREE.Scene) {
     for (let i = 0; i < list.length; i++) {
       const p = list[i];
       p.life += dt;
-      if (p.life >= p.max) continue;
+      if (p.life >= p.max) { L.free.push(p); continue; }
       if (p.gravity !== 0) p.vel.addScaledVector(up.copy(p.pos).normalize(), -PLAYER_PHYSICS.gravity * p.gravity * dt);
       if (p.drag > 0) p.vel.multiplyScalar(Math.max(0, 1 - p.drag * dt));
       p.pos.addScaledVector(p.vel, dt);
@@ -142,12 +142,21 @@ export function createSprites(scene: THREE.Scene) {
     /** Ajoute une particule en `pos`. Au-delà de la réserve, la plus ancienne laisse sa place. */
     emit(pos: THREE.Vector3, s: SpriteSpec) {
       const L = s.kind === 'smoke' ? smokes : lights;
-      if (L.list.length >= L.max) L.list.shift();
-      L.list.push({
-        pos: pos.clone(), vel: (s.vel ?? ZERO).clone(), color: new THREE.Color(s.color), kind: KIND[s.kind],
-        size: s.size, endSize: s.endSize ?? s.size, life: 0, max: s.life, gravity: s.gravity ?? 0, drag: s.drag ?? 0,
-        intensity: s.intensity ?? 1, rot: s.rot ?? 0, spin: s.spin ?? 0,
-      });
+      // Réserve pleine : la nouvelle remplace une ancienne, à tour de rôle (jamais de décalage du tableau)
+      let p: Particle;
+      if (L.list.length >= L.max) p = L.list[L.cursor = (L.cursor + 1) % L.max];
+      else {
+        p = L.free.pop() ?? { pos: new THREE.Vector3(), vel: new THREE.Vector3(), color: new THREE.Color(), kind: 0, size: 0, endSize: 0, life: 0, max: 0, gravity: 0, drag: 0, intensity: 1, rot: 0, spin: 0 };
+        L.list.push(p);
+      }
+      p.pos.copy(pos);
+      p.vel.copy(s.vel ?? ZERO);
+      p.color.set(s.color);
+      p.kind = KIND[s.kind];
+      p.size = s.size; p.endSize = s.endSize ?? s.size;
+      p.life = 0; p.max = s.life;
+      p.gravity = s.gravity ?? 0; p.drag = s.drag ?? 0;
+      p.intensity = s.intensity ?? 1; p.rot = s.rot ?? 0; p.spin = s.spin ?? 0;
     },
     update(dt: number) {
       write(lights, dt);

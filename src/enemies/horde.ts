@@ -81,11 +81,15 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
    * Recolle un zombie au sol après un déplacement : poussé hors du décor puis posé dessus ; un
    * fantôme traverse le décor et reste au niveau du relief.
    */
-  function settle(z: Zombie) {
-    if (z.def.ghost) { z.pos.setLength(PLANET_RADIUS + heightAt(tmp.copy(z.pos).normalize())); return; }
-    decor?.resolve(z.pos, M.radius);
-    snap(z.pos);
+  function settle(z: Zombie, fresh = true) {
+    // Une image sur deux, il garde la hauteur de sol de l'image d'avant (il a bougé de quelques centimètres) :
+    // la hauteur du relief est le calcul le plus cher de la horde
+    if (!fresh && z.groundR > 0) { if (!z.def.ghost) decor?.resolve(z.pos, M.radius); z.pos.setLength(z.groundR); return; }
+    if (z.def.ghost) z.pos.setLength(PLANET_RADIUS + heightAt(tmp.copy(z.pos).normalize()));
+    else { decor?.resolve(z.pos, M.radius); snap(z.pos); }
+    z.groundR = z.pos.length();
   }
+  let tick = 0;
 
   /** Pose un zombie sur le sol, à la direction donnée, regardant vers `facing`. */
   function spawn(enemy: EnemyId, dir: THREE.Vector3, facing: THREE.Vector3) {
@@ -270,8 +274,11 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
     update(dt: number) {
       for (const z of zombies) step(z, dt, player.pos);
       separate();
-      for (const z of zombies) {
-        settle(z);
+      tick++;
+      for (let i = 0; i < zombies.length; i++) {
+        const z = zombies[i];
+        // Un corps qui ne glisse plus reste où il est
+        if (!z.dead || z.knockVel.lengthSq() > 1e-4) settle(z, ((tick + i) & 1) === 0);
         if (z.def.ghost) z.ghostClock += dt;
         z.update(dt);
         // Mèche du kamikaze : à zéro, il explose (même sonné)
@@ -296,6 +303,16 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
           push.addScaledVector(up, -push.dot(up));
           if (push.lengthSq() < 1e-6) push.copy(z.facing);
           api.onHit?.(z, push.normalize());
+        }
+      }
+      // Trop de corps au sol : les plus anciens disparaissent tout de suite
+      let corpses = 0;
+      for (const z of zombies) if (z.dead && !z.gone) corpses++;
+      if (corpses > H.maxCorpses) {
+        let extra = corpses - H.maxCorpses;
+        for (const z of zombies) {
+          if (extra <= 0) break;
+          if (z.dead && !z.gone && z.deadTime > H.corpseMinTime) { z.gone = true; extra--; }
         }
       }
       // Corps entièrement enfoncés : retirés

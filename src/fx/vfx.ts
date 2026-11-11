@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { VFX as V, type ExplosionLook } from '../config/fx';
 import { LAYER_SKY } from '../render/materials';
-import type { Sprites } from './sprites';
+import type { Sprites, SpriteSpec } from './sprites';
 
 /**
  * Recettes d'effets visuels, composées de particules (`fx/sprites.ts`) et de colonnes de lumière :
@@ -11,6 +11,8 @@ import type { Sprites } from './sprites';
 export function createVfx(scene: THREE.Scene, sprites: Sprites) {
   const up = new THREE.Vector3(), dir = new THREE.Vector3(), vel = new THREE.Vector3(), at = new THREE.Vector3();
   const rand = (a: number, b: number) => a + Math.random() * (b - a);
+  /** Réglage de la traînée, réutilisé à chaque appel (lancée des centaines de fois par image). */
+  const trailSpec: SpriteSpec = { kind: 'glow', color: 0, size: 0, endSize: 0, life: V.trail.life, intensity: V.trail.intensity };
   /**
    * Nombre de particules à lancer pour une recette qui en veut `n` : tout tant que l'écran est calme, de moins
    * en moins quand la réserve se remplit (horde qui meurt en chaîne), pour que l'action reste lisible.
@@ -156,7 +158,10 @@ export function createVfx(scene: THREE.Scene, sprites: Sprites) {
 
     /** Traînée d'un projectile en vol : une petite lueur qui reste derrière lui. */
     trail(pos: THREE.Vector3, color: number, size: number = V.trail.size) {
-      sprites.emit(pos, { kind: 'glow', color, size, endSize: 0, life: V.trail.life, intensity: V.trail.intensity });
+      // Des centaines de projectiles : les traînées s'effacent d'elles-mêmes au-delà d'une part de la réserve
+      if (sprites.load(false) > V.trail.maxLoad) return;
+      trailSpec.color = color; trailSpec.size = size;
+      sprites.emit(pos, trailSpec);
     },
 
     /** Scintillement des objets à ramasser : de temps en temps, une étoile s'allume sur l'un d'eux. */

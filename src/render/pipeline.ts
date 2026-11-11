@@ -5,6 +5,7 @@ import { GTAOPass } from 'three/examples/jsm/postprocessing/GTAOPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { BokehPass } from 'three/examples/jsm/postprocessing/BokehPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { RENDER } from '../config/visual';
 import { LAYER_CHARACTER, LAYER_SKY } from './materials';
@@ -95,7 +96,7 @@ export class Pipeline {
     this.composer.addPass(this.bloom);
 
     this.dof = new BokehPass(scene, this.worldCam, { focus: 16, aperture: RENDER.dof.aperture, maxblur: RENDER.dof.maxBlur });
-    patchVat((this.dof as unknown as { _materialDepth: THREE.Material })._materialDepth, 'dof-depth');
+    this.shareDepth();
     this.composer.addPass(this.dof);
 
     this.grade = new ShaderPass(GradeShader);
@@ -108,6 +109,37 @@ export class Pipeline {
     this.composer.addPass(this.grade);
 
     this.composer.addPass(new OutputPass());
+  }
+
+  /**
+   * La profondeur de champ redessinait toute la scène (décor et horde) rien que pour sa profondeur. Elle lit
+   * maintenant celle que l'occlusion ambiante vient de calculer avec la même caméra : une passe plein écran la
+   * recopie dans son format (profondeur empaquetée), soit un cinquième de géométrie en moins à chaque image.
+   */
+  private shareDepth() {
+    const pack = new THREE.ShaderMaterial({
+      uniforms: { tDepth: { value: this.ao.depthTexture } },
+      vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`,
+      fragmentShader: `#include <packing>
+uniform sampler2D tDepth; varying vec2 vUv; void main() { gl_FragColor = packDepthToRGBA(texture2D(tDepth, vUv).x); }`,
+      depthTest: false, depthWrite: false,
+    });
+    const quad = new FullScreenQuad(pack);
+    const dof = this.dof as unknown as {
+      _renderTargetDepth: THREE.WebGLRenderTarget; _fsQuad: FullScreenQuad; uniforms: Record<string, THREE.IUniform>; renderToScreen: boolean;
+      camera: THREE.PerspectiveCamera; render: (r: THREE.WebGLRenderer, w: THREE.WebGLRenderTarget, rd: THREE.WebGLRenderTarget) => void;
+    };
+    dof.render = (renderer, writeBuffer, readBuffer) => {
+      pack.uniforms.tDepth.value = this.ao.depthTexture;
+      renderer.setRenderTarget(dof._renderTargetDepth);
+      quad.render(renderer);
+      dof.uniforms.tColor.value = readBuffer.texture;
+      dof.uniforms.nearClip.value = dof.camera.near;
+      dof.uniforms.farClip.value = dof.camera.far;
+      renderer.setRenderTarget(dof.renderToScreen ? null : writeBuffer);
+      if (!dof.renderToScreen) renderer.clear();
+      dof._fsQuad.render(renderer);
+    };
   }
 
   setSize(w: number, h: number) {
