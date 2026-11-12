@@ -34,6 +34,9 @@ const CSS = `
   padding: 6px 26px 9px; border: 3px solid #1a120c; border-radius: 16px; background: rgba(42,22,8,.75);
   box-shadow: 0 4px 0 #1a120c; transition: transform .08s; }
 .home-options:hover, .home-options:focus-visible { transform: scale(1.06); outline: none; background: rgba(90,58,28,.9); }
+.home-row { position: relative; z-index: 1; display: flex; gap: 14px; margin-top: -2vh; }
+.home-row .home-options { margin-top: 0; }
+.home-shop { color: #8fe07a; }
 .home-hint { position: relative; z-index: 1; color: #f3e6cf; font-size: 16px; letter-spacing: .04em; margin-top: -2vh;
   text-shadow: -2px 0 #1a120c, 2px 0 #1a120c, 0 -2px #1a120c, 0 2px #1a120c; }
 `;
@@ -41,23 +44,25 @@ const CSS = `
 /**
  * Écran d'accueil provisoire (GDD section 16), séparé du jeu : fond opaque, le monde n'est ni montré
  * ni rendu tant qu'on y est ; la run (et le Buveur sur la planète) commence avec Jouer. Sera remplacé
- * par l'accueil dans l'espace. Boutons : Jouer, Options ; les autres (boutique, skill tree, persos...)
+ * par l'accueil dans l'espace. Boutons : Jouer, Boutique, Options ; les autres (skill tree, persos...)
  * apparaîtront au fil des déblocages.
  */
-export function createHomeScreen(onPlay: () => void, onOptions: () => void) {
+export function createHomeScreen(onPlay: () => void, onOptions: () => void, onShop: () => void) {
   const style = document.createElement('style');
   style.textContent = CSS;
   document.head.appendChild(style);
   const el = document.createElement('div');
   el.className = 'home';
-  el.innerHTML = `<div class="home-logo">MEGABEER</div><button class="home-play">Jouer</button><div class="home-hint">Espace ou A</div><button class="home-options">Options</button>`;
+  el.innerHTML = `<div class="home-logo">MEGABEER</div><button class="home-play">Jouer</button><div class="home-hint">Espace ou A</div><div class="home-row"><button class="home-options home-shop">Boutique</button><button class="home-options home-opt">Options</button></div>`;
   document.body.appendChild(el);
   const btn = el.querySelector<HTMLButtonElement>('.home-play')!;
   btn.addEventListener('click', (e) => { e.stopPropagation(); onPlay(); });
-  const opt = el.querySelector<HTMLButtonElement>('.home-options')!;
+  const opt = el.querySelector<HTMLButtonElement>('.home-opt')!;
   opt.addEventListener('click', (e) => { e.stopPropagation(); onOptions(); });
-  // Espace sur Options ouvre le panneau, sans lancer la run
-  opt.addEventListener('keydown', (e) => { if (e.code === 'Space' || e.code === 'Enter') e.stopPropagation(); });
+  const shop = el.querySelector<HTMLButtonElement>('.home-shop')!;
+  shop.addEventListener('click', (e) => { e.stopPropagation(); onShop(); });
+  // Espace sur Options ou Boutique ouvre le panneau, sans lancer la run
+  for (const b of [opt, shop]) b.addEventListener('keydown', (e) => { if (e.code === 'Space' || e.code === 'Enter') e.stopPropagation(); });
 
   return {
     root: el,

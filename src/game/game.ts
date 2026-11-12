@@ -11,6 +11,8 @@ import type { Zombie, ZombieTimings } from '../enemies/zombie';
 import { createXpDrops } from '../pickups/xpDrops';
 import { COIN_DROPS, COINS } from '../config/coins';
 import { TUNA_DROPS, TUNAS } from '../config/tunas';
+import type { CardOptionId } from '../config/shop';
+import type { RunUnlocks } from '../meta/shop';
 import { createEnemyShots, type EnemyShot } from '../enemies/enemyShots';
 import { PLANET_RADIUS } from '../config/world';
 import { PlayerController } from '../player/controller';
@@ -19,7 +21,7 @@ import { Progression } from '../player/progression';
 import type { DecorCollider } from '../world/decor/collider';
 import type { ThrowRig, Weapon, WeaponContext, WeaponId } from '../weapons/weapon';
 import { Emitter } from './emitter';
-import { applyCard, rollCards, type Card } from './levelUpCards';
+import { applyCard, cardKey, rollCards, type Card } from './levelUpCards';
 import { WEAPON_FACTORIES } from '../weapons/registry';
 import { SYNERGIES } from '../config/weapons';
 import { activeSynergies, synergiesCompletedBy, type SynergyId } from './synergies';
@@ -76,6 +78,10 @@ export type GameEvents = {
   levelGained: { level: number };
   /** Cartes proposées ; `first` : premier écran d'une série (les suivantes s'enchaînent). */
   levelUpOffered: { level: number; cards: Card[]; first: boolean };
+  /** Bannir : la carte est retirée du tirage pour la run ; `cards` : celles qui restent proposées. */
+  cardBanished: { card: Card; cards: Card[] };
+  /** Passer : le level-up est refusé (sans compensation). */
+  cardsSkipped: Record<string, never>;
   cardPicked: { card: Card };
   paused: Record<string, never>;
   resumed: Record<string, never>;
@@ -292,6 +298,17 @@ export class Game {
   menuPaused = false;
   /** Cartes de level-up proposées (null : pas d'écran de level-up). */
   offer: Card[] | null = null;
+  /** D'où vient l'offre en cours : level-up (les options de cartes ne marchent que là), pompe ou coffre. */
+  offerKind: 'level' | 'pump' | 'chest' | null = null;
+  /**
+   * Déblocages de la boutique pour la run (objets qui sortent des coffres, utilisations des options de cartes) ; null : tout
+   * est débloqué, sans option de cartes (tests, outils).
+   */
+  unlocks: RunUnlocks | null = null;
+  /** Utilisations restantes de Relancer, Bannir, Passer pendant la run. */
+  cardOptions: Record<CardOptionId, number> = { reroll: 0, banish: 0, skip: 0 };
+  /** Cartes bannies pour la run (clés de `cardKey`). */
+  readonly banned = new Set<string>();
   /** Durée de la run (s de jeu, sans la chute d'arrivée ni les pauses), et zombies tués. */
   runTime = 0;
   kills = 0;
@@ -453,6 +470,7 @@ export class Game {
   pickCard(card: Card) {
     if (!this.offer?.includes(card)) return;
     this.offer = null;
+    this.offerKind = null;
     if (card.kind === 'stat') this.applyStatBonus(card.stat, card.value);
     else if (card.kind === 'item') this.gainItem(card.item);
     else {
@@ -461,6 +479,42 @@ export class Game {
       this.progression.pending--;
     }
     this.events.emit('cardPicked', { card });
+    if (this.progression.pending > 0) this.offerCards(false);
+  }
+
+  /** Relancer (level-up seulement) : 3 nouvelles cartes à la place des proposées. */
+  rerollCards() {
+    if (this.offerKind !== 'level' || this.cardOptions.reroll <= 0) return false;
+    this.cardOptions.reroll--;
+    this.offerCards(false);
+    return true;
+  }
+
+  /** Bannir (level-up seulement) : la carte disparaît de l'offre et ne sortira plus de la run. */
+  banishCard(card: Card) {
+    if (this.offerKind !== 'level' || this.cardOptions.banish <= 0 || !this.offer?.includes(card)) return false;
+    this.cardOptions.banish--;
+    this.banned.add(cardKey(card));
+    this.offer = this.offer.filter((c) => c !== card);
+    this.events.emit('cardBanished', { card, cards: this.offer });
+    if (!this.offer.length) this.endLevelOffer();
+    return true;
+  }
+
+  /** Passer (level-up seulement) : ne rien prendre, sans compensation. */
+  skipCards() {
+    if (this.offerKind !== 'level' || this.cardOptions.skip <= 0) return false;
+    this.cardOptions.skip--;
+    this.events.emit('cardsSkipped', {});
+    this.endLevelOffer();
+    return true;
+  }
+
+  /** Le level-up est clos sans carte prise : le degré suivant s'enchaîne s'il en reste. */
+  private endLevelOffer() {
+    this.offer = null;
+    this.offerKind = null;
+    this.progression.pending--;
     if (this.progression.pending > 0) this.offerCards(false);
   }
 
@@ -474,6 +528,7 @@ export class Game {
       const { chest, price, rarity, cards } = this.reveal;
       this.reveal = null;
       this.offer = cards;
+      this.offerKind = 'chest';
       this.events.emit('chestOpened', { chest, price, rarity, cards });
     }
     const frozen = this.frozen;
@@ -510,6 +565,7 @@ export class Game {
         if (full) {
           const cards = rollStatCards(full.tier, PUMPS.choices, this.stats.luck);
           this.offer = cards;
+          this.offerKind = 'pump';
           this.events.emit('pumpFilled', { pump: full, cards });
         }
         // Coffres : celui à portée s'ouvre à la touche d'action, s'il y a de quoi payer
@@ -616,7 +672,7 @@ export class Game {
     if (!chest.free) this.chests.opened++;
     if (chest.trapped) { this.springTrap(chest, price); return; }
     const rarity = chest.rarity ?? rollTier(this.stats.luck);
-    const cards = rollItemCards(rarity, CHESTS.choices);
+    const cards = rollItemCards(rarity, CHESTS.choices, this.unlocks?.items);
     const duration = CHESTS.revealTime + CHESTS.revealPerRarity * rarity;
     this.reveal = { chest, price, rarity, cards, left: duration };
     this.events.emit('chestRevealing', { chest, rarity, duration });
@@ -1124,13 +1180,14 @@ export class Game {
   }
 
   private offerCards(first: boolean) {
-    // Armes débloquées pas encore équipées (toutes débloquées tant que la boutique TUNAS n'existe pas)
-    const available = this.loadout.full ? [] : (Object.keys(WEAPON_FACTORIES) as WeaponId[]).filter((id) => !this.loadout.has(id));
-    const cards = rollCards(LEVEL_UP_SCREEN.cards, this.stats.luck, this.loadout.weapons, available, LEVEL_UP_SCREEN.newWeaponBelow);
-    if (!cards.length) { this.progression.pending = 0; return; }
+    // Armes débloquées en boutique pas encore équipées
+    const available = this.loadout.full ? [] : (Object.keys(WEAPON_FACTORIES) as WeaponId[]).filter((id) => !this.loadout.has(id) && (!this.unlocks || this.unlocks.weapons.has(id)));
+    const cards = rollCards(LEVEL_UP_SCREEN.cards, this.stats.luck, this.loadout.weapons, available, LEVEL_UP_SCREEN.newWeaponBelow, (k) => this.banned.has(k));
+    if (!cards.length) { this.progression.pending = 0; this.offer = null; this.offerKind = null; return; }
     // Une nouvelle arme annonce les synergies qu'elle activerait
     for (const c of cards) if (c.kind === 'weapon') c.synergies = synergiesCompletedBy(c.weaponId, (x) => this.loadout.has(x));
     this.offer = cards;
+    this.offerKind = 'level';
     const level = this.progression.level - this.progression.pending + 1;
     this.events.emit('levelUpOffered', { level, cards, first });
   }
@@ -1165,7 +1222,11 @@ export class Game {
     this.arriving = false;
     this.menuPaused = false;
     this.offer = null;
+    this.offerKind = null;
     this.reveal = null;
+    this.banned.clear();
+    const o = this.unlocks?.options;
+    this.cardOptions = { reroll: o?.reroll ?? 0, banish: o?.banish ?? 0, skip: o?.skip ?? 0 };
     this.runTime = 0;
     this.kills = 0;
     this.acc = 0;

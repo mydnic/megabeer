@@ -134,7 +134,9 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    (connexion Discord, base Cloudflare D1), jeu en invité possible (progression dans le navigateur, rattachée au compte à
    la première connexion). Checkpoints : 1 compte et sauvegarde (runs, record, kills), 2 TUNAS, 3 boutique, 4 skill tree.
    **Checkpoint 1 (comptes) validé par l'utilisateur le 2026-11-12. Checkpoint 2 (TUNAS) fait le 2026-11-12, à valider en jeu**
-   (liasses de billets au sol, détail dans le journal du GDD ; réglages `config/tunas.ts`). Ensuite : 3 boutique.
+   (liasses de billets au sol, détail dans le journal du GDD ; réglages `config/tunas.ts`). **Checkpoint 3 (boutique) fait le
+   2026-11-12, à valider** : persos, armes et objets ; le skill tree (checkpoint 4) fera le reste, dont Relancer / Bannir /
+   Passer (déjà dans le noyau, sans bouton). Ensuite : 4 skill tree.
    Checkpoint 1, notes : base D1 `megabeer` (WEUR, id dans
    `wrangler.jsonc`, schéma appliqué), application Discord de l'utilisateur (Client ID dans `wrangler.jsonc`, secret
    posé par `wrangler secret put`, en local dans `.dev.vars`). Commandes Cloudflare : variables d'environnement

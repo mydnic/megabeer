@@ -138,9 +138,12 @@ export class Chests {
   }
 }
 
-/** Les objets proposés par un coffre de rareté `rarity` : `n` objets différents de cette rareté. */
-export function rollItemCards(rarity: number, n: number): ItemCard[] {
-  const left = (Object.keys(ITEMS) as ItemId[]).filter((id) => (ITEMS[id] as ItemDef).rarity === rarity);
+/**
+ * Les objets proposés par un coffre de rareté `rarity` : `n` objets différents de cette rareté, parmi ceux débloqués en
+ * boutique (`allowed`, tous par défaut).
+ */
+export function rollItemCards(rarity: number, n: number, allowed?: ReadonlySet<ItemId>): ItemCard[] {
+  const left = (Object.keys(ITEMS) as ItemId[]).filter((id) => (ITEMS[id] as ItemDef).rarity === rarity && (!allowed || allowed.has(id)));
   const cards: ItemCard[] = [];
   while (cards.length < n && left.length) cards.push({ kind: 'item', item: left.splice(Math.floor(Math.random() * left.length), 1)[0], rarity });
   return cards;

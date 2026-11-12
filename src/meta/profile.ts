@@ -16,11 +16,13 @@ export type Profile = {
   tunas: number;
   /** TUNAS gagnés depuis le début (dépensés compris). */
   totalTunas: number;
+  /** Achats de la boutique (`item:<id>`, `option:<id>`, voir meta/shop.ts). */
+  unlocks: string[];
   /** Dernière modification (ms depuis 1970) : la plus récente gagne entre deux appareils. */
   updatedAt: number;
 };
 
-export const emptyProfile = (): Profile => ({ version: PROFILE_VERSION, runs: 0, bestTime: 0, totalKills: 0, tunas: 0, totalTunas: 0, updatedAt: 0 });
+export const emptyProfile = (): Profile => ({ version: PROFILE_VERSION, runs: 0, bestTime: 0, totalKills: 0, tunas: 0, totalTunas: 0, unlocks: [], updatedAt: 0 });
 
 const count = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : 0);
 
@@ -34,6 +36,7 @@ export function readProfile(raw: unknown): Profile {
   p.totalKills = Math.floor(count(r.totalKills));
   p.tunas = Math.floor(count(r.tunas));
   p.totalTunas = Math.max(p.tunas, Math.floor(count(r.totalTunas)));
+  p.unlocks = Array.isArray(r.unlocks) ? [...new Set(r.unlocks.filter((u): u is string => typeof u === 'string'))] : [];
   p.updatedAt = count(r.updatedAt);
   return p;
 }
@@ -54,7 +57,7 @@ export function recordRun(p: Profile, run: { survived: number; kills: number; tu
 
 /**
  * Première connexion depuis un navigateur où l'on a joué en invité : la progression invitée rejoint celle du compte
- * (runs et kills additionnés, meilleur temps gardé), rien n'est perdu.
+ * (runs, kills et TUNAS additionnés, meilleur temps gardé, achats réunis), rien n'est perdu.
  */
 export function mergeProfiles(account: Profile, guest: Profile, now: number): Profile {
   return {
@@ -64,9 +67,10 @@ export function mergeProfiles(account: Profile, guest: Profile, now: number): Pr
     totalKills: account.totalKills + guest.totalKills,
     tunas: account.tunas + guest.tunas,
     totalTunas: account.totalTunas + guest.totalTunas,
+    unlocks: [...new Set([...account.unlocks, ...guest.unlocks])],
     updatedAt: now,
   };
 }
 
 /** Un profil vide (jamais joué) : rien à rattacher. */
-export const isEmpty = (p: Profile) => p.runs === 0 && p.totalKills === 0 && p.tunas === 0;
+export const isEmpty = (p: Profile) => p.runs === 0 && p.totalKills === 0 && p.tunas === 0 && p.unlocks.length === 0;

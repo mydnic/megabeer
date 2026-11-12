@@ -1,4 +1,5 @@
 import { emptyProfile, isEmpty, mergeProfiles, readProfile, recordRun, type Profile } from '../meta/profile';
+import { buy } from '../meta/shop';
 
 /** Joueur connecté (compte Discord), tel que le renvoie /api/me. */
 export type Account = { id: string; name: string; avatarUrl: string };
@@ -72,6 +73,16 @@ export function createProgress() {
       profile = recordRun(profile, run, Date.now());
       changed();
       await save();
+    },
+
+    /** Achat en boutique : les TUNAS sont retirés et l'article débloqué, sauvegardé tout de suite. Faux si impossible. */
+    buy(key: string) {
+      const next = buy(profile, key, Date.now());
+      if (!next) return false;
+      profile = next;
+      changed();
+      void save();
+      return true;
     },
 
     login() { location.href = '/api/auth/discord'; },

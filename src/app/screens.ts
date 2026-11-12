@@ -34,6 +34,8 @@ import { PATRON_DOOR } from '../config/bosses';
 import { CLOSING } from '../config/closing';
 import { createPadNav } from '../ui/padNav';
 import { createAccountPanel } from '../ui/accountPanel';
+import { createShopScreen } from '../ui/shopScreen';
+import { runUnlocks } from '../meta/shop';
 import { createProgress } from './progress';
 import { TOURNEES } from '../config/tournees';
 import { ITEM_EFFECTS } from '../config/items';
@@ -112,16 +114,21 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
       loading.hide();
     }
     planet.use();
+    // Les déblocages de la boutique valent pour la run qui commence
+    game.unlocks = runUnlocks(progress.profile);
     game.startRun(planet.decor.randomSpawn());
     starting = false;
   }
-  const home = createHomeScreen(() => void play(), () => options.show(() => home.focus()));
+  const home = createHomeScreen(() => void play(), () => options.show(() => home.focus()), () => shop.show(() => home.focus()));
   const padNav = createPadNav();
 
   // Compte et progression : invité (navigateur) ou Discord (en ligne) ; chaque run terminée compte
   const progress = createProgress();
   const accountPanel = createAccountPanel(home.root, { login: () => progress.login(), logout: () => void progress.logout() });
   progress.onChange(() => accountPanel.update(progress.online, progress.account, progress.profile, progress.canLogin));
+  // Boutique : persos, armes et objets à débloquer avec les TUNAS
+  const shop = createShopScreen({ buy: (k) => progress.buy(k), profile: () => progress.profile, onClose: () => home.focus() });
+  progress.onChange(() => shop.refresh());
   void progress.init();
   // TUNAS de la dernière run, pour le bilan de fin
   const lastRun = { tunas: 0, tunasBonus: 0 };
@@ -220,8 +227,8 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
     update(realDt: number, input: InputState) {
       levelUp.input(input.moveX, input.jumpPressed || input.actionPressed);
       // Menus à la manette : celui du premier plan (Options, puis pause, puis accueil) ; B revient en arrière
-      const menu = options.open ? options.root : pause.open ? pause.root : game.phase === 'home' && home.visible && !starting ? home.root : null;
-      const back = options.open ? options.close : pause.open ? () => game.resume() : undefined;
+      const menu = options.open ? options.root : shop.open ? shop.root : pause.open ? pause.root : game.phase === 'home' && home.visible && !starting ? home.root : null;
+      const back = options.open ? options.close : shop.open ? shop.close : pause.open ? () => game.resume() : undefined;
       const usedA = padNav.update(realDt, input, menu, back);
       // Start de la manette : pause, ou reprise
       if (input.pausePressed && game.phase === 'run') {

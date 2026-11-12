@@ -1,0 +1,57 @@
+// La boutique (GDD section 14), pure : ce qui est à vendre, ce qui est débloqué, et l'achat. Testée telle quelle.
+
+import { ITEMS, type ItemDef, type ItemId } from '../config/items';
+import { CARD_OPTIONS, ITEM_PRICES, SHOP_CHARACTERS, STARTING_ITEMS, STARTING_WEAPONS, WEAPON_PRICE, type CardOptionId } from '../config/shop';
+import { WEAPON_FACTORIES } from '../weapons/registry';
+import type { WeaponId } from '../weapons/weapon';
+import type { Profile } from './profile';
+
+/** Un article : un perso (`character:<id>`), une arme (`weapon:<id>`) ou un objet (`item:<id>`). */
+export type ShopEntry =
+  | { key: string; kind: 'character'; character: string; name: string; price: number }
+  | { key: string; kind: 'weapon'; weapon: WeaponId; price: number }
+  | { key: string; kind: 'item'; item: ItemId; rarity: number; price: number };
+
+const itemKey = (id: ItemId) => `item:${id}`;
+const weaponKey = (id: WeaponId) => `weapon:${id}`;
+
+/** Tout ce que vend la boutique : les persos, les armes, puis les objets par rareté (ceux donnés au départ n'y sont pas). */
+export function catalog(): ShopEntry[] {
+  const characters = SHOP_CHARACTERS.map((c): ShopEntry => ({ key: `character:${c.id}`, kind: 'character', character: c.id, name: c.name, price: c.price }));
+  const weapons = (Object.keys(WEAPON_FACTORIES) as WeaponId[])
+    .filter((id) => !STARTING_WEAPONS.includes(id))
+    .map((weapon): ShopEntry => ({ key: weaponKey(weapon), kind: 'weapon', weapon, price: WEAPON_PRICE }));
+  const items = (Object.keys(ITEMS) as ItemId[])
+    .filter((id) => !STARTING_ITEMS.includes(id))
+    .map((item): ShopEntry => { const rarity = (ITEMS[item] as ItemDef).rarity; return { key: itemKey(item), kind: 'item', item, rarity, price: ITEM_PRICES[rarity] }; })
+    .sort((a, b) => (a.kind === 'item' && b.kind === 'item' ? a.rarity - b.rarity : 0));
+  return [...characters, ...weapons, ...items];
+}
+
+/** L'article est-il débloqué (acheté, ou donné au départ) ? */
+export function owned(p: Profile, key: string) {
+  if (key.startsWith('item:') && STARTING_ITEMS.includes(key.slice(5) as ItemId)) return true;
+  if (key.startsWith('weapon:') && STARTING_WEAPONS.includes(key.slice(7) as WeaponId)) return true;
+  return p.unlocks.includes(key);
+}
+
+/** Achète un article : le prix est retiré des TUNAS. Null si déjà débloqué, inconnu, ou pas assez de TUNAS. */
+export function buy(p: Profile, key: string, now: number): Profile | null {
+  const entry = catalog().find((e) => e.key === key);
+  if (!entry || owned(p, key) || p.tunas < entry.price) return null;
+  return { ...p, tunas: p.tunas - entry.price, unlocks: [...p.unlocks, key], updatedAt: now };
+}
+
+/**
+ * Ce que la run peut utiliser : les armes qui sortent au level-up, les objets qui sortent des coffres, et les utilisations
+ * des options de cartes (0 tant que le skill tree n'existe pas).
+ */
+export type RunUnlocks = { weapons: ReadonlySet<WeaponId>; items: ReadonlySet<ItemId>; options: Record<CardOptionId, number> };
+
+export function runUnlocks(p: Profile): RunUnlocks {
+  const weapons = new Set((Object.keys(WEAPON_FACTORIES) as WeaponId[]).filter((id) => owned(p, weaponKey(id))));
+  const items = new Set((Object.keys(ITEMS) as ItemId[]).filter((id) => owned(p, itemKey(id))));
+  const options = {} as Record<CardOptionId, number>;
+  for (const o of Object.keys(CARD_OPTIONS) as CardOptionId[]) options[o] = 0;
+  return { weapons, items, options };
+}

@@ -38,7 +38,10 @@ et la sauvegarde), base D1 `megabeer` (schéma dans `migrations/`, à appliquer 
 (non versionné). Côté jeu : `meta/profile.ts` (la progression, pure, testée), `app/progress.ts` (invité dans le navigateur,
 ou en ligne ; la progression invitée rejoint le compte à la première connexion), `ui/accountPanel.ts` (le compte sur
 l'accueil, avec les TUNAS). TUNAS (monnaie permanente) : `config/tunas.ts` (chance de drop, élites, boss, bonus de fin à
-la mort, multiplicateur de difficulté dans `DIFFICULTIES`), liasses au sol `game.tunaDrops` et `pickups/tunaDropsView.ts`. `yarn dev` fait tourner le Worker et une D1 locale (plugin Cloudflare de Vite).
+la mort, multiplicateur de difficulté dans `DIFFICULTIES`), liasses au sol `game.tunaDrops` et `pickups/tunaDropsView.ts`. Boutique : `config/shop.ts` (ce qui est donné au départ,
+prix, persos à vendre), `meta/shop.ts` (catalogue, achat, `runUnlocks` appliqué à `game.unlocks` au début de chaque run),
+`ui/shopScreen.ts`. Relancer / Bannir / Passer : `game.rerollCards`, `banishCard`, `skipCards` (débloqués par le futur
+skill tree, sans bouton à l'écran pour l'instant). `yarn dev` fait tourner le Worker et une D1 locale (plugin Cloudflare de Vite).
 
 ```
 yarn dev        # http://localhost:5173

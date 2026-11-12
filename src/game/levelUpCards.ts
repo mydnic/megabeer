@@ -26,21 +26,30 @@ export function rollTier(luck: number) {
 
 const pickOne = <T>(list: readonly T[]) => list[Math.floor(Math.random() * list.length)];
 
-/** Une amélioration au hasard pour cette arme, à une rareté qui la permet. */
-function upgradeCard(weapon: Weapon, luck: number): UpgradeCard | null {
+/** Clé d'une carte pour Bannir : l'arme (nouvelle arme) ou l'amélioration de cette arme. */
+export function cardKey(c: Card) {
+  if (c.kind === 'weapon') return c.weaponId;
+  if (c.kind === 'upgrade') return `${c.weapon.id}:${c.upgrade.id}`;
+  return c.kind === 'item' ? `item:${c.item}` : `stat:${c.stat}`;
+}
+
+/** Une amélioration au hasard pour cette arme, parmi celles qui ne sont pas bannies. */
+function upgradeCard(weapon: Weapon, luck: number, banned: (key: string) => boolean): UpgradeCard | null {
   const tier = rollTier(luck);
-  return weapon.upgrades.length ? { kind: 'upgrade', weapon, upgrade: pickOne(weapon.upgrades), tier } : null;
+  const ok = weapon.upgrades.filter((u) => !banned(`${weapon.id}:${u.id}`));
+  return ok.length ? { kind: 'upgrade', weapon, upgrade: pickOne(ok), tier } : null;
 }
 
 /**
  * Tire jusqu'à `n` cartes, chacune pour une arme différente (GDD section 8) : une amélioration au
  * hasard d'une arme équipée, ou une nouvelle arme parmi `available` (débloquées, pas encore
  * équipées ; vide quand l'arsenal est plein). Tant qu'il y a moins de `guaranteeBelow` armes
- * équipées, une des cartes est toujours une nouvelle arme. Moins de choix possibles = moins de cartes.
+ * équipées, une des cartes est toujours une nouvelle arme. Moins de choix possibles = moins de cartes. `banned` : cartes
+ * retirées pour la run (Bannir, clés de `cardKey`).
  */
-export function rollCards(n: number, luck: number, equipped: readonly Weapon[], available: readonly WeaponId[], guaranteeBelow = 3): Card[] {
+export function rollCards(n: number, luck: number, equipped: readonly Weapon[], available: readonly WeaponId[], guaranteeBelow = 3, banned: (key: string) => boolean = () => false): Card[] {
   const cards: Card[] = [];
-  const news = [...available];
+  const news = available.filter((id) => !banned(id));
   const take = (id: WeaponId) => { news.splice(news.indexOf(id), 1); cards.push({ kind: 'weapon', weaponId: id, synergies: [] }); };
   if (equipped.length < guaranteeBelow && news.length && n > 0) take(pickOne(news));
   // Le reste : armes équipées et autres nouvelles armes, mélangées, une carte par arme
@@ -48,7 +57,7 @@ export function rollCards(n: number, luck: number, equipped: readonly Weapon[], 
   while (cards.length < n && pool.length) {
     const c = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
     if (typeof c === 'string') take(c);
-    else { const card = upgradeCard(c, luck); if (card) cards.push(card); }
+    else { const card = upgradeCard(c, luck, banned); if (card) cards.push(card); }
   }
   // La nouvelle arme garantie n'est pas toujours la première carte
   for (let i = cards.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [cards[i], cards[j]] = [cards[j], cards[i]]; }
