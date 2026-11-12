@@ -3,7 +3,7 @@ import { RARITIES } from '../config/upgrades';
 import { WEAPON_INFO } from '../config/weapons';
 import { itemCardText } from '../game/levelUpCards';
 import type { Profile } from '../meta/profile';
-import { catalog, isStarting, owned, type ShopEntry } from '../meta/shop';
+import { catalog, owned, type ShopEntry } from '../meta/shop';
 import { weaponIcon, tunasIcon } from './icons';
 import { pint, svg64 } from './iconKit';
 import { itemIcon } from './itemIcons';
@@ -39,11 +39,11 @@ const CSS = `
 .shop-card.locked { background: linear-gradient(#a8977a, #8a785c); color: #1a120c; }
 .shop-card.locked .shop-ico > svg, .shop-card.locked .shop-ico > img { filter: grayscale(1) brightness(.75); opacity: .75; }
 .shop-lock { position: absolute; right: -6px; bottom: -4px; width: 24px !important; height: 24px !important; }
-.shop-own { grid-column: 1 / 3; justify-self: start; display: inline-flex; align-items: center; gap: 5px; padding: 2px 12px 4px 6px;
+.shop-own { grid-column: 1 / 3; justify-self: start; display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px;
   border: 2px solid #1a120c; border-radius: 12px; background: linear-gradient(#7ad66a, #3f9a46); color: #fff; font-size: 15px;
   text-shadow: 0 1px 0 #1a120c; }
 .shop-own svg { width: 18px; height: 18px; }
-.shop-own.base { padding: 3px 8px; }
+
 .shop-buy { grid-column: 1 / 3; display: flex; align-items: center; justify-content: center; gap: 6px; font: inherit; font-size: 17px;
   cursor: pointer; padding: 4px 10px 6px; border: 3px solid #1a120c; border-radius: 12px; color: #fff; background: linear-gradient(#5fc46a, #2f8a3e);
   box-shadow: 0 3px 0 #1a120c; transition: transform .08s; }
@@ -87,7 +87,7 @@ export function createShopScreen(cb: { buy: (key: string) => boolean; profile: (
   function card(e: ShopEntry, p: Profile) {
     const have = owned(p, e.key);
     const poor = !have && p.tunas < e.price;
-    const foot = have ? `<span class="shop-own${isStarting(e.key) ? ' base' : ''}">${CHECK}${isStarting(e.key) ? '' : 'Débloqué'}</span>`
+    const foot = have ? `<span class="shop-own">${CHECK}</span>`
       : `<button class="shop-buy${poor ? ' poor' : ''}" data-k="${e.key}">${TUNAS}${e.price}</button>`;
     const box = (color: string, tag: string, icon: string, name: string, text: string) =>
       `<div class="shop-card${have ? '' : ' locked'}" style="--c:${color}">${tag ? `<span class="shop-tag">${tag}</span>` : ''}<div class="shop-ico">${icon}${have ? '' : LOCK}</div><b>${esc(name)}</b><p>${esc(text)}</p>${foot}</div>`;
