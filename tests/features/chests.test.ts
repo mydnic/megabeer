@@ -95,7 +95,13 @@ describe('Les coffres', () => {
     const [a, b] = t.game.chests.list;
     standNear(t, a, 1.8);
     open(t);
-    t.game.pickCard(t.game.offer![0]);
+    // Un objet qui ne touche pas au prix des coffres (pas la Carte de fidélité ni le Bon de réduction)
+    const cards = t.game.offer as ItemCard[];
+    const neutral = cards.find((c) => {
+      const def: ItemDef = ITEMS[c.item];
+      return !def.stats?.chestDiscount && def.effect !== 'freeChestChance';
+    })!;
+    t.game.pickCard(neutral);
     const after1 = t.game.coins;
     expect(after1).toBe(1000 - CHESTS.basePrice);
     standNear(t, b, 1.8);

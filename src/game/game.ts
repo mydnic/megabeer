@@ -112,8 +112,12 @@ export type GameEvents = {
   lastCallRung: { source: 'bell' | 'drop'; at: THREE.Vector3; bell: CallBell | null; pulled: number };
   /** Le boss arrive (il sort de terre). */
   bossSpawned: { boss: FrereSonneur };
-  /** Le maillet du boss touche le sol en `at` : une onde part. */
+  /** Le boss sonne sa cloche (posée en `at`) : une onde part. */
   bossWave: { boss: FrereSonneur; at: THREE.Vector3 };
+  /** Le boss pousse sa cloche : elle part rouler vers le joueur. */
+  bossBellPush: { boss: FrereSonneur };
+  /** La cloche du boss s'arrête de rouler. */
+  bossBellStop: { boss: FrereSonneur };
   /** Le boss change de phase (il rugit). */
   bossPhase: { boss: FrereSonneur; phase: number };
   /** Le boss est tué : il laisse un coffre gratuit de haute rareté. */
@@ -273,6 +277,7 @@ export class Game {
 
   private acc = 0;
   private readonly groundAt: (p: THREE.Vector3) => number;
+  private readonly collider: DecorCollider;
   private readonly weaponCtx: WeaponContext;
   private readonly tmp = new THREE.Vector3();
   private readonly chest = new THREE.Vector3();
@@ -280,6 +285,7 @@ export class Game {
   constructor(deps: GameDeps) {
     const player = new PlayerController(new THREE.Vector3(0, 1, 0));
     player.decor = deps.collider;
+    this.collider = deps.collider;
     this.player = player;
     const groundAt = (p: THREE.Vector3) => player.supportAt(p, p.length());
     this.groundAt = groundAt;
@@ -705,6 +711,10 @@ export class Game {
       playerPos: () => this.player.pos,
       playerHeight: () => this.player.pos.length() - this.groundAt(this.player.pos),
       hurtPlayer: (dir, damage) => this.hurtPlayer(z, dir, damage),
+      groundAt: (q) => this.groundAt(q),
+      blocked: (q, margin) => this.collider.occupied(q, margin),
+      onPush: () => this.events.emit('bossBellPush', { boss }),
+      onBellStop: () => this.events.emit('bossBellStop', { boss }),
       onWave: (wat) => this.events.emit('bossWave', { boss, at: wat.clone() }),
       onPhase: (phase) => this.events.emit('bossPhase', { boss, phase }),
     });

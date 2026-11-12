@@ -107,8 +107,12 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    piloté par `game/frereSonneur.ts` (la horde saute les `def.boss`). Arrive à 5:00, marche vers le joueur, abat son
    maillet à portée : onde en anneau à sauter. Phase 2 sous 50 % (rugit, plus vite, deux ondes). Barre de vie
    (`ui/bossBar.ts`), musique `boss/sonneur` (sinon `default`), coffre légendaire gratuit à sa mort. Réglages
-   `config/bosses.ts`, DEV « Boss maintenant ». **Checkpoint suivant : la cloche géante** qu'il frappe et fait rouler vers
-   le joueur (GDD). Ensuite : Porte du patron, l'Abbé, fermeture à 10:00, victoire.
+   `config/bosses.ts`, DEV « Boss maintenant ». Checkpoint 1 validé par l'utilisateur le 2026-11-12.
+   **Checkpoint 2 fait le 2026-11-12, à valider en jeu : la cloche géante** (`tools/blender/cloche_geante.py`) : il se place
+   derrière elle (côté opposé au joueur), la sonne 2 fois (une onde depuis la cloche à chaque coup), puis la pousse : elle se
+   couche et roule vers le joueur (20 m, blesse au contact), il retourne la chercher. Pas encore de collision avec la cloche
+   debout (on la traverse). Tests du boss : hasard à graine fixe (`vi.spyOn(Math, 'random')`), arène sans objets.
+   Ensuite : Porte du patron, l'Abbé, fermeture à 10:00, victoire.
    **Tournées du bar faites le 2026-11-11, à valider en jeu** : 8 bonus lâchés par les ennemis (liste dans le journal du
    GDD), `game/tournees.ts`, `config/tournees.ts`, icônes `ui/tourneeIcons.ts` (aussi en texture au sol par
    `iconDataUrl`), HUD `ui/tourneeHud.ts`, DEV « Tournée devant ». Tests : `createTestGame(seed, { tournees: 'peket' })`,

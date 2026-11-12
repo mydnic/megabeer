@@ -142,7 +142,7 @@ BD/aquarelle, Valheim, style anime, herbe dense.
 (prépare le Moine de `MONK.blend` pour la foule : textures en un atlas, un seul matériau, animations
 renommées comme les zombies ; `--variant` : lanceur, pelerin (bure rouge, tonneau sans fond autour du ventre) ou tonnelier (bure ardoise, gros tonneau qui roule devant lui, mains dessus), tonneau donné par `--barrel` ; source dans `Desktop/MODELS/personnages/kelgar_monk`) génèrent les GLB
 de `src/assets/models/`, comme `tools/blender/kaykit.py` (personnages KayKit : pièces retirées, recolorés, objet
-en main, animations du Rig_Medium ; sources lues dans `Desktop/MODELS`). `tools/blender/cloche.py` (cloche du Dernier service, avec ou sans potence). `tools/blender/monsters.py` (monstres Quaternius
+en main, animations du Rig_Medium ; sources lues dans `Desktop/MODELS`). `tools/blender/cloche.py` (cloche du Dernier service, avec ou sans potence),  (le Frère Sonneur, boss : modèle sculpté par remaillage, rig et clips) et  (sa cloche). `tools/blender/monsters.py` (monstres Quaternius
 à couleurs unies, rangées dans une palette). Outils communs dans `crowd_utils.py`.
 Pas plus de 3 ennemis sur le même corps de base. Ne pas éditer les GLB à la main : modifier le script et relancer.
 
