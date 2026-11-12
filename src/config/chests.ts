@@ -44,6 +44,11 @@ export const CHEST_LOOK = {
   /** Ouverture du couvercle (rad, autour de sa charnière) et sa durée (s). */
   lidOpen: -1.9,
   lidTime: 0.35,
+  /**
+   * Coffre gratuit (élite, boss, Bonnet du Père Noël...) : couvercle entrouvert (rad) et lumière qui sort, de la couleur
+   * de sa rareté (sinon `light`). Faisceau en cône évasé : rayons en bas et en haut, hauteur (m), éclat, pulsation.
+   */
+  free: { lidAjar: -0.5, light: 0xffd45a, beamBottom: 0.45, beamTop: 1.3, beamHeight: 6, intensity: 1.6, pulse: 0.3, pulseSpeed: 3 },
 } as const;
 
 /** Rappel à l'écran près d'un coffre fermé. */

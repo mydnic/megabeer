@@ -4,6 +4,7 @@ import { PUMP_TIERS } from '../config/pumps';
 import { PLANET, PLANET_RADIUS } from '../config/world';
 import type { Pump } from '../game/pumps';
 import type { Chest } from '../game/chests';
+import { RARITIES } from '../config/upgrades';
 import type { CallBell } from '../game/lastCall';
 import type { Zombie } from '../enemies/zombie';
 import { heightAt } from '../world/terrain';
@@ -123,16 +124,19 @@ export function createMinimap() {
       ctx.drawImage(terrain, -span * scale, -span * scale, 2 * span * scale, 2 * span * scale);
       ctx.restore();
 
-      // Coffres encore fermés dans le disque : petits carrés bruns
-      const cs = M.chestSize * dpr;
+      // Coffres encore fermés dans le disque : petits carrés bruns. Les gratuits : plus gros, de la couleur de leur
+      // rareté, toujours affichés (posés au bord du disque quand ils sont loin)
       for (const c of chests) {
         if (c.opened) continue;
         const m = toMap(c.pos);
-        if (m.dist > M.range * 0.95) continue;
-        ctx.fillStyle = hex(M.colors.chest);
-        ctx.fillRect(R + m.x * scale - cs / 2, R - m.y * scale - cs / 2, cs, cs);
-        ctx.lineWidth = 1.5 * dpr; ctx.strokeStyle = '#1a120c';
-        ctx.strokeRect(R + m.x * scale - cs / 2, R - m.y * scale - cs / 2, cs, cs);
+        const k = c.free && m.dist > M.range * 0.9 ? (M.range * 0.9) / m.dist : 1;
+        if (!c.free && m.dist > M.range * 0.95) continue;
+        const cs = (c.free ? M.freeChestSize : M.chestSize) * dpr;
+        const x = R + m.x * k * scale - cs / 2, y = R - m.y * k * scale - cs / 2;
+        ctx.fillStyle = c.free ? (c.rarity !== undefined ? RARITIES[c.rarity].color : hex(M.colors.freeChest)) : hex(M.colors.chest);
+        ctx.fillRect(x, y, cs, cs);
+        ctx.lineWidth = (c.free ? 2.5 : 1.5) * dpr; ctx.strokeStyle = '#1a120c';
+        ctx.strokeRect(x, y, cs, cs);
       }
 
       // Pompes encore pleines dans le disque, en point de leur couleur ; rien d'autre (vidées ou trop loin)

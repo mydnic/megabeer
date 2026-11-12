@@ -58,7 +58,9 @@ export const MINIMAP = {
   playerArrow: 9,
   /** Côté du carré d'un coffre (px). */
   chestSize: 7,
-  colors: { low: 0x3d6b2e, high: 0x9ccc5a, rock: 0x8a8478, player: 0xfff4dc, chest: 0xb07038, bell: 0xffd45a, elite: 0xff3b2a, door: 0xff3a2a, reaper: 0x2a0f3a },
+  /** Coffre gratuit : côté (px), toujours affiché (au bord quand il est loin), de la couleur de sa rareté (sinon `freeChest`). */
+  freeChestSize: 10,
+  colors: { low: 0x3d6b2e, high: 0x9ccc5a, rock: 0x8a8478, player: 0xfff4dc, chest: 0xb07038, freeChest: 0xffc93a, bell: 0xffd45a, elite: 0xff3b2a, door: 0xff3a2a, reaper: 0x2a0f3a },
   /** Élites : rayon du point (px). */
   eliteDot: 6,
   /** Cloches du Dernier service : rayon du point (px), toujours affichées (au bord quand elles sont loin). */
