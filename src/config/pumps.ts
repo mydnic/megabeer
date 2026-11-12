@@ -39,10 +39,10 @@ export type StatId = 'damage' | 'attackSpeed' | 'maxHp' | 'moveSpeed' | 'pickupR
 
 /**
  * Bonus de stat d'une pompe : `value` en Commun, multiplié par la rareté de la carte (RARITIES, comme
- * les cartes d'arme), sauf `fixed`. `kind` règle l'affichage : percent -> « +8 % », flat -> « +15 »,
- * meters -> « +0,5 m ». `minRarity` : rareté minimum pour qu'il soit proposé (index dans RARITIES).
+ * les cartes d'arme, `rarityValue`) ; `whole` : nombre entier. `kind` règle l'affichage : percent -> « +8 % »,
+ * flat -> « +15 », meters -> « +0,5 m ». Tous sortent à toutes les raretés.
  */
-export type StatBonusDef = { id: StatId; label: string; value: number; kind: 'percent' | 'flat' | 'meters'; fixed?: boolean; minRarity?: number };
+export type StatBonusDef = { id: StatId; label: string; value: number; kind: 'percent' | 'flat' | 'meters'; whole?: boolean };
 
 export const STAT_BONUSES: readonly StatBonusDef[] = [
   { id: 'damage', label: 'dégâts', value: 0.08, kind: 'percent' },
@@ -52,7 +52,7 @@ export const STAT_BONUSES: readonly StatBonusDef[] = [
   { id: 'pickupRange', label: "portée d'attraction", value: 0.5, kind: 'meters' },
   { id: 'xpGain', label: "gain d'XP", value: 0.08, kind: 'percent' },
   { id: 'luck', label: 'chance', value: 2, kind: 'flat' },
-  { id: 'extraProjectiles', label: 'projectile en plus', value: 1, kind: 'flat', fixed: true, minRarity: 2 },
+  { id: 'extraProjectiles', label: 'projectile en plus', value: 1, kind: 'flat', whole: true },
 ];
 
 /** Apparence d'une pompe (world/pumpsView.ts) : fût sur chevalet KayKit, faisceau, pinte-jauge au-dessus. */

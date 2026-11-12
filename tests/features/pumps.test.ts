@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { PUMPS, STAT_BONUSES } from '../../src/config/pumps';
-import { RARITIES } from '../../src/config/upgrades';
+import { rarityValue } from '../../src/config/upgrades';
 import { rollStatCards } from '../../src/game/pumps';
 import { PLANET_RADIUS } from '../../src/config/world';
 import { WEAPONS } from '../../src/config/weapons';
@@ -110,7 +110,7 @@ describe('Les pompes à bière', () => {
     fill(t, pump);
     for (const c of t.game.offer! as StatCard[]) {
       const base = STAT_BONUSES.find((b) => b.id === c.stat)!;
-      expect(c.value).toBeCloseTo(base.fixed ? base.value : base.value * RARITIES[c.rarity].mult);
+      expect(c.value).toBeCloseTo(rarityValue(base.value, c.rarity, base.whole));
     }
   });
 

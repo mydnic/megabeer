@@ -166,13 +166,19 @@ describe('Les cartes', () => {
     expect(rollCards(3, 0, w, [])).toHaveLength(1);
   });
 
-  it("ne proposent « projectile en plus » qu'à partir de la rareté minimum", () => {
+  it("proposent « projectile en plus » à toutes les raretés : +1 en Commun et Peu commun, plus haut ensuite", () => {
     const w = weapons();
-    for (let i = 0; i < 300; i++) {
-      for (const c of rollCards(3, 0, w, [])) {
-        if (c.kind === 'upgrade' && c.upgrade.id === 'projectiles') expect(c.tier).toBeGreaterThanOrEqual(c.upgrade.minTier!);
-      }
+    const tiers = new Set<number>();
+    for (let i = 0; i < 2000; i++) {
+      for (const c of rollCards(3, 30, w, [])) if (c.kind === 'upgrade' && c.upgrade.id === 'projectiles') tiers.add(c.tier);
     }
+    expect(tiers.has(0)).toBe(true);
+    const canette = w[0];
+    const proj = (tier: number) => cardText({ kind: 'upgrade', weapon: canette, upgrade: canette.upgrades.find((u) => u.id === 'projectiles')!, tier });
+    expect(proj(0)).toBe('+1 projectile en plus');
+    expect(proj(1)).toBe('+1 projectile en plus');
+    expect(proj(2)).toBe('+2 projectile en plus');
+    expect(proj(4)).toBe('+4 projectile en plus');
   });
 
   it('sortent plus souvent en raretés hautes avec de la chance (LUCK)', () => {
@@ -200,7 +206,7 @@ describe('Les cartes', () => {
 
   it("montrent la stat de l'arme avant et après (projectiles 1 puis 2), sans la changer", () => {
     const canette = weapons()[0];
-    const card: UpgradeCard = { kind: 'upgrade', weapon: canette, upgrade: canette.upgrades.find((u) => u.id === 'projectiles')!, tier: 2 };
+    const card: UpgradeCard = { kind: 'upgrade', weapon: canette, upgrade: canette.upgrades.find((u) => u.id === 'projectiles')!, tier: 0 };
     const mods = { ...canette.mods };
     const d = cardStatChange(card)!;
     expect(d.after.label).toBe('Projectiles');

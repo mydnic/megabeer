@@ -5,7 +5,7 @@ import { heightAt } from '../world/terrain';
 import { groundBodies, type DecorCollider } from '../world/decor/collider';
 import { boxShape } from '../world/decor/gridShape';
 import { rollTier as rollRarity, type StatCard } from './levelUpCards';
-import { RARITIES } from '../config/upgrades';
+import { rarityValue } from '../config/upgrades';
 
 /** Une pompe à bière posée sur la planète. */
 export type Pump = {
@@ -96,11 +96,8 @@ export function rollStatCards(tier: PumpTier, n: number, luck: number): StatCard
   const left = [...STAT_BONUSES];
   while (cards.length < n && left.length) {
     const rarity = rollRarity(luck + PUMP_TIERS[tier].luck);
-    const ok = left.filter((b) => (b.minRarity ?? 0) <= rarity);
-    if (!ok.length) break;
-    const b = ok[Math.floor(Math.random() * ok.length)];
-    left.splice(left.indexOf(b), 1);
-    cards.push({ kind: 'stat', stat: b.id, value: b.fixed ? b.value : b.value * RARITIES[rarity].mult, rarity, tier });
+    const b = left.splice(Math.floor(Math.random() * left.length), 1)[0];
+    cards.push({ kind: 'stat', stat: b.id, value: rarityValue(b.value, rarity, b.whole), rarity, tier });
   }
   return cards;
 }

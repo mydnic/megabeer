@@ -25,22 +25,29 @@ export type UpgradeDef = {
   label: string;
   value: number;
   kind: 'percent' | 'points' | 'flat' | 'mult';
-  /** Effet fixe : non multiplié par la rareté. */
-  fixed?: boolean;
-  /** Rareté minimum pour que la carte existe (index dans RARITIES). */
-  minTier?: number;
+  /** Nombre entier (projectiles, zombies traversés) : la valeur multipliée par la rareté est arrondie à l'inférieur. */
+  whole?: boolean;
 };
 
 /**
- * Améliorations de la Canette. `value` = effet en Commun (multiplié par le tier, sauf `fixed`).
- * `minTier` : rareté minimum pour que la carte existe (index dans RARITIES).
+ * Valeur d'une carte de stat (arme ou pompe) à une rareté : `value` (Commun) x le multiplicateur de la rareté. Une stat
+ * entière est arrondie à l'inférieur, au moins 1 : Commun et Peu commun +1, Rare +2, Dingue +3, Légendaire +4.
+ */
+export function rarityValue(value: number, rarity: number, whole = false) {
+  const v = value * RARITIES[rarity].mult;
+  return whole ? Math.max(1, Math.floor(v + 1e-9)) : v;
+}
+
+/**
+ * Améliorations de la Canette. `value` = effet en Commun (multiplié par le tier, voir `rarityValue`). Toutes sortent
+ * à toutes les raretés.
  * Affichage selon `kind` : percent et points -> « +15 % », flat -> « +1 », mult -> « +0,15 ».
  * (points : points de pourcentage ajoutés, ex. chances de critique 5 % -> 9 %).
  */
 export const CANETTE_UPGRADES: readonly UpgradeDef[] = [
   { id: 'damage', label: 'dégâts', value: 0.15, kind: 'percent' },
   { id: 'rate', label: "vitesse d'attaque", value: 0.10, kind: 'percent' },
-  { id: 'projectiles', label: 'projectile en plus', value: 1, kind: 'flat', fixed: true, minTier: 2 },
+  { id: 'projectiles', label: 'projectile en plus', value: 1, kind: 'flat', whole: true },
   { id: 'speed', label: 'vitesse des projectiles', value: 0.10, kind: 'percent' },
   { id: 'range', label: 'portée', value: 0.10, kind: 'percent' },
   { id: 'critChance', label: 'chances de critique', value: 0.04, kind: 'points' },
@@ -53,8 +60,8 @@ export const STOUT_UPGRADES: readonly UpgradeDef[] = [
   { id: 'damage', label: 'dégâts', value: 0.15, kind: 'percent' },
   { id: 'rate', label: "vitesse d'attaque", value: 0.10, kind: 'percent' },
   { id: 'knock', label: 'recul', value: 0.20, kind: 'percent' },
-  { id: 'projectiles', label: 'projectile en plus', value: 1, kind: 'flat', fixed: true, minTier: 2 },
-  { id: 'pierce', label: 'zombie traversé', value: 1, kind: 'flat', fixed: true, minTier: 2 },
+  { id: 'projectiles', label: 'projectile en plus', value: 1, kind: 'flat', whole: true },
+  { id: 'pierce', label: 'zombie traversé', value: 1, kind: 'flat', whole: true },
   { id: 'range', label: 'portée', value: 0.10, kind: 'percent' },
   { id: 'critChance', label: 'chances de critique', value: 0.04, kind: 'points' },
   { id: 'critMult', label: 'multiplicateur critique', value: 0.15, kind: 'mult' },
@@ -68,7 +75,7 @@ export const FUT_UPGRADES: readonly UpgradeDef[] = [
   { id: 'size', label: 'taille du fût', value: 0.15, kind: 'percent' },
   { id: 'duration', label: 'distance parcourue', value: 0.15, kind: 'percent' },
   { id: 'knock', label: 'recul', value: 0.20, kind: 'percent' },
-  { id: 'projectiles', label: 'fût en plus', value: 1, kind: 'flat', fixed: true, minTier: 2 },
+  { id: 'projectiles', label: 'fût en plus', value: 1, kind: 'flat', whole: true },
   { id: 'critChance', label: 'chances de critique', value: 0.04, kind: 'points' },
   { id: 'critMult', label: 'multiplicateur critique', value: 0.15, kind: 'mult' },
 ];
@@ -78,7 +85,7 @@ export const GUEUZE_UPGRADES: readonly UpgradeDef[] = [
   { id: 'damage', label: 'dégâts', value: 0.15, kind: 'percent' },
   { id: 'rate', label: "vitesse d'attaque", value: 0.10, kind: 'percent' },
   { id: 'radius', label: "rayon d'explosion", value: 0.12, kind: 'percent' },
-  { id: 'projectiles', label: 'gueuze en plus', value: 1, kind: 'flat', fixed: true, minTier: 2 },
+  { id: 'projectiles', label: 'gueuze en plus', value: 1, kind: 'flat', whole: true },
   { id: 'critChance', label: 'chances de critique', value: 0.04, kind: 'points' },
   { id: 'critMult', label: 'multiplicateur critique', value: 0.15, kind: 'mult' },
 ];

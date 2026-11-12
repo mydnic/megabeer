@@ -1,5 +1,5 @@
 import type { ItemCard } from './chests';
-import { LUCK, RARITIES, type UpgradeDef } from '../config/upgrades';
+import { LUCK, RARITIES, rarityValue, type UpgradeDef } from '../config/upgrades';
 import type { Weapon, WeaponId } from '../weapons/weapon';
 import type { SynergyId } from './synergies';
 import { STAT_BONUSES, type PumpTier, type StatId } from '../config/pumps';
@@ -29,8 +29,7 @@ const pickOne = <T>(list: readonly T[]) => list[Math.floor(Math.random() * list.
 /** Une amélioration au hasard pour cette arme, à une rareté qui la permet. */
 function upgradeCard(weapon: Weapon, luck: number): UpgradeCard | null {
   const tier = rollTier(luck);
-  const ok = weapon.upgrades.filter((u) => (u.minTier ?? 0) <= tier);
-  return ok.length ? { kind: 'upgrade', weapon, upgrade: pickOne(ok), tier } : null;
+  return weapon.upgrades.length ? { kind: 'upgrade', weapon, upgrade: pickOne(weapon.upgrades), tier } : null;
 }
 
 /**
@@ -56,9 +55,9 @@ export function rollCards(n: number, luck: number, equipped: readonly Weapon[], 
   return cards;
 }
 
-/** Valeur de l'effet d'une amélioration (multipliée par son tier, sauf effets fixes). */
+/** Valeur de l'effet d'une amélioration (multipliée par son tier, arrondie pour une stat entière). */
 export function cardValue(c: UpgradeCard) {
-  return c.upgrade.fixed ? c.upgrade.value : c.upgrade.value * RARITIES[c.tier].mult;
+  return rarityValue(c.upgrade.value, c.tier, c.upgrade.whole);
 }
 
 /** Texte de l'effet, ex. "+30 % dégâts", "+1 projectile en plus", "+0,3 multiplicateur critique". */
