@@ -77,12 +77,12 @@ export function statCardText(c: StatCard) {
   return `+${num(c.value)} ${def.label}`;
 }
 
-/** Effet d'une carte d'objet, en clair (sa valeur à la rareté tirée). */
+/** Effet d'une carte d'objet, en clair. */
 export function itemCardText(c: ItemCard) {
   const def: ItemDef = ITEMS[c.item];
   const values: Record<string, number> = {};
-  for (const [k, v] of Object.entries(def.stats ?? {})) values[k] = v * c.mult;
-  const v = (def.value ?? 0) * c.mult;
+  for (const [k, v] of Object.entries(def.stats ?? {})) values[k] = v;
+  const v = def.value ?? 0;
   values.v = v;
   // Période (s) : bouclier de mousse (recharges par seconde), coffre du Bonnet
   if (def.effect === 'foamShield') values.every = Math.round(1 / v);

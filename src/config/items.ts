@@ -1,8 +1,8 @@
-// Objets passifs (GDD section 7) : ils ne sortent que des coffres. Chaque objet a une rareté qui
-// multiplie son effet (RARITIES : x1 à x4), sauf `fixed`. Un objet donne des stats (`stats`, plusieurs
-// possibles), un effet spécial (`effect` et sa `value`), ou les deux. Les copies d'un même objet
-// s'additionnent. Le texte de la carte (`text`) remplace {clé} par la valeur à la rareté tirée :
-// {clé} en nombre, {clé%} en pourcentage ; `v` est la valeur de l'effet.
+// Objets passifs (GDD section 7) : ils ne sortent que des coffres. Chaque objet a UNE rareté (`rarity`, index dans
+// RARITIES) et un effet fixe (choix de l'utilisateur le 2026-11-12) : un coffre propose 3 objets différents de sa rareté.
+// Une dizaine d'objets par rareté. Un objet donne des stats (`stats`, plusieurs possibles), un effet spécial (`effect`
+// et sa `value`), ou les deux. Les copies d'un même objet s'additionnent. Le texte de la carte (`text`) remplace {clé}
+// par la valeur : {clé} en nombre, {clé%} en pourcentage ; `v` est la valeur de l'effet.
 
 /** Stats du joueur qu'un objet peut monter (champs de PlayerStats, sauf maxHp : les PV max). */
 export type ItemStatId =
@@ -18,21 +18,19 @@ export type EffectId =
 
 export type ItemDef = {
   name: string;
-  /** Texte de la carte : {clé} et {clé%} remplacés par les valeurs à la rareté tirée (`v` : l'effet). */
+  /** Sa rareté (index dans RARITIES : 0 Commun, 1 Peu commun, 2 Rare, 3 Dingue, 4 Légendaire). */
+  rarity: number;
+  /** Texte de la carte : {clé} et {clé%} remplacés par les valeurs (`v` : l'effet). */
   text: string;
-  /** Stats montées (valeurs en Commun). */
+  /** Stats montées. */
   stats?: Partial<Record<ItemStatId, number>>;
-  /** Effet spécial et sa valeur en Commun (sens dans ITEM_EFFECTS). */
+  /** Effet spécial et sa valeur (sens dans ITEM_EFFECTS). */
   effect?: EffectId;
   value?: number;
-  /** N'existe qu'à partir de `minRarity`, sans multiplicateur de rareté. */
-  fixed?: boolean;
-  /** Rareté minimum pour qu'il sorte (index dans RARITIES). */
-  minRarity?: number;
 };
 
 /**
- * Réglages des effets spéciaux. La valeur de l'objet (multipliée par la rareté, copies additionnées) :
+ * Réglages des effets spéciaux. La valeur de l'objet (copies additionnées) :
  * - explodeOnKill (Cendrier) : chance qu'un ennemi tué explose (plafond `maxChance`), dans `radius` m
  *   (stat Taille), `damage` qui suit les PV des ennemis au fil de la run et la stat Dégâts.
  * - foamShield (Mousse épaisse) : recharges du bouclier par seconde (0,05 = 1 toutes les 20 s).
@@ -87,50 +85,50 @@ const E = ITEM_EFFECTS;
 
 export const ITEMS = {
   // --- Objets d'évolution (GDD 7)
-  tourneeRapide: { name: 'Tournée rapide', stats: { attackSpeed: 0.08 }, text: "+{attackSpeed%} vitesse d'attaque" },
-  biereForte: { name: 'Bière plus forte', stats: { damage: 0.08 }, text: '+{damage%} dégâts' },
-  pinteXXL: { name: 'Pinte XXL', stats: { size: 0.1 }, text: '+{size%} taille des explosions et des ondes' },
-  kebab: { name: 'Kebab de 4h', stats: { duration: 0.1 }, text: '+{duration%} durée des effets' },
-  culSec: { name: 'Cul sec', stats: { critChance: 0.04 }, text: '+{critChance%} chances de critique' },
-  briquet: { name: 'Briquet', stats: { critDamage: 0.15 }, text: '+{critDamage%} dégâts critiques' },
-  sansAlcool: { name: 'Bière sans alcool', stats: { regen: 0.5 }, text: '+{regen} PV par seconde' },
-  ventreABiere: { name: 'Ventre à bière', stats: { maxHp: 15 }, text: '+{maxHp} PV max' },
-  bonnet: { name: 'Bonnet du Père Noël', effect: 'freeChest', value: 1, text: `Un coffre gratuit apparaît toutes les {every} s` },
-  trefle: { name: 'Trèfle de comptoir', stats: { luck: 5 }, text: '+{luck} chance' },
+  tourneeRapide: { name: 'Tournée rapide', rarity: 0, stats: { attackSpeed: 0.08 }, text: "+{attackSpeed%} vitesse d'attaque" },
+  biereForte: { name: 'Bière plus forte', rarity: 0, stats: { damage: 0.08 }, text: '+{damage%} dégâts' },
+  pinteXXL: { name: 'Pinte XXL', rarity: 0, stats: { size: 0.1 }, text: '+{size%} taille des explosions et des ondes' },
+  kebab: { name: 'Kebab de 4h', rarity: 0, stats: { duration: 0.1 }, text: '+{duration%} durée des effets' },
+  culSec: { name: 'Cul sec', rarity: 0, stats: { critChance: 0.04 }, text: '+{critChance%} chances de critique' },
+  briquet: { name: 'Briquet', rarity: 0, stats: { critDamage: 0.15 }, text: '+{critDamage%} dégâts critiques' },
+  sansAlcool: { name: 'Bière sans alcool', rarity: 0, stats: { regen: 0.5 }, text: '+{regen} PV par seconde' },
+  ventreABiere: { name: 'Ventre à bière', rarity: 0, stats: { maxHp: 15 }, text: '+{maxHp} PV max' },
+  bonnet: { name: 'Bonnet du Père Noël', rarity: 4, effect: 'freeChest', value: 2, text: `Un coffre gratuit apparaît toutes les {every} s` },
+  trefle: { name: 'Trèfle de comptoir', rarity: 1, stats: { luck: 8 }, text: '+{luck} chance' },
   // +20 % de la portée de base (5 m)
-  aimantCapsules: { name: 'Aimant à capsules', stats: { pickupRange: 1 }, text: "+{pickupRange} m portée d'attraction" },
-  godasses: { name: 'Godasses de bar', stats: { moveSpeed: 0.06 }, text: '+{moveSpeed%} vitesse' },
-  seauAGlace: { name: 'Seau à glace', effect: 'slowOnHit', value: 0.1, text: `Les ennemis touchés sont ralentis de {v%} (${E.slowOnHit.time} s)` },
-  deuxMains: { name: 'Deux mains', stats: { extraProjectiles: 1 }, fixed: true, minRarity: 2, text: '+{extraProjectiles} projectile' },
-  pression: { name: 'Pression du fût', stats: { knockback: 0.15 }, text: '+{knockback%} recul des ennemis touchés' },
-  gueuleDeBois: { name: 'Gueule de bois', stats: { armor: 1 }, text: '+{armor} armure (PV en moins par coup reçu)' },
-  ticketTournee: { name: 'Ticket de tournée', stats: { xpGain: 0.1 }, text: "+{xpGain%} gain d'XP" },
-  gantsVideur: { name: 'Gants de videur', effect: 'closeDamage', value: 0.15, text: `+{v%} dégâts aux ennemis à moins de ${E.closeDamage.range} m` },
-  lunettes: { name: 'Lunettes de comptoir', effect: 'eliteDamage', value: 0.15, text: '+{v%} dégâts aux gros ennemis' },
-  echarpe: { name: 'Écharpe de supporter', effect: 'crowdBoost', value: 0.1, text: `+{v%} vitesse et +${E.crowdBoost.armor} armure entouré de ${E.crowdBoost.count} ennemis` },
-  cochonnet: { name: 'Cochonnet', effect: 'extraShotChance', value: 0.1, text: '{v%} de chances de tirer un projectile de plus' },
-  cacahuetes: { name: 'Sachet de cacahuètes', effect: 'healOnXp', value: 0.2, text: "Chaque goutte d'XP soigne {v} PV" },
-  cendrier: { name: 'Cendrier', effect: 'explodeOnKill', value: 0.05, text: '{v%} des ennemis tués explosent' },
-  demarche: { name: 'Démarche de pochtron', stats: { dodge: 0.04 }, text: '+{dodge%} esquive' },
+  aimantCapsules: { name: 'Aimant à capsules', rarity: 1, stats: { pickupRange: 1.5 }, text: "+{pickupRange} m portée d'attraction" },
+  godasses: { name: 'Godasses de bar', rarity: 0, stats: { moveSpeed: 0.06 }, text: '+{moveSpeed%} vitesse' },
+  seauAGlace: { name: 'Seau à glace', rarity: 2, effect: 'slowOnHit', value: 0.2, text: `Les ennemis touchés sont ralentis de {v%} (${E.slowOnHit.time} s)` },
+  deuxMains: { name: 'Deux mains', rarity: 2, stats: { extraProjectiles: 1 }, text: '+{extraProjectiles} projectile' },
+  pression: { name: 'Pression du fût', rarity: 1, stats: { knockback: 0.22 }, text: '+{knockback%} recul des ennemis touchés' },
+  gueuleDeBois: { name: 'Gueule de bois', rarity: 3, stats: { armor: 3 }, text: '+{armor} armure (PV en moins par coup reçu)' },
+  ticketTournee: { name: 'Ticket de tournée', rarity: 1, stats: { xpGain: 0.15 }, text: "+{xpGain%} gain d'XP" },
+  gantsVideur: { name: 'Gants de videur', rarity: 2, effect: 'closeDamage', value: 0.3, text: `+{v%} dégâts aux ennemis à moins de ${E.closeDamage.range} m` },
+  lunettes: { name: 'Lunettes de comptoir', rarity: 2, effect: 'eliteDamage', value: 0.3, text: '+{v%} dégâts aux gros ennemis' },
+  echarpe: { name: 'Écharpe de supporter', rarity: 3, effect: 'crowdBoost', value: 0.3, text: `+{v%} vitesse et +${E.crowdBoost.armor} armure entouré de ${E.crowdBoost.count} ennemis` },
+  cochonnet: { name: 'Cochonnet', rarity: 3, effect: 'extraShotChance', value: 0.3, text: '{v%} de chances de tirer un projectile de plus' },
+  cacahuetes: { name: 'Sachet de cacahuètes', rarity: 2, effect: 'healOnXp', value: 0.4, text: "Chaque goutte d'XP soigne {v} PV" },
+  cendrier: { name: 'Cendrier', rarity: 4, effect: 'explodeOnKill', value: 0.2, text: '{v%} des ennemis tués explosent' },
+  demarche: { name: 'Démarche de pochtron', rarity: 1, stats: { dodge: 0.06 }, text: '+{dodge%} esquive' },
   // --- Autres objets
-  ressort: { name: 'Ressort de canapé', effect: 'doubleJump', value: 1, fixed: true, minRarity: 2, text: 'Double saut' },
-  secondeTournee: { name: 'Seconde tournée', effect: 'revive', value: 0.5, fixed: true, minRarity: 4, text: 'Revivre une fois avec {v%} des PV' },
-  carteFidelite: { name: 'Carte de fidélité', stats: { chestDiscount: 0.08 }, text: 'Coffres {chestDiscount%} moins chers' },
-  happyHour: { name: 'Happy hour', effect: 'happyHour', value: 8, text: `Toutes les ${E.happyHour.every} s : attaque x${E.happyHour.rate} pendant {v} s` },
-  glacons: { name: 'Glaçons', effect: 'freezeChance', value: 0.03, text: `{v%} de chances de geler un ennemi touché ${E.freezeChance.time} s` },
-  lastOrder: { name: 'Last order', effect: 'lowHpDamage', value: 0.2, text: `+{v%} dégâts sous ${E.lowHpDamage.below * 100} % PV` },
-  ardoise: { name: 'Ardoise du bar', effect: 'damageSpread', value: 3, text: 'Les dégâts reçus sont étalés sur {v} s' },
-  mousseEpaisse: { name: 'Mousse épaisse', effect: 'foamShield', value: 0.05, text: 'Un bouclier absorbe 1 coup toutes les {every} s' },
-  jukeBox: { name: 'Juke-box', effect: 'musicWave', value: 8, text: `Toutes les ${E.musicWave.every} s, une onde fait {v} dégâts et repousse` },
-  bretelles: { name: 'Bretelles', stats: { maxHp: 10, moveSpeed: 0.03 }, text: '+{maxHp} PV max et +{moveSpeed%} vitesse' },
-  casquette: { name: 'Casquette à bière', effect: 'standRegen', value: 2, text: '+{v} PV par seconde sans bouger' },
-  tongs: { name: 'Tongs', stats: { moveSpeed: 0.1, jumpHeight: -0.1 }, text: '+{moveSpeed%} vitesse, saut moins haut' },
-  sifflet: { name: "Sifflet d'arbitre", effect: 'whistle', value: 1, text: `Toutes les ${E.whistle.every} s, étourdit les ennemis proches {v} s` },
-  paille: { name: 'Paille', stats: { lifeSteal: 0.015 }, text: '+{lifeSteal%} vol de vie' },
-  piqueAssiette: { name: 'Pique-assiette', stats: { lifeSteal: 0.01, damage: 0.04 }, text: '+{lifeSteal%} vol de vie et +{damage%} dégâts' },
-  porteMonnaie: { name: 'Porte-monnaie', stats: { coinGain: 0.1 }, text: '+{coinGain%} capsules' },
-  tabouret: { name: 'Tabouret réservé', stats: { pumpSpeed: 0.2 }, text: 'Pompes à bière {pumpSpeed%} plus rapides' },
-  bonReduction: { name: 'Bon de réduction', effect: 'freeChestChance', value: 0.05, text: '{v%} de chances qu\'un coffre soit gratuit' },
+  ressort: { name: 'Ressort de canapé', rarity: 2, effect: 'doubleJump', value: 1, text: 'Double saut' },
+  secondeTournee: { name: 'Seconde tournée', rarity: 4, effect: 'revive', value: 0.5, text: 'Revivre une fois avec {v%} des PV' },
+  carteFidelite: { name: 'Carte de fidélité', rarity: 2, stats: { chestDiscount: 0.16 }, text: 'Coffres {chestDiscount%} moins chers' },
+  happyHour: { name: 'Happy hour', rarity: 4, effect: 'happyHour', value: 16, text: `Toutes les ${E.happyHour.every} s : attaque x${E.happyHour.rate} pendant {v} s` },
+  glacons: { name: 'Glaçons', rarity: 2, effect: 'freezeChance', value: 0.06, text: `{v%} de chances de geler un ennemi touché ${E.freezeChance.time} s` },
+  lastOrder: { name: 'Last order', rarity: 3, effect: 'lowHpDamage', value: 0.6, text: `+{v%} dégâts sous ${E.lowHpDamage.below * 100} % PV` },
+  ardoise: { name: 'Ardoise du bar', rarity: 3, effect: 'damageSpread', value: 6, text: 'Les dégâts reçus sont étalés sur {v} s' },
+  mousseEpaisse: { name: 'Mousse épaisse', rarity: 4, effect: 'foamShield', value: 0.1, text: 'Un bouclier absorbe 1 coup toutes les {every} s' },
+  jukeBox: { name: 'Juke-box', rarity: 4, effect: 'musicWave', value: 32, text: `Toutes les ${E.musicWave.every} s, une onde fait {v} dégâts et repousse` },
+  bretelles: { name: 'Bretelles', rarity: 1, stats: { maxHp: 15, moveSpeed: 0.045 }, text: '+{maxHp} PV max et +{moveSpeed%} vitesse' },
+  casquette: { name: 'Casquette à bière', rarity: 3, effect: 'standRegen', value: 6, text: '+{v} PV par seconde sans bouger' },
+  tongs: { name: 'Tongs', rarity: 1, stats: { moveSpeed: 0.15, jumpHeight: -0.1 }, text: '+{moveSpeed%} vitesse, saut moins haut' },
+  sifflet: { name: "Sifflet d'arbitre", rarity: 3, effect: 'whistle', value: 2, text: `Toutes les ${E.whistle.every} s, étourdit les ennemis proches {v} s` },
+  paille: { name: 'Paille', rarity: 2, stats: { lifeSteal: 0.03 }, text: '+{lifeSteal%} vol de vie' },
+  piqueAssiette: { name: 'Pique-assiette', rarity: 3, stats: { lifeSteal: 0.03, damage: 0.12 }, text: '+{lifeSteal%} vol de vie et +{damage%} dégâts' },
+  porteMonnaie: { name: 'Porte-monnaie', rarity: 1, stats: { coinGain: 0.15 }, text: '+{coinGain%} capsules' },
+  tabouret: { name: 'Tabouret réservé', rarity: 1, stats: { pumpSpeed: 0.3 }, text: 'Pompes à bière {pumpSpeed%} plus rapides' },
+  bonReduction: { name: 'Bon de réduction', rarity: 4, effect: 'freeChestChance', value: 0.2, text: '{v%} de chances qu\'un coffre soit gratuit' },
 } as const satisfies Record<string, ItemDef>;
 
 export type ItemId = keyof typeof ITEMS;

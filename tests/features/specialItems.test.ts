@@ -17,7 +17,7 @@ const toward = (t: ReturnType<typeof arena>) => t.game.player.facing.clone();
 describe('Objets à effet spécial', () => {
   it('Cendrier : un ennemi tué explose et blesse ses voisins, jamais le joueur', () => {
     const t = arena();
-    t.game.gainItem('cendrier', 0);
+    t.game.gainItem('cendrier');
     const victim = t.game.spawnZombie('zombie', t.inFront(6), toward(t).negate())!;
     const neighbour = t.game.spawnZombie('zombie', t.inFront(7), toward(t).negate())!;
     const far = t.game.spawnZombie('zombie', t.inFront(6 + ITEM_EFFECTS.explodeOnKill.radius + 3), toward(t).negate())!;
@@ -37,7 +37,7 @@ describe('Objets à effet spécial', () => {
     expect(without.events('itemExploded')).toHaveLength(0);
 
     const unlucky = arena(() => 0.99);
-    unlucky.game.gainItem('cendrier', 0);
+    unlucky.game.gainItem('cendrier');
     const z2 = unlucky.game.spawnZombie('zombie', unlucky.inFront(6), toward(unlucky))!;
     unlucky.game.hitZombie(z2, 9999, false, z2.pos, toward(unlucky));
     expect(unlucky.events('itemExploded')).toHaveLength(0);
@@ -47,7 +47,7 @@ describe('Objets à effet spécial', () => {
     const t = arena();
     t.game.cheats.god = false;
     t.game.loadout.weapons[0].mods.range = 0; // le joueur ne tire pas : le zombie reste au contact
-    t.game.gainItem('mousseEpaisse', 0);
+    t.game.gainItem('mousseEpaisse');
     const hp = t.game.health.hp;
     t.game.spawnZombie('novice', t.inFront(1.2), toward(t).negate());
     expect(t.playUntil(() => t.events('foamShieldPopped').length > 0, 6)).toBe(true);
@@ -65,8 +65,8 @@ describe('Objets à effet spécial', () => {
     const t = arena();
     t.game.cheats.god = false;
     t.game.loadout.weapons[0].mods.range = 0;
-    t.game.gainItem('mousseEpaisse', 0);
-    t.game.gainItem('mousseEpaisse', 0);
+    t.game.gainItem('mousseEpaisse');
+    t.game.gainItem('mousseEpaisse');
     expect(t.game.effects.shieldsUp).toBe(2);
     const hp = t.game.health.hp;
     const z = t.game.spawnZombie('novice', t.inFront(1.2), toward(t).negate())!;
@@ -83,7 +83,7 @@ describe('Objets à effet spécial', () => {
 
   it("Happy hour : toutes les 60 s, la cadence double pendant quelques secondes", () => {
     const t = arena();
-    t.game.gainItem('happyHour', 0);
+    t.game.gainItem('happyHour');
     const base = t.game.stats.fireRate;
     t.play(ITEM_EFFECTS.happyHour.every - 1);
     expect(t.events('happyHourStarted')).toHaveLength(0);
@@ -96,7 +96,7 @@ describe('Objets à effet spécial', () => {
 
   it("Sachet de cacahuètes : chaque goutte d'XP ramassée soigne un peu", () => {
     const t = arena();
-    t.game.gainItem('cacahuetes', 0);
+    t.game.gainItem('cacahuetes');
     t.game.health.hp = PLAYER_STATS.maxHp / 2;
     const hp = t.game.health.hp;
     t.game.xp.drop(t.inFront(1), 1);
@@ -105,11 +105,11 @@ describe('Objets à effet spécial', () => {
     expect(t.game.health.hp).toBeCloseTo(hp + 2 * ITEMS.cacahuetes.value, 5);
   });
 
-  it('les objets à effet se cumulent et suivent la rareté', () => {
+  it('les objets à effet se cumulent', () => {
     const t = arena();
-    t.game.gainItem('cacahuetes', 0);
-    t.game.gainItem('cacahuetes', 2);
-    expect(t.game.effects.healPerXp).toBeCloseTo(ITEMS.cacahuetes.value * 3, 5);
+    t.game.gainItem('cacahuetes');
+    t.game.gainItem('cacahuetes');
+    expect(t.game.effects.healPerXp).toBeCloseTo(ITEMS.cacahuetes.value * 2, 5);
     expect(t.game.items).toHaveLength(2);
   });
 });

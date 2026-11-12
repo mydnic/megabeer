@@ -29,32 +29,36 @@ const stat = (t: T, k: ItemStatId) => (k === 'maxHp' ? t.game.health.max : (t.ga
 const height = (t: T) => t.game.player.pos.length() - PLANET_RADIUS - heightAt(t.game.player.pos.clone().normalize());
 
 describe('Tous les objets', () => {
-  it('chaque carte d objet a un texte complet, à chaque rareté où il sort', () => {
+  it('chaque objet a une seule rareté, et sa carte un texte complet', () => {
     for (const id of Object.keys(ITEMS) as ItemId[]) {
       const def: ItemDef = ITEMS[id];
-      for (let r = def.minRarity ?? 0; r < RARITIES.length; r++) {
-        const text = itemCardText({ kind: 'item', item: id, rarity: r, mult: def.fixed ? 1 : RARITIES[r].mult });
-        expect(text, id).not.toMatch(/[{}]|NaN|undefined|Infinity/);
-      }
+      expect(RARITIES[def.rarity], id).toBeDefined();
+      const text = itemCardText({ kind: 'item', item: id, rarity: def.rarity });
+      expect(text, id).not.toMatch(/[{}]|NaN|undefined|Infinity/);
     }
   });
 
-  it('les objets à stats montent leurs stats de leur valeur (x la rareté)', () => {
+  it('une dizaine d objets par rareté : un coffre a toujours de quoi proposer 3 objets différents', () => {
+    for (let r = 0; r < RARITIES.length; r++) {
+      const n = (Object.keys(ITEMS) as ItemId[]).filter((id) => (ITEMS[id] as ItemDef).rarity === r).length;
+      expect(n, RARITIES[r].name).toBeGreaterThanOrEqual(7);
+    }
+  });
+
+  it('les objets à stats montent leurs stats de leur valeur fixe', () => {
     const t = arena();
     for (const id of Object.keys(ITEMS) as ItemId[]) {
       const def: ItemDef = ITEMS[id];
       if (!def.stats) continue;
-      const r = def.minRarity ?? 1;
-      const mult = def.fixed ? 1 : RARITIES[r].mult;
       const before = Object.fromEntries(Object.keys(def.stats).map((k) => [k, stat(t, k as ItemStatId)]));
-      t.game.gainItem(id, r);
-      for (const [k, v] of Object.entries(def.stats)) expect(stat(t, k as ItemStatId), `${id}.${k}`).toBeCloseTo(before[k] + v * mult, 5);
+      t.game.gainItem(id);
+      for (const [k, v] of Object.entries(def.stats)) expect(stat(t, k as ItemStatId), `${id}.${k}`).toBeCloseTo(before[k] + v, 5);
     }
   });
 
   it('Glaçons : un ennemi touché gèle, il ne bouge plus le temps du gel', () => {
     const t = arena();
-    t.game.gainItem('glacons', 0);
+    t.game.gainItem('glacons');
     const z = t.game.spawnZombie('zombie', t.inFront(8), facing(t).negate())!;
     t.play(0.5);
     shoot(t, z, 1);
@@ -69,8 +73,8 @@ describe('Tous les objets', () => {
 
   it('Seau à glace : les ennemis touchés ralentissent ; la stat Durée (Kebab) allonge le ralenti', () => {
     const t = arena();
-    t.game.gainItem('seauAGlace', 0);
-    t.game.gainItem('kebab', 0);
+    t.game.gainItem('seauAGlace');
+    t.game.gainItem('kebab');
     const z = t.game.spawnZombie('zombie', t.inFront(8), facing(t).negate())!;
     shoot(t, z, 1);
     expect(z.slowMul).toBeCloseTo(1 - ITEMS.seauAGlace.value, 5);
@@ -79,7 +83,7 @@ describe('Tous les objets', () => {
 
   it('Gants de videur, Lunettes, Last order : plus de dégâts aux bonnes cibles', () => {
     const t = arena();
-    t.game.gainItem('gantsVideur', 0);
+    t.game.gainItem('gantsVideur');
     const near = t.game.spawnZombie('tonnelier', t.inFront(2), facing(t).negate())!;
     const far = t.game.spawnZombie('tonnelier', t.inFront(10), facing(t).negate())!;
     const h0 = near.hp;
@@ -87,7 +91,7 @@ describe('Tous les objets', () => {
     expect(h0 - near.hp).toBeCloseTo((h0 - far.hp) * (1 + ITEMS.gantsVideur.value), 5);
 
     const u = arena();
-    u.game.gainItem('lunettes', 0);
+    u.game.gainItem('lunettes');
     const big = u.game.spawnZombie('tonnelier', u.inFront(10), facing(u).negate())!;
     const small = u.game.spawnZombie('zombie', u.inFront(10, 3), facing(u).negate())!;
     const b0 = big.hp, s0 = small.hp;
@@ -96,7 +100,7 @@ describe('Tous les objets', () => {
     expect(b0 - big.hp).toBeCloseTo((s0 - small.hp) * (1 + ITEMS.lunettes.value), 5);
 
     const v = arena();
-    v.game.gainItem('lastOrder', 0);
+    v.game.gainItem('lastOrder');
     const z = v.game.spawnZombie('tonnelier', v.inFront(10), facing(v).negate())!;
     const z0 = z.hp;
     shoot(v, z, 2);
@@ -109,7 +113,7 @@ describe('Tous les objets', () => {
 
   it('Paille : une part des dégâts infligés revient en PV', () => {
     const t = arena();
-    t.game.gainItem('paille', 0);
+    t.game.gainItem('paille');
     t.game.health.hp = 50;
     const z = t.game.spawnZombie('tonnelier', t.inFront(10), facing(t).negate())!;
     const before = z.hp;
@@ -120,7 +124,7 @@ describe('Tous les objets', () => {
   it('Démarche de pochtron : un coup esquivé ne fait rien', () => {
     const t = arena();
     t.game.cheats.god = false;
-    t.game.gainItem('demarche', 0);
+    t.game.gainItem('demarche');
     const hp = t.game.health.hp;
     t.game.spawnZombie('novice', t.inFront(1.2), facing(t).negate());
     expect(t.playUntil(() => t.events('playerDodged').length > 0, 5)).toBe(true);
@@ -130,7 +134,7 @@ describe('Tous les objets', () => {
   it('Gueule de bois : l armure retire des PV à chaque coup reçu', () => {
     const t = arena(() => 0.99);
     t.game.cheats.god = false;
-    t.game.gainItem('gueuleDeBois', 0);
+    t.game.gainItem('gueuleDeBois');
     t.game.spawnZombie('novice', t.inFront(1.2), facing(t).negate());
     expect(t.playUntil(() => t.events('playerHurt').some((h) => !h.blocked), 5)).toBe(true);
     const hit = t.events('playerHurt').find((h) => !h.blocked)!;
@@ -140,7 +144,7 @@ describe('Tous les objets', () => {
   it('Ardoise du bar : le coup reçu tombe en quelques secondes, pas d un coup', () => {
     const t = arena(() => 0.99);
     t.game.cheats.god = false;
-    t.game.gainItem('ardoise', 0);
+    t.game.gainItem('ardoise');
     const hp = t.game.health.hp;
     const z = t.game.spawnZombie('novice', t.inFront(1.2), facing(t).negate())!;
     expect(t.playUntil(() => t.events('playerHurt').length > 0, 5)).toBe(true);
@@ -153,13 +157,13 @@ describe('Tous les objets', () => {
 
   it('Bière sans alcool et Casquette : les PV remontent (la Casquette seulement sans bouger)', () => {
     const t = arena();
-    t.game.gainItem('sansAlcool', 0);
+    t.game.gainItem('sansAlcool');
     t.game.health.hp = 50;
     t.play(2);
     expect(t.game.health.hp).toBeCloseTo(50 + 2 * ITEMS.sansAlcool.stats.regen, 1);
 
     const u = arena();
-    u.game.gainItem('casquette', 0);
+    u.game.gainItem('casquette');
     u.game.health.hp = 50;
     u.play(1);
     expect(u.game.health.hp).toBeCloseTo(50 + ITEMS.casquette.value, 1);
@@ -169,7 +173,7 @@ describe('Tous les objets', () => {
 
   it("Sifflet d'arbitre : toutes les 15 s, les ennemis proches sont étourdis", () => {
     const t = arena();
-    t.game.gainItem('sifflet', 0);
+    t.game.gainItem('sifflet');
     const near = t.game.spawnZombie('zombie', t.inFront(4), facing(t).negate())!;
     t.play(ITEM_EFFECTS.whistle.every + 0.1);
     expect(t.events('whistleBlown')).toHaveLength(1);
@@ -179,7 +183,7 @@ describe('Tous les objets', () => {
   it('Juke-box : toutes les quelques secondes, une onde blesse et repousse les ennemis proches', () => {
     const t = arena();
     t.game.loadout.weapons[0].mods.range = 0; // seule l'onde touche le zombie
-    t.game.gainItem('jukeBox', 0);
+    t.game.gainItem('jukeBox');
     t.play(ITEM_EFFECTS.musicWave.every - 0.2);
     expect(t.events('shockwave')).toHaveLength(0);
     const z = t.game.spawnZombie('tonnelier', t.inFront(3), facing(t).negate())!;
@@ -195,7 +199,7 @@ describe('Tous les objets', () => {
 
   it('Seconde tournée : à la mort, le joueur revient une fois, puis meurt pour de bon', () => {
     const t = arena();
-    t.game.gainItem('secondeTournee', 4);
+    t.game.gainItem('secondeTournee');
     t.game.health.invuln = 0;
     t.game.health.damage(9999);
     t.play(0.1);
@@ -210,9 +214,9 @@ describe('Tous les objets', () => {
 
   it('Bonnet du Père Noël : un coffre gratuit apparaît près du joueur, il s ouvre sans capsule', () => {
     const t = arena();
-    t.game.gainItem('bonnet', 0);
+    t.game.gainItem('bonnet');
     t.game.coins = 0;
-    t.play(ITEM_EFFECTS.freeChest.every + 0.1);
+    t.play(ITEM_EFFECTS.freeChest.every / ITEMS.bonnet.value + 0.1);
     const spawned = t.events('freeChestSpawned');
     expect(spawned).toHaveLength(1);
     const chest = spawned[0].chest;
@@ -222,11 +226,11 @@ describe('Tous les objets', () => {
 
   it('Carte de fidélité et Bon de réduction : les coffres coûtent moins, ou rien', () => {
     const t = arena(() => 0.99);
-    t.game.gainItem('carteFidelite', 4);
-    expect(t.game.chests.price).toBe(Math.round(CHESTS.basePrice * (1 - ITEMS.carteFidelite.stats.chestDiscount * RARITIES[4].mult)));
+    t.game.gainItem('carteFidelite');
+    expect(t.game.chests.price).toBe(Math.round(CHESTS.basePrice * (1 - ITEMS.carteFidelite.stats.chestDiscount)));
 
     const u = arena();
-    u.game.gainItem('bonReduction', 0);
+    u.game.gainItem('bonReduction');
     u.game.coins = 0;
     const chest = u.game.chests.list[0];
     const up = chest.pos.clone().normalize();
@@ -251,12 +255,12 @@ describe('Tous les objets', () => {
     };
     const plain = jump(arena(), false);
     const spring = arena();
-    spring.game.gainItem('ressort', 2);
+    spring.game.gainItem('ressort');
     expect(jump(spring, true)).toBeGreaterThan(plain * 1.3);
     const noSpring = jump(arena(), true);
     expect(noSpring).toBeCloseTo(plain, 1);
     const tongs = arena();
-    tongs.game.gainItem('tongs', 0);
+    tongs.game.gainItem('tongs');
     expect(jump(tongs, false)).toBeLessThan(plain * 0.9);
   });
 
@@ -264,15 +268,15 @@ describe('Tous les objets', () => {
     const t = createTestGame(1, { coins: 'always' });
     t.startRunAndLand();
     t.noSpawns();
-    t.game.gainItem('porteMonnaie', 4);
+    t.game.gainItem('porteMonnaie');
     for (let i = 0; i < 10; i++) t.game.coinDrops.drop(t.inFront(1, (i - 5) * 0.1), 1);
     t.playUntil(() => t.game.coinDrops.drops.length === 0, 5);
-    expect(t.game.coins).toBe(Math.floor(10 * (1 + ITEMS.porteMonnaie.stats.coinGain * RARITIES[4].mult) + 1e-9));
+    expect(t.game.coins).toBe(Math.floor(10 * (1 + ITEMS.porteMonnaie.stats.coinGain) + 1e-9));
   });
 
   it('Tabouret réservé : les pompes se remplissent plus vite', () => {
     const t = arena();
-    t.game.gainItem('tabouret', 0);
+    t.game.gainItem('tabouret');
     const pump = t.game.pumps.list[0];
     t.game.pumps.update(1, pump.pos, t.game.stats.pumpSpeed);
     expect(pump.fill).toBeGreaterThan(1 / 6 * (1 + ITEMS.tabouret.stats.pumpSpeed) - 1e-6);
@@ -280,7 +284,7 @@ describe('Tous les objets', () => {
 
   it('Cochonnet : parfois un projectile de plus dans la volée', () => {
     const t = arena();
-    t.game.gainItem('cochonnet', 0);
+    t.game.gainItem('cochonnet');
     t.play(0.1);
     expect(t.game.stats.volleyBonus()).toBe(t.game.stats.extraProjectiles + 1);
     t.game.stats.random = () => 0.99;
@@ -289,7 +293,7 @@ describe('Tous les objets', () => {
 
   it('Écharpe de supporter : entouré de beaucoup d ennemis, le joueur court plus vite', () => {
     const t = arena();
-    t.game.gainItem('echarpe', 0);
+    t.game.gainItem('echarpe');
     t.play(0.1);
     const speed = t.game.player.speed;
     for (let i = 0; i < ITEM_EFFECTS.crowdBoost.count; i++) {
@@ -303,8 +307,8 @@ describe('Tous les objets', () => {
 
   it('Pinte XXL : les explosions du Cendrier sont plus grandes', () => {
     const t = arena();
-    t.game.gainItem('cendrier', 0);
-    t.game.gainItem('pinteXXL', 0);
+    t.game.gainItem('cendrier');
+    t.game.gainItem('pinteXXL');
     const z = t.game.spawnZombie('zombie', t.inFront(6), facing(t))!;
     shoot(t, z, 9999);
     expect(t.events('itemExploded')[0].radius).toBeCloseTo(ITEM_EFFECTS.explodeOnKill.radius * (1 + ITEMS.pinteXXL.stats.size), 5);

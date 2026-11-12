@@ -121,20 +121,19 @@ describe('Les coffres', () => {
     const before = read();
     t.game.pickCard(card);
     // Objet à stat : la stat monte ; objet à effet spécial : l'effet est actif
-    if (stat) expect(read()).toBeCloseTo(before + base! * card.mult, 5);
+    if (stat) expect(read()).toBeCloseTo(before + base!, 5);
     else expect(t.game.effects.has(def.effect!)).toBe(true);
     expect(t.game.items).toEqual([{ item: card.item, rarity: card.rarity }]);
     expect(t.game.frozen).toBe(false);
   });
 
-  it('un objet vaut plus quand la rareté monte, et « Deux mains » ne sort qu à partir de Rare', () => {
+  it('un coffre propose 3 objets différents, tous de sa rareté', () => {
     for (let r = 0; r < RARITIES.length; r++) {
       for (let i = 0; i < 50; i++) {
-        for (const c of rollItemCards(r, 3)) {
-          const def: ItemDef = ITEMS[c.item];
-          expect(r).toBeGreaterThanOrEqual(def.minRarity ?? 0);
-          expect(c.mult).toBeCloseTo(def.fixed ? 1 : RARITIES[r].mult, 5);
-        }
+        const cards = rollItemCards(r, 3);
+        expect(cards).toHaveLength(3);
+        expect(new Set(cards.map((c) => c.item)).size).toBe(3);
+        for (const c of cards) expect((ITEMS[c.item] as ItemDef).rarity).toBe(r);
       }
     }
   });

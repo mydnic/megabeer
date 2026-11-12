@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { CHESTS as C } from '../config/chests';
 import { ITEMS, type ItemDef, type ItemId } from '../config/items';
-import { RARITIES } from '../config/upgrades';
 import { PLANET_RADIUS } from '../config/world';
 import { groundBodies, type DecorCollider } from '../world/decor/collider';
 import { boxShape } from '../world/decor/gridShape';
@@ -14,7 +13,8 @@ const X = new THREE.Vector3(1, 0, 0), Y = new THREE.Vector3(0, 1, 0);
 export type Chest = { pos: THREE.Vector3; opened: boolean; free?: boolean; trapped?: boolean; rarity?: number };
 
 /** Carte d'objet (coffre) : l'objet, sa rareté, l'effet qui en découle. */
-export type ItemCard = { kind: 'item'; item: ItemId; rarity: number; mult: number };
+/** Un objet proposé par un coffre (`rarity` : celle de l'objet, qui est celle du coffre). */
+export type ItemCard = { kind: 'item'; item: ItemId; rarity: number };
 
 /**
  * Les coffres d'une run : une centaine posés au hasard, payés en capsules à la touche d'action, à
@@ -138,14 +138,10 @@ export class Chests {
   }
 }
 
-/** Les objets proposés par un coffre de rareté `rarity` : `n` objets différents, permis à cette rareté. */
+/** Les objets proposés par un coffre de rareté `rarity` : `n` objets différents de cette rareté. */
 export function rollItemCards(rarity: number, n: number): ItemCard[] {
-  const left = (Object.keys(ITEMS) as ItemId[]).filter((id) => ((ITEMS[id] as { minRarity?: number }).minRarity ?? 0) <= rarity);
+  const left = (Object.keys(ITEMS) as ItemId[]).filter((id) => (ITEMS[id] as ItemDef).rarity === rarity);
   const cards: ItemCard[] = [];
-  while (cards.length < n && left.length) {
-    const id = left.splice(Math.floor(Math.random() * left.length), 1)[0];
-    const def: ItemDef = ITEMS[id];
-    cards.push({ kind: 'item', item: id, rarity, mult: def.fixed ? 1 : RARITIES[rarity].mult });
-  }
+  while (cards.length < n && left.length) cards.push({ kind: 'item', item: left.splice(Math.floor(Math.random() * left.length), 1)[0], rarity });
   return cards;
 }

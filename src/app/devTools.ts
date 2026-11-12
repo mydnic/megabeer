@@ -1,5 +1,4 @@
 import { ITEMS, type ItemId } from '../config/items';
-import { RARITIES } from '../config/upgrades';
 import * as THREE from 'three';
 import { DIFFICULTIES, type DifficultyId } from '../config/spawn';
 import { WEAPON_FACTORIES } from '../weapons/registry';
@@ -67,8 +66,7 @@ export async function wireDevTools(game: Game, d: {
     weapons: Object.keys(WEAPON_FACTORIES),
     giveWeapon(id) { if (inRun() && game.equip(id as WeaponId)) runLog.event('dev', 'weapon', id); },
     items: Object.keys(ITEMS),
-    rarities: RARITIES.map((r) => r.name),
-    giveItem(id, rarity) { if (inRun()) { game.gainItem(id as ItemId, rarity); runLog.event('dev', 'item', id, rarity); } },
+    giveItem(id) { if (inRun()) { game.gainItem(id as ItemId); runLog.event('dev', 'item', id); } },
     heal() { if (inRun()) { game.health.reset(); runLog.event('dev', 'heal'); } },
     giveCoins(n) { if (inRun()) { game.coins += n; runLog.event('dev', 'coins', n); } },
     placeBin() {

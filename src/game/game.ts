@@ -4,7 +4,7 @@ import { ENEMIES, ROSTERS, type EnemyId } from '../config/enemies';
 import { ZOMBIE_ATTACK, type ZombieModel } from '../config/zombies';
 import { ARRIVAL } from '../config/player';
 import { DEATH } from '../config/buveur';
-import { LEVEL_UP_SCREEN, RARITIES } from '../config/upgrades';
+import { LEVEL_UP_SCREEN } from '../config/upgrades';
 import type { InputState } from '../core/input';
 import { createHorde } from '../enemies/horde';
 import type { Zombie, ZombieTimings } from '../enemies/zombie';
@@ -146,7 +146,7 @@ export type GameEvents = {
   /** Touche d'action sur un coffre sans assez de capsules. */
   chestDenied: { chest: Chest; price: number; coins: number };
   /** Objet pris dans un coffre. */
-  itemGained: { item: ItemId; rarity: number; mult: number };
+  itemGained: { item: ItemId; rarity: number };
   /** Glaçons ou Sifflet : un ennemi gèle (ou est étourdi) `time` s. */
   zombieFrozen: { zombie: Zombie; time: number };
   /** Démarche de pochtron : le joueur esquive le coup de `zombie` (null : un piège). */
@@ -442,7 +442,7 @@ export class Game {
     if (!this.offer?.includes(card)) return;
     this.offer = null;
     if (card.kind === 'stat') this.applyStatBonus(card.stat, card.value);
-    else if (card.kind === 'item') this.gainItem(card.item, card.rarity, card.mult);
+    else if (card.kind === 'item') this.gainItem(card.item);
     else {
       if (card.kind === 'weapon') this.equip(card.weaponId);
       else applyCard(card);
@@ -576,16 +576,16 @@ export class Game {
 
   /**
    * Le joueur prend un objet (carte de coffre, outils de dev) : rangé dans ses objets, sa stat ou son
-   * effet s'applique. `value` : effet à cette rareté (par défaut celui de la config).
+   * effet s'applique (sa valeur fixe, sa rareté : celles de la config).
    */
-  gainItem(item: ItemId, rarity: number, mult?: number) {
+  gainItem(item: ItemId) {
     const def: ItemDef = ITEMS[item];
-    const m = mult ?? (def.fixed ? 1 : RARITIES[rarity].mult);
+    const rarity = def.rarity;
     this.items.push({ item, rarity });
-    for (const [stat, v] of Object.entries(def.stats ?? {}) as [ItemStatId, number][]) this.applyStatBonus(stat, v * m);
-    if (def.effect) this.effects.add(def.effect, (def.value ?? 0) * m);
+    for (const [stat, v] of Object.entries(def.stats ?? {}) as [ItemStatId, number][]) this.applyStatBonus(stat, v);
+    if (def.effect) this.effects.add(def.effect, def.value ?? 0);
     if (def.effect === 'doubleJump') this.player.airJumps = Math.round(this.effects.power.doubleJump);
-    this.events.emit('itemGained', { item, rarity, mult: m });
+    this.events.emit('itemGained', { item, rarity });
   }
 
   /** Paie et ouvre un coffre : la rareté se révèle, le jeu se fige sur 3 objets de cette rareté. */
