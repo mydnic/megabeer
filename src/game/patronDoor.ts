@@ -6,7 +6,7 @@ import type { DecorCollider } from '../world/decor/collider';
 import { randomDir } from './pumps';
 
 /**
- * La Porte du patron (GDD section 12) : une seule par run, cachée loin du départ. Le joueur l'active quand il veut
+ * La Porte du patron (GDD section 12) : une seule par run, posée loin du départ sur un sol presque plat. Le joueur l'active quand il veut
  * (touche d'action) : elle s'ouvre et le boss final en sort. `focus` : le joueur est à portée et elle est fermée.
  */
 export class PatronDoor {
@@ -31,6 +31,7 @@ export class PatronDoor {
       if (!chests.every((c) => far(dir, c, D.minFromChest * k))) continue;
       if (!pumps.every((c) => far(dir, c, D.minFromPump * k))) continue;
       const pos = dir.clone().multiplyScalar(PLANET_RADIUS + heightAt(dir));
+      if (!flatAround(dir, D.flatRadius, D.maxBump / k)) continue;
       if (this.collider.occupied(this.tmp.copy(dir).multiplyScalar(pos.length() + 1.5), D.clearRadius * k)) continue;
       this.pos = pos;
       // Elle regarde vers le départ (le long du grand cercle)
@@ -45,4 +46,21 @@ export class PatronDoor {
   update(playerPos: THREE.Vector3) {
     this.focus = !!this.pos && !this.open && this.pos.angleTo(playerPos) * PLANET_RADIUS < D.interactRange;
   }
+}
+
+/** Le relief autour de `dir` (8 directions, à `radius` m et à mi-chemin) reste-t-il à moins de `bump` m de sa hauteur ? */
+export function flatAround(dir: THREE.Vector3, radius: number, bump: number) {
+  const h0 = heightAt(dir);
+  const a = new THREE.Vector3().crossVectors(dir, Math.abs(dir.y) < 0.9 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0)).normalize();
+  const b = new THREE.Vector3().crossVectors(dir, a);
+  const t = new THREE.Vector3(), d = new THREE.Vector3();
+  for (let i = 0; i < 8; i++) {
+    const ang = (i / 8) * Math.PI * 2;
+    t.copy(a).multiplyScalar(Math.cos(ang)).addScaledVector(b, Math.sin(ang));
+    for (const r of [radius / 2, radius]) {
+      d.copy(dir).addScaledVector(t, r / PLANET_RADIUS).normalize();
+      if (Math.abs(heightAt(d) - h0) > bump) return false;
+    }
+  }
+  return true;
 }

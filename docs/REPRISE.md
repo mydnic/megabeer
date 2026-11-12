@@ -112,11 +112,12 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    de zone c'est suffisant »). Le boss tient maintenant une cloche à main (gauche) qu'il frappe au maillet : chaque
    coup lance l'onde, rien d'autre. Ne pas re-proposer la cloche qui roule. Tests du boss : hasard à graine fixe.
    Frère Sonneur validé par l'utilisateur le 2026-11-12.
-   **Fin de run, checkpoint 1 fait le 2026-11-12, à valider en jeu : Porte du patron + l'Abbé + victoire.** Choix de
+   **Fin de run, checkpoint 1 validé par l'utilisateur le 2026-11-12 : Porte du patron + l'Abbé + victoire.** Choix de
    l'utilisateur : Abbé sculpté maison (`tools/blender/abbe.py`, outils communs `tools/blender/figure_kit.py`), attaque
    « simple » (flaques de vin marquées puis brûlantes autour du joueur, pas d'invocation), phase 2 géante (il boit son
    calice, x1,6), porte en pièces du Castle Kit (`world/doorView.ts`, faisceau rouge). Retours du premier test (2026-11-12),
-   faits, à revalider : porte 2,5x plus grande et pareille des deux côtés, toujours sur la mini-carte (flèche au bord) ;
+   faits et validés : porte 2,5x plus grande, posée sur sol presque plat (`flatAround`), mains de l'Abbé retournées (pouce en haut) ; et pareille des deux côtés, toujours sur la mini-carte (flèche au bord) ;
+   
    Abbé 2x plus grand, flaques 2x plus larges ; cartes de level-up à la croix de la manette, X pour valider. Le boss
    est générique (`game/boss.ts`, une vue par boss `createBossView`), victoire = jeu figé + `ui/victoryScreen.ts`.
    Réglages `ABBE`, `PATRON_DOOR`, `DOOR_LOOK`, `WINE_LOOK` (config/bosses.ts). DEV : « Abbé maintenant », « Aller à la

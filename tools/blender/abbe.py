@@ -169,8 +169,9 @@ def build_head():
 
 # ---------------------------------------------------------------- les mains : longs doigts osseux, griffes
 def build_hands():
-    # Main droite : poing fermé sur la crosse (manche vertical)
-    h = STAFF
+    # Main droite : poing fermé sur la crosse (manche vertical). Le kit pose le pouce du côté de -h : h vers le bas
+    # met le pouce en haut, par-dessus l'index, comme une vraie prise
+    h = -STAFF
     u = (-FAR - h * (-FAR).dot(h)).normalized()
     fist('main.R', 'hand.R', mx(WR, -1), FAR, GRIP_R, h, u, h.cross(u))
     # Main gauche : poing fermé sur la tige du calice (vertical, calice au-dessus de la main)
@@ -489,4 +490,11 @@ if RENDER_DIR:
     shoot('cast_vin.png', 70, 5, action='cast', frame=CAST_POUR, scale=4.4)
     shoot('roar.png', -60, 5, action='roar', frame=20, scale=4.4)
     shoot('death.png', 70, 10, action='death', frame=60, scale=4.4, target=(0, 0, 0.8))
+    # Gros plans des mains (pose de repos), de face et de profil extérieur
+    for side, yaw in (('R', -60), ('L', 60)):
+        scene.frame_set(0)
+        pb = arm.pose.bones[f'hand.{side}']
+        at = arm.matrix_world @ pb.tail
+        shoot(f'main_{side}_face.png', 0, 5, action='idle', scale=0.9, target=tuple(at))
+        shoot(f'main_{side}_cote.png', yaw, 5, action='idle', scale=0.9, target=tuple(at))
     print('RENDERS_OK', RENDER_DIR)

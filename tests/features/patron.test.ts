@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ABBE as A, PATRON_DOOR } from '../../src/config/bosses';
 import { PLANET_RADIUS } from '../../src/config/world';
 import type { Abbe } from '../../src/game/abbe';
+import { flatAround } from '../../src/game/patronDoor';
 import { createTestGame } from '../support/testGame';
 
 /** Hasard à graine fixe : même planète, mêmes placements à chaque passage. */
@@ -52,6 +53,15 @@ describe('La Porte du patron', () => {
     const spawn = t.game.player.pos.clone();
     expect(t.game.door.pos).not.toBeNull();
     expect(dist(t.game.door.pos!, spawn)).toBeGreaterThan(PATRON_DOOR.minFromSpawn - 25);
+  });
+
+  it('elle est posée sur un sol presque plat, pas sur un flanc de montagne', () => {
+    for (const seed of [3, 11, 27]) {
+      vi.spyOn(Math, 'random').mockImplementation(seeded(seed));
+      const t = arena();
+      const dir = t.game.door.pos!.clone().normalize();
+      expect(flatAround(dir, PATRON_DOOR.flatRadius, PATRON_DOOR.maxBump)).toBe(true);
+    }
   });
 
   it("devant elle, la touche d'action l'ouvre : l'Abbé en sort, une seule fois", () => {

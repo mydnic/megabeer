@@ -118,6 +118,9 @@ export const PATRON_DOOR = {
   minFromPump: 12,
   /** Rayon (m) sans décor autour d'elle ; si aucune place n'est trouvée, on réessaie avec des écarts divisés par deux. */
   clearRadius: 5,
+  /** Sol presque plat : à `flatRadius` m autour d'elle (et à mi-chemin), le relief ne s'écarte pas de plus de `maxBump` m. */
+  flatRadius: 9,
+  maxBump: 0.8,
   placementTries: 4000,
   /** Portée de la touche d'action (m, au sol). */
   interactRange: 7,
