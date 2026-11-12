@@ -111,6 +111,7 @@ export function createHordeView(scene: THREE.Scene, lib: ZombieLibrary) {
       for (const c of crowds) c.mesh.count = 0;
       for (const z of zombies) {
         if (z.gone) continue; // un kamikaze qui vient d'exploser
+        if (!byModel.has(z.model)) continue; // dessiné à part (boss)
         if (camera) {
           ball.center.copy(z.pos);
           ball.radius = V.cullMargin * z.kind.scale * z.size;

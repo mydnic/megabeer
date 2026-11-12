@@ -104,6 +104,12 @@ export const AUDIO = {
   trap: { wood: 'impactWood_heavy', woodVolume: 0.9, woodRate: 0.8, boom: 'impactSoft_heavy', boomVolume: 0.9, boomRate: 0.55 },
   /** Dernier service : trois coups de cloche, de plus en plus aigus, espacés de `gap` s. */
   lastCall: { sample: 'impactBell_heavy', volume: 0.8, rate: 0.9, step: 0.12, gap: 0.22, count: 3 },
+  /** Boss : il sort de terre, son maillet frappe (cloche grave et choc sourd, entendus jusqu'à `hearDist` m), il rugit, il tombe. */
+  boss: {
+    spawn: 'impactMining', spawnVolume: 0.9, spawnRate: 0.5, hearDist: 50,
+    bell: 'impactBell_heavy', bellVolume: 0.9, bellRate: 0.55, thud: 'impactSoft_heavy', thudVolume: 0.9, thudRate: 0.45,
+    roar: 'impactSoft_heavy', roarVolume: 1, roarRate: 0.3, death: 'impactBell_heavy', deathVolume: 1, deathRate: 0.4,
+  },
   /** Élite : grondement quand il arrive (entendu jusqu'à `hearDist` m), coffre qui tombe à sa mort. */
   elite: { spawn: 'impactSoft_heavy', spawnVolume: 0.7, spawnRate: 0.5, hearDist: 45, chest: 'impactWood_heavy', chestVolume: 0.6, chestRate: 1.1 },
   /** Tournée du bar ramassée : verre qui tinte, puis une bulle ; fin d'une tournée : petit tintement grave. */

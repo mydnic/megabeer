@@ -26,6 +26,8 @@ export interface DevApi {
   placeTrap(): void;
   /** Lâche une clochette du Dernier service devant le joueur. */
   dropBell(): void;
+  /** Fait venir le boss tout de suite. */
+  spawnBoss(): void;
   /** Fait apparaître un élite du modèle choisi (liste des ennemis) devant le joueur. */
   spawnElite(model: string): void;
   /** Tournées du bar : en lâcher une devant le joueur. */
@@ -70,7 +72,7 @@ export function createDevPanel(api: DevApi) {
       <br><select data-k="item">${api.items.map((w) => `<option>${w}</option>`).join('')}</select> <select data-k="rarity">${api.rarities.map((r, i) => `<option value="${i}">${r}</option>`).join('')}</select> <button data-a="item">Donner l'objet</button>
       <br><button data-a="coins">+50 capsules</button>
       <br><button data-a="bin">Poubelle devant</button> <button data-a="trap">Coffre piégé devant</button>
-      <br><button data-a="bell">Clochette devant</button> <button data-a="elite">Élite devant (modèle ci-dessus)</button>
+      <br><button data-a="bell">Clochette devant</button> <button data-a="boss">Boss maintenant</button> <button data-a="elite">Élite devant (modèle ci-dessus)</button>
       <br><select data-k="tournee">${api.tournees.map((w) => `<option>${w}</option>`).join('')}</select> <button data-a="tournee">Tournée devant</button>
       <br><button data-a="heal">Soigner</button> <button data-a="die">Mourir</button>
     </fieldset>
@@ -94,6 +96,7 @@ export function createDevPanel(api: DevApi) {
     bin: () => api.placeBin(),
     trap: () => api.placeTrap(),
     bell: () => api.dropBell(),
+    boss: () => api.spawnBoss(),
     elite: () => api.spawnElite(q<HTMLSelectElement>('model').value),
     tournee: () => api.dropTournee(q<HTMLSelectElement>('tournee').value),
     weapon: () => api.giveWeapon(q<HTMLSelectElement>('weapon').value),

@@ -1,3 +1,4 @@
+import { FRERE_SONNEUR } from '../config/bosses';
 import { CANETTE_IMPACT, FUT_SOUND, GUEUZE_BLAST, STOUT_IMPACT } from '../config/weapons';
 import type * as THREE from 'three';
 import { BELL_SOUND } from '../config/abbey';
@@ -52,6 +53,16 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
     audio.play(T.wood, T.woodVolume, T.woodRate * jitter(0.05));
     audio.play(T.boom, T.boomVolume, T.boomRate * jitter(0.05));
   });
+  // Boss : il sort de terre en grondant ; son maillet frappe le sol comme une cloche ; il rugit en phase 2
+  const BS = AUDIO.boss;
+  game.events.on('bossSpawned', () => audio.play(BS.spawn, BS.spawnVolume, BS.spawnRate));
+  game.events.on('bossWave', ({ at }) => {
+    const k = Math.max(0.35, near(at, BS.hearDist));
+    audio.play(BS.bell, BS.bellVolume * k, BS.bellRate * jitter(0.04));
+    audio.play(BS.thud, BS.thudVolume * k, BS.thudRate * jitter(0.05));
+  });
+  game.events.on('bossPhase', () => audio.play(BS.roar, BS.roarVolume, BS.roarRate));
+  game.events.on('bossKilled', () => audio.play(BS.death, BS.deathVolume, BS.deathRate));
   // Élites
   game.events.on('eliteSpawned', ({ zombie }) => {
     const E = AUDIO.elite, k = near(zombie.pos, E.hearDist);
@@ -202,4 +213,8 @@ export function wireMusic(game: Game, audio: AudioEngine, music: ReturnType<type
   game.events.on('runStarted', () => music.startRun(map));
   game.events.on('died', () => volume(DEATH_BANNER.musicDuck, 0.6));
   game.events.on('home', () => { volume(1, 0.4); music.endRun(); });
+  // Boss : sa musique tant qu'il est debout
+  game.events.on('bossSpawned', () => music.startBoss(FRERE_SONNEUR.music));
+  game.events.on('bossKilled', () => music.endBoss());
+  game.events.on('died', () => { if (music.boss) music.endBoss(); });
 }

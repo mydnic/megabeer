@@ -31,6 +31,8 @@ import { BELL_DROPS, LAST_CALL } from '../config/lastCall';
 import { Tournees, TOURNEE_IDS, rollTournee, tourneeDropChance } from './tournees';
 import { TOURNEE_FX, TOURNEES, type TourneeId } from '../config/tournees';
 import { ELITES } from '../config/elites';
+import { FRERE_SONNEUR } from '../config/bosses';
+import { FrereSonneur } from './frereSonneur';
 import { BINS, SNACK, SNACK_DROPS } from '../config/bins';
 import { ITEMS, ITEM_EFFECTS, ITEM_STAT_CAPS, type ItemDef, type ItemId, type ItemStatId } from '../config/items';
 import { ItemEffects } from './itemEffects';
@@ -108,6 +110,14 @@ export type GameEvents = {
    * ramassée) ; `pulled` gouttes et capsules partent vers le Buveur.
    */
   lastCallRung: { source: 'bell' | 'drop'; at: THREE.Vector3; bell: CallBell | null; pulled: number };
+  /** Le boss arrive (il sort de terre). */
+  bossSpawned: { boss: FrereSonneur };
+  /** Le maillet du boss touche le sol en `at` : une onde part. */
+  bossWave: { boss: FrereSonneur; at: THREE.Vector3 };
+  /** Le boss change de phase (il rugit). */
+  bossPhase: { boss: FrereSonneur; phase: number };
+  /** Le boss est tué : il laisse un coffre gratuit de haute rareté. */
+  bossKilled: { boss: FrereSonneur; chest: Chest | null };
   /** Un élite arrive dans la horde. */
   eliteSpawned: { zombie: Zombie };
   /** Un élite est tué : il laisse un coffre gratuit (null s'il n'y avait plus de place). */
@@ -207,6 +217,9 @@ export class Game {
   readonly lastCall: LastCall;
   readonly bellDrops: ReturnType<typeof createXpDrops>;
   private rollBell: () => boolean;
+  /** Boss en cours (null : aucun) ; `bossDone` : le boss de mi-run est déjà venu. */
+  boss: FrereSonneur | null = null;
+  private bossDone = false;
   /** Tournées du bar (bonus lâchés par les ennemis). */
   readonly tournees: Tournees;
   private rollTournee: () => TourneeId | null;
@@ -270,7 +283,11 @@ export class Game {
     this.player = player;
     const groundAt = (p: THREE.Vector3) => player.supportAt(p, p.length());
     this.groundAt = groundAt;
-    this.horde = createHorde(deps.zombieKinds, player, deps.collider);
+    // Le boss est dessiné à part : ses durées d'animation viennent de sa config
+    const C = FRERE_SONNEUR.clips;
+    const clip = (duration: number) => ({ start: 0, frames: 1, duration });
+    const kinds = { ...deps.zombieKinds, sonneur: deps.zombieKinds.sonneur ?? { scale: 1, clips: { idle: clip(C.idle), walk: clip(C.walk), attack: clip(C.strike), hit: clip(C.hit), death: clip(C.death), cast: clip(C.roar) } } };
+    this.horde = createHorde(kinds, player, deps.collider);
     this.pumps = new Pumps(deps.collider);
     this.chests = new Chests(deps.collider);
     this.horde.onHit = (z, dir) => this.hurtPlayer(z, dir, this.damageOf(z, z.def.damage));
@@ -436,6 +453,9 @@ export class Game {
       this.runTime += dt;
       if (!frozen) {
         this.director.update(dt, this.runTime, this.mods.count);
+        // Boss de mi-run : il arrive tout seul à son heure
+        if (!this.bossDone && this.runTime >= FRERE_SONNEUR.arriveAt) this.spawnBoss();
+        this.boss?.update(dt);
         this.mechanic.update(dt);
         // Pompes à bière : pleine, elle fige le jeu et propose ses bonus
         const full = this.pumps.update(dt, p.pos, this.stats.pumpSpeed);
@@ -540,7 +560,7 @@ export class Game {
     chest.opened = true;
     if (!chest.free) this.chests.opened++;
     if (chest.trapped) { this.springTrap(chest, price); return; }
-    const rarity = rollTier(this.stats.luck);
+    const rarity = chest.rarity ?? rollTier(this.stats.luck);
     const cards = rollItemCards(rarity, CHESTS.choices);
     const duration = CHESTS.revealTime + CHESTS.revealPerRarity * rarity;
     this.reveal = { chest, price, rarity, cards, left: duration };
@@ -668,13 +688,38 @@ export class Game {
     this.events.emit('summoned', { zombie: z, skeletons });
   }
 
+  /**
+   * Fait venir le Frère Sonneur : il sort de terre à `at` (par défaut, à sa distance d'arrivée devant le joueur).
+   * Un seul boss à la fois.
+   */
+  spawnBoss(at?: THREE.Vector3) {
+    if (this.boss || this.phase !== 'run' || this.arriving) return null;
+    this.bossDone = true;
+    const p = this.player;
+    const up = p.pos.clone().normalize();
+    const where = at ?? up.clone().applyAxisAngle(new THREE.Vector3().crossVectors(up, p.facing).normalize(), FRERE_SONNEUR.spawnDist / PLANET_RADIUS);
+    const z = this.spawnZombie('sonneur', where, p.pos.clone().sub(where.clone().setLength(p.pos.length())));
+    if (!z) return null;
+    z.emerge();
+    const boss = new FrereSonneur(z, {
+      playerPos: () => this.player.pos,
+      playerHeight: () => this.player.pos.length() - this.groundAt(this.player.pos),
+      hurtPlayer: (dir, damage) => this.hurtPlayer(z, dir, damage),
+      onWave: (wat) => this.events.emit('bossWave', { boss, at: wat.clone() }),
+      onPhase: (phase) => this.events.emit('bossPhase', { boss, phase }),
+    });
+    this.boss = boss;
+    this.events.emit('bossSpawned', { boss });
+    return boss;
+  }
+
   /** Fait apparaître un élite : l'ennemi en plus grand, avec plus de PV (et plus de dégâts, `damageOf`). */
   spawnElite(enemy: EnemyId, at: THREE.Vector3, facing: THREE.Vector3) {
     const z = this.spawnZombie(enemy, at, facing);
     if (!z) return z;
     z.elite = true;
     z.size = ELITES.sizeMul;
-    z.hp = Math.round(z.hp * ELITES.hpMul);
+    z.hp = z.maxHp = Math.round(z.hp * ELITES.hpMul);
     this.events.emit('eliteSpawned', { zombie: z });
     return z;
   }
@@ -684,7 +729,8 @@ export class Game {
 
   spawnZombie(enemy: EnemyId, at: THREE.Vector3, facing: THREE.Vector3) {
     const z = this.horde.spawn(enemy, at, facing);
-    if (z) z.hp = Math.round(ENEMIES[enemy].hp * spawnCurveAt(this.runTime).hpMul * this.mods.hp);
+    // Un boss a des PV fixes (seule la difficulté compte) ; les autres suivent la courbe de la run
+    if (z) z.hp = z.maxHp = Math.round(ENEMIES[enemy].hp * (z.def.boss ? 1 : spawnCurveAt(this.runTime).hpMul) * this.mods.hp);
     return z;
   }
 
@@ -723,6 +769,14 @@ export class Game {
     for (const S of synergies) if (!killed && weapon?.id === S.marker) z.dazed = S.duration * this.stats.duration;
     if (weapon) this.afterWeaponHit(z, Math.min(damage, hpBefore), killed);
     this.events.emit('zombieHit', { weapon, zombie: z, damage, crit, killed, hpAfter: z.hp, impact: impact.clone(), dir, shielded: shield > 0, combo });
+    // Le boss tué laisse un coffre gratuit de haute rareté
+    if (killed && z.def.boss && this.boss?.zombie === z) {
+      const boss = this.boss;
+      this.boss = null;
+      const chest = this.chests.addFreeAt(z.pos);
+      if (chest) chest.rarity = FRERE_SONNEUR.chestRarity;
+      this.events.emit('bossKilled', { boss, chest });
+    }
     // Un élite tué laisse un coffre gratuit
     if (killed && z.elite) this.events.emit('eliteKilled', { zombie: z, chest: this.chests.addFreeAt(z.pos) });
     // Un kamikaze tué explose sur place
@@ -1032,6 +1086,8 @@ export class Game {
     this.lastCall.clear();
     this.bellDrops.clear();
     this.tournees.clear();
+    this.boss = null;
+    this.bossDone = false;
     this.items.length = 0;
     this.effects.reset();
     this.coinFrac = 0;

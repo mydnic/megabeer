@@ -35,6 +35,9 @@ export function wireRunLog(game: Game, runLog: ReturnType<typeof createRunLog>, 
     else runLog.event('cardPicked', `${card.weapon.id}:${card.upgrade.id}`, RARITIES[card.tier].id, card.weapon.mods.level);
   });
   game.events.on('chestTrapped', ({ price, hit, zombies }) => runLog.event('chestTrap', price, hit ? 1 : 0, zombies.length));
+  game.events.on('bossSpawned', () => runLog.event('boss', 'sonneur'));
+  game.events.on('bossPhase', ({ phase }) => runLog.event('bossPhase', phase));
+  game.events.on('bossKilled', () => runLog.event('bossKill', 'sonneur'));
   game.events.on('eliteSpawned', ({ zombie }) => runLog.event('elite', zombie.enemy));
   game.events.on('eliteKilled', ({ zombie, chest }) => runLog.event('eliteKill', zombie.enemy, chest ? 1 : 0));
   game.events.on('tourneeTaken', ({ id }) => runLog.event('tournee', id));

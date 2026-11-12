@@ -28,6 +28,9 @@ import { toRow } from '../ui/statFormat';
 import { createWeaponHud, type WeaponSlot } from '../ui/weaponHud';
 import { createItemHud } from '../ui/itemHud';
 import { createTourneeHud } from '../ui/tourneeHud';
+import { createBossBar } from '../ui/bossBar';
+import { BOSS_HUD } from '../config/hud';
+import { FRERE_SONNEUR } from '../config/bosses';
 import { TOURNEES } from '../config/tournees';
 import { ITEM_EFFECTS } from '../config/items';
 import type { WeaponId } from '../weapons/weapon';
@@ -61,6 +64,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   const weaponHud = createWeaponHud();
   const itemHud = createItemHud();
   const tourneeHud = createTourneeHud();
+  const bossBar = createBossBar();
   const setHud = (v: boolean) => {
     healthHud.setVisible(v);
     alcoholHud.setVisible(v);
@@ -130,6 +134,17 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   game.events.on('freeChestSpawned', () => { banner.show('Coffre gratuit !', 'Le Bonnet du Père Noël en a posé un près de toi'); banner.hideAfter(2.5); });
   game.events.on('lastCallRung', () => { banner.show(LAST_CALL_TEXT.banner, LAST_CALL_TEXT.sub); banner.pulse(); banner.hideAfter(2.5); });
   game.events.on('tourneeTaken', ({ id }) => { const T = TOURNEES[id]; banner.show(`${T.name} !`, T.text); banner.pulse(); banner.hideAfter(2); });
+  // Boss : sa barre de vie, un bandeau à son arrivée et quand il passe en phase 2
+  game.events.on('bossSpawned', () => {
+    bossBar.show(FRERE_SONNEUR.name, FRERE_SONNEUR.phase2.below);
+    banner.show(`${FRERE_SONNEUR.name} !`, 'Saute par-dessus les ondes de son maillet');
+    banner.pulse();
+    banner.hideAfter(3);
+  });
+  game.events.on('bossPhase', () => { banner.show('Il est furieux !', 'Plus rapide, et deux ondes à chaque coup'); banner.pulse(); banner.hideAfter(2.5); });
+  game.events.on('bossKilled', () => { bossBar.hide(); banner.show(`${FRERE_SONNEUR.name} est tombé !`, 'Un coffre légendaire t\'attend'); banner.pulse(); banner.hideAfter(3); });
+  game.events.on('home', () => bossBar.hide());
+  game.events.on('died', () => bossBar.hide());
   game.events.on('died', () => banner.clear());
   game.events.on('home', () => banner.clear());
   game.events.on('levelUpOffered', ({ level, cards }) => levelUp.show(level, cards));
@@ -186,6 +201,9 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
       weaponHud.update(slots());
       itemHud.update(game.items);
       tourneeHud.update((id) => game.tournees.left(id));
+      const boss = game.boss;
+      if (boss) bossBar.update(boss.zombie.hp / boss.zombie.maxHp, boss.phase);
+      tourneeHud.setOffset(boss ? BOSS_HUD.pushDown : 0);
       if (game.phase === 'dead') deathBanner.update(game.deadTime, game.runTime, game.kills);
       // Espace ou bouton A : Jouer sur l'accueil, Continuer sur le bilan de mort
       if (input.jumpPressed) {

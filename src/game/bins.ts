@@ -32,8 +32,21 @@ export class Bins {
       if (!chests.every((p) => far(dir, p, B.minFromChest))) continue;
       if (!pumps.every((p) => far(dir, p, B.minFromPump))) continue;
       if (!this.list.every((b) => far(dir, b.pos, B.minSpacing))) continue;
+      if (!this.flat(dir)) continue;
       this.add(dir.clone().multiplyScalar(PLANET_RADIUS + heightAt(dir)));
     }
+  }
+
+  /** Le sol est-il assez plat autour de `dir` (pas de poubelle sur une falaise) ? */
+  private flat(dir: THREE.Vector3) {
+    const h0 = heightAt(dir);
+    const a = new THREE.Vector3().crossVectors(dir, Math.abs(dir.y) < 0.9 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0)).normalize();
+    const b = new THREE.Vector3().crossVectors(dir, a);
+    for (const t of [a, b, a.clone().negate(), b.clone().negate()]) {
+      const d = this.tmp.copy(dir).addScaledVector(t, B.flatRadius / PLANET_RADIUS).normalize();
+      if (Math.abs(heightAt(d) - h0) > B.maxBump) return false;
+    }
+    return true;
   }
 
   /** Pose une poubelle à ce point au sol (placement, tests). */
@@ -75,7 +88,8 @@ export class Bins {
     this.tmp.copy(feet).setLength(feet.length() + B.height / 2);
     const cell = this.grid.get(key(Math.floor(this.tmp.x / CELL), Math.floor(this.tmp.y / CELL), Math.floor(this.tmp.z / CELL)));
     if (!cell) return null;
-    for (const b of cell) if (!b.broken && b.pos.angleTo(feet) * PLANET_RADIUS < B.touch && Math.abs(feet.length() - b.pos.length()) < B.height) return b;
+    // Distance en 3D du milieu du corps au centre de la poubelle : sur une pente, les deux ne sont pas à la même hauteur
+    for (const b of cell) if (!b.broken && b.center.distanceToSquared(this.tmp) < B.touch * B.touch) return b;
     return null;
   }
 

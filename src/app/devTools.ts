@@ -91,6 +91,7 @@ export async function wireDevTools(game: Game, d: {
       game.spawnElite(id, at, p.pos.clone().sub(at))?.emerge();
       runLog.event('dev', 'elite', id);
     },
+    spawnBoss() { if (inRun() && game.spawnBoss()) runLog.event('dev', 'boss'); },
     dropBell() {
       if (!inRun()) return;
       const p = game.player;

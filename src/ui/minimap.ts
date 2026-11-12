@@ -159,11 +159,11 @@ export function createMinimap() {
 
       // Élites vivants dans le disque : points rouges
       for (const z of zombies) {
-        if (!z.elite || z.dead) continue;
+        if (!(z.elite || z.def.boss) || z.dead) continue;
         const m = toMap(z.pos);
         if (m.dist > M.range * 0.92) continue;
         ctx.beginPath();
-        ctx.arc(R + m.x * scale, R - m.y * scale, M.eliteDot * dpr, 0, Math.PI * 2);
+        ctx.arc(R + m.x * scale, R - m.y * scale, M.eliteDot * dpr * (z.def.boss ? 1.8 : 1), 0, Math.PI * 2);
         ctx.fillStyle = hex(M.colors.elite); ctx.fill();
         ctx.lineWidth = 2 * dpr; ctx.strokeStyle = '#1a120c'; ctx.stroke();
       }

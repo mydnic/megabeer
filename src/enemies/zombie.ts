@@ -31,6 +31,8 @@ export class Zombie {
   /** Élite (GDD section 11) : plus grand, plus fort, liseré de couleur ; `size` : échelle du corps et de sa portée. */
   elite = false;
   size = 1;
+  /** PV à l'apparition (barre de vie des boss, phases). */
+  maxHp = 0;
   /** Contournement d'obstacle en cours : temps restant et côté. */
   detour = 0;
   detourSide = 1;

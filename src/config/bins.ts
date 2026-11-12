@@ -11,8 +11,11 @@ export const BINS = {
   minFromChest: 3,
   minFromPump: 6,
   placementTries: 6000,
-  /** Le joueur la casse en passant à moins de `touch` m (au sol) de son centre. */
-  touch: 1.0,
+  /** Sol assez plat : écart de hauteur maxi (m) à `flatRadius` m autour (pas de poubelle sur une falaise). */
+  maxBump: 0.4,
+  flatRadius: 1.0,
+  /** Le joueur la casse quand le milieu de son corps passe à moins de `touch` m du centre de la poubelle. */
+  touch: 1.1,
   /** Hauteur de la poubelle (m) et rayon autour de son centre où un projectile la casse. */
   height: 0.95,
   hitRadius: 0.75,

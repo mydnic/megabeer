@@ -100,8 +100,15 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    `config/lastCall.ts`, DEV « Clochette devant ». Tests : `createTestGame(seed, { bellDrops: 'always' })`.
    **Élites classiques faites le 2026-11-11, à valider en jeu** (demande de l'utilisateur) : un ennemi du roster en
    version x2 (taille, PV, dégâts), liseré rouge, un toutes les 45 s dès 1:00, coffre gratuit à sa mort (`config/elites.ts`,
-   `Game.spawnElite`, `Chests.addFreeAt`, DEV « Élite devant »). **En cours ensuite : le Frère Sonneur** (boss de 5:00), look
-   choisi : un ogre moine modélisé par script Blender (rig et animations comme `buveur.py`), à faire valider avant le code.
+   `Game.spawnElite`, `Chests.addFreeAt`, DEV « Élite devant »).
+   **Frère Sonneur (boss de 5:00), checkpoint 1 fait le 2026-11-12, à valider en jeu** : modèle sculpté par
+   `tools/blender/sonneur.py` (refait avec Fable 5.2 à la demande de l'utilisateur), dessiné à part (`world/bossView.ts`,
+   pas dans la foule : `separate: true` dans ZOMBIE_MODELS). Son corps est un zombie de la horde (les armes le visent)
+   piloté par `game/frereSonneur.ts` (la horde saute les `def.boss`). Arrive à 5:00, marche vers le joueur, abat son
+   maillet à portée : onde en anneau à sauter. Phase 2 sous 50 % (rugit, plus vite, deux ondes). Barre de vie
+   (`ui/bossBar.ts`), musique `boss/sonneur` (sinon `default`), coffre légendaire gratuit à sa mort. Réglages
+   `config/bosses.ts`, DEV « Boss maintenant ». **Checkpoint suivant : la cloche géante** qu'il frappe et fait rouler vers
+   le joueur (GDD). Ensuite : Porte du patron, l'Abbé, fermeture à 10:00, victoire.
    **Tournées du bar faites le 2026-11-11, à valider en jeu** : 8 bonus lâchés par les ennemis (liste dans le journal du
    GDD), `game/tournees.ts`, `config/tournees.ts`, icônes `ui/tourneeIcons.ts` (aussi en texture au sol par
    `iconDataUrl`), HUD `ui/tourneeHud.ts`, DEV « Tournée devant ». Tests : `createTestGame(seed, { tournees: 'peket' })`,

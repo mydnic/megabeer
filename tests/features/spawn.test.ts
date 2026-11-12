@@ -95,8 +95,8 @@ describe('Les zombies arrivent', () => {
     t.game.director.enabled = true;
     t.game.runTime = 480;
     t.play(1);
-    // Un élite (PV en plus) peut sortir en même temps : on regarde un ennemi normal
-    const late = standing(t).find((z) => !z.elite)!;
+    // Un élite (PV en plus) ou le boss peuvent sortir en même temps : on regarde un ennemi normal
+    const late = standing(t).find((z) => !z.elite && !z.def.boss)!;
     expect(late.hp).toBe(Math.round(late.def.hp * spawnCurveAt(t.game.runTime - 1).hpMul));
     expect(late.hp).toBeGreaterThan(late.def.hp * 3);
   });

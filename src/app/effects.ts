@@ -21,6 +21,7 @@ import { RARITIES } from '../config/upgrades';
 import { PUMP_TIERS } from '../config/pumps';
 import { TOURNEE_FX, TOURNEES } from '../config/tournees';
 import { ELITES } from '../config/elites';
+import { BOSS_LOOK, FRERE_SONNEUR } from '../config/bosses';
 import type { Vfx } from '../fx/vfx';
 import type { Sprites } from '../fx/sprites';
 
@@ -162,6 +163,33 @@ export function wireEffects(game: Game, d: Deps) {
     d.rings.spawn(game.player.pos, 9, VC.level);
     vfx.pop(chest(1.4), VC.level, 3);
     vfx.sparkle(game.player.pos, VC.level, 12, 1.2, 4);
+  });
+  // Boss : la terre gicle à son arrivée ; chaque coup de maillet secoue l'écran et soulève la poussière
+  game.events.on('bossSpawned', ({ boss }) => {
+    const at = boss.zombie.pos;
+    for (let i = 0; i < 4; i++) earth.burst(numPos.copy(at).setLength(at.length() + 0.1), still);
+    vfx.dust(at, 20, 2, 8);
+    d.rings.spawn(at, 6, VFX.dust.color);
+    rig.shake(ARRIVAL.shake.amount, ARRIVAL.shake.amplitude, ARRIVAL.shake.decay);
+  });
+  game.events.on('bossWave', ({ at }) => {
+    vfx.dust(at, 14, 1.4, 6);
+    vfx.pop(numPos.copy(at).setLength(at.length() + 0.4), BOSS_LOOK.waveColor, 3);
+    earth.burst(numPos.copy(at).setLength(at.length() + 0.1), still);
+    const k = Math.max(0.3, 1 - at.distanceTo(game.player.pos) / 30);
+    rig.shake(HIT_FEEDBACK.shake * 2 * k, HIT_FEEDBACK.shakeAmplitude * 1.5, HIT_FEEDBACK.shakeDecay);
+  });
+  game.events.on('bossPhase', ({ boss }) => {
+    d.rings.spawn(boss.zombie.pos, 8, ELITES.color);
+    vfx.pop(numPos.copy(boss.zombie.pos).setLength(boss.zombie.pos.length() + 4), ELITES.color, 6);
+    rig.shake(HIT_FEEDBACK.shake * 2, HIT_FEEDBACK.shakeAmplitude * 2, HIT_FEEDBACK.shakeDecay);
+  });
+  game.events.on('bossKilled', ({ boss, chest: c }) => {
+    const at = boss.zombie.pos;
+    vfx.explosion(numPos.copy(at).setLength(at.length() + 2), 5, VFX.wine);
+    vfx.dust(at, 24, 2.5, 10);
+    rig.shake(HIT_FEEDBACK.shake * 3, HIT_FEEDBACK.shakeAmplitude * 2, HIT_FEEDBACK.shakeDecay);
+    if (c) vfx.beam(c.pos, new THREE.Color(RARITIES[FRERE_SONNEUR.chestRarity].color).getHex(), 1.8, 18, 2);
   });
   // Élite : il sort de terre dans un éclat rouge ; tué, son coffre tombe dans une pluie d'étincelles
   game.events.on('eliteSpawned', ({ zombie }) => {

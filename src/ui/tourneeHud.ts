@@ -36,6 +36,8 @@ export function createTourneeHud() {
 
   return {
     setVisible(v: boolean) { el.style.display = v ? '' : 'none'; },
+    /** Décale les pastilles vers le bas (px), pour laisser la place à la barre d'un boss. */
+    setOffset(px: number) { el.style.top = `${H.top + px}px`; },
     /** Chaque image : le temps qu'il reste à chaque tournée (0 : inactive). */
     update(left: (id: TourneeId) => number) {
       for (const id of TOURNEE_IDS) {

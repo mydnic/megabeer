@@ -34,10 +34,10 @@ function standAt(t: ReturnType<typeof createTestGame>, at: THREE.Vector3, d: num
   return side;
 }
 
-/** Le Buveur arrive au contact de la poubelle (posé tout près, il avance : rien entre eux). */
+/** Le Buveur arrive au contact de la poubelle (posé juste à côté : le déplacement suit la caméra, pas son regard). */
 function runInto(t: ReturnType<typeof createTestGame>, bin: { pos: THREE.Vector3; broken: boolean }) {
-  standAt(t, bin.pos, 1.3);
-  return t.playUntil(() => bin.broken, 3, { moveY: 1 });
+  standAt(t, bin.pos, BINS.touch * 0.6);
+  return t.playUntil(() => bin.broken, 1);
 }
 
 describe('Les poubelles', () => {
@@ -63,8 +63,11 @@ describe('Les poubelles', () => {
     const e = t.events('binBroken');
     expect(e).toHaveLength(1);
     expect(e[0]).toMatchObject({ bin, by: 'player', loot: 'xp' });
-    expect(t.game.xp.drops).toHaveLength(BINS.xp.drops);
-    expect(t.game.xp.drops.reduce((s, d) => s + d.value, 0)).toBe(BINS.xp.drops * BINS.xp.value);
+    // Gouttes encore au sol, plus celles déjà avalées (le Buveur est juste à côté)
+    t.play(1);
+    expect(t.game.xp.drops).toHaveLength(0);
+    const xp = t.events('xpCollected').reduce((s, d) => s + d.amount, 0) / t.game.stats.xpGain;
+    expect(xp).toBeCloseTo(BINS.xp.drops * BINS.xp.value);
   });
 
   it('parfois elle lâche des capsules', () => {

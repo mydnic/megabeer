@@ -10,8 +10,8 @@ import { randomDir } from './pumps';
 
 const X = new THREE.Vector3(1, 0, 0), Y = new THREE.Vector3(0, 1, 0);
 
-/** Un coffre posé sur la planète : ses pieds, s'il a déjà été ouvert, s'il est gratuit ou piégé. */
-export type Chest = { pos: THREE.Vector3; opened: boolean; free?: boolean; trapped?: boolean };
+/** Un coffre posé sur la planète : ses pieds, s'il a déjà été ouvert, s'il est gratuit ou piégé, sa rareté s'il en a une d'office (boss). */
+export type Chest = { pos: THREE.Vector3; opened: boolean; free?: boolean; trapped?: boolean; rarity?: number };
 
 /** Carte d'objet (coffre) : l'objet, sa rareté, l'effet qui en découle. */
 export type ItemCard = { kind: 'item'; item: ItemId; rarity: number; mult: number };

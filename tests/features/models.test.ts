@@ -38,7 +38,9 @@ function rotationRange(glb: ReturnType<typeof readGlb>, clip: string) {
   return range;
 }
 
-const generated = Object.entries(ZOMBIE_MODELS).filter(([, m]) => m.file.endsWith('.glb') && !m.file.startsWith('character-'));
+const generated = Object.entries(ZOMBIE_MODELS).filter(([, m]) => m.file.endsWith('.glb') && !m.file.startsWith('character-') && !('separate' in m));
+/** Modèles dessinés à part (boss) : ils ont leurs propres animations. */
+const separate = Object.entries(ZOMBIE_MODELS).filter(([, m]) => 'separate' in m);
 
 describe('Les modèles des ennemis', () => {
   it.each(generated)("%s bouge vraiment quand il attend, marche et frappe", (_, model) => {
@@ -48,6 +50,13 @@ describe('Les modèles des ennemis', () => {
       const name = (clips[state] as readonly string[]).find((n) => glb.json.animations.some((a) => a.name === n));
       expect(name, `${model.file} : pas d'animation ${state}`).toBeDefined();
       expect(rotationRange(glb, name!), `${model.file} : ${name} est figée`).toBeGreaterThan(0.01);
+    }
+  });
+  it.each(separate)('%s (boss) a toutes ses animations, et elles bougent', (_, model) => {
+    const glb = readGlb(model.file);
+    for (const name of ['idle', 'walk', 'strike', 'push', 'hit', 'roar', 'death']) {
+      expect(glb.json.animations.some((a) => a.name === name), `${model.file} : pas d'animation ${name}`).toBe(true);
+      expect(rotationRange(glb, name), `${model.file} : ${name} est figée`).toBeGreaterThan(0.01);
     }
   });
 });

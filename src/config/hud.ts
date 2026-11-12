@@ -10,6 +10,8 @@ export const WEAPON_HUD = { slots: 4 } as const;
 export const ITEM_HUD = { top: 124, size: 36, gap: 10, perRow: 6 } as const;
 /** Tournées du bar en cours, sous le chrono : position (px), taille des pastilles, et sous combien de secondes elles battent. */
 export const TOURNEE_HUD = { top: 132, size: 46, gap: 12, lowAt: 3 } as const;
+/** Barre de vie du boss, sous le chrono (px) ; quand elle est là, les tournées en cours descendent de `pushDown`. */
+export const BOSS_HUD = { top: 92, width: 520, pushDown: 52 } as const;
 
 /**
  * Rappel près d'un coffre fermé : hauteur au-dessus du bas de l'écran (px), durée du tremblement

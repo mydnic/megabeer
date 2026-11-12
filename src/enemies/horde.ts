@@ -273,7 +273,7 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
     /** Retire tous les zombies (nouvelle run). */
     clear() { zombies.length = 0; reindex(); },
     update(dt: number) {
-      for (const z of zombies) step(z, dt, player.pos);
+      for (const z of zombies) if (!z.def.boss) step(z, dt, player.pos);
       separate();
       tick++;
       for (let i = 0; i < zombies.length; i++) {

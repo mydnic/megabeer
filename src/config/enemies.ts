@@ -1,6 +1,7 @@
 // Ennemis (GDD section 11) : chaque type est une fiche de config, et chaque map a son roster (un
 // nouveau type par minute, les anciens restent). Valeurs de départ, calées avec le journal de run.
 
+import { FRERE_SONNEUR } from './bosses';
 import type { ZombieModel } from './zombies';
 
 export type EnemyDef = {
@@ -28,6 +29,8 @@ export type EnemyDef = {
   summoner?: SummonerDef;
   /** Brique Diviseur : tué, il se sépare en plusieurs petits ennemis. */
   splitter?: SplitterDef;
+  /** Boss : piloté par son propre contrôleur (game/), pas par la horde. */
+  boss?: true;
 };
 
 /**
@@ -153,6 +156,8 @@ export const ENEMIES = {
   },
   /** Sorti du Frère cellérier à sa mort (hors roster) : petit, rapide, fragile. */
   moinillon: { name: 'Moinillon', model: 'chubby_petit', hp: 6, speed: 3.8, damage: 4, xp: 1 },
+  /** Boss de 5:00 de l'Abbaye (hors roster) : réglages dans config/bosses.ts. */
+  sonneur: { name: FRERE_SONNEUR.name, model: 'sonneur', hp: FRERE_SONNEUR.hp, speed: FRERE_SONNEUR.speed, damage: FRERE_SONNEUR.strike.damage, xp: FRERE_SONNEUR.xp, boss: true },
 } as const satisfies Record<string, EnemyDef>;
 
 export type EnemyId = keyof typeof ENEMIES;

@@ -34,6 +34,9 @@ export const ZOMBIE_MODELS = {
     /** Opacité normale, et quand il est intouchable. */
     translucent: { opacity: 0.8, intangible: 0.15 },
   },
+  // Le Frère Sonneur (boss de 5:00) : ogre moine de tools/blender/sonneur.py. Unique et très détaillé : dessiné
+  // à part (world/bossView.ts), pas dans la foule
+  sonneur: { file: 'sonneur.glb', height: 4.6, separate: true },
   // Le Novice : il court (et bondit pour frapper, il n'a pas d'attaque)
   ribcage: { file: 'Zombie_Ribcage.gltf', height: 1.4, clips: { walk: ['Run'] }, walkAnimAt: 3.7 },
 } as const;

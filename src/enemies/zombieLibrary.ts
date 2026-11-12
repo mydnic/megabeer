@@ -34,7 +34,8 @@ export async function loadZombieLibrary() {
   const manager = new THREE.LoadingManager();
   manager.setURLModifier((u) => (u.endsWith('colormap.png') ? kenneyColormap : u));
   const loader = new GLTFLoader(manager);
-  const ids = Object.keys(ZOMBIE_MODELS) as ZombieModel[];
+  // Les modèles dessinés à part (boss) ne passent pas par la foule
+  const ids = (Object.keys(ZOMBIE_MODELS) as ZombieModel[]).filter((id) => !(ZOMBIE_MODELS[id] as { separate?: boolean }).separate);
   const fps = V.bakeFps;
   const baked = await Promise.all(ids.map(async (id) => {
     const def = ZOMBIE_MODELS[id];
