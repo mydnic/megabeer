@@ -16,12 +16,16 @@ describe('La boutique', () => {
       expect(STARTING_ITEMS.filter((id) => (ITEMS[id] as ItemDef).rarity === r)).toHaveLength(3);
     }
     const items = catalog().filter((e) => e.kind === 'item');
-    expect(items).toHaveLength(Object.keys(ITEMS).length - STARTING_ITEMS.length);
+    expect(items).toHaveLength(Object.keys(ITEMS).length);
+    expect(items.filter((e) => owned(emptyProfile(), e.key))).toHaveLength(STARTING_ITEMS.length);
     for (const e of items) if (e.kind === 'item') expect(e.price).toBe(ITEM_PRICES[e.rarity]);
+    // Les objets, armes et persos de départ ne s'achètent pas
+    expect(buy(rich(), `item:${STARTING_ITEMS[0]}`, 1)).toBeNull();
+    expect(buy(rich(), 'character:buveur', 1)).toBeNull();
   });
 
   it('acheter retire les TUNAS et débloque l article, pour de bon', () => {
-    const entry = catalog().find((e) => e.kind === 'item')!;
+    const entry = catalog().find((e) => e.kind === 'item' && !owned(emptyProfile(), e.key))!;
     const p = buy(rich(500), entry.key, 1)!;
     expect(p.tunas).toBe(500 - entry.price);
     expect(owned(p, entry.key)).toBe(true);
@@ -30,7 +34,7 @@ describe('La boutique', () => {
   });
 
   it('impossible sans assez de TUNAS, ou deux fois le même', () => {
-    const entry = catalog().find((e) => e.kind === 'item')!;
+    const entry = catalog().find((e) => e.kind === 'item' && !owned(emptyProfile(), e.key))!;
     expect(buy(rich(entry.price - 1), entry.key, 1)).toBeNull();
     const once = buy(rich(), entry.key, 1)!;
     expect(buy(once, entry.key, 2)).toBeNull();
@@ -38,7 +42,7 @@ describe('La boutique', () => {
   });
 
   it('la première connexion réunit les achats du navigateur et du compte', () => {
-    const [a, b] = catalog().filter((e) => e.kind === 'item');
+    const [a, b] = catalog().filter((e) => e.kind === 'item' && !owned(emptyProfile(), e.key));
     const m = mergeProfiles(buy(rich(), a.key, 1)!, buy(rich(), b.key, 1)!, 3);
     expect(owned(m, a.key) && owned(m, b.key)).toBe(true);
   });
@@ -53,7 +57,7 @@ describe('La boutique', () => {
       }
     }
     // Un objet acheté peut sortir à son tour
-    const bought = catalog().find((e) => e.kind === 'item' && e.rarity === 4)!;
+    const bought = catalog().find((e) => e.kind === 'item' && e.rarity === 4 && !owned(emptyProfile(), e.key))!;
     const after = runUnlocks(buy(rich(), bought.key, 1)!).items;
     const seen = new Set<ItemId>();
     for (let i = 0; i < 200; i++) for (const c of rollItemCards(4, 3, after)) seen.add(c.item);

@@ -7,8 +7,13 @@
 import type { ItemId } from './items';
 import type { WeaponId } from '../weapons/weapon';
 
-/** Persos à vendre (le Buveur est le perso de départ ; les autres du GDD section 5 arriveront ici), et leur prix. */
-export const SHOP_CHARACTERS: readonly { id: string; name: string; price: number }[] = [];
+/** Persos de la boutique et leur prix (les autres persos du GDD section 5 arriveront ici). */
+export const SHOP_CHARACTERS: readonly { id: string; name: string; pitch: string; price: number }[] = [
+  { id: 'buveur', name: 'Le Buveur', pitch: 'Pinte à la main, il lance des canettes', price: 0 },
+];
+
+/** Persos disponibles dès le départ. */
+export const STARTING_CHARACTERS: readonly string[] = ['buveur'];
 
 /** Armes disponibles dès le départ (le pool de départ du GDD contient les 4 armes faites). */
 export const STARTING_WEAPONS: readonly WeaponId[] = ['canette', 'stout', 'fut', 'gueuze'];
