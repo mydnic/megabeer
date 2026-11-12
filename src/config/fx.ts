@@ -207,7 +207,7 @@ export const VFX = {
   trap: { flash: 0xffb0a0, ember: 0xff3322, smoke: 0x6a5a58, smokeDark: 0x3a2a2a, embers: 18, puffs: 9 } as ExplosionLook,
   /** Couleurs : niveau gagné, soin, coup reçu, gel, mousse, invocation, capsules, gouttes d'XP. */
   colors: { level: 0xffd45a, hurt: 0xff4a3a, ice: 0xa8e4ff, foam: 0xfff4dc, summon: 0x8a5ac8, coin: 0xff6a5a, xp: 0xffd45a, happy: 0xffc93a, snack: 0xf2c94c, bin: 0xd8d2c0 },
-  /** Scintillement des gouttes d'XP et des capsules au sol (étoiles par seconde). */
+  /** Scintillement des cloches au sol (étoiles par seconde, x4). */
   twinkleRate: 9,
   /** Étincelles quand le joueur ramasse de l'XP ou des capsules : écart mini entre deux (s). */
   pickupGap: 0.07,

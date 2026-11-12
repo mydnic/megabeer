@@ -226,14 +226,12 @@ function frame(now: number) {
   gift.update(dt);
   tin.update(dt);
   rings.update(dt);
-  // Traînées des projectiles, scintillement des gouttes et des capsules au sol (figés avec le jeu)
+  // Traînées des projectiles, scintillement des cloches au sol (figés avec le jeu ; plus sur l'XP ni les capsules, retiré le 2026-11-12)
   if (dt > 0) {
     for (const id of Object.keys(bottleViews) as WeaponId[]) {
       const color = VFX.trail.colors[id];
       if (color !== undefined) for (const b of projectiles(id)) if (b.active) vfx.trail(b.pos, color, VFX.trail.size * b.size);
     }
-    vfx.twinkle(game.xp.drops, VFX.colors.xp, dt, VFX.twinkleRate);
-    vfx.twinkle(game.coinDrops.drops, VFX.colors.coin, dt, VFX.twinkleRate * 0.5);
     vfx.twinkle(game.bellDrops.drops, VFX.colors.level, dt, VFX.twinkleRate * 4);
   }
   sprites.update(dt);
