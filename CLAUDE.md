@@ -30,7 +30,14 @@ Le jeu a été **refait de zéro** (three.js + TypeScript). L'ancien proto JS (s
 ## Stack et commandes
 
 Vite + TypeScript + three.js (+ `three-mesh-bvh` pour les collisions du décor), yarn 4. Déploiement
-Cloudflare (wrangler).
+Cloudflare (wrangler) : **Workers Builds construit et déploie chaque push sur `main`** (prod : megabeer.mydnic.be).
+
+**Comptes et sauvegarde** : `worker/index.ts` (le Worker : sert le jeu, et sous `/api` la connexion Discord, les sessions
+et la sauvegarde), base D1 `megabeer` (schéma dans `migrations/`, à appliquer avec `wrangler d1 migrations apply megabeer
+--local` en dev, `--remote` en prod). Secret `DISCORD_CLIENT_SECRET` : `wrangler secret put` en prod, `.dev.vars` en local
+(non versionné). Côté jeu : `meta/profile.ts` (la progression, pure, testée), `app/progress.ts` (invité dans le navigateur,
+ou en ligne ; la progression invitée rejoint le compte à la première connexion), `ui/accountPanel.ts` (le compte sur
+l'accueil). `yarn dev` fait tourner le Worker et une D1 locale (plugin Cloudflare de Vite).
 
 ```
 yarn dev        # http://localhost:5173

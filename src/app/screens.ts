@@ -33,6 +33,8 @@ import { BOSS_HUD } from '../config/hud';
 import { PATRON_DOOR } from '../config/bosses';
 import { CLOSING } from '../config/closing';
 import { createPadNav } from '../ui/padNav';
+import { createAccountPanel } from '../ui/accountPanel';
+import { createProgress } from './progress';
 import { TOURNEES } from '../config/tournees';
 import { ITEM_EFFECTS } from '../config/items';
 import type { WeaponId } from '../weapons/weapon';
@@ -115,6 +117,13 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   }
   const home = createHomeScreen(() => void play(), () => options.show(() => home.focus()));
   const padNav = createPadNav();
+
+  // Compte et progression : invité (navigateur) ou Discord (en ligne) ; chaque run terminée compte
+  const progress = createProgress();
+  const accountPanel = createAccountPanel(home.root, { login: () => progress.login(), logout: () => void progress.logout() });
+  progress.onChange(() => accountPanel.update(progress.online, progress.account, progress.profile, progress.canLogin));
+  void progress.init();
+  game.events.on('runEnded', ({ survived, kills }) => void progress.recordRun({ survived, kills }));
 
   game.events.on('runStarted', () => { setHud(true); lockCursor(); });
   // Cloches de l'Abbaye : le bandeau reste affiché pendant le débarquement et tremble à chaque coup

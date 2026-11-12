@@ -130,8 +130,16 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    pas de victoire, la run ne finit qu'à la mort. **Fin de run validée par l'utilisateur le 2026-11-12.** Faits aussi :
    coffres gratuits entrouverts avec lumière et sur la mini-carte (icône du coffre) ; cartes avec la stat avant et après ;
    projectiles en plus à toutes les raretés (+1 à +4) et sur la Stout ; objets à une rareté et un effet fixes (9/9/9/8/7).
-   **Prochaine feature : la méta-progression (GDD section 14), à commencer par la sauvegarde** (question posée à
-   l'utilisateur : navigateur d'abord, ou compte en ligne Cloudflare D1 + connexion Discord).
+   **Feature en cours : la méta-progression (GDD section 14).** Choix de l'utilisateur : compte en ligne tout de suite
+   (connexion Discord, base Cloudflare D1), jeu en invité possible (progression dans le navigateur, rattachée au compte à
+   la première connexion). Checkpoints : 1 compte et sauvegarde (runs, record, kills), 2 TUNAS, 3 boutique, 4 skill tree.
+   **Checkpoint 1 codé sur la branche `compte-en-ligne`, testé en local de bout en bout (session posée à la main).** Pour
+   le fusionner dans `main` il manque : (a) la base D1 distante : le token Cloudflare fourni n'a pas le droit D1
+   (« Authentication error ») ; il faut lui ajouter D1 Edit et Workers Scripts Edit, ou que l'utilisateur crée la base ;
+   puis mettre son id dans `wrangler.jsonc` (`A_REMPLIR`) et `wrangler d1 migrations apply megabeer --remote` ; (b)
+   l'application Discord de l'utilisateur : Client ID dans `wrangler.jsonc` (vars), secret par `wrangler secret put
+   DISCORD_CLIENT_SECRET` (et dans `.dev.vars` en local), redirects `https://megabeer.mydnic.be/api/auth/callback` et
+   `http://localhost:5173/api/auth/callback`. Ne pas fusionner avant : un `database_id` faux fait échouer les déploiements.
    **Tournées du bar faites le 2026-11-11, à valider en jeu** : 8 bonus lâchés par les ennemis (liste dans le journal du
    GDD), `game/tournees.ts`, `config/tournees.ts`, icônes `ui/tourneeIcons.ts` (aussi en texture au sol par
    `iconDataUrl`), HUD `ui/tourneeHud.ts`, DEV « Tournée devant ». Tests : `createTestGame(seed, { tournees: 'peket' })`,

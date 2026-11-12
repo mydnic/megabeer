@@ -1,0 +1,166 @@
+/**
+ * Le Worker Cloudflare de Megabeer : sert le jeu (fichiers statiques) et, sous /api, les comptes.
+ *
+ * - GET  /api/auth/discord   : part se connecter chez Discord (scope identify : pseudo et avatar, rien d'autre).
+ * - GET  /api/auth/callback  : retour de Discord ; crée ou met à jour le joueur, ouvre une session (cookie).
+ * - GET  /api/me             : le joueur connecté (ou null), et si la connexion Discord est configurée.
+ * - POST /api/logout         : ferme la session.
+ * - GET  /api/save           : la progression sauvegardée du joueur connecté, ou null.
+ * - PUT  /api/save           : remplace la progression (JSON, taille bornée).
+ *
+ * Secrets (jamais dans le dépôt) : DISCORD_CLIENT_SECRET (`wrangler secret put`, en local dans .dev.vars).
+ */
+
+interface Env {
+  DB: D1Database;
+  ASSETS: Fetcher;
+  DISCORD_CLIENT_ID: string;
+  DISCORD_CLIENT_SECRET: string;
+}
+
+const SESSION_COOKIE = 'mb_session';
+const STATE_COOKIE = 'mb_oauth_state';
+const SESSION_DAYS = 90;
+const MAX_SAVE_BYTES = 64 * 1024;
+
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const url = new URL(request.url);
+    if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
+    try {
+      return await route(request, url, env);
+    } catch (e) {
+      console.error('[api]', e);
+      return json({ error: 'erreur serveur' }, 500);
+    }
+  },
+} satisfies ExportedHandler<Env>;
+
+async function route(request: Request, url: URL, env: Env): Promise<Response> {
+  const path = url.pathname, method = request.method;
+  if (path === '/api/auth/discord' && method === 'GET') return startLogin(url, env);
+  if (path === '/api/auth/callback' && method === 'GET') return finishLogin(request, url, env);
+  if (path === '/api/me' && method === 'GET') {
+    const user = await currentUser(request, env);
+    return json({ user: user && publicUser(user), login: !!(env.DISCORD_CLIENT_ID && env.DISCORD_CLIENT_SECRET) });
+  }
+  if (path === '/api/logout' && method === 'POST') return logout(request, env);
+  if (path === '/api/save') {
+    const user = await currentUser(request, env);
+    if (!user) return json({ error: 'non connecté' }, 401);
+    if (method === 'GET') {
+      const row = await env.DB.prepare('SELECT data, updated_at FROM saves WHERE user_id = ?').bind(user.id).first<{ data: string; updated_at: number }>();
+      return json({ save: row ? { data: JSON.parse(row.data), updatedAt: row.updated_at } : null });
+    }
+    if (method === 'PUT') {
+      const body = await request.text();
+      if (body.length > MAX_SAVE_BYTES) return json({ error: 'sauvegarde trop grosse' }, 413);
+      let data: unknown;
+      try { data = JSON.parse(body).data; } catch { return json({ error: 'JSON invalide' }, 400); }
+      if (!data || typeof data !== 'object') return json({ error: 'données manquantes' }, 400);
+      const now = Date.now();
+      await env.DB.prepare('INSERT INTO saves (user_id, data, updated_at) VALUES (?1, ?2, ?3) ON CONFLICT(user_id) DO UPDATE SET data = ?2, updated_at = ?3')
+        .bind(user.id, JSON.stringify(data), now).run();
+      return json({ ok: true, updatedAt: now });
+    }
+  }
+  return json({ error: 'introuvable' }, 404);
+}
+
+// --- Connexion Discord (OAuth2, code d'autorisation)
+
+const redirectUri = (url: URL) => `${url.origin}/api/auth/callback`;
+
+function startLogin(url: URL, env: Env) {
+  if (!env.DISCORD_CLIENT_ID) return json({ error: 'connexion Discord pas configurée' }, 503);
+  const state = randomToken();
+  const q = new URLSearchParams({ client_id: env.DISCORD_CLIENT_ID, redirect_uri: redirectUri(url), response_type: 'code', scope: 'identify', state, prompt: 'none' });
+  return new Response(null, {
+    status: 302,
+    headers: { Location: `https://discord.com/oauth2/authorize?${q}`, 'Set-Cookie': cookie(STATE_COOKIE, state, 600, url) },
+  });
+}
+
+async function finishLogin(request: Request, url: URL, env: Env) {
+  const code = url.searchParams.get('code'), state = url.searchParams.get('state');
+  const expected = readCookie(request, STATE_COOKIE);
+  // Refus du joueur, lien rejoué ou forgé : retour au jeu sans connexion
+  if (!code || !state || !expected || state !== expected) return backToGame(url, 'connexion annulée');
+  const token = await fetch('https://discord.com/api/oauth2/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ client_id: env.DISCORD_CLIENT_ID, client_secret: env.DISCORD_CLIENT_SECRET, grant_type: 'authorization_code', code, redirect_uri: redirectUri(url) }),
+  });
+  if (!token.ok) { console.error('[auth] token', token.status, await token.text()); return backToGame(url, 'connexion refusée par Discord'); }
+  const { access_token } = await token.json<{ access_token: string }>();
+  const me = await fetch('https://discord.com/api/users/@me', { headers: { Authorization: `Bearer ${access_token}` } });
+  if (!me.ok) return backToGame(url, 'profil Discord illisible');
+  const d = await me.json<{ id: string; username: string; global_name: string | null; avatar: string | null }>();
+  const now = Date.now();
+  await env.DB.prepare('INSERT INTO users (id, name, avatar, created_at, last_login) VALUES (?1, ?2, ?3, ?4, ?4) ON CONFLICT(id) DO UPDATE SET name = ?2, avatar = ?3, last_login = ?4')
+    .bind(d.id, d.global_name || d.username, d.avatar, now).run();
+  const session = randomToken();
+  await env.DB.prepare('INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (?, ?, ?)')
+    .bind(await sha256(session), d.id, now + SESSION_DAYS * 86400e3).run();
+  const headers = new Headers({ Location: '/' });
+  headers.append('Set-Cookie', cookie(SESSION_COOKIE, session, SESSION_DAYS * 86400, url));
+  headers.append('Set-Cookie', cookie(STATE_COOKIE, '', 0, url));
+  return new Response(null, { status: 302, headers });
+}
+
+async function logout(request: Request, env: Env) {
+  const token = readCookie(request, SESSION_COOKIE);
+  if (token) await env.DB.prepare('DELETE FROM sessions WHERE token_hash = ?').bind(await sha256(token)).run();
+  return json({ ok: true }, 200, { 'Set-Cookie': cookie(SESSION_COOKIE, '', 0, new URL(request.url)) });
+}
+
+// --- Sessions
+
+type User = { id: string; name: string; avatar: string | null };
+
+async function currentUser(request: Request, env: Env): Promise<User | null> {
+  const token = readCookie(request, SESSION_COOKIE);
+  if (!token) return null;
+  return env.DB.prepare('SELECT u.id, u.name, u.avatar FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ? AND s.expires_at > ?')
+    .bind(await sha256(token), Date.now()).first<User>();
+}
+
+const publicUser = (u: User) => ({
+  id: u.id,
+  name: u.name,
+  avatarUrl: u.avatar ? `https://cdn.discordapp.com/avatars/${u.id}/${u.avatar}.png?size=64` : `https://cdn.discordapp.com/embed/avatars/${Number(BigInt(u.id) >> 22n) % 6}.png`,
+});
+
+// --- Outils
+
+function json(body: unknown, status = 200, headers: Record<string, string> = {}) {
+  return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', ...headers } });
+}
+
+function backToGame(url: URL, reason: string) {
+  return new Response(null, { status: 302, headers: { Location: `/?connexion=${encodeURIComponent(reason)}`, 'Set-Cookie': cookie(STATE_COOKIE, '', 0, url) } });
+}
+
+/** Cookie de session : inaccessible au JavaScript de la page, envoyé seulement au même site. */
+function cookie(name: string, value: string, maxAge: number, url: URL) {
+  const secure = url.protocol === 'https:' ? '; Secure' : '';
+  return `${name}=${value}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure}`;
+}
+
+function readCookie(request: Request, name: string) {
+  for (const part of (request.headers.get('Cookie') ?? '').split(';')) {
+    const [k, ...v] = part.trim().split('=');
+    if (k === name) return v.join('=');
+  }
+  return null;
+}
+
+function randomToken() {
+  const b = crypto.getRandomValues(new Uint8Array(32));
+  return btoa(String.fromCharCode(...b)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+async function sha256(s: string) {
+  const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return [...new Uint8Array(h)].map((x) => x.toString(16).padStart(2, '0')).join('');
+}
