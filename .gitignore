@@ -24,5 +24,3 @@ logs/
 sons-a-valider/
 tools/bench/out/
 
-# Modeles sous licence non diffusable (Fab), prepares en local (tools/blender/mort.py)
-src/assets/private/

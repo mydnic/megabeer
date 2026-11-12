@@ -7,11 +7,11 @@ import type { Reaper } from '../game/closing';
 import { characterMaterial, LAYER_CHARACTER } from '../render/materials';
 
 /**
- * Le modèle de la Mort (« Stylized Death » de Gizart, Fab) n'est pas versionné : sa licence n'en permet pas la
- * diffusion en fichier libre, et le dépôt est public. Il est préparé en local par tools/blender/mort.py dans
- * src/assets/private/ (ignoré par git). Sans lui, le Grim Reaper de Falibu (fixe, sans animation) le remplace.
+ * Le modèle de la Mort (« Stylized Death » de Gizart, Fab) est préparé par tools/blender/mort.py. Il est versionné à la
+ * demande de l'utilisateur (dépôt public, licence Fab : à retirer en cas de plainte). Si on le supprime, le Grim Reaper
+ * de Falibu (fixe, sans animation) le remplace sans autre changement.
  */
-const PRIVATE = import.meta.glob('../assets/private/mort.glb', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const PRIVATE = import.meta.glob('../assets/models/mort.glb', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 
 type Instance = { root: THREE.Group; mixer: THREE.AnimationMixer | null; actions: Map<string, THREE.AnimationAction>; current: THREE.AnimationAction | null; shown: string };
 
