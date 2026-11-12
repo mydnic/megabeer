@@ -80,13 +80,41 @@ addEventListener('resize', () => {
   pipeline.setSize(innerWidth, innerHeight);
 });
 
+// --- Chargement : tout part en même temps (planète, ennemis, modèles), la barre de l'écran de démarrage avance
+const bootFill = document.querySelector<HTMLElement>('#boot .boot-fill');
+let bootDone = 0, bootTotal = 0;
+function boot<T>(p: Promise<T>): Promise<T> {
+  bootTotal++;
+  return p.then((v) => { bootDone++; if (bootFill) bootFill.style.width = `${Math.round(4 + (96 * bootDone) / bootTotal)}%`; return v; });
+}
+const loading = {
+  planet: boot(createPlanet(scene)),
+  zombieLib: boot(loadZombieLibrary()),
+  coinView: boot(createCoinDropsView(scene)),
+  canette: boot(createBottleView(scene, CANETTE_LOOK)),
+  stout: boot(createBottleView(scene, STOUT_LOOK)),
+  fut: boot(createBottleView(scene, FUT_LOOK)),
+  gueuze: boot(createBottleView(scene, GUEUZE_LOOK)),
+  enemyShotsView: boot(createEnemyShotsView(scene)),
+  pumpsView: boot(createPumpsView(scene)),
+  chestsView: boot(createChestsView(scene)),
+  binsView: boot(createBinsView(scene)),
+  lastCallView: boot(createLastCallView(scene)),
+  sonneurView: boot(createBossView(scene, { kind: 'sonneur', url: sonneurUrl, height: FRERE_SONNEUR.height, walkSpeed: FRERE_SONNEUR.speed })),
+  abbeView: boot(createBossView(scene, { kind: 'abbe', url: abbeUrl, height: ABBE.height, walkSpeed: ABBE.speed })),
+  doorView: boot(createDoorView(scene)),
+  reaperView: boot(createReaperView(scene)),
+  bellView: boot(createBellDropsView(scene)),
+  snackView: boot(createSnackDropsView(scene)),
+};
+
 // --- Monde : une nouvelle planète à chaque run, ciel et nuages
-const planet = await createPlanet(scene);
+const planet = await loading.planet;
 const sky = createSky(scene);
 const clouds = createClouds(scene);
 
 // --- Noyau du jeu
-const zombieLib = await loadZombieLibrary();
+const zombieLib = await loading.zombieLib;
 const game = new Game({ zombieKinds: zombieLib, collider: planet.decor.collider });
 
 // --- Affichage de ce que simule le noyau
@@ -95,15 +123,15 @@ buveur.load().catch((e) => console.error(e));
 game.setThrowRig({ gesture: (rate) => buveur.throwGesture(rate), handPos: (out) => buveur.leftHandPos(out) });
 const hordeView = createHordeView(scene, zombieLib);
 const xpView = createXpDropsView(scene);
-const coinView = await createCoinDropsView(scene);
+const coinView = await loading.coinView;
 // Une vue de bouteilles par arme (chaque arme a sa bouteille)
 const bottleViews: Record<WeaponId, Awaited<ReturnType<typeof createBottleView>>> = {
-  canette: await createBottleView(scene, CANETTE_LOOK),
-  stout: await createBottleView(scene, STOUT_LOOK),
-  fut: await createBottleView(scene, FUT_LOOK),
-  gueuze: await createBottleView(scene, GUEUZE_LOOK),
+  canette: await loading.canette,
+  stout: await loading.stout,
+  fut: await loading.fut,
+  gueuze: await loading.gueuze,
 };
-const enemyShotsView = await createEnemyShotsView(scene);
+const enemyShotsView = await loading.enemyShotsView;
 const groundAt = (p: THREE.Vector3) => game.player.supportAt(p, p.length());
 const shards = createShards(scene, groundAt);
 const wine = createShards(scene, groundAt, WINE_BURST);
@@ -111,20 +139,20 @@ const wood = createShards(scene, groundAt, BARREL_SHARDS);
 const kamikazeView = createKamikazeView(scene);
 const protectorView = createProtectorView(scene);
 const dazedView = createDazedView(scene);
-const pumpsView = await createPumpsView(scene);
-const chestsView = await createChestsView(scene);
-const binsView = await createBinsView(scene);
-const lastCallView = await createLastCallView(scene);
-const sonneurView = await createBossView(scene, { kind: 'sonneur', url: sonneurUrl, height: FRERE_SONNEUR.height, walkSpeed: FRERE_SONNEUR.speed });
-const abbeView = await createBossView(scene, { kind: 'abbe', url: abbeUrl, height: ABBE.height, walkSpeed: ABBE.speed });
+const pumpsView = await loading.pumpsView;
+const chestsView = await loading.chestsView;
+const binsView = await loading.binsView;
+const lastCallView = await loading.lastCallView;
+const sonneurView = await loading.sonneurView;
+const abbeView = await loading.abbeView;
 const waveView = createWaveRingView(scene);
 const wineView = createWineView(scene);
-const doorView = await createDoorView(scene);
-const reaperView = await createReaperView(scene);
+const doorView = await loading.doorView;
+const reaperView = await loading.reaperView;
 game.events.on('zombieHit', ({ zombie }) => { if (zombie === game.boss?.zombie) (game.boss.kind === 'abbe' ? abbeView : sonneurView).hit(); });
-const bellView = await createBellDropsView(scene);
+const bellView = await loading.bellView;
 const tourneeView = createTourneeDropsView(scene);
-const snackView = await createSnackDropsView(scene);
+const snackView = await loading.snackView;
 const sparks = createShards(scene, groundAt, SHIELD_SPARKS);
 const earth = createShards(scene, groundAt, EARTH_CLODS);
 const stoutSplash = createShards(scene, groundAt, STOUT_SPLASH);
@@ -154,6 +182,9 @@ wireMusic(game, audio, music, 'abbaye');
 // --- Effets, interface, journal de run
 const effects = wireEffects(game, { buveur, rig, pint, pipeline, audio, shards, wine, wood, sparks, earth, stoutSplash, gueuzeBurst, ash, embers, foam, ice, gift, tin, rings, sprites, vfx, damageNumbers });
 const screens = wireScreens(game, { planet, canvas: renderer.domElement, audio });
+// L'accueil est prêt : l'écran de démarrage s'efface
+const bootEl = document.getElementById('boot');
+if (bootEl) { bootEl.classList.add('off'); setTimeout(() => bootEl.remove(), 400); }
 const runLog = createRunLog();
 let fps = 0;
 wireRunLog(game, runLog, () => ({ seed: planet.seed, fps }));

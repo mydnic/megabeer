@@ -4,13 +4,28 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Megabeer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
   <style>
-    html, body { margin: 0; height: 100%; overflow: hidden; background: #0b1430; }
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #120a05; }
+    /* Écran de démarrage : affiché tout de suite, avant le code du jeu, retiré quand l'accueil est prêt (main.ts) */
+    #boot { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px;
+      font-family: 'Lilita One', system-ui, sans-serif; color: #f3e6cf; transition: opacity .35s;
+      background: radial-gradient(ellipse at 50% 35%, #5a3418 0%, #2a170b 55%, #120a05 100%); }
+    #boot.off { opacity: 0; pointer-events: none; }
+    #boot .boot-logo { font-size: clamp(56px, 13vw, 170px); line-height: 1; letter-spacing: .03em; color: #ffc93a; transform: rotate(-3deg);
+      text-shadow: -4px 0 #1a120c, 4px 0 #1a120c, 0 -4px #1a120c, 0 4px #1a120c, 0 10px 0 #1a120c; }
+    #boot .boot-bar { width: min(420px, 70vw); height: 22px; border: 3px solid #1a120c; border-radius: 13px; background: #3a2418; overflow: hidden;
+      box-shadow: 0 3px 0 rgba(26,18,12,.55), inset 0 3px 6px rgba(0,0,0,.45); }
+    #boot .boot-fill { height: 100%; width: 4%; background: linear-gradient(#ffd36a, #f5a623 55%, #d9870f); transition: width .2s ease-out; }
+    #boot .boot-text { font-size: 20px; letter-spacing: .05em; text-shadow: 0 3px 0 #1a120c; }
     canvas { display: block; }
     #debug { position: fixed; bottom: 8px; right: 8px; color: #e8f0ff; font: 12px/1.45 monospace; background: rgba(0,0,0,.45); padding: 8px 10px; border-radius: 6px; white-space: pre; pointer-events: none; display: none; }
   </style>
 </head>
 <body>
+  <div id="boot"><div class="boot-logo">MEGABEER</div><div class="boot-bar"><div class="boot-fill"></div></div><div class="boot-text">On met les fûts en perce...</div></div>
   <div id="debug"></div>
   <script type="module" src="/src/main.ts"></script>
 </body>
