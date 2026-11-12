@@ -76,4 +76,14 @@ describe('La Stout', () => {
     expect(cards.some((c) => c.kind === 'upgrade' && c.weapon.id === 'stout')).toBe(true);
     expect(cards.some((c) => c.kind === 'upgrade' && c.weapon.id === 'canette')).toBe(true);
   });
+
+  it('elle gagne des projectiles en plus : la carte existe, et une volée lance alors deux bouteilles', () => {
+    const { t, stout } = arena();
+    expect(stout.upgrades.some((u) => u.id === 'projectiles')).toBe(true);
+    stout.mods.projectiles = 1;
+    t.game.spawnZombie('zombie', t.inFront(8), t.game.player.facing.clone().negate())!.hp = 1e6;
+    // Les bouteilles d'une volée partent à la suite : deux en l'air, mais jamais trois
+    expect(t.playUntil(() => stout.projectiles.filter((b) => b.active).length === 2, 3)).toBe(true);
+    expect(stout.projectiles.filter((b) => b.active).length).toBeLessThanOrEqual(2);
+  });
 });

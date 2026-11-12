@@ -48,11 +48,12 @@ export const CANETTE_UPGRADES: readonly UpgradeDef[] = [
   { id: 'size', label: 'taille', value: 0.10, kind: 'percent' },
 ];
 
-/** Améliorations de la Stout : comme la Canette, plus le recul et le perçage (pas de projectile en plus ni de vitesse). */
+/** Améliorations de la Stout : comme la Canette, plus le recul et le perçage (pas de vitesse). */
 export const STOUT_UPGRADES: readonly UpgradeDef[] = [
   { id: 'damage', label: 'dégâts', value: 0.15, kind: 'percent' },
   { id: 'rate', label: "vitesse d'attaque", value: 0.10, kind: 'percent' },
   { id: 'knock', label: 'recul', value: 0.20, kind: 'percent' },
+  { id: 'projectiles', label: 'projectile en plus', value: 1, kind: 'flat', fixed: true, minTier: 2 },
   { id: 'pierce', label: 'zombie traversé', value: 1, kind: 'flat', fixed: true, minTier: 2 },
   { id: 'range', label: 'portée', value: 0.10, kind: 'percent' },
   { id: 'critChance', label: 'chances de critique', value: 0.04, kind: 'points' },
