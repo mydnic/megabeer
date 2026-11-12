@@ -195,7 +195,7 @@ export const VFX = {
   /** Poussière soulevée (atterrissage, fût qui éclate, projectile au sol). */
   dust: { color: 0xcdbf9a },
   /** Traînée des projectiles du joueur : couleur par arme (absente : pas de traînée). */
-  trail: { size: 0.42, life: 0.17, intensity: 0.55, maxLoad: 0.3, colors: { canette: 0xffe9a8, stout: 0xd8a070, gueuze: 0xff7a9a } as Record<string, number> },
+  trail: { size: 0.42, life: 0.17, intensity: 0.55, maxLoad: 0.3, colors: { stout: 0xd8a070, gueuze: 0xff7a9a } as Record<string, number> },
   /** Colonne de lumière (niveau gagné, coffre, pompe, Happy hour) : rayon, hauteur, durée, opacité, étincelles, réserve. */
   beam: { radius: 1.1, height: 9, life: 1.1, opacity: 0.85, sparkles: 14, max: 6 },
   /** Explosions. */

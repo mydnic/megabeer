@@ -125,7 +125,8 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    modèle `src/assets/models/mort.glb` est versionné (choix de l'utilisateur, à retirer en cas de plainte), refait par `tools/blender/mort.py` depuis les FBX
    exportés d'Unreal (`Desktop/MODELS/personnages/gizart_stylized_death`) ; sans lui, repli `mort_repli.glb` (Falibu).
    Export Unreal : `UnrealEditor.exe <projet> -ExecutePythonScript=...` (le mode -run=pythonscript plante sur les
-   maillages animés). Puis checkpoint 3 : Last call.
+   maillages animés). Menus à la manette (`ui/padNav.ts` : croix ou stick, A valide, B revient, gauche/droite règlent
+   les volumes) ; plus de traînée derrière la canette. Puis checkpoint 3 : Last call.
    Ensuite : Porte du patron, l'Abbé, fermeture à 10:00, victoire.
    **Tournées du bar faites le 2026-11-11, à valider en jeu** : 8 bonus lâchés par les ennemis (liste dans le journal du
    GDD), `game/tournees.ts`, `config/tournees.ts`, icônes `ui/tourneeIcons.ts` (aussi en texture au sol par

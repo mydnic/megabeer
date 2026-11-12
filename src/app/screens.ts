@@ -33,6 +33,7 @@ import { BOSS_HUD } from '../config/hud';
 import { PATRON_DOOR } from '../config/bosses';
 import { CLOSING } from '../config/closing';
 import { createVictoryScreen } from '../ui/victoryScreen';
+import { createPadNav } from '../ui/padNav';
 import { TOURNEES } from '../config/tournees';
 import { ITEM_EFFECTS } from '../config/items';
 import type { WeaponId } from '../weapons/weapon';
@@ -114,6 +115,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
     starting = false;
   }
   const home = createHomeScreen(() => void play(), () => options.show(() => home.focus()));
+  const padNav = createPadNav();
 
   game.events.on('runStarted', () => { setHud(true); lockCursor(); });
   // Cloches de l'Abbaye : le bandeau reste affiché pendant le débarquement et tremble à chaque coup
@@ -208,6 +210,10 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
     /** Chaque image : HUD, écran de mort, manette et Espace dans les menus. */
     update(realDt: number, input: InputState) {
       levelUp.input(input.moveX, input.jumpPressed || input.actionPressed);
+      // Menus à la manette : celui du premier plan (Options, puis pause, puis accueil) ; B revient en arrière
+      const menu = options.open ? options.root : pause.open ? pause.root : game.phase === 'home' && home.visible && !starting ? home.root : null;
+      const back = options.open ? options.close : pause.open ? () => game.resume() : undefined;
+      const usedA = padNav.update(realDt, input, menu, back);
       // Start de la manette : pause, ou reprise
       if (input.pausePressed && game.phase === 'run') {
         if (!game.menuPaused) game.pause();
@@ -231,10 +237,9 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
       if (boss) bossBar.update(boss.zombie.hp / boss.zombie.maxHp, boss.phase);
       tourneeHud.setOffset(boss ? BOSS_HUD.pushDown : 0);
       if (game.phase === 'dead') deathBanner.update(game.deadTime, game.runTime, game.kills);
-      // Espace ou bouton A : Jouer sur l'accueil, Continuer sur le bilan de mort
-      if (input.jumpPressed) {
-        if (game.phase === 'home' && !options.open) void play();
-        else if (game.phase === 'dead' && deathBanner.ready) game.goHome();
+      // Espace ou bouton A : Continuer sur le bilan de mort et la victoire (l'accueil passe par la navigation des menus)
+      if (input.jumpPressed && !usedA) {
+        if (game.phase === 'dead' && deathBanner.ready) game.goHome();
         else if (game.won && victory.shown) game.goHome();
       }
     },

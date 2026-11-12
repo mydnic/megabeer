@@ -17,10 +17,12 @@ export type InputState = {
   action: boolean; actionPressed: boolean;
   /** Bouton Start de la manette, à l'appui : pause (Échap au clavier, géré à part). */
   pausePressed: boolean;
+  /** Bouton B de la manette, à l'appui : retour dans les menus. */
+  backPressed: boolean;
 };
 
 const keys = new Set<string>();
-let mouseDX = 0, mouseDY = 0, wheel = 0, prevJump = false, prevAction = false, prevStart = false;
+let mouseDX = 0, mouseDY = 0, wheel = 0, prevJump = false, prevAction = false, prevStart = false, prevBack = false;
 let canvas: HTMLElement | null = null;
 
 export function initInput(el: HTMLElement) {
@@ -44,7 +46,7 @@ function deadzone(a: number, dz: number) {
 }
 
 export function readInput(): InputState {
-  let mx = 0, my = 0, lx = 0, ly = 0, jump = false, action = false, start = false;
+  let mx = 0, my = 0, lx = 0, ly = 0, jump = false, action = false, start = false, back = false;
   if (keys.has('KeyW') || keys.has('ArrowUp')) my += 1;
   if (keys.has('KeyS') || keys.has('ArrowDown')) my -= 1;
   if (keys.has('KeyD') || keys.has('ArrowRight')) mx += 1;
@@ -71,6 +73,7 @@ export function readInput(): InputState {
     if (gp.buttons[0]?.pressed) jump = true;
     if (gp.buttons[2]?.pressed) action = true;
     if (gp.buttons[9]?.pressed) start = true;
+    if (gp.buttons[1]?.pressed) back = true;
     break; // une seule manette (jeu solo)
   }
 
@@ -82,8 +85,10 @@ export function readInput(): InputState {
     jump, jumpPressed: jump && !prevJump,
     action, actionPressed: action && !prevAction,
     pausePressed: start && !prevStart,
+    backPressed: back && !prevBack,
   };
   prevStart = start;
+  prevBack = back;
   prevJump = jump;
   prevAction = action;
   mouseDX = mouseDY = wheel = 0;

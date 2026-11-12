@@ -120,6 +120,7 @@ export function createPauseMenu(cb: { resume: () => void; options: () => void; q
   }
 
   return {
+    root: el,
     get open() { return !el.classList.contains('off'); },
     show() {
       renderStats();

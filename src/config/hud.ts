@@ -79,3 +79,14 @@ export const RUN_HUD = {
   /** Durée mini entre deux animations du compteur de kills (s), pour qu'il ne tremble pas en continu. */
   killPopGap: 0.12,
 } as const;
+
+/** Menus à la manette (ui/padNav.ts) : croix ou stick pour se déplacer, A pour valider, B pour revenir. */
+export const PAD_NAV = {
+  /** Inclinaison du stick qui compte comme un appui. */
+  threshold: 0.5,
+  /** Maintenu : premier pas répété après `repeatDelay` s, puis un toutes les `repeatEvery` s. */
+  repeatDelay: 0.35,
+  repeatEvery: 0.12,
+  /** Pas des curseurs (volumes) à gauche ou à droite. */
+  sliderStep: 5,
+} as const;

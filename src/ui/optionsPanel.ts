@@ -79,6 +79,7 @@ export function createOptionsPanel(settings: Settings, onVolume: (ch: VolumeChan
   });
 
   return {
+    root: veil,
     get open() { return !veil.classList.contains('off'); },
     show(whenClosed?: () => void) {
       onClose = whenClosed;

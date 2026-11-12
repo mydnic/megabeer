@@ -60,6 +60,7 @@ export function createHomeScreen(onPlay: () => void, onOptions: () => void) {
   opt.addEventListener('keydown', (e) => { if (e.code === 'Space' || e.code === 'Enter') e.stopPropagation(); });
 
   return {
+    root: el,
     get visible() { return !el.classList.contains('off'); },
     show() {
       el.classList.remove('off');
