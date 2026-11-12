@@ -35,6 +35,8 @@ import { CLOSING } from '../config/closing';
 import { createPadNav } from '../ui/padNav';
 import { createAccountPanel } from '../ui/accountPanel';
 import { createShopScreen } from '../ui/shopScreen';
+import { renderPortrait } from '../render/portrait';
+import buveurUrl from '../assets/models/buveur.glb?url';
 import { runUnlocks } from '../meta/shop';
 import { createProgress } from './progress';
 import { TOURNEES } from '../config/tournees';
@@ -127,7 +129,10 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   const accountPanel = createAccountPanel(home.root, { login: () => progress.login(), logout: () => void progress.logout() });
   progress.onChange(() => accountPanel.update(progress.online, progress.account, progress.profile, progress.canLogin));
   // Boutique : persos, armes et objets à débloquer avec les TUNAS
-  const shop = createShopScreen({ buy: (k) => progress.buy(k), profile: () => progress.profile, onClose: () => home.focus() });
+  // Portraits des persos, rendus une fois depuis leur modèle 3D
+  const portraits = new Map<string, string>();
+  void renderPortrait(buveurUrl).then((u) => { portraits.set('buveur', u); shop.refresh(); }).catch((e) => console.error('[portrait]', e));
+  const shop = createShopScreen({ buy: (k) => progress.buy(k), profile: () => progress.profile, onClose: () => home.focus(), portrait: (id) => portraits.get(id) ?? null });
   progress.onChange(() => shop.refresh());
   void progress.init();
   // TUNAS de la dernière run, pour le bilan de fin

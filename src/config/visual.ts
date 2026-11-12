@@ -55,3 +55,20 @@ export const CHARACTER_LOOK = {
 export const TERRAIN_PALETTE = {
   grassLow: 0x4f8a34, grassHigh: 0x8db84a, dirt: 0xa57548, path: 0x8e7556, rock: 0x8b8178, snow: 0xf4f1ea, variation: 0.14,
 } as const;
+
+/** Portrait d'un perso rendu depuis son modèle (render/portrait.ts) : boutique, choix du perso. */
+export const PORTRAIT = {
+  /** Taille de l'image (px), champ de la caméra (degrés), marge autour du cadrage. */
+  size: 160,
+  fov: 30,
+  margin: 1.3,
+  /** Cadrage : du `from` de la hauteur (0 : pieds, 1 : tête) jusqu'en haut ; caméra relevée de `lift` x la hauteur. */
+  from: 0.5,
+  lift: 0.05,
+  /** Le perso tourné de trois quarts (rad), et l'instant de l'animation d'attente (s). */
+  turn: -0.45,
+  time: 0.2,
+  /** Lumières : ambiance et soleil. */
+  ambient: 1.6,
+  sun: 2.2,
+} as const;
