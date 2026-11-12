@@ -116,9 +116,8 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    l'utilisateur : Abbé sculpté maison (`tools/blender/abbe.py`, outils communs `tools/blender/figure_kit.py`), attaque
    « simple » (flaques de vin marquées puis brûlantes autour du joueur, pas d'invocation), phase 2 géante (il boit son
    calice, x1,6), porte en pièces du Castle Kit (`world/doorView.ts`, faisceau rouge). Retours du premier test (2026-11-12),
-   faits et validés : porte 2,5x plus grande, posée sur sol presque plat (`flatAround`), mains de l'Abbé retournées (pouce en haut) ; et pareille des deux côtés, toujours sur la mini-carte (flèche au bord) ;
-   
-   Abbé 2x plus grand, flaques 2x plus larges ; cartes de level-up à la croix de la manette, X pour valider. Le boss
+   faits et validés : porte 2,5x plus grande, pareille des deux côtés, posée sur un sol presque plat (`flatAround`),
+   toujours sur la mini-carte (flèche au bord) ; mains de l'Abbé retournées (pouce en haut) ; Abbé 2x plus grand, flaques 2x plus larges ; cartes de level-up à la croix de la manette, X pour valider. Le boss
    est générique (`game/boss.ts`, une vue par boss `createBossView`), victoire = jeu figé + `ui/victoryScreen.ts`.
    Réglages `ABBE`, `PATRON_DOOR`, `DOOR_LOOK`, `WINE_LOOK` (config/bosses.ts). DEV : « Abbé maintenant », « Aller à la
    porte ». **Ensuite : checkpoint 2, fermeture à 10:00** (videurs qui affluent), puis checkpoint 3 : Last call.
