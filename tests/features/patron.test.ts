@@ -130,18 +130,21 @@ describe("L'Abbé", () => {
     expect(boss.zombie.size).toBeCloseTo(A.bodyScale * A.phase2.grow);
   });
 
-  it('le tuer, c\'est gagner : écran de victoire, jeu figé, fin de run « victoire »', () => {
+  it('le tuer laisse un coffre légendaire gratuit, et la run continue', () => {
     const t = arena();
     t.game.cheats.god = true;
     const boss = abbe(t);
+    const time = t.game.runTime;
     t.game.hitZombie(boss.zombie, 1e6, false, boss.zombie.pos, t.game.player.facing);
-    expect(t.events('victory')).toHaveLength(1);
-    expect(t.events('runEnded').at(-1)!.reason).toBe('victoire');
-    expect(t.game.won).toBe(true);
-    expect(t.game.frozen).toBe(true);
+    const killed = t.events('bossKilled').at(-1)!;
+    expect(killed.chest).not.toBeNull();
+    expect(killed.chest!.rarity).toBe(A.chestRarity);
+    expect(killed.chest!.free).toBe(true);
     expect(t.game.boss).toBeNull();
-    t.game.goHome();
-    expect(t.game.won).toBe(false);
-    expect(t.game.phase).toBe('home');
+    expect(t.game.frozen).toBe(false);
+    t.play(2);
+    expect(t.game.phase).toBe('run');
+    expect(t.game.runTime).toBeGreaterThan(time + 1.9);
+    expect(t.events('runEnded')).toHaveLength(0);
   });
 });

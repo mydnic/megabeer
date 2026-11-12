@@ -72,6 +72,8 @@ export const ABBE = {
   hp: 4000,
   speed: 2.0,
   xp: 150,
+  /** Coffre gratuit laissé à sa mort (rang dans RARITIES, 4 : Légendaire) ; la run continue jusqu'à la fermeture. */
+  chestRarity: 4,
   /** Hauteur du modèle (m), largeur du corps (multiplie le rayon d'un zombie). */
   height: 10,
   bodyScale: 4.4,

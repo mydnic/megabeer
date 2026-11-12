@@ -118,7 +118,7 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    calice, x1,6), porte en pièces du Castle Kit (`world/doorView.ts`, faisceau rouge). Retours du premier test (2026-11-12),
    faits et validés : porte 2,5x plus grande, pareille des deux côtés, posée sur un sol presque plat (`flatAround`),
    toujours sur la mini-carte (flèche au bord) ; mains de l'Abbé retournées (pouce en haut) ; Abbé 2x plus grand, flaques 2x plus larges ; cartes de level-up à la croix de la manette, X pour valider. Le boss
-   est générique (`game/boss.ts`, une vue par boss `createBossView`), victoire = jeu figé + `ui/victoryScreen.ts`.
+   est générique (`game/boss.ts`, une vue par boss `createBossView`), l'Abbé tué lâche un coffre légendaire (`ABBE.chestRarity`) et la run continue : pas d'écran de victoire (checkpoint 3, choix de l'utilisateur).
    Réglages `ABBE`, `PATRON_DOOR`, `DOOR_LOOK`, `WINE_LOOK` (config/bosses.ts). DEV : « Abbé maintenant », « Aller à la
    porte ». **Checkpoint 2, la fermeture, fait le 2026-11-12, à valider en jeu** : la Mort (modèle Fab « Stylized Death »)
    remplace les videurs, `game/closing.ts`, `config/closing.ts`, `world/reaperView.ts`, DEV « Fermeture maintenant ». Le
@@ -126,8 +126,8 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    exportés d'Unreal (`Desktop/MODELS/personnages/gizart_stylized_death`) ; sans lui, repli `mort_repli.glb` (Falibu).
    Export Unreal : `UnrealEditor.exe <projet> -ExecutePythonScript=...` (le mode -run=pythonscript plante sur les
    maillages animés). Menus à la manette (`ui/padNav.ts` : croix ou stick, A valide, B revient, gauche/droite règlent
-   les volumes) ; plus de traînée derrière la canette. Puis checkpoint 3 : Last call.
-   Ensuite : Porte du patron, l'Abbé, fermeture à 10:00, victoire.
+   les volumes) ; plus de traînée derrière la canette, plus de scintillement sur l'XP et les capsules. Checkpoint 3 fait :
+   pas de victoire, la run ne finit qu'à la mort. Reste : validation en jeu de la fermeture et de la fin de run.
    **Tournées du bar faites le 2026-11-11, à valider en jeu** : 8 bonus lâchés par les ennemis (liste dans le journal du
    GDD), `game/tournees.ts`, `config/tournees.ts`, icônes `ui/tourneeIcons.ts` (aussi en texture au sol par
    `iconDataUrl`), HUD `ui/tourneeHud.ts`, DEV « Tournée devant ». Tests : `createTestGame(seed, { tournees: 'peket' })`,

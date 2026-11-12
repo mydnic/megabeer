@@ -62,11 +62,11 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
   });
   game.events.on('bossPhase', () => audio.play(BS.roar, BS.roarVolume, BS.roarRate));
   game.events.on('bossKilled', () => audio.play(BS.death, BS.deathVolume, BS.deathRate));
-  // L'Abbé répand son vin ; la porte du patron s'ouvre ; victoire
+  // L'Abbé répand son vin ; la porte du patron s'ouvre ; l'Abbé tombe (carillon)
   game.events.on('winePoured', () => audio.play(BS.pour, BS.pourVolume, BS.pourRate * jitter(0.06)));
   game.events.on('doorOpened', () => { audio.play(BS.door, BS.doorVolume, BS.doorRate); audio.play(BS.bell, BS.bellVolume, BS.bellRate * 0.8); });
   game.events.on('doorBusy', () => audio.play(AUDIO.chest.deny, AUDIO.chest.denyVolume, AUDIO.chest.denyRate, 0, 'ui'));
-  game.events.on('victory', () => { for (let i = 0; i < 4; i++) setTimeout(() => audio.play(BS.bell, BS.bellVolume, 0.8 + i * 0.15, 0, 'ui'), i * 260); });
+  game.events.on('bossKilled', ({ boss }) => { if (boss.kind === 'abbe') for (let i = 0; i < 4; i++) setTimeout(() => audio.play(BS.bell, BS.bellVolume, 0.8 + i * 0.15, 0, 'ui'), i * 260); });
   // Élites
   // Fermeture : le glas, puis chaque Mort qui sort de terre et chaque coup de faux
   const CL = AUDIO.closing;

@@ -79,19 +79,17 @@ describe('La fermeture du bar', () => {
     expect(t.game.closing.speedAt(C.at + 3600)).toBe(C.maxSpeed);
   });
 
-  it('la porte du patron reste ouvrable pendant la fermeture, et la victoire arrête tout', () => {
+  it('abattre l\'Abbé ne l\'arrête pas : seule la Mort finit la run', () => {
     const t = beforeClosing(0.1);
-    t.game.cheats.god = true;
     t.play(1);
     const p = t.game.player;
     const at = t.inFront(10);
     const boss = t.game.spawnAbbe(at, p.pos.clone().sub(at))!;
     expect(boss).not.toBeNull();
     t.game.hitZombie(boss.zombie, 1e6, false, boss.zombie.pos, p.facing);
-    expect(t.events('victory')).toHaveLength(1);
-    const r = t.game.closing.reapers[0].pos.clone();
-    t.play(2);
-    expect(t.game.closing.reapers[0].pos.distanceTo(r)).toBe(0);
+    expect(t.game.phase).toBe('run');
+    expect(t.playUntil(() => t.game.phase !== 'run', 30)).toBe(true);
+    expect(t.events('runEnded').at(-1)!.reason).toBe('mort');
   });
 
   it('une nouvelle run repart sans Mort', () => {

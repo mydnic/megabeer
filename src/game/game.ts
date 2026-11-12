@@ -51,7 +51,7 @@ import { MAP_MECHANICS, type MapId, type MapMechanic } from './mechanics/mechani
 
 export type Phase = 'home' | 'run' | 'dead';
 export type Spawn = { dir: THREE.Vector3; facing: THREE.Vector3 };
-export type RunEnd = 'mort' | 'abandon' | 'victoire';
+export type RunEnd = 'mort' | 'abandon';
 /** Ce que lâche une poubelle cassée. */
 export type BinLoot = 'xp' | 'coins' | 'snack';
 
@@ -120,7 +120,7 @@ export type GameEvents = {
   bossWave: { boss: FrereSonneur; at: THREE.Vector3 };
   /** Le boss change de phase (il rugit). */
   bossPhase: { boss: Boss; phase: number };
-  /** Un boss est tué : le Frère Sonneur laisse un coffre gratuit de haute rareté ; l'Abbé, c'est la victoire. */
+  /** Un boss est tué : il laisse un coffre gratuit de haute rareté, et la run continue. */
   bossKilled: { boss: Boss; chest: Chest | null };
   /** L'Abbé répand son vin : des flaques sont posées. */
   winePoured: { boss: Abbe; puddles: readonly WinePuddle[] };
@@ -128,8 +128,6 @@ export type GameEvents = {
   doorOpened: { at: THREE.Vector3 };
   /** Touche d'action devant la porte alors qu'un boss est déjà là. */
   doorBusy: Record<string, never>;
-  /** Le boss final est tombé : la run est gagnée (le jeu se fige sur l'écran de victoire). */
-  victory: { survived: number; kills: number };
   /** 10:00 : la fermeture du bar, la Mort arrive. */
   closingStarted: Record<string, never>;
   /** Une Mort sort de terre ; une Mort lève sa faux. */
@@ -236,11 +234,10 @@ export class Game {
   private rollBell: () => boolean;
   /** Boss en cours (null : aucun) ; `bossDone` : le boss de mi-run est déjà venu. */
   boss: Boss | null = null;
-  /** La Porte du patron de la run ; `won` : le boss final est tombé (jeu figé sur la victoire). */
+  /** La Porte du patron de la run. */
   readonly door: PatronDoor;
   /** La fermeture du bar (10:00) : les Morts. */
   readonly closing: Closing;
-  won = false;
   bossDone = false;
   /** Tournées du bar (bonus lâchés par les ennemis). */
   readonly tournees: Tournees;
@@ -390,7 +387,7 @@ export class Game {
   setThrowRig(rig: ThrowRig) { this.weaponCtx.rig = rig; }
 
   /** Le monde est figé (menu pause ou choix de carte). */
-  get frozen() { return this.menuPaused || this.offer !== null || this.reveal !== null || this.won; }
+  get frozen() { return this.menuPaused || this.offer !== null || this.reveal !== null; }
   /** Coffre en train de révéler sa rareté (temps restant, s). */
   private reveal: { chest: Chest; price: number; rarity: number; cards: Card[]; left: number } | null = null;
 
@@ -840,19 +837,13 @@ export class Game {
     for (const S of synergies) if (!killed && weapon?.id === S.marker) z.dazed = S.duration * this.stats.duration;
     if (weapon) this.afterWeaponHit(z, Math.min(damage, hpBefore), killed);
     this.events.emit('zombieHit', { weapon, zombie: z, damage, crit, killed, hpAfter: z.hp, impact: impact.clone(), dir, shielded: shield > 0, combo });
-    // Le boss tué laisse un coffre gratuit de haute rareté
+    // Le boss tué laisse un coffre gratuit de haute rareté, et la run continue (l'Abbé aussi : seule la Mort l'arrête)
     if (killed && z.def.boss && this.boss?.zombie === z) {
       const boss = this.boss;
       this.boss = null;
-      if (boss.kind === 'abbe') {
-        // Le boss final tombe : la run est gagnée
-        this.events.emit('bossKilled', { boss, chest: null });
-        this.win();
-      } else {
-        const chest = this.chests.addFreeAt(z.pos);
-        if (chest) chest.rarity = FRERE_SONNEUR.chestRarity;
-        this.events.emit('bossKilled', { boss, chest });
-      }
+      const chest = this.chests.addFreeAt(z.pos);
+      if (chest) chest.rarity = boss.kind === 'abbe' ? ABBE.chestRarity : FRERE_SONNEUR.chestRarity;
+      this.events.emit('bossKilled', { boss, chest });
     }
     // Un élite tué laisse un coffre gratuit
     if (killed && z.elite) this.events.emit('eliteKilled', { zombie: z, chest: this.chests.addFreeAt(z.pos) });
@@ -1126,14 +1117,6 @@ export class Game {
     this.events.emit('landed', { pos: this.player.pos.clone() });
   }
 
-  /** Victoire : le jeu se fige sur l'écran de victoire (retour à l'accueil depuis l'écran). */
-  private win() {
-    if (this.won) return;
-    this.won = true;
-    this.events.emit('victory', { survived: this.runTime, kills: this.kills });
-    this.events.emit('runEnded', { reason: 'victoire', survived: this.runTime, kills: this.kills });
-  }
-
   private die() {
     this.phase = 'dead';
     this.deadTime = 0;
@@ -1173,7 +1156,6 @@ export class Game {
     this.tournees.clear();
     this.boss = null;
     this.bossDone = false;
-    this.won = false;
     this.door.clear();
     this.closing.clear();
     this.items.length = 0;

@@ -21,7 +21,7 @@ import { RARITIES } from '../config/upgrades';
 import { PUMP_TIERS } from '../config/pumps';
 import { TOURNEE_FX, TOURNEES } from '../config/tournees';
 import { ELITES } from '../config/elites';
-import { BOSS_LOOK, DOOR_LOOK, FRERE_SONNEUR, WINE_LOOK } from '../config/bosses';
+import { BOSS_LOOK, DOOR_LOOK, WINE_LOOK } from '../config/bosses';
 import type { Vfx } from '../fx/vfx';
 import type { Sprites } from '../fx/sprites';
 
@@ -189,7 +189,7 @@ export function wireEffects(game: Game, d: Deps) {
     vfx.explosion(numPos.copy(at).setLength(at.length() + 2), 5, VFX.wine);
     vfx.dust(at, 24, 2.5, 10);
     rig.shake(HIT_FEEDBACK.shake * 3, HIT_FEEDBACK.shakeAmplitude * 2, HIT_FEEDBACK.shakeDecay);
-    if (c) vfx.beam(c.pos, new THREE.Color(RARITIES[FRERE_SONNEUR.chestRarity].color).getHex(), 1.8, 18, 2);
+    if (c) vfx.beam(c.pos, new THREE.Color(RARITIES[c.rarity ?? 0].color).getHex(), 1.8, 18, 2);
     if (boss.kind === 'abbe') vfx.beam(at, VC.level, 2.4, 30, 3);
   });
   // L'Abbé répand son vin : une éclaboussure sur chaque flaque ; la porte du patron s'ouvre dans la poussière

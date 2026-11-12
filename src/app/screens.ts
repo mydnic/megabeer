@@ -32,7 +32,6 @@ import { createBossBar } from '../ui/bossBar';
 import { BOSS_HUD } from '../config/hud';
 import { PATRON_DOOR } from '../config/bosses';
 import { CLOSING } from '../config/closing';
-import { createVictoryScreen } from '../ui/victoryScreen';
 import { createPadNav } from '../ui/padNav';
 import { TOURNEES } from '../config/tournees';
 import { ITEM_EFFECTS } from '../config/items';
@@ -142,7 +141,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   // Boss : sa barre de vie, un bandeau à son arrivée et quand il passe en phase 2
   const BOSS_TEXT = {
     sonneur: { come: 'Saute par-dessus les ondes de sa cloche', rage: ['Il est furieux !', 'Plus rapide, et deux ondes à chaque coup'], fall: 'Un coffre légendaire t\'attend' },
-    abbe: { come: 'Ne reste pas dans son vin de messe', rage: ['Il a bu le calice !', 'Il devient géant'], fall: '' },
+    abbe: { come: 'Ne reste pas dans son vin de messe', rage: ['Il a bu le calice !', 'Il devient géant'], fall: 'Un coffre légendaire t\'attend. Tiens jusqu\'à la fermeture' },
   } as const;
   game.events.on('bossSpawned', ({ boss }) => {
     bossBar.show(boss.name, boss.phaseAt);
@@ -153,7 +152,6 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   game.events.on('bossPhase', ({ boss }) => { const [t, sub] = BOSS_TEXT[boss.kind].rage; banner.show(t, sub); banner.pulse(); banner.hideAfter(2.5); });
   game.events.on('bossKilled', ({ boss }) => {
     bossBar.hide();
-    if (boss.kind === 'abbe') return;
     banner.show(`${boss.name} est tombé !`, BOSS_TEXT[boss.kind].fall);
     banner.pulse();
     banner.hideAfter(3);
@@ -161,10 +159,6 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   game.events.on('closingStarted', () => { banner.show(CLOSING.banner.title, CLOSING.banner.sub); banner.pulse(); banner.hideAfter(4); });
   game.events.on('doorBusy', () => { banner.show('Pas maintenant', PATRON_DOOR.busy); banner.hideAfter(1.8); });
   game.events.on('doorOpened', () => { banner.show('Le patron arrive...', 'La porte s\'ouvre'); banner.pulse(); banner.hideAfter(2); });
-  // Victoire : l'écran de victoire, retour à l'accueil par son bouton (ou Espace)
-  const victory = createVictoryScreen(() => game.goHome());
-  game.events.on('victory', ({ survived, kills }) => { banner.clear(); victory.show(survived, kills); });
-  game.events.on('home', () => victory.hide());
   game.events.on('home', () => bossBar.hide());
   game.events.on('died', () => bossBar.hide());
   game.events.on('died', () => banner.clear());
@@ -237,10 +231,9 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
       if (boss) bossBar.update(boss.zombie.hp / boss.zombie.maxHp, boss.phase);
       tourneeHud.setOffset(boss ? BOSS_HUD.pushDown : 0);
       if (game.phase === 'dead') deathBanner.update(game.deadTime, game.runTime, game.kills);
-      // Espace ou bouton A : Continuer sur le bilan de mort et la victoire (l'accueil passe par la navigation des menus)
+      // Espace ou bouton A : Continuer sur le bilan de mort (l'accueil passe par la navigation des menus)
       if (input.jumpPressed && !usedA) {
         if (game.phase === 'dead' && deathBanner.ready) game.goHome();
-        else if (game.won && victory.shown) game.goHome();
       }
     },
   };

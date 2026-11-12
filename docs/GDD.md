@@ -756,7 +756,7 @@ Run de 5 minutes. À 5:00 : victoire ("Tu as survécu à la nuit"). Mort avant :
 - **Boss 1 à 5:00**, qui arrive tout seul.
 - **Boss final : déclenché par le joueur** en activant la **Porte du patron**, cachée sur la planète. Il peut l'activer **quand il veut** : s'il l'active trop tôt et n'est pas assez fort, c'est son problème.
 - **Fermeture à 10:00, dans tous les cas** : que la porte soit activée ou non, des videurs zombies arrivent de plus en plus nombreux jusqu'à ce que le joueur meure. Il faut donc tuer le boss final avant d'être submergé. Le boss reste activable pendant la fermeture.
-- Tuer le boss final = victoire. Le joueur peut alors arrêter, ou continuer en **"Last call"** : la run continue (et la fermeture s'emballe dès 10:00) pour le score, jusqu'à la mort.
+- Tuer le boss final ne termine pas la run [DÉCIDÉ 2026-11-12] : comme tous les boss et élites, il lâche un coffre (légendaire) et disparaît, sans écran. La run continue jusqu'à ce que la Mort de la fermeture attrape le joueur. Le "Last call" n'est donc pas un mode à part : c'est simplement la suite de la run.
 
 ### [PROPOSITION] Rythme d'une run de 10 min
 
@@ -767,7 +767,7 @@ Run de 5 minutes. À 5:00 : victoire ("Tu as survécu à la nuit"). Mort avant :
 | 5:00 | Boss 1 |
 | à tout moment | Boss final, quand le joueur active la Porte du patron |
 | 10:00 | Fermeture : les videurs zombies affluent, dans tous les cas |
-| après | Last call (infini) |
+| après | La run continue jusqu'à la mort (la fermeture s'emballe) |
 
 ### Difficulté [DÉCIDÉ]
 
@@ -1115,7 +1115,7 @@ L'ordre après l'étape 7 est indicatif : il se rediscute à chaque feature vali
 | Moteur | three.js + TypeScript, refait de zéro |
 | Style graphique | Cel-shading avec contours épais |
 | Maps | Planètes sphériques réelles, tour en environ 2 min |
-| Durée de run | 10 min, boss à 5:00, boss final via la Porte du patron, fermeture à 10:00 dans tous les cas, Last call possible après la victoire |
+| Durée de run | 10 min, boss à 5:00, boss final via la Porte du patron, fermeture à 10:00 dans tous les cas, la run ne finit qu'à la mort (l'Abbé tué lâche un coffre, pas d'écran de victoire) |
 | Difficulté | Sobre / Pompette / Bourré, débloquées en gagnant |
 | Caméra | Orbitale + zoom molette, repère local à la planète |
 | Arme du Buveur | Blonde simple, chaque bière est une arme séparée |
@@ -1207,6 +1207,7 @@ L'ordre après l'étape 7 est indicatif : il se rediscute à chaque feature vali
 | Poubelles et coffre piégé | 2026-11-11, choix de l'utilisateur : la poubelle se casse au contact **et** par les armes ; un premier snack (cornet de frites, +20 PV) en attendant la feature snacks ; coffre piégé **avec un indice visible** (couvercle qui tressaute, coffre qui rougit), payé il explose et libère des zombies, capsules perdues ; modèle de poubelle « Trashcan » de Poly by Google fourni par l'utilisateur (les `trash_A/B` KayKit sont des tas de déchets). 150 poubelles, butin XP 55 % / capsules 40 % / snack 5 %, piège 8 % : valeurs de départ, à caler en jouant |
 | Performances de fin de partie | Demandé par l'utilisateur le 2026-11-11 (« en end game, avec des armes haut niveau et full projectiles + full ennemis ça doit pas lagger »). Mesuré sur un banc (`tools/bench`, 800 ennemis, 4 armes au maximum, environ 230 projectiles) et en jeu. **Noyau** : 7,8 à 8,5 ms par image -> 2 à 3 ms selon les passages (index spatial des zombies : les projectiles et les effets ne parcourent plus toute la horde ; écartement par demi-voisinage ; sol sondé une image sur deux ; corps immobiles laissés en place ; recherche de décor sans allocation). **Rendu** : la profondeur de champ réutilise la profondeur de l'occlusion ambiante (une passe de scène en moins), un seul astre calcule ses ombres à la fois, les ennemis hors champ ne sont pas dessinés, les projectiles sont dessinés en instances (2 700 appels de dessin -> environ 600), les corps au sol sont plafonnés à 120 (au-delà, les plus anciens disparaissent : `ZOMBIE_HURT.maxCorpses`). Triangles par image avec 800 ennemis : 78 millions -> 18 millions. Sur la machine de l'utilisateur : 55 -> 91 images par seconde avec 800 ennemis, 78 -> 124 avec 400. **Filet de sécurité** : résolution adaptative (la scène baisse jusqu'à 60 % si la carte graphique sature, l'interface reste nette ; `RENDER.adaptive`). F3 affiche le temps par partie de l'image. Non fait : modèles d'ennemis simplifiés au loin (LOD) |
 | Fin de run, checkpoint 2 : la fermeture | 2026-11-12. L'utilisateur veut la Mort (« Stylized Death » de Gizart, Fab, gratuit, licence standard) à la place des videurs. Le modèle est livré pour Unreal : exporté en FBX par l'éditeur Unreal 5.8 de l'utilisateur (projet où il l'a ajouté), préparé par `tools/blender/mort.py` (translations des os retirées : celles du mannequin Unreal). D'abord gardé hors du dépôt (public, licence Fab), mais la prod est construite par Cloudflare depuis GitHub et n'avait que le repli : l'utilisateur a choisi de versionner `src/assets/models/mort.glb`, à retirer en cas de plainte. Sans lui, le Grim Reaper de Falibu (fixe, fourni par l'utilisateur) le remplace. La page Fab indique « Autoriser l'utilisation avec IA : Non » : signalé à l'utilisateur, qui a choisi de l'utiliser. Gameplay décidé par moi en l'absence de l'utilisateur, à valider : façon Faucheuse des survivors (voir section 11). Bouton Start de la manette = pause |
+| Fin de run, checkpoint 3 : pas de victoire | 2026-11-12, choix de l'utilisateur : l'Abbé tué lâche un coffre légendaire gratuit et disparaît, comme les autres boss ; pas d'écran de victoire, la run continue jusqu'à la Mort (fin « mort », seule fin avec « abandon »). L'écran de victoire est supprimé. Le Last call prévu (mode infini après la victoire) n'a plus lieu d'être. Carillon et bandeau « Un coffre légendaire t'attend » à sa mort |
 | Plus tard | Les nouveaux types d'ennemis par minute, les élites, les boss et les videurs arrivent avec leurs features |
 
 ### Encore ouvert
