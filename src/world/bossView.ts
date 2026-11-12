@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import sonneurUrl from '../assets/models/sonneur.glb?url';
-import bellUrl from '../assets/models/cloche_geante.glb?url';
 import { BOSS_LOOK as L, FRERE_SONNEUR as F } from '../config/bosses';
 import type { BossAnim, FrereSonneur } from '../game/frereSonneur';
 import { characterMaterial, LAYER_CHARACTER, LAYER_SKY } from '../render/materials';
@@ -9,13 +8,12 @@ import { heightAt } from './terrain';
 import { PLANET_RADIUS } from '../config/world';
 
 /** Animations jouées une seule fois (elles restent sur leur dernière image). */
-const ONCE: BossAnim[] = ['strike', 'push', 'roar', 'death'];
+const ONCE: BossAnim[] = ['strike', 'roar', 'death'];
 
 /**
  * Rendu du Frère Sonneur (tools/blender/sonneur.py) : le modèle détaillé en cel-shading, animé par un mixeur
  * (fondu entre les animations), posé là où la simulation le met ; ses ondes, un anneau de segments lumineux
- * posés un à un sur le relief, qui grandit exactement comme l'onde du jeu ; sa cloche géante
- * (tools/blender/cloche_geante.py), qui tremble quand il la sonne, se couche pour rouler et se redresse à l'arrêt.
+ * posés un à un sur le relief, qui grandit exactement comme l'onde du jeu.
  */
 export async function createBossView(scene: THREE.Scene) {
   const gltf = await new GLTFLoader().loadAsync(sonneurUrl);
@@ -67,32 +65,6 @@ export async function createBossView(scene: THREE.Scene) {
   segs.count = 0;
   scene.add(segs);
 
-  // Cloche géante
-  const bellGltf = await new GLTFLoader().loadAsync(bellUrl);
-  const bellModel = bellGltf.scene;
-  const bellBox = new THREE.Box3().setFromObject(bellModel);
-  const bellScale = F.bell.height / (bellBox.max.y - bellBox.min.y);
-  bellModel.traverse((o) => {
-    const mesh = o as THREE.Mesh;
-    if (!mesh.isMesh) return;
-    const name = (mesh.material as THREE.Material).name;
-    mesh.material = characterMaterial({ color: L.bellColors[name] ?? 0xc48a3a, side: THREE.DoubleSide });
-    mesh.castShadow = true;
-    mesh.layers.set(LAYER_CHARACTER);
-  });
-  const clapper = bellModel.getObjectByName('battant');
-  const bellRoot = new THREE.Group();
-  const bellHolder = new THREE.Group();
-  bellHolder.scale.setScalar(bellScale);
-  bellHolder.add(bellModel);
-  bellRoot.add(bellHolder);
-  bellRoot.visible = false;
-  scene.add(bellRoot);
-  // Couchée ou debout : moment où elle a changé (temps de la vue), pour le fondu
-  let bellTime = 0, rollChange = -10, wasRolling = false;
-  const qUp = new THREE.Quaternion(), qLie = new THREE.Quaternion(), qRoll = new THREE.Quaternion(), qShake = new THREE.Quaternion();
-  const lieAt = new THREE.Vector3(), axis = new THREE.Vector3(), shakeAxis = new THREE.Vector3();
-
   const Y = new THREE.Vector3(0, 1, 0);
   const up = new THREE.Vector3(), side = new THREE.Vector3(), fwd = new THREE.Vector3(), dir = new THREE.Vector3();
   const tan = new THREE.Vector3(), m = new THREE.Matrix4(), basis = new THREE.Matrix4(), pos = new THREE.Vector3(), s = new THREE.Vector3();
@@ -106,36 +78,6 @@ export async function createBossView(scene: THREE.Scene) {
     current = next;
   }
 
-  /** La cloche : debout (elle tremble quand elle sonne), couchée quand elle roule, fondu entre les deux. */
-  function syncBell(boss: FrereSonneur, dt: number) {
-    const b = boss.bell;
-    bellTime += dt;
-    if (b.rolling !== wasRolling) { wasRolling = b.rolling; rollChange = bellTime; }
-    const since = bellTime - rollChange;
-    let k = b.rolling ? Math.min(1, since / L.tipTime) : 1 - Math.min(1, since / L.standTime);
-    k = k * k * (3 - 2 * k);
-    up.copy(b.pos).normalize();
-    // Debout : axe de la cloche sur la verticale
-    qUp.setFromUnitVectors(Y, up);
-    // Couchée : axe en travers de la route, elle tourne autour en roulant
-    axis.crossVectors(up, b.dir.lengthSq() > 0 ? b.dir : side.set(1, 0, 0)).normalize();
-    qLie.setFromUnitVectors(Y, axis);
-    qRoll.setFromAxisAngle(axis, -b.spin);
-    qLie.premultiply(qRoll);
-    lieAt.copy(b.pos).addScaledVector(up, F.bell.radius).addScaledVector(axis, -F.bell.height / 2);
-    bellRoot.position.copy(b.pos).lerp(lieAt, k);
-    bellRoot.quaternion.copy(qUp).slerp(qLie, k);
-    // Sonnée : elle tremble et le battant se balance, de moins en moins
-    const r = b.rungAgo < L.ringTime ? 1 - b.rungAgo / L.ringTime : 0;
-    if (r > 0 && k < 0.01) {
-      shakeAxis.set(Math.sin(b.rungAgo * 7), 0, Math.cos(b.rungAgo * 7)).normalize();
-      qShake.setFromAxisAngle(shakeAxis, Math.sin(b.rungAgo * 38) * L.ringShake * r);
-      bellRoot.quaternion.multiply(qShake);
-    }
-    if (clapper) clapper.rotation.x = Math.sin(b.rungAgo * 9) * L.clapperSwing * r;
-    bellRoot.visible = true;
-  }
-
   return {
     /** Le boss a encaissé un coup : éclair blanc. */
     hit() { flash = 1; },
@@ -147,14 +89,12 @@ export async function createBossView(scene: THREE.Scene) {
       const z = boss?.zombie;
       if (!boss || !z || z.gone) {
         root.visible = false;
-        bellRoot.visible = false;
         segs.count = 0;
         held = null;
         if (shown) { mixer.stopAllAction(); current = null; shown = null; }
         return;
       }
       root.visible = true;
-      syncBell(boss, dt);
       const anim: BossAnim = z.dead ? 'death' : boss.anim;
       if (shown !== anim) { shown = anim; play(anim); }
       if (current) current.timeScale = boss.anim === 'walk' ? Math.max(0.5, z.walkSpeed / F.speed) : 1;

@@ -62,9 +62,6 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
     audio.play(BS.thud, BS.thudVolume * k, BS.thudRate * jitter(0.05));
   });
   game.events.on('bossPhase', () => audio.play(BS.roar, BS.roarVolume, BS.roarRate));
-  // La cloche part rouler (bronze qui racle), puis s'arrête (choc sourd)
-  game.events.on('bossBellPush', ({ boss }) => { const k = Math.max(0.35, near(boss.bell.pos, BS.hearDist)); audio.play(BS.push, BS.pushVolume * k, BS.pushRate); });
-  game.events.on('bossBellStop', ({ boss }) => { const k = Math.max(0.3, near(boss.bell.pos, BS.hearDist)); audio.play(BS.stop, BS.stopVolume * k, BS.stopRate); });
   game.events.on('bossKilled', () => audio.play(BS.death, BS.deathVolume, BS.deathRate));
   // Élites
   game.events.on('eliteSpawned', ({ zombie }) => {

@@ -17,7 +17,7 @@ function seeded(seed: number) {
 beforeEach(() => { vi.spyOn(Math, 'random').mockImplementation(seeded(7)); });
 afterEach(() => { vi.restoreAllMocks(); });
 
-/** Une run au sol, calme : pas de zombies, Canette désarmée, rien d'autre sur la planète (la cloche roule librement). */
+/** Une run au sol, calme : pas de zombies, Canette désarmée, rien d'autre sur la planète. */
 function arena() {
   const t = createTestGame();
   t.startRunAndLand();
@@ -45,27 +45,27 @@ describe('Le Frère Sonneur', () => {
     expect(t.events('bossSpawned')).toHaveLength(1);
   });
 
-  it('arrive avec sa cloche géante posée entre lui et le joueur', () => {
+  it('marche vers le joueur', () => {
     const t = arena();
     t.game.cheats.god = true;
     const boss = t.game.spawnBoss()!;
-    const p = t.game.player.pos;
-    expect(dist(boss.bell, p)).toBeLessThan(dist(boss.zombie, p));
-    expect(dist(boss.bell, boss.zombie.pos)).toBeCloseTo(F.bell.standOff, 0);
+    const d0 = dist(boss.zombie, t.game.player.pos);
+    t.play(4);
+    expect(dist(boss.zombie, t.game.player.pos)).toBeLessThan(d0 - 4);
   });
 
-  it('il sonne sa cloche : chaque coup lance une onde depuis la cloche, elle blesse le joueur resté au sol', () => {
+  it("à portée, il frappe la cloche qu'il tient : une onde part de lui, elle blesse le joueur resté au sol", () => {
     const t = arena();
-    const boss = t.game.spawnBoss(t.inFront(11))!;
+    const boss = t.game.spawnBoss(t.inFront(F.strike.range - 2))!;
     expect(t.playUntil(() => t.events('bossWave').length > 0, 4)).toBe(true);
-    expect(t.events('bossWave')[0].at.distanceTo(boss.bell.pos)).toBeLessThan(0.1);
+    expect(t.events('bossWave')[0].at.distanceTo(boss.zombie.pos)).toBeLessThan(0.5);
     expect(t.playUntil(() => t.events('playerHurt').some((e) => !e.blocked), 3)).toBe(true);
     expect(t.events('playerHurt').find((e) => !e.blocked)!.damage).toBeCloseTo(F.wave.damage * t.game.mods.damage);
   });
 
   it("on évite l'onde en sautant au bon moment", () => {
     const t = arena();
-    t.game.spawnBoss(t.inFront(11));
+    t.game.spawnBoss(t.inFront(F.strike.range - 2));
     expect(t.playUntil(() => t.events('bossWave').length > 0, 4)).toBe(true);
     const w = t.events('bossWave')[0];
     const d = w.at.angleTo(t.game.player.pos) * PLANET_RADIUS;
@@ -75,28 +75,11 @@ describe('Le Frère Sonneur', () => {
     expect(t.events('playerHurt').filter((e) => !e.blocked)).toHaveLength(0);
   });
 
-  it('après ses coups de cloche, il la pousse : elle roule vers le joueur et le renverse', () => {
-    const t = arena();
-    const boss = t.game.spawnBoss(t.inFront(11))!;
-    expect(t.playUntil(() => t.events('bossBellPush').length > 0, 10)).toBe(true);
-    expect(t.events('bossWave')).toHaveLength(F.strike.rings);
-    const before = dist(boss.bell, t.game.player.pos);
-    t.game.health.invuln = 0;
-    const hurt = t.events('playerHurt').length;
-    expect(t.playUntil(() => t.events('playerHurt').slice(hurt).some((e) => e.damage === F.bell.damage * t.game.mods.damage && !e.blocked), 3)).toBe(true);
-    expect(dist(boss.bell, t.game.player.pos)).toBeLessThan(before);
-  });
-
-  it("la cloche s'arrête au bout de sa course ; il retourne la chercher et la resonne là où elle est", () => {
+  it('il recommence après une pause', () => {
     const t = arena();
     t.game.cheats.god = true;
-    const boss = t.game.spawnBoss(t.inFront(11))!;
-    expect(t.playUntil(() => t.events('bossBellStop').length > 0, 12)).toBe(true);
-    expect(boss.bell.rolling).toBe(false);
-    const stoppedAt = boss.bell.pos.clone();
-    expect(t.playUntil(() => t.events('bossWave').length > F.strike.rings, 20)).toBe(true);
-    expect(t.events('bossWave').at(-1)!.at.distanceTo(stoppedAt)).toBeLessThan(0.1);
-    expect(dist(boss.zombie, stoppedAt)).toBeLessThan(F.bell.standOff + F.bell.arrive + 0.5);
+    t.game.spawnBoss(t.inFront(F.strike.range - 2));
+    expect(t.playUntil(() => t.events('bossWave').length >= 2, F.strike.duration * 2 + F.strike.cooldown + 3)).toBe(true);
   });
 
   it('sous la moitié de ses PV, il rugit et passe en phase 2', () => {

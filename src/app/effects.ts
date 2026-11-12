@@ -179,9 +179,6 @@ export function wireEffects(game: Game, d: Deps) {
     const k = Math.max(0.3, 1 - at.distanceTo(game.player.pos) / 30);
     rig.shake(HIT_FEEDBACK.shake * 2 * k, HIT_FEEDBACK.shakeAmplitude * 1.5, HIT_FEEDBACK.shakeDecay);
   });
-  // Cloche du boss : poussière quand elle part rouler et quand elle s'arrête
-  game.events.on('bossBellPush', ({ boss }) => { vfx.dust(boss.bell.pos, 12, 1.5, 5); rig.shake(HIT_FEEDBACK.shake, HIT_FEEDBACK.shakeAmplitude, HIT_FEEDBACK.shakeDecay); });
-  game.events.on('bossBellStop', ({ boss }) => { vfx.dust(boss.bell.pos, 16, 1.8, 6); earth.burst(numPos.copy(boss.bell.pos).setLength(boss.bell.pos.length() + 0.1), still); });
   game.events.on('bossPhase', ({ boss }) => {
     d.rings.spawn(boss.zombie.pos, 8, ELITES.color);
     vfx.pop(numPos.copy(boss.zombie.pos).setLength(boss.zombie.pos.length() + 4), ELITES.color, 6);

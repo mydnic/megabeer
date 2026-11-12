@@ -137,7 +137,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   // Boss : sa barre de vie, un bandeau à son arrivée et quand il passe en phase 2
   game.events.on('bossSpawned', () => {
     bossBar.show(FRERE_SONNEUR.name, FRERE_SONNEUR.phase2.below);
-    banner.show(`${FRERE_SONNEUR.name} !`, 'Saute par-dessus les ondes de son maillet');
+    banner.show(`${FRERE_SONNEUR.name} !`, 'Saute par-dessus les ondes de sa cloche');
     banner.pulse();
     banner.hideAfter(3);
   });

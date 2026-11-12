@@ -157,7 +157,7 @@ export const ENEMIES = {
   /** Sorti du Frère cellérier à sa mort (hors roster) : petit, rapide, fragile. */
   moinillon: { name: 'Moinillon', model: 'chubby_petit', hp: 6, speed: 3.8, damage: 4, xp: 1 },
   /** Boss de 5:00 de l'Abbaye (hors roster) : réglages dans config/bosses.ts. */
-  sonneur: { name: FRERE_SONNEUR.name, model: 'sonneur', hp: FRERE_SONNEUR.hp, speed: FRERE_SONNEUR.speed, damage: FRERE_SONNEUR.bell.damage, xp: FRERE_SONNEUR.xp, boss: true },
+  sonneur: { name: FRERE_SONNEUR.name, model: 'sonneur', hp: FRERE_SONNEUR.hp, speed: FRERE_SONNEUR.speed, damage: FRERE_SONNEUR.wave.damage, xp: FRERE_SONNEUR.xp, boss: true },
 } as const satisfies Record<string, EnemyDef>;
 
 export type EnemyId = keyof typeof ENEMIES;

@@ -54,7 +54,7 @@ describe('Les modèles des ennemis', () => {
   });
   it.each(separate)('%s (boss) a toutes ses animations, et elles bougent', (_, model) => {
     const glb = readGlb(model.file);
-    for (const name of ['idle', 'walk', 'strike', 'push', 'hit', 'roar', 'death']) {
+    for (const name of ['idle', 'walk', 'strike', 'hit', 'roar', 'death']) {
       expect(glb.json.animations.some((a) => a.name === name), `${model.file} : pas d'animation ${name}`).toBe(true);
       expect(rotationRange(glb, name), `${model.file} : ${name} est figée`).toBeGreaterThan(0.01);
     }

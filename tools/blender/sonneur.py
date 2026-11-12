@@ -1,6 +1,6 @@
 """
 Le Frère Sonneur (boss de 5:00 de l'Abbaye) : un ogre moine zombie, énorme ventre sous la bure, tonsure, mâchoire
-prognathe et défenses, un grand maillet de sonneur au poing. Modèle, squelette et animations générés par script.
+prognathe et défenses, une cloche à la main gauche et un grand maillet de sonneur dans la droite. Modèle, squelette et animations générés par script.
 
     blender -b --factory-startup -P tools/blender/sonneur.py -- --out src/assets/models/sonneur.glb [--render DIR]
 
@@ -11,8 +11,8 @@ poids des os sont calculés par distance (membres souples). Les accessoires (cor
 cousues, maillet riveté, sandales) sont posés sur la surface obtenue par lancer de rayons.
 
 Repère Blender : Z en haut, il regarde vers -Y (devient +Z dans le glTF). Pose de repos : bras écartés (pose en A),
-le maillet dans la main droite (-X). Animations : idle, walk, strike (le maillet touche à l'image STRIKE_HIT),
-push, hit, roar, death.
+le maillet dans la main droite (-X), une cloche à main dans la gauche. Animations : idle, walk, strike (le maillet
+frappe la cloche à l'image STRIKE_HIT), hit, roar, death.
 """
 import bpy
 import bmesh
@@ -28,7 +28,7 @@ def arg(name, default=None):
 OUT = arg('--out', 'sonneur.glb')
 RENDER_DIR = arg('--render')
 FPS = 30
-# Image où le maillet touche le sol dans le clip strike (le jeu cale l'onde dessus)
+# Image où le maillet frappe la cloche dans le clip strike (le jeu cale l'onde dessus)
 STRIKE_HIT = 30
 TAU = math.tau
 
@@ -465,55 +465,42 @@ def nail(tip, d, back, bone):
     hard(ell(tip - d * 0.012 + back * 0.022, (0.03, 0.026, 0.012), basis=(d, d.cross(back), back), seg=8, rings=6), 'ongle', bone, smooth=True)
 
 def build_hands():
-    # Main gauche ouverte, doigts épais un peu crochus
-    d = FA
-    n0 = Vector((0, -0.4, -0.8))
-    n = (n0 - d * n0.dot(d)).normalized()        # paume tournée vers le bas et l'avant
-    sd = d.cross(n)
-    P0 = WR + d * 0.19
-    parts = [cap(WR - d * 0.10, WR + d * 0.06, 0.115, 0.12), ell(P0, (0.155, 0.14, 0.075), basis=(d, sd, n))]
-    tips = []
-    for k in range(4):
-        o = (k - 1.5)
-        base = P0 + d * 0.11 + sd * (o * 0.078)
-        d1 = norm(d + sd * (o * 0.13) + n * 0.22)
-        mid = base + d1 * (0.14 - 0.012 * abs(o))
-        d2 = norm(d * 0.55 + n * 0.85 + sd * (o * 0.05))
-        tip = mid + d2 * 0.11
-        parts += [cap(base, mid, 0.05, 0.043), cap(mid, tip, 0.043, 0.034)]
-        tips.append((tip, d2))
-    side = 1 if sd.dot(Vector((0, -1, 0))) > 0 else -1
-    tb = P0 + sd * (0.12 * side) - d * 0.03
-    t1 = norm(sd * side + d * 0.5 + n * 0.25)
-    tm = tb + t1 * 0.12
-    t2 = norm(d * 0.7 + n * 0.6 + sd * (0.2 * side))
-    tt = tm + t2 * 0.095
-    parts += [cap(tb, tm, 0.056, 0.047), cap(tm, tt, 0.047, 0.038)]
-    tips.append((tt, t2))
-    hand = sculpt('main.L', parts, voxel=0.011, smooth=2, tris=2400)
-    paint(hand, 'peau')
-    weigh(hand, ['hand.L'])
-    FINAL.append(hand)
-    for tip, dd in tips:
-        back = (-n + dd * n.dot(dd)).normalized()
-        nail(tip, dd, back, 'hand.L')
+    # Main gauche : poing fermé sur le manche de sa cloche à main, qui prolonge l'avant-bras
+    h = FA
+    up0 = Vector((0, 0, 1))
+    u = (up0 - h * up0.dot(h)).normalized()      # dos de la main, vers le haut
+    v = h.cross(u)
+    grip = WR + h * 0.20
+    fist('main.L', 'hand.L', WR, h, grip, h, u, v)
+    # La cloche à main : manche de bois, couronne, robe de bronze, lèvre évasée, cordon
+    hard(tube([grip - h * 0.13, grip + h * 0.26], 0.042, seg=10), 'bois', 'hand.L', smooth=True)
+    hard(ell(grip - h * 0.15, (0.055, 0.055, 0.05), basis=(u, v, h), seg=10, rings=7), 'bois_fonce', 'hand.L', smooth=True)
+    c0 = grip + h * 0.26
+    body = [(0.0, -0.01), (0.07, 0.0), (0.12, 0.025), (0.155, 0.08), (0.165, 0.16), (0.172, 0.24), (0.20, 0.31),
+            (0.255, 0.36), (0.30, 0.395), (0.31, 0.42), (0.27, 0.425), (0.22, 0.40), (0.0, 0.38)]
+    hard(lathe(body, c0, h, seg=24), 'laiton', 'hand.L', smooth=True)
+    hard(lathe([(0.0, 0.17), (0.176, 0.17), (0.18, 0.2), (0.0, 0.2)], c0, h, seg=24), 'bois_fonce', 'hand.L')
+    hard(lathe([(0.0, 0.33), (0.252, 0.335), (0.262, 0.36), (0.0, 0.36)], c0, h, seg=24), 'bois_fonce', 'hand.L')
 
     # Main droite : poing fermé sur le manche du maillet
     h = HANDLE
     u = (-FAR - h * (-FAR).dot(h)).normalized()   # du manche vers le poignet
-    v = h.cross(u)
-    wr = mx(WR, -1)
-    parts = [cap(wr - FAR * 0.10, GRIP + u * 0.06, 0.115, 0.125), ell(GRIP + u * 0.07, (0.125, 0.135, 0.185), basis=(u, v, h))]
+    fist('main.R', 'hand.R', mx(WR, -1), FAR, GRIP, h, u, h.cross(u))
+
+
+def fist(name, bone, wr, fa, grip, h, u, v):
+    """Poing fermé sur un manche d'axe `h` en `grip` ; `u` : côté de la paume (vers le poignet ou le dos de la main)."""
+    parts = [cap(wr - fa * 0.10, grip + u * 0.06, 0.115, 0.125), ell(grip + u * 0.07, (0.125, 0.135, 0.185), basis=(u, v, h))]
     for k in range(4):
-        c = GRIP + h * ((k - 1.5) * 0.086)
+        c = grip + h * ((k - 1.5) * 0.086)
         pts = [c + (u * math.cos(a) + v * math.sin(a)) * 0.098 for a in (math.radians(60 + i * 30) for i in range(9))]
         parts.append(tube(pts, 0.05, seg=10))
         parts += [ell(pts[0], (0.05,) * 3, seg=10, rings=7), ell(pts[-1], (0.05,) * 3, seg=10, rings=7)]
-    parts += cap(GRIP + u * 0.11 - h * 0.12, GRIP - u * 0.05 + v * 0.095 - h * 0.215, 0.058, 0.045)   # pouce par-dessus
-    fist = sculpt('main.R', parts, voxel=0.011, smooth=2, tris=2400)
-    paint(fist, 'peau', [('peau_fonce', lambda c, nn: (c - GRIP).dot(u) < -0.105)])   # jointures
-    weigh(fist, ['hand.R'])
-    FINAL.append(fist)
+    parts += cap(grip + u * 0.11 - h * 0.12, grip - u * 0.05 + v * 0.095 - h * 0.215, 0.058, 0.045)   # pouce par-dessus
+    obj = sculpt(name, parts, voxel=0.011, smooth=2, tris=2400)
+    paint(obj, 'peau', [('peau_fonce', lambda c, nn: (c - grip).dot(u) < -0.105)])   # jointures
+    weigh(obj, [bone])
+    FINAL.append(obj)
 
 # ---------------------------------------------------------------- les jambes et les sandales
 def build_legs():
@@ -873,29 +860,23 @@ def build_clips(arm):
     make_clip(arm, 'walk', L, walk, loop=True)
 
     rest = idle[0]
-    # ---- STRIKE : il lève le maillet à deux mains au-dessus de la tête, tient, et l'abat devant lui (1,6 s)
-    raised = merge(arms((0.30, -0.25, 1), (-0.45, 0.25, 0.85), (-0.30, -0.15, 1), (-0.05, 0.5, 0.85)), {
+    # ---- STRIKE : il tend sa cloche devant lui, lève le maillet au-dessus de sa tête et l'abat sur la cloche (1,6 s)
+    hold_l = ((0.30, -0.85, -0.25), (-0.30, -0.95, 0.30))
+    raised = merge(arms(*hold_l, (-0.30, -0.15, 1), (0.05, 0.45, 0.85)), {
         'hips': {'r': (-4, 0, 0)},
-        'spine': {'r': (-14, 0, -8)}, 'chest': {'r': (-8, 0, -5)}, 'head': {'r': (-12, 0, 0)},
+        'spine': {'r': (-12, 0, -10)}, 'chest': {'r': (-8, 0, -6)}, 'head': {'r': (-6, 0, 8)},
         'belly': {'s': (0.97, 0.97, 1.05)},
         'thigh.L': {'r': (-10, 0, 0)}, 'thigh.R': {'r': (8, 0, 0)},
     })
-    slam = merge(arms((0.30, -1, -0.35), (-0.25, -0.9, -0.5), (-0.28, -1, -0.3), (-0.12, -0.9, -0.55)), {
-        'hips': {'r': (14, 0, 0), 'l': (0, -0.05, -0.16)},
-        'spine': {'r': (30, 0, 5)}, 'chest': {'r': (10, 0, 0)}, 'head': {'r': (-10, 0, 0)},
-        'belly': {'s': (1.06, 1.06, 0.93)},
-        'thigh.L': {'r': (-38, 0, 0)}, 'shin.L': {'r': (40, 0, 0)}, 'foot.L': {'r': (-4, 0, 0)},
-        'thigh.R': {'r': (-14, 0, 0)}, 'shin.R': {'r': (32, 0, 0)},
+    slam = merge(arms(*hold_l, (-0.10, -1, 0.05), (0.55, -0.80, -0.15)), {
+        'hips': {'r': (8, 0, 0), 'l': (0, -0.03, -0.08)},
+        'spine': {'r': (18, 0, 12)}, 'chest': {'r': (6, 0, 8)}, 'head': {'r': (4, 0, 14)},
+        'belly': {'s': (1.05, 1.05, 0.95)},
+        'thigh.L': {'r': (-24, 0, 0)}, 'shin.L': {'r': (26, 0, 0)},
+        'thigh.R': {'r': (-8, 0, 0)}, 'shin.R': {'r': (18, 0, 0)},
     })
-    make_clip(arm, 'strike', 48, {0: rest, 14: raised, 22: raised, STRIKE_HIT: slam, 36: slam, 48: rest}, loop=False)
-
-    # ---- PUSH : il s'arc-boute et pousse devant lui, les deux bras tendus (1 s)
-    legs_push = {'thigh.L': {'r': (-40, 0, 0)}, 'shin.L': {'r': (35, 0, 0)}, 'thigh.R': {'r': (30, 0, 0)}, 'shin.R': {'r': (10, 0, 0)}}
-    shove = merge(arms((0.35, -1, 0.05), (0.1, -1, 0.1), (-0.35, -1, 0.05), (-0.1, -1, -0.2)), legs_push, {
-        'hips': {'r': (16, 0, 0), 'l': (0, -0.12, -0.08)}, 'spine': {'r': (22, 0, 0)}, 'head': {'r': (-14, 0, 0)}})
-    windup = merge(arms((0.7, -0.2, -0.6), (0.2, -0.9, 0.3), (-0.7, -0.2, -0.6), (-0.2, -0.9, 0.1)), legs_push, {
-        'hips': {'r': (8, 0, 0), 'l': (0, -0.04, -0.08)}, 'spine': {'r': (10, 0, 0)}, 'head': {'r': (-6, 0, 0)}})
-    make_clip(arm, 'push', 30, {0: rest, 10: windup, 16: shove, 24: shove, 30: rest}, loop=False)
+    ring = merge(slam, arms(*hold_l, (-0.12, -1, 0.15), (0.45, -0.85, 0.0)))
+    make_clip(arm, 'strike', 48, {0: rest, 14: raised, 22: raised, STRIKE_HIT: slam, 36: ring, 48: rest}, loop=False)
 
     # ---- HIT : il encaisse, la tête part en arrière, la panse tremble (0,4 s)
     hurt = merge(rest, {'spine': {'r': (-8, 0, 6)}, 'head': {'r': (-20, 0, 8)}, 'belly': {'s': (1.06, 1.06, 0.95)}})
@@ -996,7 +977,7 @@ if RENDER_DIR:
     shoot('walk.png', 70, 5, action='walk', frame=9)
     shoot('strike_haut.png', 70, 5, action='strike', frame=18, scale=5.2, target=(0, -0.3, 1.8))
     shoot('strike_bas.png', 70, 5, action='strike', frame=STRIKE_HIT, scale=5.2, target=(0, -0.6, 1.3))
-    shoot('push.png', 70, 5, action='push', frame=18, scale=4.6, target=(0, -0.4, 1.3))
+    shoot('strike_face.png', -20, 5, action='strike', frame=STRIKE_HIT, scale=5.2, target=(0, -0.4, 1.6))
     shoot('roar.png', -25, 5, action='roar', frame=10, scale=5.0, target=(0, 0, 1.5))
     shoot('death.png', 70, 10, action='death', frame=60, scale=4.6, target=(0, -0.6, 1.0))
     print('RENDERS_OK', RENDER_DIR)
