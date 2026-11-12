@@ -202,7 +202,7 @@ export type GameDeps = {
 };
 
 /** Aucune entrée : joueur immobile (accueil, mort, pause, chute d'arrivée). */
-export const NO_INPUT: InputState = { moveX: 0, moveY: 0, lookX: 0, lookY: 0, mouseDX: 0, mouseDY: 0, zoom: 0, jump: false, jumpPressed: false, action: false, actionPressed: false };
+export const NO_INPUT: InputState = { moveX: 0, moveY: 0, lookX: 0, lookY: 0, mouseDX: 0, mouseDY: 0, zoom: 0, jump: false, jumpPressed: false, action: false, actionPressed: false, pausePressed: false };
 
 /** Pas de la physique du joueur (s). */
 const STEP = 1 / 120;

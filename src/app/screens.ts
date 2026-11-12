@@ -206,6 +206,11 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
     /** Chaque image : HUD, écran de mort, manette et Espace dans les menus. */
     update(realDt: number, input: InputState) {
       levelUp.input(input.moveX, input.jumpPressed || input.actionPressed);
+      // Start de la manette : pause, ou reprise
+      if (input.pausePressed && game.phase === 'run') {
+        if (!game.menuPaused) game.pause();
+        else if (!options.open) game.resume();
+      }
       healthHud.update(realDt);
       alcoholHud.update();
       if (game.phase === 'run' && !game.frozen) pumpGauge.update(game.pumps.focus, game.pumps.filling);
