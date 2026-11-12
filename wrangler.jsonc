@@ -19,12 +19,12 @@
     {
       "binding": "DB",
       "database_name": "megabeer",
-      "database_id": "A_REMPLIR",
+      "database_id": "e33d957c-cf73-4df2-92fc-a16d7ad10e71",
       "migrations_dir": "migrations"
     }
   ],
   "vars": {
     // Identifiant public de l'application Discord (le secret, lui, est un secret Cloudflare : DISCORD_CLIENT_SECRET)
-    "DISCORD_CLIENT_ID": ""
+    "DISCORD_CLIENT_ID": "1570530963602022500"
   }
 }
