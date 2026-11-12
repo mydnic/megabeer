@@ -2,13 +2,29 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "megabeer",
   "compatibility_date": "2026-07-19",
+  // Le Worker (comptes, sauvegarde) ne répond qu'à /api ; tout le reste est servi tel quel depuis dist/
+  "main": "worker/index.ts",
   "observability": {
     "enabled": true
   },
   "assets": {
-    "not_found_handling": "single-page-application"
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
   },
   "compatibility_flags": [
     "nodejs_compat"
-  ]
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "megabeer",
+      "database_id": "e33d957c-cf73-4df2-92fc-a16d7ad10e71",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    // Identifiant public de l'application Discord (le secret, lui, est un secret Cloudflare : DISCORD_CLIENT_SECRET)
+    "DISCORD_CLIENT_ID": "1570530963602022500"
+  }
 }

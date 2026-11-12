@@ -130,8 +130,14 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    pas de victoire, la run ne finit qu'à la mort. **Fin de run validée par l'utilisateur le 2026-11-12.** Faits aussi :
    coffres gratuits entrouverts avec lumière et sur la mini-carte (icône du coffre) ; cartes avec la stat avant et après ;
    projectiles en plus à toutes les raretés (+1 à +4) et sur la Stout ; objets à une rareté et un effet fixes (9/9/9/8/7).
-   **Prochaine feature : la méta-progression (GDD section 14), à commencer par la sauvegarde** (question posée à
-   l'utilisateur : navigateur d'abord, ou compte en ligne Cloudflare D1 + connexion Discord).
+   **Feature en cours : la méta-progression (GDD section 14).** Choix de l'utilisateur : compte en ligne tout de suite
+   (connexion Discord, base Cloudflare D1), jeu en invité possible (progression dans le navigateur, rattachée au compte à
+   la première connexion). Checkpoints : 1 compte et sauvegarde (runs, record, kills), 2 TUNAS, 3 boutique, 4 skill tree.
+   **Checkpoint 1 fait le 2026-11-12, en prod, à valider par l'utilisateur** : base D1 `megabeer` (WEUR, id dans
+   `wrangler.jsonc`, schéma appliqué), application Discord de l'utilisateur (Client ID dans `wrangler.jsonc`, secret
+   posé par `wrangler secret put`, en local dans `.dev.vars`). Commandes Cloudflare : variables d'environnement
+   CLOUDFLARE_ACCOUNT_ID et CLOUDFLARE_API_TOKEN (jeton de l'utilisateur, jamais dans le dépôt ; il a les droits D1 et
+   Workers).
    **Tournées du bar faites le 2026-11-11, à valider en jeu** : 8 bonus lâchés par les ennemis (liste dans le journal du
    GDD), `game/tournees.ts`, `config/tournees.ts`, icônes `ui/tourneeIcons.ts` (aussi en texture au sol par
    `iconDataUrl`), HUD `ui/tourneeHud.ts`, DEV « Tournée devant ». Tests : `createTestGame(seed, { tournees: 'peket' })`,
