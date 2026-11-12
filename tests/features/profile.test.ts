@@ -9,8 +9,10 @@ describe('La progression du joueur', () => {
   });
 
   it('chaque run terminée compte : runs, kills additionnés, meilleur temps gardé', () => {
-    let p = recordRun(emptyProfile(), { survived: 300, kills: 120 }, 1000);
-    p = recordRun(p, { survived: 200, kills: 80 }, 2000);
+    let p = recordRun(emptyProfile(), { survived: 300, kills: 120, tunas: 40 }, 1000);
+    p = recordRun(p, { survived: 200, kills: 80, tunas: 25 }, 2000);
+    expect(p.tunas).toBe(65);
+    expect(p.totalTunas).toBe(65);
     expect(p.runs).toBe(2);
     expect(p.totalKills).toBe(200);
     expect(p.bestTime).toBe(300);
@@ -19,9 +21,10 @@ describe('La progression du joueur', () => {
   });
 
   it('la première connexion rattache la progression invitée au compte, sans rien perdre', () => {
-    const account = recordRun(emptyProfile(), { survived: 400, kills: 50 }, 1);
-    const guest = recordRun(recordRun(emptyProfile(), { survived: 500, kills: 10 }, 2), { survived: 100, kills: 5 }, 3);
+    const account = recordRun(emptyProfile(), { survived: 400, kills: 50, tunas: 30 }, 1);
+    const guest = recordRun(recordRun(emptyProfile(), { survived: 500, kills: 10, tunas: 7 }, 2), { survived: 100, kills: 5, tunas: 3 }, 3);
     const m = mergeProfiles(account, guest, 9);
+    expect(m.tunas).toBe(40);
     expect(m.runs).toBe(3);
     expect(m.totalKills).toBe(65);
     expect(m.bestTime).toBe(500);

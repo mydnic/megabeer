@@ -1,8 +1,9 @@
 import { RUN_HUD as R } from '../config/hud';
-import { capsuleIcon } from './icons';
+import { capsuleIcon, tunasIcon } from './icons';
 import { P } from './iconKit';
 
 const CAPSULE = capsuleIcon();
+const TUNAS = tunasIcon();
 
 const CSS = `
 .run-hud { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 10; pointer-events: none;
@@ -17,7 +18,7 @@ const CSS = `
   background: linear-gradient(rgba(58,36,24,.8), rgba(26,18,12,.7)); border: 2px solid #1a120c; box-shadow: inset 0 2px 0 rgba(255,255,255,.12), 0 3px 0 rgba(26,18,12,.45); font-size: 20px; line-height: 1; font-variant-numeric: tabular-nums;
   text-shadow: -2px 0 #1a120c, 2px 0 #1a120c, 0 -2px #1a120c, 0 2px #1a120c; }
 .run-kills svg { width: 22px; height: 22px; flex: none; }
-.run-kills.pop, .run-coins.pop { animation: run-pop .26s cubic-bezier(.2,1.6,.4,1); }
+.run-kills.pop, .run-coins.pop, .run-tunas.pop { animation: run-pop .26s cubic-bezier(.2,1.6,.4,1); }
 .run-coins.pop svg { animation: run-flip .4s ease-out; }
 @keyframes run-flip { 0% { transform: rotateY(0) scale(1.5); } 100% { transform: rotateY(360deg) scale(1); } }
 .run-kills.pop svg { animation: run-nod .26s ease-out; }
@@ -27,6 +28,10 @@ const CSS = `
   background: linear-gradient(rgba(58,36,24,.8), rgba(26,18,12,.7)); border: 2px solid #1a120c; box-shadow: inset 0 2px 0 rgba(255,255,255,.12), 0 3px 0 rgba(26,18,12,.45); font-size: 20px; line-height: 1; font-variant-numeric: tabular-nums; color: #ff6a5a;
   text-shadow: -2px 0 #1a120c, 2px 0 #1a120c, 0 -2px #1a120c, 0 2px #1a120c; }
 .run-coins svg { width: 22px; height: 22px; flex: none; }
+.run-tunas { display: flex; align-items: center; gap: 6px; padding: 2px 12px 3px 8px; border-radius: 14px;
+  background: linear-gradient(rgba(58,36,24,.8), rgba(26,18,12,.7)); border: 2px solid #1a120c; box-shadow: inset 0 2px 0 rgba(255,255,255,.12), 0 3px 0 rgba(26,18,12,.45); font-size: 20px; line-height: 1; font-variant-numeric: tabular-nums; color: #8fe07a;
+  text-shadow: -2px 0 #1a120c, 2px 0 #1a120c, 0 -2px #1a120c, 0 2px #1a120c; }
+.run-tunas svg { width: 24px; height: 24px; flex: none; }
 @keyframes run-pop { 0% { transform: scale(1) } 40% { transform: scale(1.22) } 100% { transform: scale(1) } }
 `;
 
@@ -35,25 +40,32 @@ const SKULL = `<svg viewBox="0 0 24 24">${P('M12 2C6.900 2 3.500 5.600 3.500 10.
 
 
 
-/** Chrono de la run (temps de jeu, figé en pause), compteur de zombies tués et Pièces en poche, en haut au centre. */
+/** Chrono de la run (temps de jeu, figé en pause), compteur de zombies tués, Pièces en poche et TUNAS gagnés, en haut au centre. */
 export function createRunHud() {
   const style = document.createElement('style');
   style.textContent = CSS;
   document.head.appendChild(style);
   const el = document.createElement('div');
   el.className = 'run-hud';
-  el.innerHTML = `<div class="run-time">00:00</div><div class="run-row"><div class="run-kills">${SKULL}<span>0</span></div><div class="run-coins">${CAPSULE}<span>0</span></div></div>`;
+  el.innerHTML = `<div class="run-time">00:00</div><div class="run-row"><div class="run-kills">${SKULL}<span>0</span></div><div class="run-coins">${CAPSULE}<span>0</span></div><div class="run-tunas">${TUNAS}<span>0</span></div></div>`;
   document.body.appendChild(el);
   const time = el.querySelector<HTMLElement>('.run-time')!;
   const kills = el.querySelector<HTMLElement>('.run-kills')!;
   const killsText = kills.querySelector('span')!;
   const coins = el.querySelector<HTMLElement>('.run-coins')!;
   const coinsText = coins.querySelector('span')!;
-  let shownSec = -1, shownKills = -1, lastPop = 0, shownCoins = -1;
+  const tunas = el.querySelector<HTMLElement>('.run-tunas')!;
+  const tunasText = tunas.querySelector('span')!;
+  let shownSec = -1, shownKills = -1, lastPop = 0, shownCoins = -1, shownTunas = -1;
 
   return {
     setVisible(v: boolean) { el.style.display = v ? '' : 'none'; },
-    update(runTime: number, killCount: number, coinCount: number) {
+    update(runTime: number, killCount: number, coinCount: number, tunaCount = 0) {
+      if (tunaCount !== shownTunas) {
+        if (tunaCount > shownTunas && shownTunas >= 0) { tunas.classList.remove('pop'); void tunas.offsetWidth; tunas.classList.add('pop'); }
+        shownTunas = tunaCount;
+        tunasText.textContent = tunaCount.toLocaleString('fr');
+      }
       if (coinCount !== shownCoins) {
         if (coinCount > shownCoins && shownCoins >= 0) { coins.classList.remove('pop'); void coins.offsetWidth; coins.classList.add('pop'); }
         shownCoins = coinCount;

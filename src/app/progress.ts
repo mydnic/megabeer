@@ -68,7 +68,7 @@ export function createProgress() {
     },
 
     /** Fin de run : elle compte dans la progression, sauvegardée tout de suite. */
-    async recordRun(run: { survived: number; kills: number }) {
+    async recordRun(run: { survived: number; kills: number; tunas: number }) {
       profile = recordRun(profile, run, Date.now());
       changed();
       await save();

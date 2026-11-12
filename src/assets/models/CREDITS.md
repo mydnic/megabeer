@@ -17,4 +17,8 @@
   `tools/blender/mort.py`. Versionné à la demande de l'utilisateur alors que le dépôt est public : à retirer en cas de
   plainte (le jeu bascule alors seul sur `mort_repli.glb`).
 
+- `liasse.glb` : « Cash Stack » par J-Toastie (fichier fourni par l'utilisateur, nom d'origine
+  `Cash Stack by J-Toastie - aLp0P2nXJ2.glb`, Poly Pizza). Licence à confirmer sur la page source (probablement CC-BY,
+  crédit obligatoire). Les liasses de TUNAS au sol (`pickups/tunaDropsView.ts`, recolorées par `TUNA_DROPS.colors`).
+
 Les autres GLB de ce dossier sont générés par les scripts de `tools/blender/` (voir CLAUDE.md).

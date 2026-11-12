@@ -215,6 +215,12 @@ export function chestImage(color: string, open: boolean) {
 export const chestIcon = (cls: string, lock: number) => chestSvg(cls, `#${lock.toString(16).padStart(6, '0')}`);
 
 /** Capsule de bière (Pièces), vue de trois quarts : toute rouge, dessus bombé et anneau imprimé, jupe crantée plus sombre. */
+/** TUNAS : une liasse de billets verts en trois quarts, bande de papier rouge et symbole imprimé (comme le modèle au sol). */
+export const tunasIcon = () => {
+  ensureIconDefs();
+  return `<svg viewBox="0 0 24 24">${P('M3 9.500l9-4 9 4-9 4z', '#7ccf6a', 'sh', 1.6)}${P('M3 9.500v5l9 4v-5z', '#3f9a52', 'sh', 1.6)}${P('M12 13.500v5l9-4v-5z', '#2f7a3e', 'sh', 1.6)}<path d="M3 11.200l9 4 9-4M3 12.900l9 4 9-4" stroke="#1a120c" stroke-width=".7" opacity=".45" fill="none"/>${P('M9.300 6.700l9 4v5l-1.800.8v-5l-9-4z', '#d8454f', 'sh', 1.4)}<ellipse cx="7.200" cy="9.300" rx="2" ry=".9" fill="#d8f2c8" opacity=".85"/></svg>`;
+};
+
 export const capsuleIcon = () => {
   ensureIconDefs();
   return `<svg viewBox="0 0 24 24">${cap(12, 12.5, 9.5)}</svg>`;

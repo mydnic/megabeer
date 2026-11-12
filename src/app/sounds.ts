@@ -105,6 +105,14 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
     lastCoin = now;
     audio.play(C.sample, C.volume, C.rate * jitter(0.06), 0, 'ui');
   });
+  // Liasse de TUNAS ramassée : froissement
+  let lastTuna = -1;
+  game.events.on('tunasCollected', ({ amount }) => {
+    const T = AUDIO.tunas, now = performance.now() / 1000;
+    if (now - lastTuna < T.minGap) return;
+    lastTuna = now;
+    audio.play(T.sample, T.volume, (amount > 1 ? T.bigRate : T.rate) * jitter(0.06), 0, 'ui');
+  });
   // Ramassage : une bulle, de plus en plus aiguë quand on en avale plusieurs à la suite
   let lastPickup = -1, combo = 0;
   game.events.on('xpCollected', () => {

@@ -12,11 +12,15 @@ export type Profile = {
   bestTime: number;
   /** Ennemis tués, toutes runs confondues. */
   totalKills: number;
+  /** TUNAS à dépenser (boutique). */
+  tunas: number;
+  /** TUNAS gagnés depuis le début (dépensés compris). */
+  totalTunas: number;
   /** Dernière modification (ms depuis 1970) : la plus récente gagne entre deux appareils. */
   updatedAt: number;
 };
 
-export const emptyProfile = (): Profile => ({ version: PROFILE_VERSION, runs: 0, bestTime: 0, totalKills: 0, updatedAt: 0 });
+export const emptyProfile = (): Profile => ({ version: PROFILE_VERSION, runs: 0, bestTime: 0, totalKills: 0, tunas: 0, totalTunas: 0, updatedAt: 0 });
 
 const count = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : 0);
 
@@ -28,17 +32,22 @@ export function readProfile(raw: unknown): Profile {
   p.runs = Math.floor(count(r.runs));
   p.bestTime = count(r.bestTime);
   p.totalKills = Math.floor(count(r.totalKills));
+  p.tunas = Math.floor(count(r.tunas));
+  p.totalTunas = Math.max(p.tunas, Math.floor(count(r.totalTunas)));
   p.updatedAt = count(r.updatedAt);
   return p;
 }
 
-/** Le profil après une run terminée. */
-export function recordRun(p: Profile, run: { survived: number; kills: number }, now: number): Profile {
+/** Le profil après une run terminée : ses TUNAS (liasses et bonus de fin) rejoignent la réserve. */
+export function recordRun(p: Profile, run: { survived: number; kills: number; tunas: number }, now: number): Profile {
+  const won = Math.max(0, Math.floor(run.tunas));
   return {
     ...p,
     runs: p.runs + 1,
     bestTime: Math.max(p.bestTime, run.survived),
     totalKills: p.totalKills + run.kills,
+    tunas: p.tunas + won,
+    totalTunas: p.totalTunas + won,
     updatedAt: now,
   };
 }
@@ -53,9 +62,11 @@ export function mergeProfiles(account: Profile, guest: Profile, now: number): Pr
     runs: account.runs + guest.runs,
     bestTime: Math.max(account.bestTime, guest.bestTime),
     totalKills: account.totalKills + guest.totalKills,
+    tunas: account.tunas + guest.tunas,
+    totalTunas: account.totalTunas + guest.totalTunas,
     updatedAt: now,
   };
 }
 
 /** Un profil vide (jamais joué) : rien à rattacher. */
-export const isEmpty = (p: Profile) => p.runs === 0 && p.totalKills === 0;
+export const isEmpty = (p: Profile) => p.runs === 0 && p.totalKills === 0 && p.tunas === 0;

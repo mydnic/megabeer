@@ -122,6 +122,8 @@ export const AUDIO = {
   snack: { sample: 'impactPunch_medium', volume: 0.5, rate: 1.6 },
   /** Capsule (Pièce) ramassée : petit tintement métallique aigu. */
   coin: { sample: 'impactMetal_light', volume: 0.45, rate: 1.9, minGap: 0.05 },
+  /** Liasse de TUNAS ramassée : froissement sourd, plus grave pour une grosse liasse. */
+  tunas: { sample: 'impactSoft_medium', volume: 0.6, rate: 1.7, bigRate: 1.1, minGap: 0.05 },
   /** Fondu de l'ambiance quand une partie commence ou finit (constante de temps, s). */
   ambienceFade: 0.6,
   /** Ambiances synthétisées : vent permanent, oiseaux le jour, chouette la nuit. */

@@ -1,5 +1,8 @@
 import type { Account } from '../app/progress';
 import type { Profile } from '../meta/profile';
+import { tunasIcon } from './icons';
+
+const TUNAS_ICON = tunasIcon();
 
 const CSS = `
 .acc { position: absolute; top: 16px; left: 16px; z-index: 2; display: flex; align-items: center; gap: 12px; max-width: calc(100vw - 32px);
@@ -9,6 +12,7 @@ const CSS = `
 .acc-ava { width: 46px; height: 46px; border-radius: 50%; border: 3px solid #1a120c; background: #5a3a1c; flex: none; object-fit: cover; }
 .acc-txt { display: flex; flex-direction: column; min-width: 0; }
 .acc-name { font-size: 20px; letter-spacing: .03em; color: #ffc93a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.acc-tunas { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; color: #8fe07a; } .acc-tunas svg { width: 22px; height: 22px; }
 .acc-stats { font-size: 13px; opacity: .8; white-space: nowrap; }
 .acc-btn { font: inherit; font-size: 15px; letter-spacing: .04em; cursor: pointer; padding: 6px 14px 8px; border: 3px solid #1a120c; border-radius: 13px;
   color: #fff; background: linear-gradient(#7b86ff, #5865f2 60%, #4752c4); box-shadow: 0 4px 0 #1a120c; transition: transform .08s; flex: none; }
@@ -42,9 +46,10 @@ export function createAccountPanel(parent: HTMLElement, cb: { login: () => void;
       el.classList.toggle('off', !online);
       if (!online) return;
       const stats = p.runs ? `${p.runs} run${p.runs > 1 ? 's' : ''}, record ${time(p.bestTime)}, ${p.totalKills.toLocaleString('fr')} kills` : 'Aucune run pour l\'instant';
+      const tunas = `<span class="acc-tunas">${TUNAS_ICON}${p.tunas.toLocaleString('fr')}</span>`;
       el.innerHTML = account
-        ? `<img class="acc-ava" src="${esc(account.avatarUrl)}" alt=""><div class="acc-txt"><span class="acc-name">${esc(account.name)}</span><span class="acc-stats">${stats}</span></div><button class="acc-btn out">Se déconnecter</button>`
-        : `<div class="acc-txt"><span class="acc-name">Invité</span><span class="acc-stats">${stats}, sur ce navigateur</span></div>${canLogin ? '<button class="acc-btn">Se connecter avec Discord</button>' : ''}`;
+        ? `<img class="acc-ava" src="${esc(account.avatarUrl)}" alt=""><div class="acc-txt"><span class="acc-name">${esc(account.name)} ${tunas}</span><span class="acc-stats">${stats}</span></div><button class="acc-btn out">Se déconnecter</button>`
+        : `<div class="acc-txt"><span class="acc-name">Invité ${tunas}</span><span class="acc-stats">${stats}, sur ce navigateur</span></div>${canLogin ? '<button class="acc-btn">Se connecter avec Discord</button>' : ''}`;
       if (error) el.insertAdjacentHTML('beforeend', `<div class="acc-err">Connexion : ${esc(error)}</div>`);
       error = null;
       const btn = el.querySelector<HTMLButtonElement>('.acc-btn');

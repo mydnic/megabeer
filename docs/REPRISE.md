@@ -133,7 +133,9 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    **Feature en cours : la méta-progression (GDD section 14).** Choix de l'utilisateur : compte en ligne tout de suite
    (connexion Discord, base Cloudflare D1), jeu en invité possible (progression dans le navigateur, rattachée au compte à
    la première connexion). Checkpoints : 1 compte et sauvegarde (runs, record, kills), 2 TUNAS, 3 boutique, 4 skill tree.
-   **Checkpoint 1 fait le 2026-11-12, en prod, à valider par l'utilisateur** : base D1 `megabeer` (WEUR, id dans
+   **Checkpoint 1 (comptes) validé par l'utilisateur le 2026-11-12. Checkpoint 2 (TUNAS) fait le 2026-11-12, à valider en jeu**
+   (liasses de billets au sol, détail dans le journal du GDD ; réglages `config/tunas.ts`). Ensuite : 3 boutique.
+   Checkpoint 1, notes : base D1 `megabeer` (WEUR, id dans
    `wrangler.jsonc`, schéma appliqué), application Discord de l'utilisateur (Client ID dans `wrangler.jsonc`, secret
    posé par `wrangler secret put`, en local dans `.dev.vars`). Commandes Cloudflare : variables d'environnement
    CLOUDFLARE_ACCOUNT_ID et CLOUDFLARE_API_TOKEN (jeton de l'utilisateur, jamais dans le dépôt ; il a les droits D1 et

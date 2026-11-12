@@ -10,6 +10,7 @@ import { loadZombieLibrary } from './enemies/zombieLibrary';
 import { createHordeView } from './enemies/hordeView';
 import { createXpDropsView } from './pickups/xpDropsView';
 import { createCoinDropsView } from './pickups/coinDropsView';
+import { createTunaDropsView } from './pickups/tunaDropsView';
 import { createBottleView } from './weapons/bottleView';
 import { createEnemyShotsView } from './enemies/enemyShotsView';
 import { createShards } from './fx/shards';
@@ -106,6 +107,7 @@ const loading = {
   reaperView: boot(createReaperView(scene)),
   bellView: boot(createBellDropsView(scene)),
   snackView: boot(createSnackDropsView(scene)),
+  tunaView: boot(createTunaDropsView(scene)),
 };
 
 // --- Monde : une nouvelle planète à chaque run, ciel et nuages
@@ -153,6 +155,7 @@ game.events.on('zombieHit', ({ zombie }) => { if (zombie === game.boss?.zombie) 
 const bellView = await loading.bellView;
 const tourneeView = createTourneeDropsView(scene);
 const snackView = await loading.snackView;
+const tunaView = await loading.tunaView;
 const sparks = createShards(scene, groundAt, SHIELD_SPARKS);
 const earth = createShards(scene, groundAt, EARTH_CLODS);
 const stoutSplash = createShards(scene, groundAt, STOUT_SPLASH);
@@ -225,6 +228,7 @@ function frame(now: number) {
   hordeView.sync(game.horde.zombies, camera);
   xpView.sync(game.xp.drops);
   coinView.sync(game.coinDrops.drops);
+  tunaView.sync(game.tunaDrops.drops);
   for (const id of Object.keys(bottleViews) as WeaponId[]) bottleViews[id].sync(projectiles(id));
   enemyShotsView.sync(game.shots.shots);
   kamikazeView.sync(game.horde.zombies);

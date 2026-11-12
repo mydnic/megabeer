@@ -40,9 +40,9 @@ export const SPAWN = {
 
 /** Difficultés (GDD section 12) : multiplicateurs sur les ennemis. Seule Sobre est jouable pour l'instant. */
 export const DIFFICULTIES = {
-  sobre: { label: 'Sobre', hp: 1, count: 1, damage: 1 },
-  pompette: { label: 'Pompette', hp: 1.5, count: 1.25, damage: 1.1 },
-  bourre: { label: 'Bourré', hp: 2.5, count: 1.5, damage: 1.25 },
+  sobre: { label: 'Sobre', hp: 1, count: 1, damage: 1, tunas: 1 },
+  pompette: { label: 'Pompette', hp: 1.5, count: 1.25, damage: 1.1, tunas: 1.5 },
+  bourre: { label: 'Bourré', hp: 2.5, count: 1.5, damage: 1.25, tunas: 2.5 },
 } as const;
 
 export type DifficultyId = keyof typeof DIFFICULTIES;

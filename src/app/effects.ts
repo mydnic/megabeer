@@ -300,6 +300,7 @@ export function wireEffects(game: Game, d: Deps) {
   };
   game.events.on('xpCollected', () => pickup(VC.xp));
   game.events.on('coinsCollected', () => { pickup(VC.coin); vfx.pop(chest(1.2), VC.coin, 0.9); });
+  game.events.on('tunasCollected', ({ amount }) => { pickup(VC.tunas); vfx.pop(chest(1.2), VC.tunas, amount > 1 ? 1.6 : 1); });
 
   // Débarquement des cloches : la terre tremble
   game.events.on('bellsLanding', () => rig.shake(BELLS.shake.amount, BELLS.shake.amplitude, BELLS.shake.decay));

@@ -123,7 +123,13 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   const accountPanel = createAccountPanel(home.root, { login: () => progress.login(), logout: () => void progress.logout() });
   progress.onChange(() => accountPanel.update(progress.online, progress.account, progress.profile, progress.canLogin));
   void progress.init();
-  game.events.on('runEnded', ({ survived, kills }) => void progress.recordRun({ survived, kills }));
+  // TUNAS de la dernière run, pour le bilan de fin
+  const lastRun = { tunas: 0, tunasBonus: 0 };
+  game.events.on('runEnded', ({ survived, kills, tunas, tunasBonus }) => {
+    lastRun.tunas = tunas;
+    lastRun.tunasBonus = tunasBonus;
+    void progress.recordRun({ survived, kills, tunas });
+  });
 
   game.events.on('runStarted', () => { setHud(true); lockCursor(); });
   // Cloches de l'Abbaye : le bandeau reste affiché pendant le débarquement et tremble à chaque coup
@@ -232,14 +238,14 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
       chestPrompt.update(chest ? game.chests.priceOf(chest) : null, game.coins);
       bellPrompt.update(!chest && game.phase === 'run' && !game.frozen && game.lastCall.focus ? 0 : null, game.coins);
       doorPrompt.update(!chest && !game.lastCall.focus && game.phase === 'run' && !game.frozen && game.door.focus ? 0 : null, game.coins);
-      runHud.update(game.runTime, game.kills, game.coins);
+      runHud.update(game.runTime, game.kills, game.coins, Math.floor(game.tunas + 1e-9));
       weaponHud.update(slots());
       itemHud.update(game.items);
       tourneeHud.update((id) => game.tournees.left(id));
       const boss = game.boss;
       if (boss) bossBar.update(boss.zombie.hp / boss.zombie.maxHp, boss.phase);
       tourneeHud.setOffset(boss ? BOSS_HUD.pushDown : 0);
-      if (game.phase === 'dead') deathBanner.update(game.deadTime, game.runTime, game.kills);
+      if (game.phase === 'dead') deathBanner.update(game.deadTime, game.runTime, game.kills, lastRun.tunas, lastRun.tunasBonus);
       // Espace ou bouton A : Continuer sur le bilan de mort (l'accueil passe par la navigation des menus)
       if (input.jumpPressed && !usedA) {
         if (game.phase === 'dead' && deathBanner.ready) game.goHome();

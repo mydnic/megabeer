@@ -10,6 +10,7 @@ import { createHorde } from '../enemies/horde';
 import type { Zombie, ZombieTimings } from '../enemies/zombie';
 import { createXpDrops } from '../pickups/xpDrops';
 import { COIN_DROPS, COINS } from '../config/coins';
+import { TUNA_DROPS, TUNAS } from '../config/tunas';
 import { createEnemyShots, type EnemyShot } from '../enemies/enemyShots';
 import { PLANET_RADIUS } from '../config/world';
 import { PlayerController } from '../player/controller';
@@ -70,6 +71,8 @@ export type GameEvents = {
   xpCollected: { amount: number };
   /** Capsules ramassées : `amount` gagnées, `total` en poche. */
   coinsCollected: { amount: number; total: number };
+  /** Une liasse ramassée : TUNAS gagnés (difficulté comprise) et total de la run. */
+  tunasCollected: { amount: number; total: number };
   levelGained: { level: number };
   /** Cartes proposées ; `first` : premier écran d'une série (les suivantes s'enchaînent). */
   levelUpOffered: { level: number; cards: Card[]; first: boolean };
@@ -77,7 +80,8 @@ export type GameEvents = {
   paused: Record<string, never>;
   resumed: Record<string, never>;
   died: Record<string, never>;
-  runEnded: { reason: RunEnd; survived: number; kills: number };
+  /** Fin de run : `tunas` gagnés au total (liasses + `tunasBonus`, le bonus de fin, à la mort seulement). */
+  runEnded: { reason: RunEnd; survived: number; kills: number; tunas: number; tunasBonus: number };
   /** Retour à l'accueil : tout est remis à zéro. */
   home: Record<string, never>;
   /** Un ennemi tireur lâche un projectile (son point d'impact au sol est `shot.to`). */
@@ -193,6 +197,8 @@ export type GameDeps = {
   map?: MapId;
   /** Tirage « cet ennemi tué lâche une capsule au lieu de l'XP » (par défaut : la chance de la config). */
   rollCoin?: () => boolean;
+  /** Tirage « cet ennemi tué lâche une liasse de TUNAS » (par défaut : la chance de la config). */
+  rollTuna?: () => boolean;
   /** Hasard des effets d'objets et du butin des poubelles (0 à 1, par défaut Math.random). */
   random?: () => number;
   /** Tirage « cet ennemi tué lâche une clochette » (par défaut : la chance de la config et la Chance du joueur). */
@@ -256,6 +262,10 @@ export class Game {
   readonly xp: ReturnType<typeof createXpDrops>;
   /** Capsules (Pièces) au sol. */
   readonly coinDrops: ReturnType<typeof createXpDrops>;
+  /** Liasses de TUNAS au sol, et TUNAS ramassés pendant la run (non arrondis : la difficulté les multiplie). */
+  readonly tunaDrops: ReturnType<typeof createXpDrops>;
+  tunas = 0;
+  private rollTuna: () => boolean;
   /** Pièces en poche (monnaie de la run, perdue à la fin). */
   coins = 0;
   /** Fraction de capsule gagnée en plus (Porte-monnaie), pas encore entière. */
@@ -335,6 +345,7 @@ export class Game {
     this.horde.onSpawn = (zombie) => this.events.emit('zombieSpawned', { zombie });
     this.xp = createXpDrops(groundAt);
     this.coinDrops = createXpDrops(groundAt, COIN_DROPS);
+    this.tunaDrops = createXpDrops(groundAt, TUNA_DROPS);
     this.snackDrops = createXpDrops(groundAt, SNACK_DROPS);
     this.bellDrops = createXpDrops(groundAt, BELL_DROPS);
     this.lastCall = new LastCall(deps.collider);
@@ -344,6 +355,7 @@ export class Game {
     this.binCount = deps.binCount ?? BINS.count;
     this.trapChance = deps.trapChance ?? CHEST_TRAP.chance;
     this.rollCoin = deps.rollCoin ?? (() => Math.random() < COINS.dropChance);
+    this.rollTuna = deps.rollTuna ?? (() => Math.random() < TUNAS.dropChance);
     this.random = deps.random ?? Math.random;
     this.director = new SpawnDirector({
       player, collider: deps.collider, zombies: () => this.horde.zombies,
@@ -413,7 +425,7 @@ export class Game {
   /** Abandon depuis la pause : la run est perdue, retour à l'accueil. */
   abandon() {
     if (this.phase !== 'run') return;
-    this.events.emit('runEnded', { reason: 'abandon', survived: this.runTime, kills: this.kills });
+    this.events.emit('runEnded', { reason: 'abandon', survived: this.runTime, kills: this.kills, tunas: Math.floor(this.tunas + 1e-9), tunasBonus: 0 });
     this.goHome();
   }
 
@@ -537,6 +549,11 @@ export class Game {
       this.coinFrac -= extra;
       this.coins += v + extra;
       this.events.emit('coinsCollected', { amount: v + extra, total: this.coins });
+    });
+    this.tunaDrops.update(dt, this.chest, this.phase === 'run' ? this.stats.pickupRange : 0, (v) => {
+      const amount = v * this.mods.tunas;
+      this.tunas += amount;
+      this.events.emit('tunasCollected', { amount, total: this.tunas });
     });
     this.tournees.drops.update(dt, this.chest, this.phase === 'run' ? this.stats.pickupRange : 0, (v) => this.takeTournee(TOURNEE_IDS[v]));
     this.bellDrops.update(dt, this.chest, this.phase === 'run' ? this.stats.pickupRange : 0, () => this.pullAll('drop', null));
@@ -664,10 +681,11 @@ export class Game {
     this.pullAll('bell', bell);
   }
 
-  /** Dernier service : toute l'XP et toutes les capsules de la planète partent vers le Buveur (pas les snacks). */
+  /** Dernier service : toute l'XP, les capsules et les liasses de la planète partent vers le Buveur (pas les snacks). */
   private pullAll(source: 'bell' | 'drop', bell: CallBell | null) {
     const L = LAST_CALL;
-    const pulled = this.xp.pullAll(L.pullStart, L.pullAccel, L.pullMax) + this.coinDrops.pullAll(L.pullStart, L.pullAccel, L.pullMax);
+    const pulled = this.xp.pullAll(L.pullStart, L.pullAccel, L.pullMax) + this.coinDrops.pullAll(L.pullStart, L.pullAccel, L.pullMax)
+      + this.tunaDrops.pullAll(L.pullStart, L.pullAccel, L.pullMax);
     this.events.emit('lastCallRung', { source, at: (bell ? bell.pos : this.player.pos).clone(), bell, pulled });
   }
 
@@ -828,6 +846,9 @@ export class Game {
       // Parfois une capsule (Pièces) à la place de la goutte d'XP
       if (this.rollCoin()) this.coinDrops.drop(z.pos, COINS.value);
       else this.xp.drop(z.pos, z.def.xp);
+      // Parfois une liasse de TUNAS en plus ; une grosse pour un élite
+      if (z.elite) this.tunaDrops.drop(z.pos, TUNAS.elite);
+      else if (this.rollTuna()) this.tunaDrops.drop(z.pos, TUNAS.value);
       // Rarement, une clochette du Dernier service en plus
       if (this.rollBell()) this.bellDrops.drop(z.pos, 1);
       // Rarement, une tournée du bar
@@ -843,6 +864,7 @@ export class Game {
       this.boss = null;
       const chest = this.chests.addFreeAt(z.pos);
       if (chest) chest.rarity = boss.kind === 'abbe' ? ABBE.chestRarity : FRERE_SONNEUR.chestRarity;
+      this.tunaDrops.drop(z.pos, TUNAS.boss[boss.kind]);
       this.events.emit('bossKilled', { boss, chest });
     }
     // Un élite tué laisse un coffre gratuit
@@ -1122,7 +1144,9 @@ export class Game {
     this.deadTime = 0;
     this.horde.setPassive(true);
     this.events.emit('died', {});
-    this.events.emit('runEnded', { reason: 'mort', survived: this.runTime, kills: this.kills });
+    // Bonus de fin : le temps survécu rapporte des TUNAS (à la mort seulement : abandonner n'est pas une astuce)
+    const tunasBonus = Math.floor((this.runTime / 60) * TUNAS.endBonusPerMinute * this.mods.tunas + 1e-9);
+    this.events.emit('runEnded', { reason: 'mort', survived: this.runTime, kills: this.kills, tunas: Math.floor(this.tunas + 1e-9) + tunasBonus, tunasBonus });
   }
 
   /** Vitesse du temps : ralenti juste après la mort, puis retour progressif. */
@@ -1171,6 +1195,8 @@ export class Game {
     this.xp.clear();
     this.coinDrops.clear();
     this.coins = 0;
+    this.tunaDrops.clear();
+    this.tunas = 0;
     this.shots.clear();
   }
 }
