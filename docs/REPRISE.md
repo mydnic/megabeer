@@ -127,7 +127,11 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    Export Unreal : `UnrealEditor.exe <projet> -ExecutePythonScript=...` (le mode -run=pythonscript plante sur les
    maillages animés). Menus à la manette (`ui/padNav.ts` : croix ou stick, A valide, B revient, gauche/droite règlent
    les volumes) ; plus de traînée derrière la canette, plus de scintillement sur l'XP et les capsules. Checkpoint 3 fait :
-   pas de victoire, la run ne finit qu'à la mort. Reste : validation en jeu de la fermeture et de la fin de run.
+   pas de victoire, la run ne finit qu'à la mort. **Fin de run validée par l'utilisateur le 2026-11-12.** Faits aussi :
+   coffres gratuits entrouverts avec lumière et sur la mini-carte (icône du coffre) ; cartes avec la stat avant et après ;
+   projectiles en plus à toutes les raretés (+1 à +4) et sur la Stout ; objets à une rareté et un effet fixes (9/9/9/8/7).
+   **Prochaine feature : la méta-progression (GDD section 14), à commencer par la sauvegarde** (question posée à
+   l'utilisateur : navigateur d'abord, ou compte en ligne Cloudflare D1 + connexion Discord).
    **Tournées du bar faites le 2026-11-11, à valider en jeu** : 8 bonus lâchés par les ennemis (liste dans le journal du
    GDD), `game/tournees.ts`, `config/tournees.ts`, icônes `ui/tourneeIcons.ts` (aussi en texture au sol par
    `iconDataUrl`), HUD `ui/tourneeHud.ts`, DEV « Tournée devant ». Tests : `createTestGame(seed, { tournees: 'peket' })`,
