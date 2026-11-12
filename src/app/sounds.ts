@@ -1,4 +1,3 @@
-import { FRERE_SONNEUR } from '../config/bosses';
 import { CANETTE_IMPACT, FUT_SOUND, GUEUZE_BLAST, STOUT_IMPACT } from '../config/weapons';
 import type * as THREE from 'three';
 import { BELL_SOUND } from '../config/abbey';
@@ -63,6 +62,11 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
   });
   game.events.on('bossPhase', () => audio.play(BS.roar, BS.roarVolume, BS.roarRate));
   game.events.on('bossKilled', () => audio.play(BS.death, BS.deathVolume, BS.deathRate));
+  // L'Abbé répand son vin ; la porte du patron s'ouvre ; victoire
+  game.events.on('winePoured', () => audio.play(BS.pour, BS.pourVolume, BS.pourRate * jitter(0.06)));
+  game.events.on('doorOpened', () => { audio.play(BS.door, BS.doorVolume, BS.doorRate); audio.play(BS.bell, BS.bellVolume, BS.bellRate * 0.8); });
+  game.events.on('doorBusy', () => audio.play(AUDIO.chest.deny, AUDIO.chest.denyVolume, AUDIO.chest.denyRate, 0, 'ui'));
+  game.events.on('victory', () => { for (let i = 0; i < 4; i++) setTimeout(() => audio.play(BS.bell, BS.bellVolume, 0.8 + i * 0.15, 0, 'ui'), i * 260); });
   // Élites
   game.events.on('eliteSpawned', ({ zombie }) => {
     const E = AUDIO.elite, k = near(zombie.pos, E.hearDist);
@@ -214,7 +218,7 @@ export function wireMusic(game: Game, audio: AudioEngine, music: ReturnType<type
   game.events.on('died', () => volume(DEATH_BANNER.musicDuck, 0.6));
   game.events.on('home', () => { volume(1, 0.4); music.endRun(); });
   // Boss : sa musique tant qu'il est debout
-  game.events.on('bossSpawned', () => music.startBoss(FRERE_SONNEUR.music));
+  game.events.on('bossSpawned', ({ boss }) => music.startBoss(boss.music));
   game.events.on('bossKilled', () => music.endBoss());
   game.events.on('died', () => { if (music.boss) music.endBoss(); });
 }

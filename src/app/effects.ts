@@ -21,7 +21,7 @@ import { RARITIES } from '../config/upgrades';
 import { PUMP_TIERS } from '../config/pumps';
 import { TOURNEE_FX, TOURNEES } from '../config/tournees';
 import { ELITES } from '../config/elites';
-import { BOSS_LOOK, FRERE_SONNEUR } from '../config/bosses';
+import { BOSS_LOOK, DOOR_LOOK, FRERE_SONNEUR, WINE_LOOK } from '../config/bosses';
 import type { Vfx } from '../fx/vfx';
 import type { Sprites } from '../fx/sprites';
 
@@ -190,7 +190,11 @@ export function wireEffects(game: Game, d: Deps) {
     vfx.dust(at, 24, 2.5, 10);
     rig.shake(HIT_FEEDBACK.shake * 3, HIT_FEEDBACK.shakeAmplitude * 2, HIT_FEEDBACK.shakeDecay);
     if (c) vfx.beam(c.pos, new THREE.Color(RARITIES[FRERE_SONNEUR.chestRarity].color).getHex(), 1.8, 18, 2);
+    if (boss.kind === 'abbe') vfx.beam(at, VC.level, 2.4, 30, 3);
   });
+  // L'Abbé répand son vin : une éclaboussure sur chaque flaque ; la porte du patron s'ouvre dans la poussière
+  game.events.on('winePoured', ({ puddles }) => { for (const w of puddles) { vfx.pop(numPos.copy(w.at).setLength(w.at.length() + 0.3), WINE_LOOK.arming.markColor, 1.6); vfx.dust(w.at, 4, 0.8, 2); } });
+  game.events.on('doorOpened', ({ at }) => { vfx.dust(at, 24, 2.5, 8); vfx.beam(at, DOOR_LOOK.beamColor, 1.8, 18, 1.6); rig.shake(ARRIVAL.shake.amount, ARRIVAL.shake.amplitude, ARRIVAL.shake.decay); });
   // Élite : il sort de terre dans un éclat rouge ; tué, son coffre tombe dans une pluie d'étincelles
   game.events.on('eliteSpawned', ({ zombie }) => {
     vfx.sparkle(zombie.pos, ELITES.color, 10, 1.2, 3);

@@ -31,8 +31,11 @@ import { BELL_DROPS, LAST_CALL } from '../config/lastCall';
 import { Tournees, TOURNEE_IDS, rollTournee, tourneeDropChance } from './tournees';
 import { TOURNEE_FX, TOURNEES, type TourneeId } from '../config/tournees';
 import { ELITES } from '../config/elites';
-import { FRERE_SONNEUR } from '../config/bosses';
+import { ABBE, FRERE_SONNEUR, PATRON_DOOR } from '../config/bosses';
 import { FrereSonneur } from './frereSonneur';
+import { Abbe, type WinePuddle } from './abbe';
+import type { Boss } from './boss';
+import { PatronDoor } from './patronDoor';
 import { BINS, SNACK, SNACK_DROPS } from '../config/bins';
 import { ITEMS, ITEM_EFFECTS, ITEM_STAT_CAPS, type ItemDef, type ItemId, type ItemStatId } from '../config/items';
 import { ItemEffects } from './itemEffects';
@@ -47,7 +50,7 @@ import { MAP_MECHANICS, type MapId, type MapMechanic } from './mechanics/mechani
 
 export type Phase = 'home' | 'run' | 'dead';
 export type Spawn = { dir: THREE.Vector3; facing: THREE.Vector3 };
-export type RunEnd = 'mort' | 'abandon';
+export type RunEnd = 'mort' | 'abandon' | 'victoire';
 /** Ce que lâche une poubelle cassée. */
 export type BinLoot = 'xp' | 'coins' | 'snack';
 
@@ -110,14 +113,22 @@ export type GameEvents = {
    * ramassée) ; `pulled` gouttes et capsules partent vers le Buveur.
    */
   lastCallRung: { source: 'bell' | 'drop'; at: THREE.Vector3; bell: CallBell | null; pulled: number };
-  /** Le boss arrive (il sort de terre). */
-  bossSpawned: { boss: FrereSonneur };
+  /** Un boss arrive (il sort de terre). */
+  bossSpawned: { boss: Boss };
   /** Le boss frappe sa cloche (il est en `at`) : une onde part. */
   bossWave: { boss: FrereSonneur; at: THREE.Vector3 };
   /** Le boss change de phase (il rugit). */
-  bossPhase: { boss: FrereSonneur; phase: number };
-  /** Le boss est tué : il laisse un coffre gratuit de haute rareté. */
-  bossKilled: { boss: FrereSonneur; chest: Chest | null };
+  bossPhase: { boss: Boss; phase: number };
+  /** Un boss est tué : le Frère Sonneur laisse un coffre gratuit de haute rareté ; l'Abbé, c'est la victoire. */
+  bossKilled: { boss: Boss; chest: Chest | null };
+  /** L'Abbé répand son vin : des flaques sont posées. */
+  winePoured: { boss: Abbe; puddles: readonly WinePuddle[] };
+  /** La Porte du patron s'ouvre : le boss final en sort. */
+  doorOpened: { at: THREE.Vector3 };
+  /** Touche d'action devant la porte alors qu'un boss est déjà là. */
+  doorBusy: Record<string, never>;
+  /** Le boss final est tombé : la run est gagnée (le jeu se fige sur l'écran de victoire). */
+  victory: { survived: number; kills: number };
   /** Un élite arrive dans la horde. */
   eliteSpawned: { zombie: Zombie };
   /** Un élite est tué : il laisse un coffre gratuit (null s'il n'y avait plus de place). */
@@ -218,7 +229,10 @@ export class Game {
   readonly bellDrops: ReturnType<typeof createXpDrops>;
   private rollBell: () => boolean;
   /** Boss en cours (null : aucun) ; `bossDone` : le boss de mi-run est déjà venu. */
-  boss: FrereSonneur | null = null;
+  boss: Boss | null = null;
+  /** La Porte du patron de la run ; `won` : le boss final est tombé (jeu figé sur la victoire). */
+  readonly door: PatronDoor;
+  won = false;
   private bossDone = false;
   /** Tournées du bar (bonus lâchés par les ennemis). */
   readonly tournees: Tournees;
@@ -286,10 +300,16 @@ export class Game {
     // Le boss est dessiné à part : ses durées d'animation viennent de sa config
     const C = FRERE_SONNEUR.clips;
     const clip = (duration: number) => ({ start: 0, frames: 1, duration });
-    const kinds = { ...deps.zombieKinds, sonneur: deps.zombieKinds.sonneur ?? { scale: 1, clips: { idle: clip(C.idle), walk: clip(C.walk), attack: clip(C.strike), hit: clip(C.hit), death: clip(C.death), cast: clip(C.roar) } } };
+    const AC = ABBE.clips;
+    const kinds = {
+      ...deps.zombieKinds,
+      sonneur: deps.zombieKinds.sonneur ?? { scale: 1, clips: { idle: clip(C.idle), walk: clip(C.walk), attack: clip(C.strike), hit: clip(C.hit), death: clip(C.death), cast: clip(C.roar) } },
+      abbe: deps.zombieKinds.abbe ?? { scale: 1, clips: { idle: clip(AC.idle), walk: clip(AC.walk), attack: clip(AC.cast), hit: clip(AC.hit), death: clip(AC.death), cast: clip(AC.roar) } },
+    };
     this.horde = createHorde(kinds, player, deps.collider);
     this.pumps = new Pumps(deps.collider);
     this.chests = new Chests(deps.collider);
+    this.door = new PatronDoor(deps.collider);
     this.horde.onHit = (z, dir) => this.hurtPlayer(z, dir, this.damageOf(z, z.def.damage));
     this.horde.onThrow = (z) => this.throwFrom(z);
     this.horde.onArm = (z) => {
@@ -354,7 +374,7 @@ export class Game {
   setThrowRig(rig: ThrowRig) { this.weaponCtx.rig = rig; }
 
   /** Le monde est figé (menu pause ou choix de carte). */
-  get frozen() { return this.menuPaused || this.offer !== null || this.reveal !== null; }
+  get frozen() { return this.menuPaused || this.offer !== null || this.reveal !== null || this.won; }
   /** Coffre en train de révéler sa rareté (temps restant, s). */
   private reveal: { chest: Chest; price: number; rarity: number; cards: Card[]; left: number } | null = null;
 
@@ -369,6 +389,7 @@ export class Game {
     this.pumps.place(spawn.dir);
     this.chests.place(spawn.dir, this.pumps.list.map((p) => p.pos), this.trapChance);
     this.lastCall.place(spawn.dir, this.chests.list.map((c) => c.pos), this.pumps.list.map((p) => p.pos));
+    this.door.place(spawn.dir, [...this.chests.list.map((c) => c.pos), ...this.lastCall.list.map((b) => b.pos)], this.pumps.list.map((p) => p.pos));
     this.bins.place(spawn.dir, [...this.chests.list.map((c) => c.pos), ...this.lastCall.list.map((b) => b.pos)], this.pumps.list.map((p) => p.pos), this.binCount);
     const landing = this.player.pos.clone();
     this.player.drop(ARRIVAL.height, ARRIVAL.speed);
@@ -469,6 +490,8 @@ export class Game {
         this.lastCall.update(p.pos);
         if (input.actionPressed && this.chests.focus && !this.offer) this.openChest(this.chests.focus);
         else if (input.actionPressed && this.lastCall.focus && !this.offer) this.ringBell(this.lastCall.focus);
+        this.door.update(p.pos);
+        if (input.actionPressed && !this.chests.focus && !this.lastCall.focus && this.door.focus && !this.offer) this.openDoor();
         // Poubelles : le Buveur qui passe dessus la casse
         const bin = this.bins.touching(p.pos);
         if (bin) this.breakBin(bin, 'player');
@@ -713,6 +736,36 @@ export class Game {
     return boss;
   }
 
+  /** Porte du patron : elle s'ouvre et l'Abbé en sort (pas pendant qu'un autre boss est debout). */
+  openDoor() {
+    const at = this.door.pos;
+    if (!at || this.door.open || this.phase !== 'run') return null;
+    if (this.boss) { this.events.emit('doorBusy', {}); return null; }
+    this.door.open = true;
+    this.events.emit('doorOpened', { at: at.clone() });
+    return this.spawnAbbe(at.clone().addScaledVector(this.door.facing, PATRON_DOOR.spawnAhead), this.door.facing.clone());
+  }
+
+  /** Fait venir l'Abbé à `at`, tourné vers `facing` (porte du patron, outils de dev). */
+  spawnAbbe(at: THREE.Vector3, facing: THREE.Vector3) {
+    if (this.boss || this.phase !== 'run' || this.arriving) return null;
+    const z = this.spawnZombie('abbe', at, facing);
+    if (!z) return null;
+    z.emerge();
+    const boss: Abbe = new Abbe(z, {
+      playerPos: () => this.player.pos,
+      playerHeight: () => this.player.pos.length() - this.groundAt(this.player.pos),
+      groundAt: (q) => this.groundAt(q),
+      hurtPlayer: (dir, damage) => this.hurtPlayer(z, dir, damage),
+      random: () => Math.random(),
+      onPour: (puddles) => this.events.emit('winePoured', { boss, puddles }),
+      onPhase: (phase) => this.events.emit('bossPhase', { boss, phase }),
+    });
+    this.boss = boss;
+    this.events.emit('bossSpawned', { boss });
+    return boss;
+  }
+
   /** Fait apparaître un élite : l'ennemi en plus grand, avec plus de PV (et plus de dégâts, `damageOf`). */
   spawnElite(enemy: EnemyId, at: THREE.Vector3, facing: THREE.Vector3) {
     const z = this.spawnZombie(enemy, at, facing);
@@ -773,9 +826,15 @@ export class Game {
     if (killed && z.def.boss && this.boss?.zombie === z) {
       const boss = this.boss;
       this.boss = null;
-      const chest = this.chests.addFreeAt(z.pos);
-      if (chest) chest.rarity = FRERE_SONNEUR.chestRarity;
-      this.events.emit('bossKilled', { boss, chest });
+      if (boss.kind === 'abbe') {
+        // Le boss final tombe : la run est gagnée
+        this.events.emit('bossKilled', { boss, chest: null });
+        this.win();
+      } else {
+        const chest = this.chests.addFreeAt(z.pos);
+        if (chest) chest.rarity = FRERE_SONNEUR.chestRarity;
+        this.events.emit('bossKilled', { boss, chest });
+      }
     }
     // Un élite tué laisse un coffre gratuit
     if (killed && z.elite) this.events.emit('eliteKilled', { zombie: z, chest: this.chests.addFreeAt(z.pos) });
@@ -1049,6 +1108,14 @@ export class Game {
     this.events.emit('landed', { pos: this.player.pos.clone() });
   }
 
+  /** Victoire : le jeu se fige sur l'écran de victoire (retour à l'accueil depuis l'écran). */
+  private win() {
+    if (this.won) return;
+    this.won = true;
+    this.events.emit('victory', { survived: this.runTime, kills: this.kills });
+    this.events.emit('runEnded', { reason: 'victoire', survived: this.runTime, kills: this.kills });
+  }
+
   private die() {
     this.phase = 'dead';
     this.deadTime = 0;
@@ -1088,6 +1155,8 @@ export class Game {
     this.tournees.clear();
     this.boss = null;
     this.bossDone = false;
+    this.won = false;
+    this.door.clear();
     this.items.length = 0;
     this.effects.reset();
     this.coinFrac = 0;

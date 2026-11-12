@@ -30,7 +30,8 @@ import { createItemHud } from '../ui/itemHud';
 import { createTourneeHud } from '../ui/tourneeHud';
 import { createBossBar } from '../ui/bossBar';
 import { BOSS_HUD } from '../config/hud';
-import { FRERE_SONNEUR } from '../config/bosses';
+import { PATRON_DOOR } from '../config/bosses';
+import { createVictoryScreen } from '../ui/victoryScreen';
 import { TOURNEES } from '../config/tournees';
 import { ITEM_EFFECTS } from '../config/items';
 import type { WeaponId } from '../weapons/weapon';
@@ -58,6 +59,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   const minimap = createMinimap();
   const chestPrompt = createChestPrompt(capsuleIcon());
   const bellPrompt = createChestPrompt(null, LAST_CALL_TEXT.prompt);
+  const doorPrompt = createChestPrompt(null, PATRON_DOOR.prompt);
   const chestReveal = createChestReveal();
   const runHud = createRunHud();
   const banner = createEventBanner();
@@ -135,14 +137,30 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   game.events.on('lastCallRung', () => { banner.show(LAST_CALL_TEXT.banner, LAST_CALL_TEXT.sub); banner.pulse(); banner.hideAfter(2.5); });
   game.events.on('tourneeTaken', ({ id }) => { const T = TOURNEES[id]; banner.show(`${T.name} !`, T.text); banner.pulse(); banner.hideAfter(2); });
   // Boss : sa barre de vie, un bandeau à son arrivée et quand il passe en phase 2
-  game.events.on('bossSpawned', () => {
-    bossBar.show(FRERE_SONNEUR.name, FRERE_SONNEUR.phase2.below);
-    banner.show(`${FRERE_SONNEUR.name} !`, 'Saute par-dessus les ondes de sa cloche');
+  const BOSS_TEXT = {
+    sonneur: { come: 'Saute par-dessus les ondes de sa cloche', rage: ['Il est furieux !', 'Plus rapide, et deux ondes à chaque coup'], fall: 'Un coffre légendaire t\'attend' },
+    abbe: { come: 'Ne reste pas dans son vin de messe', rage: ['Il a bu le calice !', 'Il devient géant'], fall: '' },
+  } as const;
+  game.events.on('bossSpawned', ({ boss }) => {
+    bossBar.show(boss.name, boss.phaseAt);
+    banner.show(`${boss.name} !`, BOSS_TEXT[boss.kind].come);
     banner.pulse();
     banner.hideAfter(3);
   });
-  game.events.on('bossPhase', () => { banner.show('Il est furieux !', 'Plus rapide, et deux ondes à chaque coup'); banner.pulse(); banner.hideAfter(2.5); });
-  game.events.on('bossKilled', () => { bossBar.hide(); banner.show(`${FRERE_SONNEUR.name} est tombé !`, 'Un coffre légendaire t\'attend'); banner.pulse(); banner.hideAfter(3); });
+  game.events.on('bossPhase', ({ boss }) => { const [t, sub] = BOSS_TEXT[boss.kind].rage; banner.show(t, sub); banner.pulse(); banner.hideAfter(2.5); });
+  game.events.on('bossKilled', ({ boss }) => {
+    bossBar.hide();
+    if (boss.kind === 'abbe') return;
+    banner.show(`${boss.name} est tombé !`, BOSS_TEXT[boss.kind].fall);
+    banner.pulse();
+    banner.hideAfter(3);
+  });
+  game.events.on('doorBusy', () => { banner.show('Pas maintenant', PATRON_DOOR.busy); banner.hideAfter(1.8); });
+  game.events.on('doorOpened', () => { banner.show('Le patron arrive...', 'La porte s\'ouvre'); banner.pulse(); banner.hideAfter(2); });
+  // Victoire : l'écran de victoire, retour à l'accueil par son bouton (ou Espace)
+  const victory = createVictoryScreen(() => game.goHome());
+  game.events.on('victory', ({ survived, kills }) => { banner.clear(); victory.show(survived, kills); });
+  game.events.on('home', () => victory.hide());
   game.events.on('home', () => bossBar.hide());
   game.events.on('died', () => bossBar.hide());
   game.events.on('died', () => banner.clear());
@@ -197,6 +215,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
       const chest = game.phase === 'run' && !game.frozen ? game.chests.focus : null;
       chestPrompt.update(chest ? game.chests.priceOf(chest) : null, game.coins);
       bellPrompt.update(!chest && game.phase === 'run' && !game.frozen && game.lastCall.focus ? 0 : null, game.coins);
+      doorPrompt.update(!chest && !game.lastCall.focus && game.phase === 'run' && !game.frozen && game.door.focus ? 0 : null, game.coins);
       runHud.update(game.runTime, game.kills, game.coins);
       weaponHud.update(slots());
       itemHud.update(game.items);
@@ -209,6 +228,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
       if (input.jumpPressed) {
         if (game.phase === 'home' && !options.open) void play();
         else if (game.phase === 'dead' && deathBanner.ready) game.goHome();
+        else if (game.won && victory.shown) game.goHome();
       }
     },
   };

@@ -59,3 +59,86 @@ export const BOSS_LOOK = {
   flash: 0.6,
   flashTime: 0.12,
 } as const;
+
+/**
+ * L'Abbé, boss final de l'Abbaye (GDD section 11), appelé par la Porte du patron. Il marche vers le joueur et, à
+ * portée, répand le vin de son calice : des flaques marquées au sol autour du joueur, qui brûlent quand elles
+ * s'allument. Sous la moitié de ses PV, il boit son calice et devient géant. Le tuer, c'est gagner la run.
+ * Version « simple » choisie par l'utilisateur le 2026-11-12 (pas d'invocation). Puissance fixe.
+ */
+export const ABBE = {
+  name: "L'Abbé",
+  /** Points de vie (multipliés par la difficulté), vitesse (m/s), XP à sa mort. */
+  hp: 4000,
+  speed: 2.0,
+  xp: 150,
+  /** Hauteur du modèle (m), largeur du corps (multiplie le rayon d'un zombie). */
+  height: 5.0,
+  bodyScale: 2.2,
+  /** Vin répandu : à moins de `range` m, au plus toutes les `cooldown` s ; geste de `duration` s, le vin part à `pourAt` s. */
+  cast: {
+    range: 18,
+    cooldown: 4,
+    duration: 1.6,
+    pourAt: 0.87,
+    /** Flaques par geste, posées autour du joueur (une sur lui, les autres à moins de `spread` m). */
+    puddles: 3,
+    spread: 4,
+    /** Marquée `arm` s avant de brûler, puis brûle `life` s ; rayon (m), dégâts toutes les `tick` s au joueur dedans. */
+    arm: 1.1,
+    life: 6,
+    radius: 2.3,
+    tick: 0.5,
+    damage: 7,
+  },
+  /** Phase 2 : il boit son calice (`roar` s, il ne bouge pas) et grandit jusqu'à `grow` fois sa taille en `growTime` s. */
+  phase2: {
+    below: 0.5,
+    roar: 1.5,
+    grow: 1.6,
+    growTime: 1.0,
+    speedMul: 1.3,
+    cooldownMul: 0.7,
+    puddles: 5,
+    damageMul: 1.3,
+  },
+  music: 'abbe',
+  /** Durée des animations (s), fixées par tools/blender/abbe.py. */
+  clips: { idle: 2, walk: 1.4, cast: 1.6, hit: 0.4, roar: 1.5, death: 2 },
+} as const;
+
+/**
+ * La Porte du patron (GDD section 12) : cachée sur la planète (pas sur la mini-carte, seulement un faisceau rouge
+ * visible de loin), loin du départ. À la touche d'action, elle s'ouvre et l'Abbé en sort. Une seule fois, et pas
+ * pendant qu'un autre boss est debout.
+ */
+export const PATRON_DOOR = {
+  minFromSpawn: 140,
+  minFromChest: 8,
+  minFromPump: 10,
+  placementTries: 4000,
+  /** Portée de la touche d'action (m, au sol). */
+  interactRange: 3.4,
+  /** L'Abbé sort à `spawnAhead` m devant la porte. */
+  spawnAhead: 5,
+  prompt: 'Appeler le patron',
+  busy: 'Un boss est déjà là',
+} as const;
+
+/** Apparence de la porte (world/doorView.ts) : pièces du Castle Kit Kenney, faisceau rouge. */
+export const DOOR_LOOK = {
+  /** Échelle des pièces du kit (1 : leur taille d'origine, une case de 1 m). */
+  scale: 4.2,
+  beamColor: 0xff3a2a,
+  beamRadius: 0.9,
+  beamHeight: 60,
+  beamOpacity: 0.28,
+  /** Ouverture : la porte s'enfonce dans le sol (m) en `openTime` s. */
+  openTime: 1.2,
+} as const;
+
+/** Flaques de vin de l'Abbé (marques au sol) : marquées, puis brûlantes. */
+export const WINE_LOOK = {
+  arming: { markColor: 0xb0203a, markOpacity: 0.55, markRing: 0.12 },
+  burning: { markColor: 0x6a0a1e, markOpacity: 0.85, markRing: 0.18 },
+} as const;

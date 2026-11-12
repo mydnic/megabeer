@@ -28,6 +28,10 @@ export interface DevApi {
   dropBell(): void;
   /** Fait venir le boss tout de suite. */
   spawnBoss(): void;
+  /** Fait venir le boss final (l'Abbé) devant le joueur. */
+  spawnAbbe(): void;
+  /** Pose le joueur devant la Porte du patron. */
+  goToDoor(): void;
   /** Fait apparaître un élite du modèle choisi (liste des ennemis) devant le joueur. */
   spawnElite(model: string): void;
   /** Tournées du bar : en lâcher une devant le joueur. */
@@ -72,7 +76,7 @@ export function createDevPanel(api: DevApi) {
       <br><select data-k="item">${api.items.map((w) => `<option>${w}</option>`).join('')}</select> <select data-k="rarity">${api.rarities.map((r, i) => `<option value="${i}">${r}</option>`).join('')}</select> <button data-a="item">Donner l'objet</button>
       <br><button data-a="coins">+50 capsules</button>
       <br><button data-a="bin">Poubelle devant</button> <button data-a="trap">Coffre piégé devant</button>
-      <br><button data-a="bell">Clochette devant</button> <button data-a="boss">Boss maintenant</button> <button data-a="elite">Élite devant (modèle ci-dessus)</button>
+      <br><button data-a="bell">Clochette devant</button> <button data-a="boss">Boss maintenant</button> <button data-a="abbe">Abbé maintenant</button> <button data-a="door">Aller à la porte</button> <button data-a="elite">Élite devant (modèle ci-dessus)</button>
       <br><select data-k="tournee">${api.tournees.map((w) => `<option>${w}</option>`).join('')}</select> <button data-a="tournee">Tournée devant</button>
       <br><button data-a="heal">Soigner</button> <button data-a="die">Mourir</button>
     </fieldset>
@@ -97,6 +101,8 @@ export function createDevPanel(api: DevApi) {
     trap: () => api.placeTrap(),
     bell: () => api.dropBell(),
     boss: () => api.spawnBoss(),
+    abbe: () => api.spawnAbbe(),
+    door: () => api.goToDoor(),
     elite: () => api.spawnElite(q<HTMLSelectElement>('model').value),
     tournee: () => api.dropTournee(q<HTMLSelectElement>('tournee').value),
     weapon: () => api.giveWeapon(q<HTMLSelectElement>('weapon').value),

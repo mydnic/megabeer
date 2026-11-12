@@ -92,6 +92,18 @@ export async function wireDevTools(game: Game, d: {
       runLog.event('dev', 'elite', id);
     },
     spawnBoss() { if (inRun() && game.spawnBoss()) runLog.event('dev', 'boss'); },
+    spawnAbbe() {
+      if (!inRun()) return;
+      const p = game.player;
+      const at = p.pos.clone().addScaledVector(p.facing, 14);
+      if (game.spawnAbbe(at, p.pos.clone().sub(at))) runLog.event('dev', 'abbe');
+    },
+    goToDoor() {
+      const d = game.door;
+      if (!inRun() || !d.pos) return;
+      game.player.reset(d.pos.clone().addScaledVector(d.facing, 6).normalize(), d.facing.clone().negate());
+      runLog.event('dev', 'door');
+    },
     dropBell() {
       if (!inRun()) return;
       const p = game.player;

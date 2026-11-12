@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { FRERE_SONNEUR as F } from '../config/bosses';
 import { PLANET_RADIUS } from '../config/world';
 import type { Zombie } from '../enemies/zombie';
+import type { Boss } from './boss';
 
 /** Ce que joue le modèle du boss (clips de tools/blender/sonneur.py). */
 export type BossAnim = 'idle' | 'walk' | 'strike' | 'roar' | 'death';
@@ -28,7 +29,12 @@ export type BossHooks = {
  * à portée, frappe de son maillet la cloche qu'il tient à la main : chaque coup lance une onde en anneau qu'il faut
  * sauter. Sous la moitié de ses PV, il rugit puis passe en phase 2 (plus vite, plus souvent, deux ondes par coup).
  */
-export class FrereSonneur {
+export class FrereSonneur implements Boss {
+  readonly kind = 'sonneur' as const;
+  readonly name = F.name;
+  readonly phaseAt = F.phase2.below;
+  readonly music = F.music;
+  readonly scale = 1;
   phase = 1;
   /** Animation en cours et son temps (s), lus par l'affichage. */
   anim: BossAnim = 'idle';

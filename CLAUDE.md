@@ -80,7 +80,8 @@ recopie son état à chaque image. Ne jamais remettre de logique de jeu dans `ma
   pause ; `step(dt, input)` ; événements `GameEvents`), `playerStats.ts`, `loadout.ts` (armes
   équipées, 4 max), `levelUpCards.ts` (tirage sur les armes équipées), `pumps.ts`, `chests.ts` (coffres, dont les
   piégés), `bins.ts` (poubelles cassées au contact ou par les armes, grille pour les projectiles), `lastCall.ts` (Dernier
-  service : cloches qui ramènent toute l'XP et les capsules), `tournees.ts` (Tournées du bar : bonus de quelques
+  service : cloches qui ramènent toute l'XP et les capsules), `boss.ts` (interface commune des boss), `frereSonneur.ts` et
+  `abbe.ts` (contrôleurs des boss : leur corps est un zombie de la horde, `def.boss`), `patronDoor.ts` (Porte du patron), `tournees.ts` (Tournées du bar : bonus de quelques
   secondes lâchés par les ennemis, minuteries et multiplicateurs), `spawnDirector.ts` (arrivée des zombies et
   montée en difficulté, courbe dans `config/spawn.ts`), `mechanics/` (mécanique propre à chaque map, interface
   `MapMechanic` et registre : Abbaye = les cloches), `emitter.ts`.
@@ -142,7 +143,7 @@ BD/aquarelle, Valheim, style anime, herbe dense.
 (prépare le Moine de `MONK.blend` pour la foule : textures en un atlas, un seul matériau, animations
 renommées comme les zombies ; `--variant` : lanceur, pelerin (bure rouge, tonneau sans fond autour du ventre) ou tonnelier (bure ardoise, gros tonneau qui roule devant lui, mains dessus), tonneau donné par `--barrel` ; source dans `Desktop/MODELS/personnages/kelgar_monk`) génèrent les GLB
 de `src/assets/models/`, comme `tools/blender/kaykit.py` (personnages KayKit : pièces retirées, recolorés, objet
-en main, animations du Rig_Medium ; sources lues dans `Desktop/MODELS`). `tools/blender/cloche.py` (cloche du Dernier service, avec ou sans potence), `tools/blender/sonneur.py` (le Frère Sonneur, boss : modèle sculpté par remaillage, rig et clips, maillet dans la main droite, une cloche à main dans la gauche). `tools/blender/monsters.py` (monstres Quaternius
+en main, animations du Rig_Medium ; sources lues dans `Desktop/MODELS`). `tools/blender/cloche.py` (cloche du Dernier service, avec ou sans potence), `tools/blender/sonneur.py` (le Frère Sonneur, boss : modèle sculpté par remaillage, rig et clips, maillet dans la main droite, une cloche à main dans la gauche) et `tools/blender/abbe.py` (l'Abbé, boss final), outils communs dans `tools/blender/figure_kit.py`. `tools/blender/monsters.py` (monstres Quaternius
 à couleurs unies, rangées dans une palette). Outils communs dans `crowd_utils.py`.
 Pas plus de 3 ennemis sur le même corps de base. Ne pas éditer les GLB à la main : modifier le script et relancer.
 

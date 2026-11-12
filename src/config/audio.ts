@@ -108,7 +108,8 @@ export const AUDIO = {
   boss: {
     spawn: 'impactMining', spawnVolume: 0.9, spawnRate: 0.5, hearDist: 50,
     bell: 'impactBell_heavy', bellVolume: 0.9, bellRate: 0.55, thud: 'impactSoft_heavy', thudVolume: 0.9, thudRate: 0.45,
-    roar: 'impactSoft_heavy', roarVolume: 1, roarRate: 0.3, death: 'impactBell_heavy', deathVolume: 1, deathRate: 0.4,
+    roar: 'impactSoft_heavy', roarVolume: 1, roarRate: 0.3,
+    pour: 'impactSoft_heavy', pourVolume: 0.7, pourRate: 0.8, door: 'impactWood_heavy', doorVolume: 1, doorRate: 0.5, death: 'impactBell_heavy', deathVolume: 1, deathRate: 0.4,
   },
   /** Élite : grondement quand il arrive (entendu jusqu'à `hearDist` m), coffre qui tombe à sa mort. */
   elite: { spawn: 'impactSoft_heavy', spawnVolume: 0.7, spawnRate: 0.5, hearDist: 45, chest: 'impactWood_heavy', chestVolume: 0.6, chestRate: 1.1 },

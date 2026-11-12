@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { ABBE, FRERE_SONNEUR } from '../../src/config/bosses';
 import { describe, expect, it } from 'vitest';
 import { ZOMBIE_MODELS, ZOMBIE_VISUAL } from '../../src/config/zombies';
 
@@ -39,6 +40,8 @@ function rotationRange(glb: ReturnType<typeof readGlb>, clip: string) {
 }
 
 const generated = Object.entries(ZOMBIE_MODELS).filter(([, m]) => m.file.endsWith('.glb') && !m.file.startsWith('character-') && !('separate' in m));
+/** Animations attendues de chaque boss (celles que le jeu joue, durées dans config/bosses.ts). */
+const BOSS_CLIPS: Record<string, object> = { 'sonneur.glb': FRERE_SONNEUR.clips, 'abbe.glb': ABBE.clips };
 /** Modèles dessinés à part (boss) : ils ont leurs propres animations. */
 const separate = Object.entries(ZOMBIE_MODELS).filter(([, m]) => 'separate' in m);
 
@@ -54,7 +57,9 @@ describe('Les modèles des ennemis', () => {
   });
   it.each(separate)('%s (boss) a toutes ses animations, et elles bougent', (_, model) => {
     const glb = readGlb(model.file);
-    for (const name of ['idle', 'walk', 'strike', 'hit', 'roar', 'death']) {
+    const clips = Object.keys(BOSS_CLIPS[model.file]);
+    expect(clips.length).toBeGreaterThan(0);
+    for (const name of clips) {
       expect(glb.json.animations.some((a) => a.name === name), `${model.file} : pas d'animation ${name}`).toBe(true);
       expect(rotationRange(glb, name), `${model.file} : ${name} est figée`).toBeGreaterThan(0.01);
     }

@@ -111,6 +111,14 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    **Cloche géante qui roule essayée puis retirée le 2026-11-12** (l'utilisateur : « c'est chelou », « rien que son attaque
    de zone c'est suffisant »). Le boss tient maintenant une cloche à main (gauche) qu'il frappe au maillet : chaque
    coup lance l'onde, rien d'autre. Ne pas re-proposer la cloche qui roule. Tests du boss : hasard à graine fixe.
+   Frère Sonneur validé par l'utilisateur le 2026-11-12.
+   **Fin de run, checkpoint 1 fait le 2026-11-12, à valider en jeu : Porte du patron + l'Abbé + victoire.** Choix de
+   l'utilisateur : Abbé sculpté maison (`tools/blender/abbe.py`, outils communs `tools/blender/figure_kit.py`), attaque
+   « simple » (flaques de vin marquées puis brûlantes autour du joueur, pas d'invocation), phase 2 géante (il boit son
+   calice, x1,6), porte en pièces du Castle Kit (`world/doorView.ts`, faisceau rouge, pas sur la mini-carte). Le boss
+   est générique (`game/boss.ts`, une vue par boss `createBossView`), victoire = jeu figé + `ui/victoryScreen.ts`.
+   Réglages `ABBE`, `PATRON_DOOR`, `DOOR_LOOK`, `WINE_LOOK` (config/bosses.ts). DEV : « Abbé maintenant », « Aller à la
+   porte ». **Ensuite : checkpoint 2, fermeture à 10:00** (videurs qui affluent), puis checkpoint 3 : Last call.
    Ensuite : Porte du patron, l'Abbé, fermeture à 10:00, victoire.
    **Tournées du bar faites le 2026-11-11, à valider en jeu** : 8 bonus lâchés par les ennemis (liste dans le journal du
    GDD), `game/tournees.ts`, `config/tournees.ts`, icônes `ui/tourneeIcons.ts` (aussi en texture au sol par
