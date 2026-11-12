@@ -61,6 +61,11 @@ export function readInput(): InputState {
       lx += deadzone(gp.axes[2] ?? 0, dz);
       ly += deadzone(gp.axes[3] ?? 0, dz);
     }
+    // Croix directionnelle (manette standard : 12 haut, 13 bas, 14 gauche, 15 droite)
+    if (gp.buttons[12]?.pressed) my += 1;
+    if (gp.buttons[13]?.pressed) my -= 1;
+    if (gp.buttons[14]?.pressed) mx -= 1;
+    if (gp.buttons[15]?.pressed) mx += 1;
     if (gp.buttons[0]?.pressed) jump = true;
     if (gp.buttons[2]?.pressed) action = true;
     break; // une seule manette (jeu solo)

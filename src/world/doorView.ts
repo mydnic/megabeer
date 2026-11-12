@@ -36,14 +36,23 @@ export async function createDoorView(scene: THREE.Scene) {
       m.receiveShadow = true;
       m.layers.set(LAYER_CHARACTER);
     });
-    // Les pièces du kit ont leur face avant sur l'axe X : un quart de tour la met face à la direction de la porte (Z)
-    const turn = new THREE.Group();
-    turn.add(g);
-    turn.rotation.y = -Math.PI / 2;
+    const raw = box.getSize(new THREE.Vector3());
     const holder = new THREE.Group();
-    holder.add(turn);
     holder.scale.setScalar(L.scale);
-    const s = box.getSize(new THREE.Vector3()).multiplyScalar(L.scale);
+    // Les deux faces pareilles : deux demi-épaisseurs dos à dos, chacune montrant la face avant du kit. Les pièces du
+    // kit ont leur face avant sur l'axe X : un quart de tour la met face à la direction de la porte (Z)
+    for (const [i, src] of [g, g.clone()].entries()) {
+      const turn = new THREE.Group();
+      turn.add(src);
+      turn.rotation.y = -Math.PI / 2;
+      const half = new THREE.Group();
+      half.add(turn);
+      half.scale.z = 0.5;
+      half.rotation.y = i * Math.PI;
+      half.position.z = (i ? -1 : 1) * raw.x / 4;
+      holder.add(half);
+    }
+    const s = raw.multiplyScalar(L.scale);
     // Taille une fois tournée : largeur en x, hauteur en y, épaisseur en z
     const size = new THREE.Vector3(s.z, s.y, s.x);
     return { holder, size };
@@ -53,11 +62,14 @@ export async function createDoorView(scene: THREE.Scene) {
   const arch = await piece(archUrl);
   const gate = await piece(gateUrl);
   root.add(arch.holder, gate.holder);
-  // Bannières : plaquées contre l'arche, de chaque côté de l'ouverture, côté face
-  for (const sx of [-1, 1]) {
-    const b = await piece(bannerUrl);
-    b.holder.position.set(sx * arch.size.x * 0.36, arch.size.y * 0.3, arch.size.z / 2 + 0.05);
-    root.add(b.holder);
+  // Bannières : plaquées contre l'arche, de chaque côté de l'ouverture, sur les deux faces
+  for (const sz of [-1, 1]) {
+    for (const sx of [-1, 1]) {
+      const b = await piece(bannerUrl);
+      b.holder.position.set(sx * arch.size.x * 0.36, arch.size.y * 0.3, sz * (arch.size.z / 2 + 0.05));
+      b.holder.rotation.y = sz < 0 ? Math.PI : 0;
+      root.add(b.holder);
+    }
   }
   const beam = new THREE.Mesh(
     new THREE.CylinderGeometry(L.beamRadius, L.beamRadius, L.beamHeight, 16, 1, true).translate(0, L.beamHeight / 2, 0),

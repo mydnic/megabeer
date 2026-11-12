@@ -110,7 +110,7 @@ const art = (icon: string) => `<div class="lu-art"><i class="lu-tw"></i><i class
 
 /**
  * Écran de level-up : le jeu est en pause, 3 cartes au choix. Souris, clavier (1 2 3, flèches,
- * Entrée / Espace) ou manette (stick / croix, A). La couleur du cadre dit la rareté.
+ * Entrée / Espace) ou manette (stick ou croix directionnelle, X ou A pour valider). La couleur du cadre dit la rareté.
  */
 export function createLevelUpScreen(onPick: (card: Card) => void, onHover: () => void) {
   const style = document.createElement('style');
@@ -118,7 +118,7 @@ export function createLevelUpScreen(onPick: (card: Card) => void, onHover: () =>
   document.head.appendChild(style);
   const el = document.createElement('div');
   el.className = 'lu';
-  el.innerHTML = `<div class="lu-title"></div><div class="lu-cards"></div><div class="lu-chest"></div><div class="lu-hint">Clic, 1 2 3, ou flèches et Espace</div>`;
+  el.innerHTML = `<div class="lu-title"></div><div class="lu-cards"></div><div class="lu-chest"></div><div class="lu-hint">Clic, 1 2 3, ou flèches et Espace ; manette : croix et X</div>`;
   document.body.appendChild(el);
   const title = el.querySelector<HTMLElement>('.lu-title')!;
   const row = el.querySelector<HTMLElement>('.lu-cards')!;

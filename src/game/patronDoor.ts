@@ -24,13 +24,14 @@ export class PatronDoor {
     this.clear();
     const dir = new THREE.Vector3();
     const far = (a: THREE.Vector3, b: THREE.Vector3, d: number) => a.angleTo(b) * PLANET_RADIUS >= d;
-    for (let i = 0; i < D.placementTries; i++) {
+    for (let i = 0; i < D.placementTries * 2; i++) {
+      const k = i < D.placementTries ? 1 : 0.5;
       randomDir(dir);
       if (!far(dir, spawnDir, D.minFromSpawn)) continue;
-      if (!chests.every((c) => far(dir, c, D.minFromChest))) continue;
-      if (!pumps.every((c) => far(dir, c, D.minFromPump))) continue;
+      if (!chests.every((c) => far(dir, c, D.minFromChest * k))) continue;
+      if (!pumps.every((c) => far(dir, c, D.minFromPump * k))) continue;
       const pos = dir.clone().multiplyScalar(PLANET_RADIUS + heightAt(dir));
-      if (this.collider.occupied(this.tmp.copy(dir).multiplyScalar(pos.length() + 1.5), 2.5)) continue;
+      if (this.collider.occupied(this.tmp.copy(dir).multiplyScalar(pos.length() + 1.5), D.clearRadius * k)) continue;
       this.pos = pos;
       // Elle regarde vers le départ (le long du grand cercle)
       this.facing.copy(spawnDir).addScaledVector(dir, -spawnDir.dot(dir)).normalize();

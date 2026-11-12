@@ -103,7 +103,7 @@ export function createMinimap() {
   return {
     setVisible(v: boolean) { canvas.classList.toggle('on', v); },
     /** Chaque image : position du joueur, sa direction, l'avant de la caméra, les pompes. */
-    update(dt: number, playerPos: THREE.Vector3, facing: THREE.Vector3, camFwd: THREE.Vector3, pumps: readonly Pump[], chests: readonly Chest[], bells: readonly CallBell[] = [], zombies: readonly Zombie[] = []) {
+    update(dt: number, playerPos: THREE.Vector3, facing: THREE.Vector3, camFwd: THREE.Vector3, pumps: readonly Pump[], chests: readonly Chest[], bells: readonly CallBell[] = [], zombies: readonly Zombie[] = [], door: THREE.Vector3 | null = null) {
       if (!canvas.classList.contains('on')) return;
       up.copy(playerPos).normalize();
       fwd.copy(camFwd).addScaledVector(up, -camFwd.dot(up)).normalize();
@@ -166,6 +166,27 @@ export function createMinimap() {
         ctx.arc(R + m.x * scale, R - m.y * scale, M.eliteDot * dpr * (z.def.boss ? 1.8 : 1), 0, Math.PI * 2);
         ctx.fillStyle = hex(M.colors.elite); ctx.fill();
         ctx.lineWidth = 2 * dpr; ctx.strokeStyle = '#1a120c'; ctx.stroke();
+      }
+
+      // Porte du patron (fermée) : toujours là ; loin, posée au bord du disque avec une flèche qui pointe vers elle
+      if (door) {
+        const m = toMap(door);
+        const edge = M.range * 0.78;
+        const far = m.dist > edge;
+        const k = far ? edge / m.dist : 1;
+        const x = R + m.x * k * scale, y = R - m.y * k * scale, s = M.doorSize * dpr;
+        if (far) {
+          const a = Math.atan2(m.x, m.y);
+          arrow(R + Math.sin(a) * R * 0.9, R - Math.cos(a) * R * 0.9, a, M.doorArrow * dpr, hex(M.colors.door));
+        }
+        // Arche : rectangle arrondi en haut, ouverture sombre
+        ctx.beginPath();
+        ctx.moveTo(x - s / 2, y + s / 2); ctx.lineTo(x - s / 2, y - s / 6);
+        ctx.arc(x, y - s / 6, s / 2, Math.PI, 0); ctx.lineTo(x + s / 2, y + s / 2); ctx.closePath();
+        ctx.fillStyle = hex(M.colors.door); ctx.fill();
+        ctx.lineWidth = 2 * dpr; ctx.strokeStyle = '#1a120c'; ctx.stroke();
+        ctx.fillStyle = '#1a120c';
+        ctx.fillRect(x - s / 6, y, s / 3, s / 2);
       }
 
       // Le Buveur au centre, tourné dans sa direction de marche
