@@ -1,6 +1,7 @@
 import { ITEMS } from '../config/items';
 import { LEVEL_UP_SCREEN as L, RARITIES } from '../config/upgrades';
-import { cardText, itemCardText, statCardText, type Card } from '../game/levelUpCards';
+import { cardStatChange, cardText, itemCardText, statCardText, type Card, type UpgradeCard } from '../game/levelUpCards';
+import { formatValue } from './statFormat';
 import { PUMP_TIERS, STAT_BONUSES } from '../config/pumps';
 import { SYNERGIES, WEAPON_INFO } from '../config/weapons';
 import { pumpIcon, weaponIcon, itemIcon, chestSvg } from './icons';
@@ -73,6 +74,10 @@ const CSS = `
 .lu-tw:nth-of-type(3) { left: 22px; bottom: 6px; animation-delay: 1s; width: 11px; }
 @keyframes lu-tw { 0%, 100% { opacity: 0; scale: .3; rotate: 0deg; } 50% { opacity: 1; scale: 1; rotate: 90deg; } }
 .lu-card.new { background: linear-gradient(#6a3214, #2e1408 72%); }
+.lu-delta { margin-top: 4px; padding: 2px 8px 3px; border-radius: 9px; background: rgba(26,18,12,.55); color: #f3e6cf; font-size: 14px; line-height: 1.2; text-align: center; max-width: 100%; box-sizing: border-box; }
+.lu-delta span { white-space: nowrap; }
+.lu-delta b { color: var(--c); font-weight: normal; }
+.lu-delta i { font-style: normal; opacity: .6; margin: 0 5px; }
 .lu-card.new .lu-eff { font-size: 16px; color: #f3e6cf; }
 .lu-syn { margin-top: -2px; padding: 4px 10px; border-radius: 10px; border: 2px solid #1a120c; background: var(--s); color: #2a1608;
   font-size: 14px; line-height: 1.1; box-shadow: 0 3px 0 #1a120c; animation: lu-syn 1.2s ease-in-out infinite alternate; }
@@ -106,6 +111,13 @@ const CSS = `
 `;
 
 /** Icône d'une carte sur son présentoir (halo, rayons, étoiles). */
+/** Sous l'effet d'une amélioration : la stat de l'arme avant et après (« Projectiles 1 -> 2 »). */
+const delta = (c: UpgradeCard) => {
+  const d = cardStatChange(c);
+  if (!d) return '';
+  return `<div class="lu-delta">${d.after.label} <span>${d.before ? formatValue(d.before) : '0'}<i>-></i><b>${formatValue(d.after)}</b></span></div>`;
+};
+
 const art = (icon: string) => `<div class="lu-art"><i class="lu-tw"></i><i class="lu-tw"></i><i class="lu-tw"></i>${icon}</div>`;
 
 /**
@@ -200,7 +212,7 @@ export function createLevelUpScreen(onPick: (card: Card) => void, onHover: () =>
           d.className = `lu-card t${c.tier}`;
           d.style.setProperty('--c', r.color);
           d.innerHTML = `${key}<div class="lu-tier">${r.name}</div>${art(weaponIcon(c.weapon.id, 'lu-bottle'))}
-            <div class="lu-name">${c.weapon.name}</div><div class="lu-eff">${cardText(c)}</div>`;
+            <div class="lu-name">${c.weapon.name}</div><div class="lu-eff">${cardText(c)}</div>${delta(c)}`;
         }
         d.style.setProperty('--i', String(i));
         d.addEventListener('mouseenter', () => select(i));

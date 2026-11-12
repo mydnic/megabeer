@@ -2,7 +2,7 @@ import { ENEMIES } from '../../src/config/enemies';
 import { describe, expect, it } from 'vitest';
 import { LEVELS, XP_DROPS } from '../../src/config/xp';
 import { LEVEL_UP_SCREEN, RARITIES } from '../../src/config/upgrades';
-import { rollCards, cardText, type Card, type UpgradeCard } from '../../src/game/levelUpCards';
+import { rollCards, cardText, cardStatChange, type Card, type UpgradeCard } from '../../src/game/levelUpCards';
 import { WEAPON_FACTORIES } from '../../src/weapons/registry';
 import type { Weapon, WeaponId } from '../../src/weapons/weapon';
 import { createTestGame } from '../support/testGame';
@@ -196,5 +196,18 @@ describe('Les cartes', () => {
     expect(cardText(card('damage', 2))).toBe(`+${Math.round(dmg.value * RARITIES[2].mult * 100)} % dégâts`);
     expect(cardText(card('rate', 0))).toContain("vitesse d'attaque");
     expect(cardText(card('critMult', 0))).toBe('+0,15 multiplicateur critique');
+  });
+
+  it("montrent la stat de l'arme avant et après (projectiles 1 puis 2), sans la changer", () => {
+    const canette = weapons()[0];
+    const card: UpgradeCard = { kind: 'upgrade', weapon: canette, upgrade: canette.upgrades.find((u) => u.id === 'projectiles')!, tier: 2 };
+    const mods = { ...canette.mods };
+    const d = cardStatChange(card)!;
+    expect(d.after.label).toBe('Projectiles');
+    expect(d.before!.value).toBe(1);
+    expect(d.after.value).toBe(2);
+    expect(canette.mods).toEqual(mods);
+    const dmg = cardStatChange({ ...card, upgrade: canette.upgrades.find((u) => u.id === 'damage')!, tier: 0 })!;
+    expect(dmg.after.value).toBeGreaterThan(dmg.before!.value);
   });
 });

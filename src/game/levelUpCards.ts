@@ -4,6 +4,7 @@ import type { Weapon, WeaponId } from '../weapons/weapon';
 import type { SynergyId } from './synergies';
 import { STAT_BONUSES, type PumpTier, type StatId } from '../config/pumps';
 import { ITEMS, ITEM_EFFECTS, type ItemDef } from '../config/items';
+import type { StatLine } from './playerStats';
 
 /** Amélioration d'une arme équipée, avec sa rareté. */
 export type UpgradeCard = { kind: 'upgrade'; weapon: Weapon; upgrade: UpgradeDef; tier: number };
@@ -89,6 +90,24 @@ export function itemCardText(c: ItemCard) {
   if (def.effect === 'freeChest') values.every = Math.round(ITEM_EFFECTS.freeChest.every / v);
   const num = (n: number) => String(Math.round(n * 100) / 100).replace('.', ',');
   return def.text.replace(/\{(\w+)(%?)\}/g, (_, k: string, pct: string) => (pct ? `${num(values[k] * 100)} %` : num(values[k])));
+}
+
+/**
+ * La stat de l'arme que la carte change, avant et après (ex. Projectiles 1 puis 2), sans toucher à l'arme ; `before`
+ * null : la stat n'existait pas encore (premier zombie traversé). Null si la carte ne change aucune stat affichée.
+ */
+export function cardStatChange(c: UpgradeCard): { before: StatLine | null; after: StatLine } | null {
+  const m = c.weapon.mods, id = c.upgrade.id, old = m[id];
+  const before = c.weapon.stats();
+  m[id] = (old ?? 0) + cardValue(c);
+  const after = c.weapon.stats();
+  if (old === undefined) delete m[id]; else m[id] = old;
+  for (const a of after) {
+    const b = before.find((l) => l.label === a.label);
+    if (!b) return { before: null, after: a };
+    if (Math.abs(b.value - a.value) > 1e-9) return { before: b, after: a };
+  }
+  return null;
 }
 
 /** Applique une amélioration à son arme (améliorations additives, l'arme monte d'un niveau). */

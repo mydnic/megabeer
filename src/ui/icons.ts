@@ -1,5 +1,5 @@
 import type { WeaponId } from '../weapons/weapon';
-import { K, G, P, E, R, L, cap, ensureIconDefs } from './iconKit';
+import { K, G, P, E, R, L, cap, ensureIconDefs, iconDefs } from './iconKit';
 
 /**
  * Icônes SVG partagées par l'interface (cartes de level-up, HUD, pause). Même style partout : couleur,
@@ -191,6 +191,25 @@ ${P('M45 54h20v24c0 4-4 7-10 7s-10-3-10-7z', G.gold, 'vol', 3)}
 <path d="M55 73v6" stroke="${K}" stroke-width="3.500" stroke-linecap="round"/>
 </svg>`;
 };
+
+const chestImages = new Map<string, HTMLImageElement>();
+/**
+ * Le coffre en image (pour un canvas, comme la mini-carte) : fermé, ou ouvert avec la lumière de la couleur `color`
+ * qui en sort. Une image par couleur et par état, gardée.
+ */
+export function chestImage(color: string, open: boolean) {
+  const key = `${color}${open ? 'o' : ''}`;
+  let img = chestImages.get(key);
+  if (!img) {
+    const body = chestSvg(open ? 'open' : '', color)
+      .replace('<svg viewBox="0 0 124 112"', `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${open ? '0 -36 124 148' : '0 0 124 112'}"`)
+      .replace('<defs>', `<style>${CHEST_CSS}</style>${iconDefs()}<defs>`);
+    img = new Image();
+    img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(body)}`;
+    chestImages.set(key, img);
+  }
+  return img;
+}
 
 /** Coffre fermé, gemme de la couleur `lock`. */
 export const chestIcon = (cls: string, lock: number) => chestSvg(cls, `#${lock.toString(16).padStart(6, '0')}`);

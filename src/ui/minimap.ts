@@ -5,6 +5,7 @@ import { PLANET, PLANET_RADIUS } from '../config/world';
 import type { Pump } from '../game/pumps';
 import type { Chest } from '../game/chests';
 import { RARITIES } from '../config/upgrades';
+import { chestImage } from './icons';
 import type { CallBell } from '../game/lastCall';
 import type { Zombie } from '../enemies/zombie';
 import { heightAt } from '../world/terrain';
@@ -124,35 +125,18 @@ export function createMinimap() {
       ctx.drawImage(terrain, -span * scale, -span * scale, 2 * span * scale, 2 * span * scale);
       ctx.restore();
 
-      // Coffres encore fermés dans le disque : petits carrés bruns. Les gratuits : plus gros, de la couleur de leur
-      // rareté, toujours affichés (posés au bord du disque quand ils sont loin)
+      // Coffres encore fermés dans le disque : l'icône du coffre du jeu, fermée. Les gratuits : plus gros, ouverts avec
+      // la lumière de leur rareté, toujours affichés (posés au bord du disque quand ils sont loin)
       for (const c of chests) {
         if (c.opened) continue;
         const m = toMap(c.pos);
         const k = c.free && m.dist > M.range * 0.9 ? (M.range * 0.9) / m.dist : 1;
         if (!c.free && m.dist > M.range * 0.95) continue;
-        const cs = (c.free ? M.freeChestSize : M.chestSize) * dpr;
-        const cx = R + m.x * k * scale, cy = R - m.y * k * scale;
-        if (!c.free) {
-          ctx.fillStyle = hex(M.colors.chest);
-          ctx.fillRect(cx - cs / 2, cy - cs / 2, cs, cs);
-          ctx.lineWidth = 1.5 * dpr; ctx.strokeStyle = '#1a120c';
-          ctx.strokeRect(cx - cs / 2, cy - cs / 2, cs, cs);
-          continue;
-        }
-        // Coffre gratuit : un petit coffre (corps brun, couvercle soulevé de la couleur de sa rareté) dans un halo
-        const glow = c.rarity !== undefined ? RARITIES[c.rarity].color : hex(M.colors.freeChest);
-        ctx.beginPath(); ctx.arc(cx, cy, cs * 0.95, 0, Math.PI * 2);
-        ctx.globalAlpha = M.freeChestHalo; ctx.fillStyle = glow; ctx.fill(); ctx.globalAlpha = 1;
-        const w = cs, h = cs * 0.55, top = cy - h / 2 + cs * 0.15;
-        ctx.lineWidth = 2 * dpr; ctx.strokeStyle = '#1a120c';
-        ctx.fillStyle = hex(M.colors.chest);
-        ctx.fillRect(cx - w / 2, top, w, h); ctx.strokeRect(cx - w / 2, top, w, h);
-        ctx.save();
-        ctx.translate(cx - w / 2, top - 1 * dpr); ctx.rotate(-0.35);
-        ctx.fillStyle = glow;
-        ctx.fillRect(0, -cs * 0.32, w, cs * 0.32); ctx.strokeRect(0, -cs * 0.32, w, cs * 0.32);
-        ctx.restore();
+        const color = c.free ? (c.rarity !== undefined ? RARITIES[c.rarity].color : hex(M.colors.freeChest)) : hex(M.colors.chest);
+        const img = chestImage(color, !!c.free);
+        if (!img.complete) continue;
+        const w = (c.free ? M.freeChestSize : M.chestSize) * dpr, h = (w * img.height) / img.width;
+        ctx.drawImage(img, R + m.x * k * scale - w / 2, R - m.y * k * scale - h * (c.free ? 0.72 : 0.55), w, h);
       }
 
       // Pompes encore pleines dans le disque, en point de leur couleur ; rien d'autre (vidées ou trop loin)

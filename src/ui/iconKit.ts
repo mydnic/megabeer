@@ -126,6 +126,9 @@ export const iconDataUrl = (body: string, px = 128) => {
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 };
 
+/** Les dégradés partagés des icônes (`<defs>...</defs>`), pour une icône autonome. */
+export const iconDefs = () => DEFS.slice(DEFS.indexOf('<defs>'), DEFS.indexOf('</defs>') + 7);
+
 export const svg64 = (cls: string, body: string) => {
   ensureIconDefs();
   return `<svg viewBox="0 0 64 64" class="${cls}">${body}</svg>`;

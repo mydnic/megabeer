@@ -56,12 +56,10 @@ export const MINIMAP = {
   rockBlend: 10,
   pumpDot: 6,
   playerArrow: 9,
-  /** Côté du carré d'un coffre (px). */
-  chestSize: 7,
-  /** Coffre gratuit : largeur (px) de son icône (petit coffre au couvercle soulevé de la couleur de sa rareté, sinon `freeChest`, dans un halo), toujours affichée (au bord quand il est loin). */
-  freeChestSize: 11,
-  /** Opacité du halo autour d'un coffre gratuit. */
-  freeChestHalo: 0.45,
+  /** Largeur de l'icône d'un coffre (px). */
+  chestSize: 12,
+  /** Coffre gratuit : largeur (px) de son icône (le coffre ouvert, la lumière de la couleur de sa rareté, sinon `freeChest`), toujours affichée (au bord quand il est loin). */
+  freeChestSize: 20,
   colors: { low: 0x3d6b2e, high: 0x9ccc5a, rock: 0x8a8478, player: 0xfff4dc, chest: 0xb07038, freeChest: 0xffc93a, bell: 0xffd45a, elite: 0xff3b2a, door: 0xff3a2a, reaper: 0x2a0f3a },
   /** Élites : rayon du point (px). */
   eliteDot: 6,
