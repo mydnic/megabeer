@@ -54,7 +54,7 @@ export type Phase = 'home' | 'run' | 'dead';
 export type Spawn = { dir: THREE.Vector3; facing: THREE.Vector3 };
 export type RunEnd = 'mort' | 'abandon';
 /** Ce que lâche une poubelle cassée. */
-export type BinLoot = 'xp' | 'coins' | 'snack';
+export type BinLoot = 'xp' | 'coins' | 'tunas' | 'snack';
 
 /** Tout ce que le noyau annonce. L'affichage, les sons, le HUD et le journal de run s'y abonnent. */
 export type GameEvents = {
@@ -689,17 +689,20 @@ export class Game {
     this.events.emit('lastCallRung', { source, at: (bell ? bell.pos : this.player.pos).clone(), bell, pulled });
   }
 
-  /** Casse une poubelle : elle lâche de l'XP, des capsules ou, rarement, un snack. */
+  /** Casse une poubelle : elle lâche de l'XP, des capsules, des liasses de TUNAS ou, rarement, un snack. */
   private breakBin(bin: Bin, by: 'player' | 'weapon') {
     if (bin.broken) return;
     bin.broken = true;
     const L = BINS.loot;
-    const r = this.random() * (L.xp + L.coins + L.snack);
-    const loot: BinLoot = r < L.xp ? 'xp' : r < L.xp + L.coins ? 'coins' : 'snack';
+    const r = this.random() * (L.xp + L.coins + L.tunas + L.snack);
+    const loot: BinLoot = r < L.xp ? 'xp' : r < L.xp + L.coins ? 'coins' : r < L.xp + L.coins + L.tunas ? 'tunas' : 'snack';
+    const between = (a: number, b: number) => a + Math.min(b - a, Math.floor(this.random() * (b - a + 1)));
     if (loot === 'xp') for (let i = 0; i < BINS.xp.drops; i++) this.xp.drop(bin.pos, BINS.xp.value);
     else if (loot === 'coins') {
       const n = BINS.coins.min + Math.min(BINS.coins.max - BINS.coins.min, Math.floor(this.random() * (BINS.coins.max - BINS.coins.min + 1)));
       for (let i = 0; i < n; i++) this.coinDrops.drop(bin.pos, COINS.value);
+    } else if (loot === 'tunas') {
+      for (let i = between(BINS.tunas.min, BINS.tunas.max); i > 0; i--) this.tunaDrops.drop(bin.pos, TUNAS.value);
     } else this.snackDrops.drop(bin.pos, 1);
     this.events.emit('binBroken', { bin, by, loot });
   }

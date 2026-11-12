@@ -126,17 +126,16 @@ export function createMinimap() {
       ctx.restore();
 
       // Coffres encore fermés dans le disque : l'icône du coffre du jeu, fermée. Les gratuits : plus gros, ouverts avec
-      // la lumière de leur rareté, toujours affichés (posés au bord du disque quand ils sont loin)
+      // la lumière de leur rareté (seulement dans la zone, comme les autres : choix de l'utilisateur)
       for (const c of chests) {
         if (c.opened) continue;
         const m = toMap(c.pos);
-        const k = c.free && m.dist > M.range * 0.9 ? (M.range * 0.9) / m.dist : 1;
-        if (!c.free && m.dist > M.range * 0.95) continue;
+        if (m.dist > M.range * 0.95) continue;
         const color = c.free ? (c.rarity !== undefined ? RARITIES[c.rarity].color : hex(M.colors.freeChest)) : hex(M.colors.chest);
         const img = chestImage(color, !!c.free);
         if (!img.complete) continue;
         const w = (c.free ? M.freeChestSize : M.chestSize) * dpr, h = (w * img.height) / img.width;
-        ctx.drawImage(img, R + m.x * k * scale - w / 2, R - m.y * k * scale - h * (c.free ? 0.72 : 0.55), w, h);
+        ctx.drawImage(img, R + m.x * scale - w / 2, R - m.y * scale - h * (c.free ? 0.72 : 0.55), w, h);
       }
 
       // Pompes encore pleines dans le disque, en point de leur couleur ; rien d'autre (vidées ou trop loin)
@@ -150,13 +149,13 @@ export function createMinimap() {
         ctx.lineWidth = 2 * dpr; ctx.strokeStyle = '#1a120c'; ctx.stroke();
       }
 
-      // Cloches du Dernier service pas encore sonnées : toujours là, posées au bord du disque quand elles sont loin
+      // Cloches du Dernier service pas encore sonnées, dans le disque seulement (choix de l'utilisateur)
       for (const b of bells) {
         if (b.rung) continue;
         const m = toMap(b.pos);
-        const k = m.dist > M.range * 0.9 ? (M.range * 0.9) / m.dist : 1;
+        if (m.dist > M.range * 0.92) continue;
         ctx.beginPath();
-        ctx.arc(R + m.x * k * scale, R - m.y * k * scale, M.bellDot * dpr, 0, Math.PI * 2);
+        ctx.arc(R + m.x * scale, R - m.y * scale, M.bellDot * dpr, 0, Math.PI * 2);
         ctx.fillStyle = hex(M.colors.bell); ctx.fill();
         ctx.lineWidth = 2 * dpr; ctx.strokeStyle = '#1a120c'; ctx.stroke();
       }

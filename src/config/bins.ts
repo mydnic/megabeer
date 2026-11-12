@@ -1,5 +1,5 @@
 // Poubelles et snacks (GDD section 10, exploration). Une poubelle se casse d'un coup, au contact du
-// joueur ou d'une arme, et lâche de l'XP, des capsules ou, rarement, un snack qui soigne. Valeurs de
+// joueur ou d'une arme, et lâche de l'XP, des capsules, parfois des liasses de TUNAS ou, rarement, un snack qui soigne. Valeurs de
 // départ, à caler en jouant.
 
 export const BINS = {
@@ -20,11 +20,13 @@ export const BINS = {
   height: 0.95,
   hitRadius: 0.75,
   /** Ce qu'elle lâche : poids de chaque butin (tirés au sort, la somme n'a pas besoin de faire 1). */
-  loot: { xp: 0.55, coins: 0.4, snack: 0.05 },
+  loot: { xp: 0.5, coins: 0.37, tunas: 0.08, snack: 0.05 },
   /** XP : gouttes lâchées et valeur de chacune. */
   xp: { drops: 3, value: 2 },
   /** Capsules lâchées (au hasard entre min et max). */
   coins: { min: 2, max: 4 },
+  /** Liasses de TUNAS lâchées (au hasard entre min et max, chacune de la valeur d'une liasse d'ennemi). */
+  tunas: { min: 1, max: 3 },
 } as const;
 
 /** Apparence (world/binsView.ts) : poubelle de rue « Trashcan » de Poly by Google, couvercle à part. */

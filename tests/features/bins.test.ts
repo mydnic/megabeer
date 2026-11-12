@@ -82,6 +82,19 @@ describe('Les poubelles', () => {
     expect(t.game.coins).toBeLessThanOrEqual(BINS.coins.max);
   });
 
+  it('parfois des liasses de TUNAS', () => {
+    const L = BINS.loot;
+    // Tirage au milieu de la part des TUNAS
+    const { t } = arena(() => (L.xp + L.coins + L.tunas / 2) / (L.xp + L.coins + L.tunas + L.snack));
+    const bin = t.game.bins.list[0];
+    runInto(t, bin);
+    expect(t.events('binBroken')[0].loot).toBe('tunas');
+    t.play(2);
+    expect(t.game.tunaDrops.drops).toHaveLength(0);
+    expect(t.game.tunas).toBeGreaterThanOrEqual(BINS.tunas.min);
+    expect(t.game.tunas).toBeLessThanOrEqual(BINS.tunas.max);
+  });
+
   it('rarement un cornet de frites, qui soigne quand on le ramasse', () => {
     const { t } = arena(() => 0.99);
     const bin = t.game.bins.list[0];
