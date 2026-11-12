@@ -36,6 +36,7 @@ import { FrereSonneur } from './frereSonneur';
 import { Abbe, type WinePuddle } from './abbe';
 import type { Boss } from './boss';
 import { PatronDoor } from './patronDoor';
+import { Closing, type Reaper } from './closing';
 import { BINS, SNACK, SNACK_DROPS } from '../config/bins';
 import { ITEMS, ITEM_EFFECTS, ITEM_STAT_CAPS, type ItemDef, type ItemId, type ItemStatId } from '../config/items';
 import { ItemEffects } from './itemEffects';
@@ -129,6 +130,11 @@ export type GameEvents = {
   doorBusy: Record<string, never>;
   /** Le boss final est tombé : la run est gagnée (le jeu se fige sur l'écran de victoire). */
   victory: { survived: number; kills: number };
+  /** 10:00 : la fermeture du bar, la Mort arrive. */
+  closingStarted: Record<string, never>;
+  /** Une Mort sort de terre ; une Mort lève sa faux. */
+  reaperSpawned: { reaper: Reaper };
+  reaperSwing: { reaper: Reaper };
   /** Un élite arrive dans la horde. */
   eliteSpawned: { zombie: Zombie };
   /** Un élite est tué : il laisse un coffre gratuit (null s'il n'y avait plus de place). */
@@ -232,8 +238,10 @@ export class Game {
   boss: Boss | null = null;
   /** La Porte du patron de la run ; `won` : le boss final est tombé (jeu figé sur la victoire). */
   readonly door: PatronDoor;
+  /** La fermeture du bar (10:00) : les Morts. */
+  readonly closing: Closing;
   won = false;
-  private bossDone = false;
+  bossDone = false;
   /** Tournées du bar (bonus lâchés par les ennemis). */
   readonly tournees: Tournees;
   private rollTournee: () => TourneeId | null;
@@ -310,6 +318,14 @@ export class Game {
     this.pumps = new Pumps(deps.collider);
     this.chests = new Chests(deps.collider);
     this.door = new PatronDoor(deps.collider);
+    this.closing = new Closing({
+      playerPos: () => this.player.pos,
+      hurtPlayer: (dir, damage) => this.hurtPlayer(null, dir, damage),
+      random: () => this.random(),
+      onStart: () => this.events.emit('closingStarted', {}),
+      onSpawn: (reaper) => this.events.emit('reaperSpawned', { reaper }),
+      onSwing: (reaper) => this.events.emit('reaperSwing', { reaper }),
+    });
     this.horde.onHit = (z, dir) => this.hurtPlayer(z, dir, this.damageOf(z, z.def.damage));
     this.horde.onThrow = (z) => this.throwFrom(z);
     this.horde.onArm = (z) => {
@@ -477,6 +493,8 @@ export class Game {
         // Boss de mi-run : il arrive tout seul à son heure
         if (!this.bossDone && this.runTime >= FRERE_SONNEUR.arriveAt) this.spawnBoss();
         this.boss?.update(dt);
+        // Fermeture du bar : à 10:00, la Mort vient chercher le Buveur
+        this.closing.update(dt, this.runTime);
         this.mechanic.update(dt);
         // Pompes à bière : pleine, elle fige le jeu et propose ses bonus
         const full = this.pumps.update(dt, p.pos, this.stats.pumpSpeed);
@@ -1157,6 +1175,7 @@ export class Game {
     this.bossDone = false;
     this.won = false;
     this.door.clear();
+    this.closing.clear();
     this.items.length = 0;
     this.effects.reset();
     this.coinFrac = 0;

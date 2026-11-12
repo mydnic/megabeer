@@ -120,7 +120,12 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    toujours sur la mini-carte (flèche au bord) ; mains de l'Abbé retournées (pouce en haut) ; Abbé 2x plus grand, flaques 2x plus larges ; cartes de level-up à la croix de la manette, X pour valider. Le boss
    est générique (`game/boss.ts`, une vue par boss `createBossView`), victoire = jeu figé + `ui/victoryScreen.ts`.
    Réglages `ABBE`, `PATRON_DOOR`, `DOOR_LOOK`, `WINE_LOOK` (config/bosses.ts). DEV : « Abbé maintenant », « Aller à la
-   porte ». **Ensuite : checkpoint 2, fermeture à 10:00** (videurs qui affluent), puis checkpoint 3 : Last call.
+   porte ». **Checkpoint 2, la fermeture, fait le 2026-11-12, à valider en jeu** : la Mort (modèle Fab « Stylized Death »)
+   remplace les videurs, `game/closing.ts`, `config/closing.ts`, `world/reaperView.ts`, DEV « Fermeture maintenant ». Le
+   modèle n'est pas versionné : `src/assets/private/mort.glb` (ignoré par git), refait par `tools/blender/mort.py` depuis les FBX
+   exportés d'Unreal (`Desktop/MODELS/personnages/gizart_stylized_death`) ; sans lui, repli `mort_repli.glb` (Falibu).
+   Export Unreal : `UnrealEditor.exe <projet> -ExecutePythonScript=...` (le mode -run=pythonscript plante sur les
+   maillages animés). Puis checkpoint 3 : Last call.
    Ensuite : Porte du patron, l'Abbé, fermeture à 10:00, victoire.
    **Tournées du bar faites le 2026-11-11, à valider en jeu** : 8 bonus lâchés par les ennemis (liste dans le journal du
    GDD), `game/tournees.ts`, `config/tournees.ts`, icônes `ui/tourneeIcons.ts` (aussi en texture au sol par

@@ -111,6 +111,8 @@ export const AUDIO = {
     roar: 'impactSoft_heavy', roarVolume: 1, roarRate: 0.3,
     pour: 'impactSoft_heavy', pourVolume: 0.7, pourRate: 0.8, door: 'impactWood_heavy', doorVolume: 1, doorRate: 0.5, death: 'impactBell_heavy', deathVolume: 1, deathRate: 0.4,
   },
+  /** Fermeture : glas (cloche grave, `count` coups espacés de `gap` s) ; une Mort sort de terre, une Mort fauche (entendue jusqu'à `hearDist` m). */
+  closing: { toll: 'impactBell_heavy', tollVolume: 1, tollRate: 0.35, count: 3, gap: 1.1, spawn: 'impactSoft_heavy', spawnVolume: 0.8, spawnRate: 0.4, swingVolume: 1, hearDist: 45 },
   /** Élite : grondement quand il arrive (entendu jusqu'à `hearDist` m), coffre qui tombe à sa mort. */
   elite: { spawn: 'impactSoft_heavy', spawnVolume: 0.7, spawnRate: 0.5, hearDist: 45, chest: 'impactWood_heavy', chestVolume: 0.6, chestRate: 1.1 },
   /** Tournée du bar ramassée : verre qui tinte, puis une bulle ; fin d'une tournée : petit tintement grave. */

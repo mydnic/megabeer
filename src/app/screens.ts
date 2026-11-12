@@ -31,6 +31,7 @@ import { createTourneeHud } from '../ui/tourneeHud';
 import { createBossBar } from '../ui/bossBar';
 import { BOSS_HUD } from '../config/hud';
 import { PATRON_DOOR } from '../config/bosses';
+import { CLOSING } from '../config/closing';
 import { createVictoryScreen } from '../ui/victoryScreen';
 import { TOURNEES } from '../config/tournees';
 import { ITEM_EFFECTS } from '../config/items';
@@ -155,6 +156,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
     banner.pulse();
     banner.hideAfter(3);
   });
+  game.events.on('closingStarted', () => { banner.show(CLOSING.banner.title, CLOSING.banner.sub); banner.pulse(); banner.hideAfter(4); });
   game.events.on('doorBusy', () => { banner.show('Pas maintenant', PATRON_DOOR.busy); banner.hideAfter(1.8); });
   game.events.on('doorOpened', () => { banner.show('Le patron arrive...', 'La porte s\'ouvre'); banner.pulse(); banner.hideAfter(2); });
   // Victoire : l'écran de victoire, retour à l'accueil par son bouton (ou Espace)
@@ -216,7 +218,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
       if (game.phase === 'run' && !game.frozen) pumpGauge.update(game.pumps.focus, game.pumps.filling);
       else pumpGauge.hide();
       const pl = game.player;
-      minimap.update(realDt, pl.pos, pl.facing, pl.camFwd, game.pumps.list, game.chests.list, game.lastCall.list, game.horde.zombies, game.door.open ? null : game.door.pos);
+      minimap.update(realDt, pl.pos, pl.facing, pl.camFwd, game.pumps.list, game.chests.list, game.lastCall.list, game.horde.zombies, game.door.open ? null : game.door.pos, game.closing.reapers);
       const chest = game.phase === 'run' && !game.frozen ? game.chests.focus : null;
       chestPrompt.update(chest ? game.chests.priceOf(chest) : null, game.coins);
       bellPrompt.update(!chest && game.phase === 'run' && !game.frozen && game.lastCall.focus ? 0 : null, game.coins);

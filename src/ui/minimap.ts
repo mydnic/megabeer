@@ -103,7 +103,7 @@ export function createMinimap() {
   return {
     setVisible(v: boolean) { canvas.classList.toggle('on', v); },
     /** Chaque image : position du joueur, sa direction, l'avant de la caméra, les pompes. */
-    update(dt: number, playerPos: THREE.Vector3, facing: THREE.Vector3, camFwd: THREE.Vector3, pumps: readonly Pump[], chests: readonly Chest[], bells: readonly CallBell[] = [], zombies: readonly Zombie[] = [], door: THREE.Vector3 | null = null) {
+    update(dt: number, playerPos: THREE.Vector3, facing: THREE.Vector3, camFwd: THREE.Vector3, pumps: readonly Pump[], chests: readonly Chest[], bells: readonly CallBell[] = [], zombies: readonly Zombie[] = [], door: THREE.Vector3 | null = null, reapers: readonly { pos: THREE.Vector3 }[] = []) {
       if (!canvas.classList.contains('on')) return;
       up.copy(playerPos).normalize();
       fwd.copy(camFwd).addScaledVector(up, -camFwd.dot(up)).normalize();
@@ -187,6 +187,16 @@ export function createMinimap() {
         ctx.lineWidth = 2 * dpr; ctx.strokeStyle = '#1a120c'; ctx.stroke();
         ctx.fillStyle = '#1a120c';
         ctx.fillRect(x - s / 6, y, s / 3, s / 2);
+      }
+
+      // Morts de la fermeture : toujours affichées, posées au bord du disque quand elles sont loin
+      for (const r of reapers) {
+        const m = toMap(r.pos);
+        const k = m.dist > M.range * 0.9 ? (M.range * 0.9) / m.dist : 1;
+        ctx.beginPath();
+        ctx.arc(R + m.x * k * scale, R - m.y * k * scale, M.reaperDot * dpr, 0, Math.PI * 2);
+        ctx.fillStyle = hex(M.colors.reaper); ctx.fill();
+        ctx.lineWidth = 2.5 * dpr; ctx.strokeStyle = '#f3e6cf'; ctx.stroke();
       }
 
       // Le Buveur au centre, tourné dans sa direction de marche

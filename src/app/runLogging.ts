@@ -39,6 +39,7 @@ export function wireRunLog(game: Game, runLog: ReturnType<typeof createRunLog>, 
   game.events.on('bossPhase', ({ phase }) => runLog.event('bossPhase', phase));
   game.events.on('bossKilled', ({ boss }) => runLog.event('bossKill', boss.kind));
   game.events.on('doorOpened', () => runLog.event('door'));
+  game.events.on('closingStarted', () => runLog.event('closing'));
   game.events.on('victory', ({ survived, kills }) => runLog.event('victory', Math.round(survived), kills));
   game.events.on('eliteSpawned', ({ zombie }) => runLog.event('elite', zombie.enemy));
   game.events.on('eliteKilled', ({ zombie, chest }) => runLog.event('eliteKill', zombie.enemy, chest ? 1 : 0));

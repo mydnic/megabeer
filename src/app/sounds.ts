@@ -68,6 +68,11 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
   game.events.on('doorBusy', () => audio.play(AUDIO.chest.deny, AUDIO.chest.denyVolume, AUDIO.chest.denyRate, 0, 'ui'));
   game.events.on('victory', () => { for (let i = 0; i < 4; i++) setTimeout(() => audio.play(BS.bell, BS.bellVolume, 0.8 + i * 0.15, 0, 'ui'), i * 260); });
   // Élites
+  // Fermeture : le glas, puis chaque Mort qui sort de terre et chaque coup de faux
+  const CL = AUDIO.closing;
+  game.events.on('closingStarted', () => { for (let i = 0; i < CL.count; i++) setTimeout(() => audio.play(CL.toll, CL.tollVolume, CL.tollRate, 0, 'ui'), i * CL.gap * 1000); });
+  game.events.on('reaperSpawned', ({ reaper }) => { const k = Math.max(0.3, near(reaper.pos, CL.hearDist)); audio.play(CL.spawn, CL.spawnVolume * k, CL.spawnRate * jitter(0.05)); });
+  game.events.on('reaperSwing', ({ reaper }) => { const k = near(reaper.pos, CL.hearDist); if (k > 0) audio.whoosh(CL.swingVolume * k); });
   game.events.on('eliteSpawned', ({ zombie }) => {
     const E = AUDIO.elite, k = near(zombie.pos, E.hearDist);
     if (k > 0) audio.play(E.spawn, E.spawnVolume * k, E.spawnRate * jitter(0.05));

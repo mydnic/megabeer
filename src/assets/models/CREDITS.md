@@ -9,4 +9,9 @@
   Même licence que la capsule (CC-BY, crédit obligatoire, à confirmer sur la page source).
 - `frites.glb` : cornet de frites du Kenney Food Kit (CC0), découpé par `tools/blender/props.py`.
 
+- `mort_repli.glb` : « Grim Reaper v1.0 » par Falibu (fichier fourni par l'utilisateur, nom d'origine
+  `Grim Reaper v1.0 by Falibu - 3Ook4jHoAjW.glb`). Licence à confirmer sur la page source (probablement CC-BY,
+  crédit obligatoire). Sert de repli quand `src/assets/private/mort.glb` (« Stylized Death » de Gizart, Fab, licence
+  standard, non versionné) est absent.
+
 Les autres GLB de ce dossier sont générés par les scripts de `tools/blender/` (voir CLAUDE.md).

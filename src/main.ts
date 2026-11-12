@@ -29,6 +29,7 @@ import { createBinsView } from './world/binsView';
 import { createLastCallView } from './world/lastCallView';
 import { createBossView, createWaveRingView, createWineView } from './world/bossView';
 import { createDoorView } from './world/doorView';
+import { createReaperView } from './world/reaperView';
 import sonneurUrl from './assets/models/sonneur.glb?url';
 import abbeUrl from './assets/models/abbe.glb?url';
 import { ABBE, FRERE_SONNEUR } from './config/bosses';
@@ -119,6 +120,7 @@ const abbeView = await createBossView(scene, { kind: 'abbe', url: abbeUrl, heigh
 const waveView = createWaveRingView(scene);
 const wineView = createWineView(scene);
 const doorView = await createDoorView(scene);
+const reaperView = await createReaperView(scene);
 game.events.on('zombieHit', ({ zombie }) => { if (zombie === game.boss?.zombie) (game.boss.kind === 'abbe' ? abbeView : sonneurView).hit(); });
 const bellView = await createBellDropsView(scene);
 const tourneeView = createTourneeDropsView(scene);
@@ -207,6 +209,7 @@ function frame(now: number) {
   waveView.sync(sonneurView.boss as FrereSonneur | null);
   wineView.sync(abbeView.boss as Abbe | null);
   doorView.sync(game.door, dt);
+  reaperView.sync(game.closing.reapers, dt);
   bellView.sync(game.bellDrops.drops);
   tourneeView.sync(game.tournees.drops.drops, dt);
   lap('vues');

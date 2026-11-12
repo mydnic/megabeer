@@ -10,6 +10,7 @@ import type { createRunLog } from '../dev/runLog';
 import type { Game } from '../game/game';
 import { TOURNEE_IDS } from '../game/tournees';
 import type { TourneeId } from '../config/tournees';
+import { CLOSING } from '../config/closing';
 
 /**
  * Panneau DEV (yarn dev seulement, importé dynamiquement : absent du build). Toutes ses actions
@@ -97,6 +98,11 @@ export async function wireDevTools(game: Game, d: {
       const p = game.player;
       const at = p.pos.clone().addScaledVector(p.facing, 14);
       if (game.spawnAbbe(at, p.pos.clone().sub(at))) runLog.event('dev', 'abbe');
+    },
+    closingNow() {
+      if (!inRun()) return;
+      game.runTime = Math.max(game.runTime, CLOSING.at);
+      runLog.event('dev', 'closing');
     },
     goToDoor() {
       const d = game.door;

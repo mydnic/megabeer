@@ -194,6 +194,9 @@ export function wireEffects(game: Game, d: Deps) {
   });
   // L'Abbé répand son vin : une éclaboussure sur chaque flaque ; la porte du patron s'ouvre dans la poussière
   game.events.on('winePoured', ({ puddles }) => { for (const w of puddles) { vfx.pop(numPos.copy(w.at).setLength(w.at.length() + 0.3), WINE_LOOK.arming.markColor, 1.6); vfx.dust(w.at, 4, 0.8, 2); } });
+  // Fermeture : la terre tremble ; chaque Mort sort de terre dans un nuage de poussière
+  game.events.on('closingStarted', () => rig.shake(ARRIVAL.shake.amount, ARRIVAL.shake.amplitude, ARRIVAL.shake.decay));
+  game.events.on('reaperSpawned', ({ reaper }) => vfx.dust(reaper.pos, 18, 1.6, 6));
   game.events.on('doorOpened', ({ at }) => { vfx.dust(at, 24, 2.5, 8); vfx.beam(at, DOOR_LOOK.beamColor, 1.8, 18, 1.6); rig.shake(ARRIVAL.shake.amount, ARRIVAL.shake.amplitude, ARRIVAL.shake.decay); });
   // Élite : il sort de terre dans un éclat rouge ; tué, son coffre tombe dans une pluie d'étincelles
   game.events.on('eliteSpawned', ({ zombie }) => {
