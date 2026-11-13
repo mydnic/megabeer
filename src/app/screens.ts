@@ -97,7 +97,11 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
 
   // --- Écrans
   const loading = createLoadingScreen();
-  const levelUp = createLevelUpScreen((card) => game.pickCard(card), () => audio.play(AUDIO.cards.hover, AUDIO.cards.hoverVolume, jitter(0.05), 0, 'ui'));
+  const levelUp = createLevelUpScreen((card) => game.pickCard(card), () => audio.play(AUDIO.cards.hover, AUDIO.cards.hoverVolume, jitter(0.05), 0, 'ui'), (o, card) => {
+    if (o === 'reroll') game.rerollCards();
+    else if (o === 'skip') game.skipCards();
+    else if (card) game.banishCard(card);
+  });
   const deathBanner = createDeathBanner(() => game.goHome());
   const pause = createPauseMenu({
     resume: () => game.resume(),
@@ -139,7 +143,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   // Portraits des persos, rendus une fois depuis leur modèle 3D
   const portraits = new Map<string, string>();
   void renderPortrait(buveurUrl).then((u) => { portraits.set('buveur', u); shop.refresh(); }).catch((e) => console.error('[portrait]', e));
-  const shop = createShopScreen({ buy: (k) => progress.buy(k), profile: () => progress.profile, onClose: () => home.focus(), portrait: (id) => portraits.get(id) ?? null });
+  const shop = createShopScreen({ buy: (k) => progress.buy(k), buySkill: (l) => progress.buySkill(l), profile: () => progress.profile, onClose: () => home.focus(), portrait: (id) => portraits.get(id) ?? null });
   progress.onChange(() => shop.refresh());
   void progress.init();
   // TUNAS de la dernière run, pour le bilan de fin
@@ -197,7 +201,11 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   game.events.on('died', () => bossBar.hide());
   game.events.on('died', () => banner.clear());
   game.events.on('home', () => banner.clear());
-  game.events.on('levelUpOffered', ({ level, cards }) => levelUp.show(level, cards));
+  // Level-up : les cartes, et sous elles Relancer / Bannir / Passer s'il en reste (skill tree)
+  let lastLevel = 0;
+  game.events.on('levelUpOffered', ({ level, cards }) => { lastLevel = level; levelUp.show(level, cards, undefined, undefined, game.cardOptions); });
+  game.events.on('cardBanished', ({ cards }) => { if (cards.length) levelUp.show(lastLevel, cards, undefined, undefined, game.cardOptions); });
+  game.events.on('cardsSkipped', () => { if (game.progression.pending === 0) lockCursor(); });
   // Pompe à bière pleine : même écran, titre de la pompe
   game.events.on('pumpFilled', ({ pump, cards }) => levelUp.show(0, cards, `Pompe en ${PUMP_TIERS[pump.tier].name} !`));
   game.events.on('chestOpened', () => chestReveal.finish());
@@ -241,7 +249,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
     forceDifficulty(d: DifficultyId) { progress.difficulty = d; difficulty.update([...new Set([...progress.profile.difficulties, d])], d); },
     /** Chaque image : HUD, écran de mort, manette et Espace dans les menus. */
     update(realDt: number, input: InputState) {
-      levelUp.input(input.moveX, input.jumpPressed || input.actionPressed);
+      levelUp.input(input.moveX, input.jumpPressed || input.actionPressed, input.moveY);
       // Menus à la manette : celui du premier plan (Options, puis pause, puis accueil) ; B revient en arrière
       const menu = options.open ? options.root : shop.open ? shop.root : pause.open ? pause.root : game.phase === 'home' && home.visible && !starting ? home.root : null;
       const back = options.open ? options.close : shop.open ? shop.close : pause.open ? () => game.resume() : undefined;

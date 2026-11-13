@@ -5,6 +5,8 @@ import { CARD_OPTIONS, ITEM_PRICES, SHOP_CHARACTERS, STARTING_CHARACTERS, STARTI
 import { WEAPON_FACTORIES } from '../weapons/registry';
 import type { WeaponId } from '../weapons/weapon';
 import type { Profile } from './profile';
+import { skillBonuses } from './skills';
+import type { ItemStatId } from '../config/items';
 
 /** Un article : un perso (`character:<id>`), une arme (`weapon:<id>`) ou un objet (`item:<id>`). */
 export type ShopEntry =
@@ -48,15 +50,16 @@ export function buy(p: Profile, key: string, now: number): Profile | null {
 }
 
 /**
- * Ce que la run peut utiliser : les armes qui sortent au level-up, les objets qui sortent des coffres, et les utilisations
- * des options de cartes (0 tant que le skill tree n'existe pas).
+ * Ce que la run peut utiliser : les armes qui sortent au level-up, les objets qui sortent des coffres (boutique), les
+ * utilisations des options de cartes et les bonus de stat du début de run (skill tree).
  */
-export type RunUnlocks = { weapons: ReadonlySet<WeaponId>; items: ReadonlySet<ItemId>; options: Record<CardOptionId, number> };
+export type RunUnlocks = { weapons: ReadonlySet<WeaponId>; items: ReadonlySet<ItemId>; options: Record<CardOptionId, number>; bonuses: readonly { stat: ItemStatId; value: number }[] };
 
 export function runUnlocks(p: Profile): RunUnlocks {
   const weapons = new Set((Object.keys(WEAPON_FACTORIES) as WeaponId[]).filter((id) => owned(p, weaponKey(id))));
   const items = new Set((Object.keys(ITEMS) as ItemId[]).filter((id) => owned(p, itemKey(id))));
+  const skills = skillBonuses(p);
   const options = {} as Record<CardOptionId, number>;
-  for (const o of Object.keys(CARD_OPTIONS) as CardOptionId[]) options[o] = 0;
-  return { weapons, items, options };
+  for (const o of Object.keys(CARD_OPTIONS) as CardOptionId[]) options[o] = skills.options[o];
+  return { weapons, items, options, bonuses: skills.stats };
 }

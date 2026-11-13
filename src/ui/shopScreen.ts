@@ -4,6 +4,8 @@ import { WEAPON_INFO } from '../config/weapons';
 import { itemCardText } from '../game/levelUpCards';
 import type { Profile } from '../meta/profile';
 import { catalog, owned, type ShopEntry } from '../meta/shop';
+import { SKILL_LINES, SKILL_PRICES } from '../config/skills';
+import { tiersOf } from '../meta/skills';
 import { weaponIcon, tunasIcon } from './icons';
 import { pint, svg64 } from './iconKit';
 import { itemIcon } from './itemIcons';
@@ -51,7 +53,25 @@ const CSS = `
 .shop-buy:hover, .shop-buy:focus-visible { transform: scale(1.04); outline: 3px solid #ffc93a; outline-offset: 2px; }
 .shop-buy.poor { background: linear-gradient(#8a7a6a, #5a4a3a); color: #e8dccb; cursor: default; }
 .shop-msg { min-height: 22px; margin-top: 6px; font-size: 16px; color: #ffb4a0; }
-@media (max-width: 540px) { .shop-head { flex-wrap: wrap; } .shop-grid { grid-template-columns: 1fr; } }
+.shop-tabs { display: flex; gap: 8px; }
+.shop-tab { font: inherit; font-size: clamp(22px, 3vw, 32px); letter-spacing: .04em; cursor: pointer; padding: 4px 18px 7px; border: 3px solid #1a120c;
+  border-radius: 16px; color: #f3e6cf; background: rgba(42,22,8,.75); box-shadow: 0 4px 0 #1a120c; transition: transform .08s; }
+.shop-tab.on { color: #2a1608; background: linear-gradient(#ffd45a, #f5a623 60%, #e08a12); }
+.shop-tab:hover, .shop-tab:focus-visible { transform: scale(1.05); outline: none; }
+/* Skill tree : une ligne par catégorie, ses paliers de gauche à droite (chacun demande le précédent) */
+.sk-line { display: grid; grid-template-columns: 130px repeat(5, 1fr); gap: 8px; align-items: stretch; margin: 10px 0; }
+.sk-name { display: flex; align-items: center; font-size: 22px; color: var(--c); text-shadow: -2px 0 #1a120c, 2px 0 #1a120c, 0 -2px #1a120c, 0 2px #1a120c; }
+.sk-tier { position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: 6px; padding: 8px 8px 8px; border: 3px solid #1a120c;
+  border-radius: 12px; background: linear-gradient(#fff8e2, #f1dcae); color: #2a1608; box-shadow: 0 4px 0 #1a120c, inset 0 0 0 3px var(--c); font-size: 13px; line-height: 1.2; }
+.sk-tier.locked { background: linear-gradient(#a8977a, #8a785c); color: #2a1608; opacity: .7; }
+.sk-tier.next { box-shadow: 0 4px 0 #1a120c, inset 0 0 0 3px var(--c), 0 0 14px var(--c); }
+.sk-tier .shop-own, .sk-tier .shop-buy { align-self: flex-start; grid-column: auto; }
+.sk-tier .shop-buy { align-self: stretch; }
+.sk-price { display: inline-flex; align-items: center; gap: 4px; font-size: 15px; opacity: .8; }
+.sk-price svg { width: 18px; height: 18px; }
+.sk-tier .shop-lock { position: static; width: 18px !important; height: 18px !important; }
+@media (max-width: 900px) { .sk-line { grid-template-columns: repeat(5, 1fr); } .sk-name { grid-column: 1 / -1; } }
+@media (max-width: 540px) { .shop-head { flex-wrap: wrap; } .shop-grid { grid-template-columns: 1fr; } .sk-line { grid-template-columns: 1fr 1fr; } }
 `;
 
 const TUNAS = tunasIcon();
@@ -63,17 +83,18 @@ const WEAPON_COLOR = '#f5a623';
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
 /**
- * La boutique (accueil, bouton Boutique) : les TUNAS du joueur, puis trois rayons, Persos, Armes et Objets (par rareté).
- * Un article débloqué l'est pour toutes les runs suivantes. Souris, clavier ou manette (croix, A pour acheter, B pour
+ * La boutique (accueil, bouton Boutique), deux onglets. Boutique : les TUNAS du joueur, puis trois rayons, Persos, Armes
+ * et Objets (par rareté) ; un article débloqué l'est pour toutes les runs suivantes. Skill tree : une ligne de paliers par
+ * catégorie, achetés dans l'ordre. Souris, clavier ou manette (croix, A pour acheter, B pour
  * revenir : navigation commune des menus).
  */
-export function createShopScreen(cb: { buy: (key: string) => boolean; profile: () => Profile; onClose: () => void; portrait: (id: string) => string | null }) {
+export function createShopScreen(cb: { buy: (key: string) => boolean; buySkill: (line: string) => boolean; profile: () => Profile; onClose: () => void; portrait: (id: string) => string | null }) {
   const style = document.createElement('style');
   style.textContent = CSS;
   document.head.appendChild(style);
   const el = document.createElement('div');
   el.className = 'shop off';
-  el.innerHTML = `<div class="shop-head"><div class="shop-title">Boutique</div><div class="shop-wallet">${TUNAS}<span></span></div><button class="shop-close">Fermer</button></div>
+  el.innerHTML = `<div class="shop-head"><div class="shop-tabs"><button class="shop-tab on" data-t="shop">Boutique</button><button class="shop-tab" data-t="skills">Skill tree</button></div><div class="shop-wallet">${TUNAS}<span></span></div><button class="shop-close">Fermer</button></div>
     <div class="shop-msg"></div><div class="shop-body"></div>`;
   document.body.appendChild(el);
   const wallet = el.querySelector<HTMLElement>('.shop-wallet span')!;
@@ -100,9 +121,46 @@ export function createShopScreen(cb: { buy: (key: string) => boolean; profile: (
     return box(WEAPON_COLOR, '', face ? `<img src="${face}" alt="">` : PINT, e.name, e.pitch);
   }
 
+  let tab: 'shop' | 'skills' = 'shop';
+  for (const t of el.querySelectorAll<HTMLButtonElement>('.shop-tab')) {
+    t.addEventListener('click', (e) => {
+      e.stopPropagation();
+      tab = t.dataset.t as 'shop' | 'skills';
+      msg.textContent = '';
+      render();
+      body.scrollTop = 0;
+    });
+    t.addEventListener('keydown', (e) => { if (e.code === 'Space' || e.code === 'Enter') e.stopPropagation(); });
+  }
+
+  /** Le skill tree : une ligne par catégorie ; acheté, prochain palier (à acheter), ou fermé (il faut le précédent). */
+  function renderSkills(p: Profile) {
+    body.innerHTML = SKILL_LINES.map((line) => {
+      const done = tiersOf(p, line.id);
+      const cells = line.tiers.map((tier, i) => {
+        const price = SKILL_PRICES[Math.min(i, SKILL_PRICES.length - 1)];
+        if (i < done) return `<div class="sk-tier"><span>${esc(tier.text)}</span><span class="shop-own">${CHECK}</span></div>`;
+        if (i === done) return `<div class="sk-tier next"><span>${esc(tier.text)}</span><button class="shop-buy${p.tunas < price ? ' poor' : ''}" data-s="${line.id}">${TUNAS}${price}</button></div>`;
+        return `<div class="sk-tier locked"><span>${esc(tier.text)}</span><span class="sk-price">${LOCK}${price}</span></div>`;
+      }).join('');
+      return `<div class="sk-line" style="--c:${line.color}"><div class="sk-name">${esc(line.name)}</div>${cells}</div>`;
+    }).join('');
+    for (const b of body.querySelectorAll<HTMLButtonElement>('.shop-buy[data-s]')) {
+      b.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        const line = b.dataset.s!;
+        if (cb.buySkill(line)) { msg.textContent = ''; render(); (body.querySelector<HTMLElement>(`.shop-buy[data-s="${line}"]`) ?? body.querySelector<HTMLElement>('.shop-buy[data-s]'))?.focus({ preventScroll: true }); }
+        else msg.textContent = 'Pas assez de TUNAS';
+      });
+      b.addEventListener('keydown', (ev) => { if (ev.code === 'Space' || ev.code === 'Enter') ev.stopPropagation(); });
+    }
+  }
+
   function render() {
     const p = cb.profile();
     wallet.textContent = p.tunas.toLocaleString('fr');
+    for (const t of el.querySelectorAll<HTMLElement>('.shop-tab')) t.classList.toggle('on', t.dataset.t === tab);
+    if (tab === 'skills') { renderSkills(p); return; }
     const all = catalog();
     const section = (title: string, list: ShopEntry[]) => `<h2>${title}</h2><div class="shop-grid">${list.map((e) => card(e, p)).join('')}</div>`;
     const items = all.filter((e): e is Extract<ShopEntry, { kind: 'item' }> => e.kind === 'item');
@@ -139,7 +197,7 @@ export function createShopScreen(cb: { buy: (key: string) => boolean; profile: (
       msg.textContent = '';
       render();
       el.classList.remove('off');
-      (el.querySelector<HTMLElement>('.shop-buy[data-k]') ?? el.querySelector<HTMLElement>('.shop-close'))!.focus({ preventScroll: true });
+      el.querySelector<HTMLElement>('.shop-tab.on')!.focus({ preventScroll: true });
     },
     /** Les TUNAS ont changé (fin de run, connexion) : réaffiche si ouverte. */
     refresh() { if (!el.classList.contains('off')) render(); },

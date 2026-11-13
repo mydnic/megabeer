@@ -20,13 +20,15 @@ export type Profile = {
   totalTunas: number;
   /** Achats de la boutique (`item:<id>`, `weapon:<id>`, `character:<id>`, voir meta/shop.ts). */
   unlocks: string[];
+  /** Skill tree : paliers achetés par ligne (id de la ligne -> nombre de paliers, voir meta/skills.ts). */
+  skills: Record<string, number>;
   /** Difficultés ouvertes (Sobre d'office ; la suivante s'ouvre en tuant l'Abbé dans la précédente). */
   difficulties: DifficultyId[];
   /** Dernière modification (ms depuis 1970) : la plus récente gagne entre deux appareils. */
   updatedAt: number;
 };
 
-export const emptyProfile = (): Profile => ({ version: PROFILE_VERSION, runs: 0, bestTime: 0, totalKills: 0, tunas: 0, totalTunas: 0, unlocks: [], difficulties: ['sobre'], updatedAt: 0 });
+export const emptyProfile = (): Profile => ({ version: PROFILE_VERSION, runs: 0, bestTime: 0, totalKills: 0, tunas: 0, totalTunas: 0, unlocks: [], skills: {}, difficulties: ['sobre'], updatedAt: 0 });
 
 const count = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : 0);
 
@@ -41,6 +43,9 @@ export function readProfile(raw: unknown): Profile {
   p.tunas = Math.floor(count(r.tunas));
   p.totalTunas = Math.max(p.tunas, Math.floor(count(r.totalTunas)));
   p.unlocks = Array.isArray(r.unlocks) ? [...new Set(r.unlocks.filter((u): u is string => typeof u === 'string'))] : [];
+  if (r.skills && typeof r.skills === 'object') {
+    for (const [k, v] of Object.entries(r.skills as Record<string, unknown>)) if (typeof v === 'number' && v > 0) p.skills[k] = Math.floor(v);
+  }
   if (Array.isArray(r.difficulties)) p.difficulties = ORDER.filter((d) => d === 'sobre' || (r.difficulties as unknown[]).includes(d));
   p.updatedAt = count(r.updatedAt);
   return p;
@@ -81,9 +86,10 @@ export function mergeProfiles(account: Profile, guest: Profile, now: number): Pr
     totalTunas: account.totalTunas + guest.totalTunas,
     unlocks: [...new Set([...account.unlocks, ...guest.unlocks])],
     difficulties: ORDER.filter((d) => account.difficulties.includes(d) || guest.difficulties.includes(d)),
+    skills: Object.fromEntries([...new Set([...Object.keys(account.skills), ...Object.keys(guest.skills)])].map((k) => [k, Math.max(account.skills[k] ?? 0, guest.skills[k] ?? 0)])),
     updatedAt: now,
   };
 }
 
 /** Un profil vide (jamais joué) : rien à rattacher. */
-export const isEmpty = (p: Profile) => p.runs === 0 && p.totalKills === 0 && p.tunas === 0 && p.unlocks.length === 0;
+export const isEmpty = (p: Profile) => p.runs === 0 && p.totalKills === 0 && p.tunas === 0 && p.unlocks.length === 0 && !Object.keys(p.skills).length;

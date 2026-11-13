@@ -1,5 +1,6 @@
 import { emptyProfile, isEmpty, mergeProfiles, readProfile, recordRun, type Profile } from '../meta/profile';
 import { buy } from '../meta/shop';
+import { buySkill } from '../meta/skills';
 import { DIFFICULTIES, type DifficultyId } from '../config/spawn';
 
 const DIFF_KEY = 'megabeer.difficulty';
@@ -99,6 +100,16 @@ export function createProgress() {
       profile = { ...profile, tunas: profile.tunas + n, totalTunas: profile.totalTunas + n, updatedAt: Date.now() };
       changed();
       void save();
+    },
+
+    /** Achat du palier suivant d'une ligne du skill tree, sauvegardé tout de suite. Faux si impossible. */
+    buySkill(line: string) {
+      const next = buySkill(profile, line, Date.now());
+      if (!next) return false;
+      profile = next;
+      changed();
+      void save();
+      return true;
     },
 
     login() { location.href = '/api/auth/discord'; },

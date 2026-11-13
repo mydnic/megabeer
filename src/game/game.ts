@@ -430,6 +430,8 @@ export class Game {
     this.resetRun();
     this.phase = 'run';
     this.player.reset(spawn.dir, spawn.facing);
+    // Skill tree : ses bonus de stat valent dès le début de la run
+    for (const b of this.unlocks?.bonuses ?? []) this.applyStatBonus(b.stat, b.value, true);
     this.pumps.place(spawn.dir);
     this.chests.place(spawn.dir, this.pumps.list.map((p) => p.pos), this.trapChance);
     this.lastCall.place(spawn.dir, this.chests.list.map((c) => c.pos), this.pumps.list.map((p) => p.pos));
@@ -636,7 +638,7 @@ export class Game {
    * Bonus de stat (pompe à bière) : ajouté à la stat du joueur. PV max : la vie monte d'autant ;
    * vitesse : appliquée au déplacement.
    */
-  applyStatBonus(stat: ItemStatId, value: number) {
+  applyStatBonus(stat: ItemStatId, value: number, silent = false) {
     if (stat === 'maxHp') {
       this.health.max += value;
       this.health.heal(value);
@@ -646,7 +648,7 @@ export class Game {
       if (stat === 'jumpHeight') this.player.jumpMul = 1 + this.stats.jumpHeight;
       if (stat === 'chestDiscount') this.chests.discount = this.stats.discount;
     }
-    this.events.emit('statGained', { stat, value });
+    if (!silent) this.events.emit('statGained', { stat, value });
   }
 
   /**

@@ -84,6 +84,17 @@ const CSS = `
 .lu-syn small { display: block; font-size: 11px; opacity: .85; }
 @keyframes lu-syn { to { box-shadow: 0 3px 0 #1a120c, 0 0 16px var(--s); } }
 .lu-hint { color: #cdbfa6; font-size: 15px; letter-spacing: .04em; }
+/* Relancer, Bannir, Passer (skill tree) : sous les cartes, avec leurs utilisations restantes */
+.lu-opts { display: flex; gap: 12px; }
+.lu-opts:empty { display: none; }
+.lu-opt { font: inherit; font-size: 19px; letter-spacing: .04em; cursor: pointer; padding: 5px 16px 7px; border: 3px solid #1a120c; border-radius: 14px;
+  color: #f3e6cf; background: linear-gradient(rgba(74,46,28,.95), rgba(42,22,8,.92)); box-shadow: 0 4px 0 #1a120c; transition: transform .08s; }
+.lu-opt small { font-size: 14px; opacity: .7; margin-left: 4px; }
+.lu-opt kbd { font: inherit; font-size: 13px; padding: 0 5px; margin-right: 6px; border-radius: 5px; background: #1a120c; color: #ffc93a; }
+.lu-opt.sel, .lu-opt:hover { transform: scale(1.08); color: #2a1608; background: linear-gradient(#ffd45a, #f5a623 60%, #e08a12); }
+.lu-opt.on { color: #fff; background: linear-gradient(#d8454f, #8a1f28); }
+.lu.banish .lu-card { box-shadow: 0 0 0 4px #d8454f, 0 10px 0 #1a120c; }
+.lu.leave .lu-opts { opacity: 0; transition: opacity .18s; }
 /* Coffre ouvert sous les cartes : elles en sortent une par une */
 .lu-chest { position: relative; width: clamp(110px, 16vh, 180px); margin-top: -1vh; }
 .lu:not(.chest) .lu-chest { display: none; }
@@ -124,36 +135,79 @@ const art = (icon: string) => `<div class="lu-art"><i class="lu-tw"></i><i class
  * Écran de level-up : le jeu est en pause, 3 cartes au choix. Souris, clavier (1 2 3, flèches,
  * Entrée / Espace) ou manette (stick ou croix directionnelle, X ou A pour valider). La couleur du cadre dit la rareté.
  */
-export function createLevelUpScreen(onPick: (card: Card) => void, onHover: () => void) {
+export type CardOptions = { reroll: number; banish: number; skip: number };
+type OptionId = keyof CardOptions;
+const OPTION_LABELS: Record<OptionId, { name: string; key: string; code: string }> = {
+  reroll: { name: 'Relancer', key: 'R', code: 'KeyR' },
+  banish: { name: 'Bannir', key: 'B', code: 'KeyB' },
+  skip: { name: 'Passer', key: 'P', code: 'KeyP' },
+};
+
+export function createLevelUpScreen(onPick: (card: Card) => void, onHover: () => void, onOption: (o: OptionId, card?: Card) => void = () => {}) {
   const style = document.createElement('style');
   style.textContent = CSS;
   document.head.appendChild(style);
   const el = document.createElement('div');
   el.className = 'lu';
-  el.innerHTML = `<div class="lu-title"></div><div class="lu-cards"></div><div class="lu-chest"></div><div class="lu-hint">Clic, 1 2 3, ou flèches et Espace ; manette : croix et X</div>`;
+  el.innerHTML = `<div class="lu-title"></div><div class="lu-cards"></div><div class="lu-opts"></div><div class="lu-chest"></div><div class="lu-hint">Clic, 1 2 3, ou flèches et Espace ; manette : croix et X</div>`;
   document.body.appendChild(el);
   const title = el.querySelector<HTMLElement>('.lu-title')!;
   const row = el.querySelector<HTMLElement>('.lu-cards')!;
   const chestEl = el.querySelector<HTMLElement>('.lu-chest')!;
+  const optsEl = el.querySelector<HTMLElement>('.lu-opts')!;
   let selTimer = 0, leaveTimer = 0;
   let cards: Card[] = [];
-  let sel = 0, open = false, openedAt = 0, lastMoveX = 0;
+  let sel = 0, open = false, openedAt = 0, lastMoveX = 0, lastMoveY = 0;
+  /** Options affichées, la ligne choisie à la manette (cartes ou options), et le mode Bannir (le prochain clic bannit). */
+  let opts: OptionId[] = [], inOpts = false, optSel = 0, banishing = false, heading = '';
 
-  function select(i: number) {
-    if (i === sel || performance.now() - openedAt < 50) return;
-    sel = (i + cards.length) % cards.length;
-    [...row.children].forEach((c, k) => c.classList.toggle('sel', k === sel));
-    onHover();
+  function renderOpts(counts?: CardOptions) {
+    opts = counts ? (Object.keys(OPTION_LABELS) as OptionId[]).filter((o) => counts[o] > 0) : [];
+    optsEl.innerHTML = opts.map((o) => `<button class="lu-opt" data-o="${o}"><kbd>${OPTION_LABELS[o].key}</kbd>${OPTION_LABELS[o].name}<small>x${counts![o]}</small></button>`).join('');
+    for (const b of optsEl.querySelectorAll<HTMLButtonElement>('.lu-opt')) b.addEventListener('click', (e) => { e.stopPropagation(); useOption(b.dataset.o as OptionId); });
+    inOpts = false; optSel = 0; banishing = false;
+    el.classList.remove('banish');
   }
-  function pick(i: number) {
-    if (!open || performance.now() - openedAt < L.inputDelay * 1000) return;
+  function markOpts() {
+    [...optsEl.children].forEach((c, k) => c.classList.toggle('sel', inOpts && k === optSel));
+    [...row.children].forEach((c, k) => c.classList.toggle('sel', !inOpts && k === sel));
+  }
+  function useOption(o: OptionId) {
+    if (!open || !opts.includes(o) || performance.now() - openedAt < L.inputDelay * 1000) return;
+    if (o === 'banish') {
+      // Mode Bannir : la prochaine carte choisie est bannie (un second appui annule)
+      banishing = !banishing;
+      el.classList.toggle('banish', banishing);
+      title.textContent = banishing ? 'Bannir : choisis la carte' : heading;
+      optsEl.querySelector('[data-o="banish"]')?.classList.toggle('on', banishing);
+      inOpts = false;
+      markOpts();
+      return;
+    }
+    if (o === 'skip') leave(-1);
+    onOption(o);
+  }
+  /** Sortie : la carte `i` s'envole (aucune si -1), les autres retombent ; le jeu a déjà repris dessous. */
+  function leave(i: number) {
     open = false;
-    // Sortie : la carte prise s'envole, les autres retombent ; le jeu a déjà repris dessous
     clearTimeout(selTimer);
     [...row.children].forEach((c, k) => { c.classList.remove('sel'); c.classList.toggle('picked', k === i); });
     el.classList.add('leave');
     clearTimeout(leaveTimer);
     leaveTimer = window.setTimeout(() => el.classList.remove('on', 'leave'), L.outTime * 1000);
+  }
+
+  function select(i: number) {
+    if ((i === sel && !inOpts) || performance.now() - openedAt < 50) return;
+    sel = (i + cards.length) % cards.length;
+    inOpts = false;
+    markOpts();
+    onHover();
+  }
+  function pick(i: number) {
+    if (!open || !cards[i] || performance.now() - openedAt < L.inputDelay * 1000) return;
+    if (banishing) { banishing = false; onOption('banish', cards[i]); return; }
+    leave(i);
     onPick(cards[i]);
   }
   addEventListener('keydown', (e) => {
@@ -163,20 +217,24 @@ export function createLevelUpScreen(onPick: (card: Card) => void, onHover: () =>
     else if (e.code === 'Digit3' || e.code === 'Numpad3') pick(2);
     else if (e.code === 'ArrowLeft' || e.code === 'KeyA') select(sel - 1);
     else if (e.code === 'ArrowRight' || e.code === 'KeyD') select(sel + 1);
-    else if (e.code === 'Enter') pick(sel);
+    else if (e.code === 'Enter') { if (inOpts) useOption(opts[optSel]); else pick(sel); }
+    else for (const o of opts) if (e.code === OPTION_LABELS[o].code) useOption(o);
   });
 
   return {
     get open() { return open; },
     /**
      * `heading` : titre à la place de « N° atteint ! » (pompe, coffre). `chest` : couleur de la rareté
-     * d'un coffre, posé ouvert sous les cartes qui en sortent.
+     * d'un coffre, posé ouvert sous les cartes qui en sortent. `options` : utilisations restantes de Relancer, Bannir,
+     * Passer (level-up seulement).
      */
-    show(level: number, list: Card[], heading?: string, chest?: string) {
+    show(level: number, list: Card[], headingText?: string, chest?: string, options?: CardOptions) {
       cards = list;
       sel = 0;
       clearTimeout(leaveTimer);
-      title.textContent = heading ?? `${level}° atteint !`;
+      heading = headingText ?? `${level}° atteint !`;
+      title.textContent = heading;
+      renderOpts(options);
       row.innerHTML = '';
       list.forEach((c, i) => {
         const d = document.createElement('div');
@@ -249,13 +307,19 @@ export function createLevelUpScreen(onPick: (card: Card) => void, onHover: () =>
       openedAt = performance.now();
       if (document.pointerLockElement) document.exitPointerLock();
     },
-    /** Manette et Espace : appelée chaque frame avec l'entrée du jeu. */
-    input(moveX: number, confirm: boolean) {
+    /** Manette et Espace : appelée chaque frame avec l'entrée du jeu (bas : la ligne des options, haut : les cartes). */
+    input(moveX: number, confirm: boolean, moveY = 0) {
       if (!open) return;
+      const dy = moveY > 0.5 ? 1 : moveY < -0.5 ? -1 : 0;
+      if (dy && dy !== lastMoveY && opts.length) { inOpts = dy < 0; markOpts(); onHover(); }
+      lastMoveY = dy;
       const dir = moveX > 0.5 ? 1 : moveX < -0.5 ? -1 : 0;
-      if (dir && dir !== lastMoveX) select(sel + dir);
+      if (dir && dir !== lastMoveX) {
+        if (inOpts) { optSel = (optSel + dir + opts.length) % opts.length; markOpts(); onHover(); }
+        else select(sel + dir);
+      }
       lastMoveX = dir;
-      if (confirm) pick(sel);
+      if (confirm) { if (inOpts) useOption(opts[optSel]); else pick(sel); }
     },
     hide() { open = false; clearTimeout(leaveTimer); el.classList.remove('on', 'leave'); },
   };
