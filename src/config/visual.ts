@@ -28,6 +28,13 @@ export const RENDER = {
   adaptive: { enabled: true, window: 1, lowFps: 45, highFps: 57, cpuShare: 0.6, step: 0.1, minScale: 0.6, cooldown: 2, calmWindows: 5 },
   /** `minIntensity` : sous cette intensité, l'astre ne recalcule plus ses ombres (invisibles de toute façon). */
   shadow: { mapSize: 4096, extent: 40, softness: 3.5, bias: -0.0004, normalBias: 0.05, minIntensity: 0.02 },
+  /**
+   * Rendu léger (render/quality.ts) : téléphones et tablettes, ou `?rendu=leger` dans l'adresse. Sans occlusion
+   * ambiante, halo ni profondeur de champ (trop lourds pour une puce mobile, et sources d'artefacts noirs), sans
+   * anticrénelage multi-échantillons, ombres plus petites, résolution d'écran plafonnée, terrain moins fin
+   * (`terrainDetail` subdivisions au lieu de PLANET.detail).
+   */
+  light: { pixelRatio: 1, shadowMapSize: 1024, minScale: 0.5, terrainDetail: 120 },
 } as const;
 
 /** Matériau par défaut du décor : plastique mat (aspect « maquette »). */

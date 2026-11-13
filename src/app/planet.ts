@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { LOADING } from '../config/hud';
 import { createDecor } from '../world/decor';
 import { buildTerrain, buildTerrainSteps, setTerrainSeed } from '../world/terrain';
+import { LIGHT_RENDER, TERRAIN_DETAIL } from '../render/quality';
 
 /**
  * La planète affichée : une seed, son relief et son décor. Une nouvelle planète à chaque run ; la
@@ -12,7 +13,9 @@ export async function createPlanet(scene: THREE.Scene) {
   const newSeed = () => Math.floor(Math.random() * 0x7fffffff);
   let seed = newSeed();
   setTerrainSeed(seed);
-  let terrain = buildTerrain();
+  let terrain = buildTerrain(TERRAIN_DETAIL);
+  // Rendu léger (téléphone) : le terrain reçoit les ombres sans en projeter (une passe d'ombre bien plus légère)
+  terrain.castShadow = !LIGHT_RENDER;
   scene.add(terrain);
   const decor = await createDecor(scene);
   decor.generate(seed);
@@ -46,11 +49,12 @@ export async function createPlanet(scene: THREE.Scene) {
       progress(0);
       await nextFrame();
       setTerrainSeed(seed);
-      const t = await run(buildTerrainSteps(), 0.02, 0.72, progress);
+      const t = await run(buildTerrainSteps(TERRAIN_DETAIL), 0.02, 0.72, progress);
       scene.remove(terrain);
       terrain.geometry.dispose();
       (terrain.material as THREE.Material).dispose();
       terrain = t;
+      terrain.castShadow = !LIGHT_RENDER;
       scene.add(terrain);
       await run(decor.generateSteps(seed), 0.72, 1, progress);
       progress(1);

@@ -4,7 +4,7 @@ export const WEAPONS = {
   /** Canette : canette de bière lancée vers le zombie le plus proche (arme de départ du Buveur). */
   canette: {
     /** Temps entre deux lancers (s). */
-    cooldown: 1.0,
+    cooldown: 2.0,
     damage: 16,
     /** Coup critique : chance de base (0 à 1) et multiplicateur de dégâts de base (GDD : x2). */
     critChance: 0.05,
@@ -39,7 +39,7 @@ export const WEAPONS = {
   },
   /** Stout : bouteille noire, lourde et lente ; gros dégâts, gros recul, traverse un zombie (GDD section 6, n° 2). */
   stout: {
-    cooldown: 1.3,
+    cooldown: 2.6,
     damage: 30,
     critChance: 0.05,
     critMult: 2,

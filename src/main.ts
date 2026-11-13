@@ -48,6 +48,8 @@ import { CameraRig } from './player/cameraRig';
 import { PintProp } from './player/pintProp';
 import { Pipeline } from './render/pipeline';
 import { createAdaptiveResolution } from './render/adaptiveResolution';
+import { LIGHT_RENDER } from './render/quality';
+import { RENDER } from './config/visual';
 import { createSky } from './world/sky';
 import { createClouds } from './world/clouds';
 import { heightAt } from './world/terrain';
@@ -63,7 +65,8 @@ import { initInput, readInput } from './core/input';
 
 // --- Rendu
 const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+// Rendu léger (téléphone) : résolution plafonnée, sinon jusqu'à 2x pour les écrans haute densité
+renderer.setPixelRatio(Math.min(devicePixelRatio, LIGHT_RENDER ? RENDER.light.pixelRatio : 2));
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFShadowMap;

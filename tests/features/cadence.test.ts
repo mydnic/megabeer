@@ -19,7 +19,7 @@ function only(id: 'canette' | 'stout') {
 }
 
 /** Instants (s) où une nouvelle bouteille de l'arme part. */
-function launches(t: ReturnType<typeof createTestGame>, w: { projectiles: { active: boolean; age: number }[] }, seconds: number) {
+function launches(t: ReturnType<typeof createTestGame>, w: { projectiles: readonly { active: boolean; age: number }[] }, seconds: number) {
   const times: number[] = [];
   let now = 0;
   const seen = new Set<object>();

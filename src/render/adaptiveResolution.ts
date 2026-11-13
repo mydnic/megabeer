@@ -1,5 +1,6 @@
 import type * as THREE from 'three';
 import { RENDER } from '../config/visual';
+import { LIGHT_RENDER } from './quality';
 
 /**
  * Résolution adaptative : quand l'image ralentit et que c'est la carte graphique qui ne suit pas (le
@@ -11,6 +12,8 @@ import { RENDER } from '../config/visual';
  */
 export function createAdaptiveResolution(renderer: THREE.WebGLRenderer, apply: () => void) {
   const A = RENDER.adaptive;
+  // Rendu léger (téléphone) : la résolution peut descendre plus bas
+  const minScale = LIGHT_RENDER ? RENDER.light.minScale : A.minScale;
   const base = renderer.getPixelRatio();
   let scale = 1;
   let frames = 0, time = 0, cpu = 0, wait = 0, calm = 0;
@@ -38,9 +41,9 @@ export function createAdaptiveResolution(renderer: THREE.WebGLRenderer, apply: (
       if (wait > 0) { wait -= A.window; return; }
       const fps = 1000 / frameMs;
       // Trop lent, et le calcul du jeu n'explique pas la durée de l'image : la carte graphique sature
-      if (fps < A.lowFps && cpuAvg < frameMs * A.cpuShare && scale > A.minScale) {
+      if (fps < A.lowFps && cpuAvg < frameMs * A.cpuShare && scale > minScale) {
         calm = 0;
-        set(Math.max(A.minScale, scale - A.step));
+        set(Math.max(minScale, scale - A.step));
       } else if (fps >= A.highFps && scale < 1) {
         // Ça tient depuis un moment : on retente un cran plus net
         if (++calm >= A.calmWindows) { calm = 0; set(Math.min(1, scale + A.step)); }

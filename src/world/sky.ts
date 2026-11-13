@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { LIGHTING } from '../config/lighting';
 import { RENDER } from '../config/visual';
 import { LAYER_CHARACTER, LAYER_SKY } from '../render/materials';
+import { LIGHT_RENDER, SHADOW_MAP_SIZE } from '../render/quality';
 
 const L = LIGHTING;
 const col = (hex: number) => new THREE.Color(hex);
@@ -26,7 +27,7 @@ export function createSky(scene: THREE.Scene) {
     const l = new THREE.DirectionalLight(color, 0);
     l.castShadow = true;
     const S = RENDER.shadow;
-    l.shadow.mapSize.set(S.mapSize, S.mapSize);
+    l.shadow.mapSize.set(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE);
     const c = l.shadow.camera;
     c.layers.enable(LAYER_CHARACTER); // les persos (couche à part) projettent leur ombre
     c.left = -S.extent; c.right = S.extent; c.top = S.extent; c.bottom = -S.extent;
@@ -40,6 +41,8 @@ export function createSky(scene: THREE.Scene) {
   };
   const sun = makeDir(L.day.sunColor);
   const moon = makeDir(L.night.moonColor);
+  // Rendu léger (téléphone) : seul le soleil projette des ombres (une carte d'ombres de moins à calculer)
+  if (LIGHT_RENDER) moon.castShadow = false;
 
   // --- Dôme de ciel (suit la caméra, dégradé calculé par rapport à la verticale locale)
   const uniforms = {
@@ -129,7 +132,7 @@ export function createSky(scene: THREE.Scene) {
   let dayFactor = 1;
   // Repère fixe de chaque lumière (mêmes axes que lookAt de la caméra d'ombre) pour caler son centre
   // sur la grille des texels : sans ça, les bords d'ombre grouillent dès que le joueur bouge.
-  const texel = (2 * RENDER.shadow.extent) / RENDER.shadow.mapSize;
+  const texel = (2 * RENDER.shadow.extent) / SHADOW_MAP_SIZE;
   const bases = [0, 1].map(() => ({ x: new THREE.Vector3(), y: new THREE.Vector3(), z: new THREE.Vector3() }));
   const setBasis = (b: (typeof bases)[number], dir: THREE.Vector3) => {
     b.z.copy(dir);

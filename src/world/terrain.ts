@@ -138,9 +138,9 @@ let unitSphere: THREE.BufferGeometry | null = null;
  * `yield` donne l'avancement (0 à 1) et laisse l'appelant rendre la main à l'écran (barre de
  * chargement). buildTerrain() fait tout d'un coup.
  */
-export function* buildTerrainSteps(): Generator<number, THREE.Mesh> {
+export function* buildTerrainSteps(detail: number = PLANET.detail): Generator<number, THREE.Mesh> {
   if (!unitSphere) {
-    let g: THREE.BufferGeometry = new THREE.IcosahedronGeometry(1, PLANET.detail);
+    let g: THREE.BufferGeometry = new THREE.IcosahedronGeometry(1, detail);
     g.deleteAttribute('normal');
     g.deleteAttribute('uv');
     unitSphere = mergeVertices(g); // sommets partagés : normales lisses pour le cel-shading
@@ -172,8 +172,8 @@ export function* buildTerrainSteps(): Generator<number, THREE.Mesh> {
   return mesh;
 }
 
-export function buildTerrain(): THREE.Mesh {
-  const g = buildTerrainSteps();
+export function buildTerrain(detail: number = PLANET.detail): THREE.Mesh {
+  const g = buildTerrainSteps(detail);
   for (;;) {
     const r = g.next();
     if (r.done) return r.value;

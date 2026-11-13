@@ -11,6 +11,7 @@ import { RENDER } from '../config/visual';
 import { LAYER_CHARACTER, LAYER_SKY } from './materials';
 import { CharacterOutlinePass } from './characterOutline';
 import { patchVat } from './vat';
+import { LIGHT_RENDER } from './quality';
 
 const GradeShader = {
   uniforms: {
@@ -74,7 +75,8 @@ export class Pipeline {
     this.worldCam.layers.set(0);
     this.worldCam.layers.enable(LAYER_CHARACTER);
 
-    const rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 4 });
+    // Rendu léger (téléphone) : pas d'anticrénelage multi-échantillons, et l'AO, le halo et le flou coupés plus bas
+    const rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: LIGHT_RENDER ? 0 : 4 });
     this.composer = new EffectComposer(renderer, rt);
     this.composer.addPass(new RenderPass(scene, camera));
 
@@ -109,6 +111,7 @@ export class Pipeline {
     this.composer.addPass(this.grade);
 
     this.composer.addPass(new OutputPass());
+    if (LIGHT_RENDER) this.ao.enabled = this.bloom.enabled = this.dof.enabled = false;
   }
 
   /**
