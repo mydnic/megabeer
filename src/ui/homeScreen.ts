@@ -1,6 +1,6 @@
 const CSS = `
 .home { position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column; align-items: center;
-  justify-content: flex-end; padding-bottom: 14vh; gap: 4vh; font-family: 'Lilita One', system-ui, sans-serif;
+  justify-content: center; padding-top: 16vh; box-sizing: border-box; gap: 3.2vh; font-family: 'Lilita One', system-ui, sans-serif;
   background: radial-gradient(ellipse at 50% 35%, #5a3418 0%, #2a170b 55%, #120a05 100%); transition: opacity .45s; }
 /* Bulles de bière qui montent sans fin, sur deux profondeurs */
 .home::before { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .55;
@@ -14,8 +14,8 @@ const CSS = `
   background: radial-gradient(ellipse, rgba(255,201,58,.28), transparent 65%); animation: home-glow 3.2s ease-in-out infinite alternate; }
 @keyframes home-glow { to { scale: 1.15; opacity: .6; } }
 .home.off { opacity: 0; pointer-events: none; }
-.home-logo { position: absolute; top: 9vh; left: 0; right: 0; text-align: center; pointer-events: none;
-  font-size: clamp(56px, 13vw, 170px); line-height: 1; letter-spacing: .03em; color: #ffc93a; z-index: 1;
+.home-logo { position: absolute; top: 7vh; left: 0; right: 0; text-align: center; pointer-events: none;
+  font-size: clamp(48px, min(12vw, 20vh), 170px); line-height: 1; letter-spacing: .03em; color: #ffc93a; z-index: 1;
   background: linear-gradient(100deg, transparent 40%, rgba(255,255,255,.9) 50%, transparent 60%) -100% 0 / 300% 100% no-repeat,
     linear-gradient(#fff6c8 12%, #ffd24a 38%, #f59a16 72%, #c96a08 96%);
   -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
@@ -34,20 +34,19 @@ const CSS = `
   padding: 6px 26px 9px; border: 3px solid #1a120c; border-radius: 16px; background: rgba(42,22,8,.75);
   box-shadow: 0 4px 0 #1a120c; transition: transform .08s; }
 .home-options:hover, .home-options:focus-visible { transform: scale(1.06); outline: none; background: rgba(90,58,28,.9); }
-.home-row { position: relative; z-index: 1; display: flex; gap: 14px; margin-top: -2vh; }
+.home-row { position: relative; z-index: 1; display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+.home-opt { position: absolute; left: 16px; bottom: 16px; margin: 0; }
 .home-row .home-options { margin-top: 0; }
 .home-shop { color: #8fe07a; }
 .home-skills { color: #ffc93a; }
 .home-ach { color: #ff9f6a; }
-.home-hint { position: relative; z-index: 1; color: #f3e6cf; font-size: 16px; letter-spacing: .04em; margin-top: -2vh;
-  text-shadow: -2px 0 #1a120c, 2px 0 #1a120c, 0 -2px #1a120c, 0 2px #1a120c; }
+@media (max-height: 520px) { .home { padding-top: 22vh; gap: 2.4vh; } .home-options { font-size: 18px; padding: 4px 18px 7px; } }
 `;
 
 /**
- * Écran d'accueil provisoire (GDD section 16), séparé du jeu : fond opaque, le monde n'est ni montré
- * ni rendu tant qu'on y est ; la run (et le Buveur sur la planète) commence avec Jouer. Sera remplacé
- * par l'accueil dans l'espace. Boutons : Jouer, Boutique, Skills, Succès, Options ; les autres (persos...)
- * apparaîtront au fil des déblocages.
+ * Écran d'accueil (GDD section 16), séparé du jeu : fond opaque, le monde n'est ni montré ni rendu tant qu'on y est.
+ * Logo en haut, Jouer au centre (il ouvre l'écran avant partie : perso, map, difficulté), Boutique, Skills et Succès
+ * dessous, Options en bas à gauche ; le compte (haut gauche) et le classement (bas droite) s'y ajoutent.
  */
 export function createHomeScreen(onPlay: () => void, onOptions: () => void, onShop: () => void, onSkills: () => void, onAchievements: () => void) {
   const style = document.createElement('style');
@@ -55,7 +54,7 @@ export function createHomeScreen(onPlay: () => void, onOptions: () => void, onSh
   document.head.appendChild(style);
   const el = document.createElement('div');
   el.className = 'home';
-  el.innerHTML = `<div class="home-logo">MEGABEER</div><button class="home-play">Jouer</button><div class="home-hint">Espace ou A</div><div class="home-row"><button class="home-options home-shop">Boutique</button><button class="home-options home-skills">Skills</button><button class="home-options home-ach">Succès</button><button class="home-options home-opt">Options</button></div>`;
+  el.innerHTML = `<div class="home-logo">MEGABEER</div><button class="home-play">Jouer</button><div class="home-row"><button class="home-options home-shop">Boutique</button><button class="home-options home-skills">Skills</button><button class="home-options home-ach">Succès</button></div><button class="home-options home-opt">Options</button>`;
   document.body.appendChild(el);
   const btn = el.querySelector<HTMLButtonElement>('.home-play')!;
   btn.addEventListener('click', (e) => { e.stopPropagation(); onPlay(); });

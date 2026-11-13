@@ -42,6 +42,8 @@ import { createSnackDropsView } from './pickups/snackDropsView';
 import { createDamageNumbers } from './ui/damageNumbers';
 import { createRunLog } from './dev/runLog';
 import { BuveurVisual } from './player/buveurVisual';
+import videurUrl from './assets/models/videur.glb?url';
+import { CHARACTERS } from './config/characters';
 import { CameraRig } from './player/cameraRig';
 import { PintProp } from './player/pintProp';
 import { Pipeline } from './render/pipeline';
@@ -123,6 +125,8 @@ const game = new Game({ zombieKinds: zombieLib, collider: planet.decor.collider 
 // --- Affichage de ce que simule le noyau
 const buveur = new BuveurVisual(scene);
 buveur.load().catch((e) => console.error(e));
+// Le Videur (perso débloqué par un succès) : chargé à côté, affiché quand on le choisit
+buveur.load('videur', videurUrl).catch((e) => console.error(e));
 game.setThrowRig({ gesture: (rate) => buveur.throwGesture(rate), handPos: (out) => buveur.leftHandPos(out) });
 const hordeView = createHordeView(scene, zombieLib);
 const xpView = createXpDropsView(scene);
@@ -194,6 +198,8 @@ const runLog = createRunLog();
 let fps = 0;
 wireRunLog(game, runLog, () => ({ seed: planet.seed, fps }));
 game.events.on('home', () => adaptive.reset());
+// Le perso choisi avant la partie : son modèle
+game.events.on('runStarted', () => buveur.use(CHARACTERS[game.character].model));
 
 // --- Debug (F3)
 const debugEl = document.getElementById('debug')!;

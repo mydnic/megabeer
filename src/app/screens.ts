@@ -35,11 +35,16 @@ import { CLOSING } from '../config/closing';
 import { createPadNav } from '../ui/padNav';
 import { createAccountPanel } from '../ui/accountPanel';
 import { ACHIEVEMENTS, ACHIEVEMENT_BANNER } from '../config/achievements';
-import { createDifficultyPicker } from '../ui/difficultyPicker';
+import { createSetupScreen } from '../ui/setupScreen';
+import { createLeaderboardPanel } from '../ui/leaderboardPanel';
+import { CHARACTERS, type CharacterId } from '../config/characters';
+import { LEADERBOARD } from '../config/hud';
+import { achievementFor, owned } from '../meta/shop';
 import type { DifficultyId } from '../config/spawn';
 import { createShopScreen } from '../ui/shopScreen';
 import { renderPortrait } from '../render/portrait';
 import buveurUrl from '../assets/models/buveur.glb?url';
+import videurUrl from '../assets/models/videur.glb?url';
 import { runUnlocks } from '../meta/shop';
 import { createProgress } from './progress';
 import { TOURNEES } from '../config/tournees';
@@ -113,6 +118,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
 
   // Jouer : nouvelle planète (sauf la toute première, déjà prête), puis le Buveur tombe du ciel
   let starting = false;
+  const chosen = { character: 'buveur' as CharacterId, difficulty: 'sobre' as DifficultyId };
   async function play() {
     if (game.phase !== 'home' || starting) return;
     starting = true;
@@ -123,40 +129,63 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
       loading.hide();
     }
     planet.use();
-    // Les déblocages de la boutique et la difficulté choisie valent pour la run qui commence
+    // Les déblocages de la boutique, le perso et la difficulté choisis valent pour la run qui commence
     game.unlocks = runUnlocks(progress.profile);
-    game.difficulty = difficulty.selected;
+    game.difficulty = chosen.difficulty;
+    game.character = chosen.character;
     // Succès : ceux déjà gagnés ne retombent pas ; les kills de toujours comptent pour « au total »
     game.achievements.owned = new Set(progress.profile.achievements);
     game.achievements.lifetimeKills = progress.profile.totalKills;
     game.startRun(planet.decor.randomSpawn());
     starting = false;
   }
-  const home = createHomeScreen(() => void play(), () => options.show(() => home.focus()), () => shop.show('shop', () => home.focus()), () => shop.show('skills', () => home.focus()), () => shop.show('achievements', () => home.focus()));
+  // Pourquoi un perso est fermé (null : jouable)
+  const lockedBy = (id: CharacterId) => {
+    const key = `character:${id}`;
+    if (owned(progress.profile, key)) return null;
+    const a = achievementFor(key);
+    return a ? `Succès ${a.name} : ${a.text}` : 'À débloquer en boutique';
+  };
+  // Jouer sur l'accueil : l'écran avant partie (perso, map, difficulté), dont le Jouer lance la run
+  const setup = createSetupScreen({
+    play: (character, d) => { chosen.character = character; chosen.difficulty = d; setup.hide(); void play(); },
+    back: () => home.focus(),
+    portrait: (id) => portraits.get(id) ?? null,
+    pickCharacter: (c) => { progress.character = c; },
+    pickDifficulty: (d) => { progress.difficulty = d; },
+  });
+  // Outils de dev : difficultés ouvertes d'office
+  const forced = new Set<DifficultyId>();
+  const openSetup = () => setup.show({ lockedBy, character: progress.character, difficulties: [...new Set([...progress.profile.difficulties, ...forced])], difficulty: progress.difficulty });
+  const home = createHomeScreen(openSetup, () => options.show(() => home.focus()), () => shop.show('shop', () => home.focus()), () => shop.show('skills', () => home.focus()), () => shop.show('achievements', () => home.focus()));
   const padNav = createPadNav();
 
   // Compte et progression : invité (navigateur) ou Discord (en ligne) ; chaque run terminée compte
   const progress = createProgress();
   const accountPanel = createAccountPanel(home.root, { login: () => progress.login(), logout: () => void progress.logout() });
   progress.onChange(() => accountPanel.update(progress.online, progress.account, progress.profile, progress.canLogin));
-  // Difficulté : au-dessus de Jouer, celles débloquées en tuant l'Abbé
-  const difficulty = createDifficultyPicker(home.root, home.root.querySelector('.home-play')!, (d) => { progress.difficulty = d; });
-  progress.onChange(() => difficulty.update(progress.profile.difficulties, progress.difficulty));
-  difficulty.update(progress.profile.difficulties, progress.difficulty);
+  // Classement : top 10 en kills sur une run, relu régulièrement tant que l'accueil est affiché, et après chaque run
+  const board = createLeaderboardPanel(home.root);
+  const refreshBoard = async () => { if (progress.online) board.update(await progress.leaderboard(), !progress.account); };
+  progress.onChange(() => void refreshBoard());
+  setInterval(() => { if (game.phase === 'home' && home.visible) void refreshBoard(); }, LEADERBOARD.refreshEvery * 1000);
   // Boutique : persos, armes et objets à débloquer avec les TUNAS
   // Portraits des persos, rendus une fois depuis leur modèle 3D
   const portraits = new Map<string, string>();
-  void renderPortrait(buveurUrl).then((u) => { portraits.set('buveur', u); shop.refresh(); }).catch((e) => console.error('[portrait]', e));
+  const models: Record<string, string> = { buveur: buveurUrl, videur: videurUrl };
+  for (const id of Object.keys(CHARACTERS) as CharacterId[]) {
+    void renderPortrait(models[CHARACTERS[id].model]).then((u) => { portraits.set(id, u); shop.refresh(); setup.refresh(); }).catch((e) => console.error('[portrait]', e));
+  }
   const shop = createShopScreen({ buy: (k) => progress.buy(k), buySkill: (l) => progress.buySkill(l), profile: () => progress.profile, onClose: () => home.focus(), portrait: (id) => portraits.get(id) ?? null });
   progress.onChange(() => shop.refresh());
   void progress.init();
   // TUNAS de la dernière run, pour le bilan de fin
   const lastRun = { tunas: 0, tunasBonus: 0, achievements: [] as { name: string; tunas: number }[] };
-  game.events.on('runEnded', ({ survived, kills, tunas, tunasBonus, difficulty: d, abbe, achievements }) => {
+  game.events.on('runEnded', ({ survived, kills, tunas, tunasBonus, difficulty: d, abbe, achievements, character }) => {
     lastRun.achievements = ACHIEVEMENTS.filter((a) => achievements.includes(a.id));
     lastRun.tunas = tunas + lastRun.achievements.reduce((s, a) => s + a.tunas, 0);
     lastRun.tunasBonus = tunasBonus;
-    void progress.recordRun({ survived, kills, tunas, difficulty: d, abbe, achievements });
+    void progress.recordRun({ survived, kills, tunas, difficulty: d, abbe, achievements, character }).then(() => refreshBoard());
   });
   // Un succès tombe : bandeau avec ce qu'il rapporte
   game.events.on('achievementUnlocked', ({ name, tunas }) => { banner.show(`Succès : ${name} !`, `+${tunas} TUNAS`); banner.pulse(); banner.hideAfter(ACHIEVEMENT_BANNER.duration); });
@@ -253,13 +282,13 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
     /** Outils de dev : la progression (TUNAS, difficulté). */
     progress,
     /** Outils de dev : choisir une difficulté, même pas encore débloquée. */
-    forceDifficulty(d: DifficultyId) { progress.difficulty = d; difficulty.update([...new Set([...progress.profile.difficulties, d])], d); },
+    forceDifficulty(d: DifficultyId) { progress.difficulty = d; forced.add(d); },
     /** Chaque image : HUD, écran de mort, manette et Espace dans les menus. */
     update(realDt: number, input: InputState) {
       levelUp.input(input.moveX, input.jumpPressed || input.actionPressed, input.moveY);
       // Menus à la manette : celui du premier plan (Options, puis pause, puis accueil) ; B revient en arrière
-      const menu = options.open ? options.root : shop.open ? shop.root : pause.open ? pause.root : game.phase === 'home' && home.visible && !starting ? home.root : null;
-      const back = options.open ? options.close : shop.open ? shop.close : pause.open ? () => game.resume() : undefined;
+      const menu = options.open ? options.root : shop.open ? shop.root : setup.open ? setup.root : pause.open ? pause.root : game.phase === 'home' && home.visible && !starting ? home.root : null;
+      const back = options.open ? options.close : shop.open ? shop.close : setup.open ? setup.close : pause.open ? () => game.resume() : undefined;
       const usedA = padNav.update(realDt, input, menu, back);
       // Start de la manette : pause, ou reprise
       if (input.pausePressed && game.phase === 'run') {
@@ -296,7 +325,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
 function pauseStats(game: Game): PauseStats {
   const h = game.health;
   const player = {
-    title: 'Le Buveur',
+    title: CHARACTERS[game.character].name,
     rows: [['PV', `${Math.ceil(h.hp)} / ${h.max}`, ''] as [string, string, string], ...game.stats.lines().map(toRow)],
   };
   const active = game.activeSynergies().map((s) => SYNERGIES[s]);

@@ -2,11 +2,16 @@ import { emptyProfile, isEmpty, mergeProfiles, readProfile, recordRun, type Prof
 import { buy } from '../meta/shop';
 import { buySkill } from '../meta/skills';
 import { DIFFICULTIES, type DifficultyId } from '../config/spawn';
+import { CHARACTERS, type CharacterId } from '../config/characters';
 
 const DIFF_KEY = 'megabeer.difficulty';
+const CHAR_KEY = 'megabeer.character';
 
 /** Joueur connecté (compte Discord), tel que le renvoie /api/me. */
-export type Account = { id: string; name: string; avatarUrl: string };
+export type Account = { id: string; name: string; avatarUrl: string | null };
+
+/** Une ligne du leaderboard (/api/leaderboard) : la meilleure run d'un joueur, en kills. */
+export type LeaderboardEntry = { rank: number; name: string; avatarUrl: string | null; kills: number; survived: number; difficulty: string; character: string; me: boolean };
 
 const GUEST_KEY = 'megabeer.profile';
 
@@ -73,11 +78,27 @@ export function createProgress() {
     },
 
     /** Fin de run : elle compte dans la progression, sauvegardée tout de suite. */
-    async recordRun(run: { survived: number; kills: number; tunas: number; difficulty: DifficultyId; abbe: boolean; achievements: readonly string[] }) {
+    async recordRun(run: { survived: number; kills: number; tunas: number; difficulty: DifficultyId; abbe: boolean; achievements: readonly string[]; character: CharacterId }) {
       profile = recordRun(profile, run, Date.now());
       changed();
-      await save();
+      // Connecté : la run va au leaderboard (le serveur ne garde que la meilleure)
+      const score = account && run.kills > 0
+        ? api('/api/score', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kills: run.kills, survived: run.survived, difficulty: run.difficulty, character: run.character }) })
+        : null;
+      await Promise.all([save(), score]);
     },
+
+    /** Les 10 meilleures runs, tous joueurs confondus (null : serveur injoignable). */
+    async leaderboard() {
+      const r = await api<{ entries: LeaderboardEntry[] }>('/api/leaderboard');
+      return r?.entries ?? null;
+    },
+
+    /** Perso choisi avant la partie (gardé dans le navigateur). */
+    get character(): CharacterId {
+      try { const c = localStorage.getItem(CHAR_KEY) as CharacterId | null; return c && c in CHARACTERS ? c : 'buveur'; } catch { return 'buveur'; }
+    },
+    set character(c: CharacterId) { try { localStorage.setItem(CHAR_KEY, c); } catch { /* stockage indisponible */ } },
 
     /** Achat en boutique : les TUNAS sont retirés et l'article débloqué, sauvegardé tout de suite. Faux si impossible. */
     buy(key: string) {

@@ -92,3 +92,6 @@ export const PAD_NAV = {
   /** Pas des curseurs (volumes) à gauche ou à droite. */
   sliderStep: 5,
 } as const;
+
+/** Leaderboard de l'accueil (top 10 en kills sur une run) : relu toutes les `refreshEvery` secondes tant qu'il est affiché. */
+export const LEADERBOARD = { refreshEvery: 60 } as const;
