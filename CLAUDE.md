@@ -33,7 +33,7 @@ Vite + TypeScript + three.js (+ `three-mesh-bvh` pour les collisions du décor),
 Cloudflare (wrangler) : **Workers Builds construit et déploie chaque push sur `main`** (prod : megabeer.mydnic.be).
 
 **Comptes et sauvegarde** : `worker/index.ts` (le Worker : sert le jeu, et sous `/api` la connexion Discord ou par email
-(lien magique Resend, secret `RESEND_API_KEY` et variable `MAIL_FROM`), les sessions, la sauvegarde et le classement), base D1 `megabeer` (schéma dans `migrations/`, à appliquer avec `wrangler d1 migrations apply megabeer
+(lien magique, Cloudflare Email Service : binding `EMAIL`, expéditeur `MAIL_FROM` ; simulé en local), les sessions, la sauvegarde et le classement), base D1 `megabeer` (schéma dans `migrations/`, à appliquer avec `wrangler d1 migrations apply megabeer
 --local` en dev, `--remote` en prod). Secret `DISCORD_CLIENT_SECRET` : `wrangler secret put` en prod, `.dev.vars` en local
 (non versionné). Côté jeu : `meta/profile.ts` (la progression, pure, testée), `app/progress.ts` (invité dans le navigateur,
 ou en ligne ; la progression invitée rejoint le compte à la première connexion), `ui/accountPanel.ts` (le compte sur

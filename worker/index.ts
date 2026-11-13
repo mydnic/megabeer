@@ -3,7 +3,7 @@
  *
  * - GET  /api/auth/discord   : part se connecter chez Discord (scope identify : pseudo et avatar, rien d'autre).
  * - GET  /api/auth/callback  : retour de Discord ; crée ou met à jour le joueur, ouvre une session (cookie).
- * - POST /api/auth/email     : envoie un lien de connexion à usage unique à l'adresse donnée (service Resend).
+ * - POST /api/auth/email     : envoie un lien de connexion à usage unique à l'adresse donnée (Cloudflare Email Service).
  * - GET  /api/auth/email/link : page du lien reçu, avec un bouton qui confirme (les antivirus de messagerie ouvrent les
  *                               liens tout seuls : la connexion ne se fait qu'au clic, en POST).
  * - POST /api/auth/email/link : confirme le lien ; crée le joueur au besoin et ouvre une session.
@@ -14,8 +14,9 @@
  * - POST /api/score          : fin de run d'un joueur connecté ; garde sa meilleure (le plus de kills).
  * - GET  /api/leaderboard    : les 10 meilleures runs, tous joueurs confondus.
  *
- * Secrets (jamais dans le dépôt) : DISCORD_CLIENT_SECRET et RESEND_API_KEY (`wrangler secret put`, en local dans .dev.vars).
- * La connexion par email n'apparaît que si RESEND_API_KEY et MAIL_FROM (expéditeur d'un domaine vérifié chez Resend) existent.
+ * Secrets (jamais dans le dépôt) : DISCORD_CLIENT_SECRET (`wrangler secret put`, en local dans .dev.vars).
+ * Emails : binding EMAIL (send_email) et MAIL_FROM, une adresse d'un domaine onboardé dans Cloudflare Email Service
+ * (envoi à n'importe quelle adresse : offre Workers Paid). En local, wrangler simule l'envoi (le mail est écrit dans la console).
  */
 
 interface Env {
@@ -23,7 +24,8 @@ interface Env {
   ASSETS: Fetcher;
   DISCORD_CLIENT_ID: string;
   DISCORD_CLIENT_SECRET: string;
-  RESEND_API_KEY?: string;
+  /** Envoi d'emails (Cloudflare Email Service, binding send_email de wrangler.jsonc). */
+  EMAIL?: { send(m: { from: string | { email: string; name?: string }; to: string; subject: string; html?: string; text?: string }): Promise<{ messageId: string }> };
   MAIL_FROM?: string;
 }
 
@@ -161,10 +163,10 @@ async function openSession(userId: string, url: URL, env: Env) {
   return new Response(null, { status: 302, headers });
 }
 
-// --- Connexion par email (lien magique, envoyé par Resend)
+// --- Connexion par email (lien magique, envoyé par Cloudflare Email Service)
 
 const MAIL = { linkMinutes: 15, maxPending: 3 };
-const mailReady = (env: Env) => !!(env.RESEND_API_KEY && env.MAIL_FROM);
+const mailReady = (env: Env) => !!(env.EMAIL && env.MAIL_FROM);
 const EMAIL_RE = /^[^\s@<>"']+@[^\s@<>"']+\.[a-z]{2,}$/i;
 const escHtml = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 const html = (body: string) => new Response(body, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' } });
@@ -186,17 +188,20 @@ async function sendMagicLink(request: Request, url: URL, env: Env) {
   await env.DB.prepare('INSERT INTO email_logins (token_hash, email, name, expires_at) VALUES (?, ?, ?, ?)')
     .bind(await sha256(token), email, name, now + MAIL.linkMinutes * 60e3).run();
   const link = `${url.origin}/api/auth/email/link?token=${token}`;
-  const r = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      from: env.MAIL_FROM, to: [email], subject: 'Ton lien de connexion à Megabeer',
+  try {
+    await env.EMAIL!.send({
+      from: { email: env.MAIL_FROM!, name: 'Megabeer' }, to: email, subject: 'Ton lien de connexion à Megabeer',
       html: `<p>Salut !</p><p>Clique ici pour te connecter à Megabeer (lien valable ${MAIL.linkMinutes} minutes, une seule fois) :</p>`
         + `<p><a href="${link}" style="font-size:18px">Me connecter</a></p><p>Si tu n'as rien demandé, ignore ce mail.</p>`,
       text: `Ton lien de connexion à Megabeer (valable ${MAIL.linkMinutes} minutes, une seule fois) : ${link}`,
-    }),
-  });
-  if (!r.ok) { console.error('[mail]', r.status, await r.text()); return json({ error: "l'email n'a pas pu partir" }, 502); }
+    });
+  } catch (e) {
+    const code = (e as { code?: string }).code;
+    console.error('[mail]', code, (e as Error).message);
+    await env.DB.prepare('DELETE FROM email_logins WHERE token_hash = ?').bind(await sha256(token)).run();
+    if (code === 'E_RATE_LIMIT_EXCEEDED' || code === 'E_DAILY_LIMIT_EXCEEDED') return json({ error: 'trop de mails envoyés aujourd\'hui, réessaie plus tard' }, 429);
+    return json({ error: "l'email n'a pas pu partir" }, 502);
+  }
   return json({ ok: true });
 }
 

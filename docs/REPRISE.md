@@ -156,9 +156,10 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    (`ui/setupScreen.ts` : perso, map, difficulté) ; classement top 10 en kills sur une run (`ui/leaderboardPanel.ts`,
    table `scores`, `/api/score` envoyé à chaque fin de run connectée) ; téléphone en paysage (`ui/touchControls.ts` :
    joystick, glisser pour la caméra, Saut, Action, Pause ; interface réduite par `zoom` CSS, réglages `TOUCH`) ;
-   connexion par email (lien magique Resend, pseudo choisi, table `email_logins`). **L'email attend l'utilisateur** :
-   compte Resend, domaine vérifié, puis `wrangler secret put RESEND_API_KEY` et la variable `MAIL_FROM` dans
-   `wrangler.jsonc` ; sans eux le bouton n'apparaît pas. Après ça : ajouter du contenu.
+   connexion par email (lien magique, Cloudflare Email Service : binding `EMAIL`, expéditeur `MAIL_FROM` = megabeer@mail.mydnic.be ; pseudo choisi, table `email_logins`). En local l'envoi est simulé (mail dans la console du serveur). **Prod :**
+   mail.mydnic.be doit être onboardé dans le tableau de bord (Email Service > Email Sending > Onboard Domain), et
+   l'envoi à n'importe quelle adresse demande l'offre Workers Paid (doc Cloudflare). Erreurs d'envoi : codes `E_*` dans
+   les logs du Worker (`[mail]`). Après ça : ajouter du contenu.
    Checkpoint 1, notes : base D1 `megabeer` (WEUR, id dans
    `wrangler.jsonc`, schéma appliqué), application Discord de l'utilisateur (Client ID dans `wrangler.jsonc`, secret
    posé par `wrangler secret put`, en local dans `.dev.vars`). Commandes Cloudflare : variables d'environnement

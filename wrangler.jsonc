@@ -23,8 +23,13 @@
       "migrations_dir": "migrations"
     }
   ],
+  // Liens de connexion par email : Cloudflare Email Service (domaine mail.mydnic.be onboardé dans Email Sending).
+  // En local, wrangler simule l'envoi : le mail s'affiche dans la console du serveur de dev.
+  "send_email": [{ "name": "EMAIL" }],
   "vars": {
     // Identifiant public de l'application Discord (le secret, lui, est un secret Cloudflare : DISCORD_CLIENT_SECRET)
-    "DISCORD_CLIENT_ID": "1570530963602022500"
+    "DISCORD_CLIENT_ID": "1570530963602022500",
+    // Expéditeur des liens de connexion
+    "MAIL_FROM": "megabeer@mail.mydnic.be"
   }
 }

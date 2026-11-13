@@ -38,4 +38,6 @@ function runLog(): Plugin {
 
 export default defineConfig({
   plugins: [runLog(), cloudflare()],
+  // .wrangler : D1 locale et mails simulés ; leur écriture ne doit pas recharger la page
+  server: { watch: { ignored: ['**/.wrangler/**', '**/logs/**'] } },
 });
