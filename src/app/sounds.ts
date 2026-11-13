@@ -1,4 +1,4 @@
-import { CANETTE_IMPACT, FUT_SOUND, GUEUZE_BLAST, STOUT_IMPACT } from '../config/weapons';
+import { CANETTE_IMPACT, FUT_SOUND, GUEUZE_BLAST, STOUT_IMPACT, TABOURET_SOUND } from '../config/weapons';
 import type * as THREE from 'three';
 import { BELL_SOUND } from '../config/abbey';
 import { AUDIO } from '../config/audio';
@@ -152,6 +152,15 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
   });
   game.events.on('projectileHitGround', ({ weapon }) => {
     if (weapon.id === 'fut') audio.play(FUT_SOUND.burst.sample, FUT_SOUND.burst.volume, FUT_SOUND.burst.pitch * jitter(0.08));
+  });
+  // Le Tabouret de bar : un choc de bois sur chaque zombie frappé (espacés, la mêlée en touche beaucoup d'un coup)
+  let lastStool = -1;
+  game.events.on('zombieHit', ({ weapon }) => {
+    if (weapon?.id !== 'tabouret') return;
+    const now = performance.now() / 1000;
+    if (now - lastStool < TABOURET_SOUND.hitGap) return;
+    lastStool = now;
+    audio.play(TABOURET_SOUND.hit.sample, TABOURET_SOUND.hit.volume, TABOURET_SOUND.hit.pitch * jitter(0.1));
   });
   // Objets à effet
   const I = AUDIO.items;

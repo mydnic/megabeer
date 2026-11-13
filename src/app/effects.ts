@@ -75,8 +75,8 @@ export function wireEffects(game: Game, d: Deps) {
     // La Stout éclate en bière brune ; la Canette gicle en bière blonde, sans verre (elle est en métal) ;
     // le fût écrase sans se briser (il éclate à la fin de sa course) ; la Gueuze a sa propre explosion
     if (weapon?.id === 'stout') stoutSplash.burst(impact, dir);
-    else if (weapon?.id !== 'fut' && weapon?.id !== 'gueuze') buveur.splashAt(impact, 14);
-    if (weapon?.id !== 'canette' && weapon?.id !== 'fut' && weapon?.id !== 'gueuze') shards.burst(impact, dir);
+    else if (weapon?.id !== 'fut' && weapon?.id !== 'gueuze' && weapon?.id !== 'tabouret') buveur.splashAt(impact, 14);
+    if (weapon?.id !== 'canette' && weapon?.id !== 'fut' && weapon?.id !== 'gueuze' && weapon?.id !== 'tabouret') shards.burst(impact, dir);
     if (shielded) sparks.burst(impact, dir);
     // Éclat lumineux du coup ; critique ou combo : grosse étoile ; ennemi tué : il part en fumée
     if (crit || combo) vfx.crit(impact); else vfx.hit(impact);

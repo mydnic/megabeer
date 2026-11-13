@@ -19,7 +19,7 @@ import { createRingWaveView } from './fx/ringWaveView';
 import { createSprites } from './fx/sprites';
 import { createVfx } from './fx/vfx';
 import { BARREL_SHARDS, TIN_SHARDS, EARTH_CLODS, GUEUZE_BURST, ASH_BURST, EMBERS, FOAM_POP, ICE_SHARDS, GIFT_SPARKS, SHIELD_SPARKS, STOUT_SPLASH, VFX, WINE_BURST } from './config/fx';
-import { CANETTE_LOOK, FUT_LOOK, GUEUZE_LOOK, STOUT_LOOK } from './config/weapons';
+import { CANETTE_LOOK, FUT_LOOK, GUEUZE_LOOK, STOUT_LOOK, TABOURET_LOOK } from './config/weapons';
 import type { WeaponId } from './weapons/weapon';
 import { createKamikazeView } from './enemies/kamikazeView';
 import { createProtectorView } from './enemies/protectorView';
@@ -96,6 +96,7 @@ const loading = {
   stout: boot(createBottleView(scene, STOUT_LOOK)),
   fut: boot(createBottleView(scene, FUT_LOOK)),
   gueuze: boot(createBottleView(scene, GUEUZE_LOOK)),
+  tabouret: boot(createBottleView(scene, TABOURET_LOOK)),
   enemyShotsView: boot(createEnemyShotsView(scene)),
   pumpsView: boot(createPumpsView(scene)),
   chestsView: boot(createChestsView(scene)),
@@ -132,6 +133,7 @@ const bottleViews: Record<WeaponId, Awaited<ReturnType<typeof createBottleView>>
   stout: await loading.stout,
   fut: await loading.fut,
   gueuze: await loading.gueuze,
+  tabouret: await loading.tabouret,
 };
 const enemyShotsView = await loading.enemyShotsView;
 const groundAt = (p: THREE.Vector3) => game.player.supportAt(p, p.length());

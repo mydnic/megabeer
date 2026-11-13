@@ -208,12 +208,57 @@ export const DAZED_LOOK = {
   stroke: '#3a2416',
 } as const;
 
+/**
+ * Tabouret de bar (GDD section 6, n° 18), arme du Videur : mêlée circulaire. Dès qu'un zombie est à portée, le
+ * tabouret fait un tour complet autour du joueur et frappe une fois chaque zombie traversé, avec un gros recul.
+ */
+export const TABOURET = {
+  /** Temps entre deux tours (s), délai avant le premier (s). */
+  cooldown: 2.2,
+  firstDelay: 0.8,
+  damage: 22,
+  critChance: 0.05,
+  critMult: 2,
+  /** Portée du coup (m, multipliée par la Taille), corps d'un zombie (m) ; un zombie collé au joueur est pris d'office. */
+  radius: 2.6,
+  zombieRadius: 0.45,
+  innerRadius: 0.6,
+  /** Le tour part si un zombie est à moins de la portée plus cette marge (m). */
+  triggerMargin: 0.5,
+  /** Durée d'un tour complet (s). */
+  swingTime: 0.45,
+  /** Recul : fois le recul normal, et vitesse donnée vers l'extérieur du cercle (m/s). */
+  knock: 4,
+  knockSpeed: 9,
+  /** Affichage : hauteur du tabouret (m), part de la portée où il passe, inclinaison vers l'extérieur (rad). */
+  height: 1.0,
+  holdAt: 0.72,
+  tilt: 1.15,
+  /** Vitesse du geste du bras (le perso accompagne le tour). */
+  gestureRate: 1.6,
+} as const;
+
+/** Apparence du tabouret (« Stool » de CMHT Oculus) : mis à cette hauteur (m) le long de son axe. */
+export const TABOURET_LOOK = {
+  file: 'tabouret.glb',
+  length: 0.8,
+  colors: { Stool: 0x8a5230 } as Record<string, number>,
+} as const;
+
+/** Sons du tabouret : le souffle du tour, le coup sur un zombie. */
+export const TABOURET_SOUND = {
+  swing: { sample: 'impactSoft_medium', volume: 0.35, pitch: 0.55 },
+  hit: { sample: 'impactWood_heavy', volume: 0.5, pitch: 1.0 },
+  hitGap: 0.05,
+} as const;
+
 /** Nom de chaque arme, et sa présentation sur la carte « Nouvelle arme » du level-up. */
 export const WEAPON_INFO = {
   canette: { name: 'Canette', pitch: 'Canette lancée sur le zombie le plus proche' },
   stout: { name: 'Stout', pitch: 'Lourde et lente : gros dégâts, gros recul, traverse un zombie' },
   fut: { name: 'Fût qui roule', pitch: 'Un tonneau roule tout droit et écrase toute la ligne' },
   gueuze: { name: 'Gueuze', pitch: 'Lancée sur le plus gros groupe, elle mousse puis explose' },
+  tabouret: { name: 'Tabouret de bar', pitch: 'Un grand tour autour de toi : tout ce qui approche prend un coup et vole' },
 } as const satisfies Record<string, { name: string; pitch: string }>;
 
 /** Apparence de la Canette (canette de soda Kenney, découpée par tools/blender/props.py). */

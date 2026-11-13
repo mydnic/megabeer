@@ -54,6 +54,21 @@ ${label(20, 70, 10, 'Stout', '#c8102e', "Georgia, 'Times New Roman', serif", 26)
 ${shell(STOUT)}
 ${R(13.5, 2.5, 13, 6.5, 1.5, G.gold, 'vol', 2.5)}`);
 
+/**
+ * Tabouret de bar en bois, vu de trois quarts : assise ronde épaisse au bord arrondi, quatre pieds évasés, barreau
+ * repose-pieds en anneau.
+ */
+const tabouretIcon = (cls: string) => tall(cls, `
+<path d="M10.500 42L6 83M29.500 42L34 83" stroke="${K}" stroke-width="7" stroke-linecap="round"/>
+<path d="M10.500 42L6 83M29.500 42L34 83" stroke="#8a5230" stroke-width="4" stroke-linecap="round"/>
+<path d="M16 44l-1.500 37M24 44l1.500 37" stroke="${K}" stroke-width="6" stroke-linecap="round"/>
+<path d="M16 44l-1.500 37M24 44l1.500 37" stroke="#6e3f20" stroke-width="3.200" stroke-linecap="round"/>
+<ellipse cx="20" cy="66" rx="13.500" ry="3.600" fill="none" stroke="${K}" stroke-width="5"/>
+<ellipse cx="20" cy="66" rx="13.500" ry="3.600" fill="none" stroke="#a8693a" stroke-width="2.400"/>
+${P('M4 34c0-6 7.200-9 16-9s16 3 16 9v4c0 4.500-7.200 7.500-16 7.500S4 42.500 4 38z', '#b06d3c', 'vol', 3)}
+${E(20, 33.500, 16, 6.800, '#c98a52', 'sh', 2.600)}
+<path d="M10 31.500c3-2 8-2.600 12-2.200" stroke="#fff" stroke-opacity=".45" stroke-width="2" fill="none" stroke-linecap="round"/>`);
+
 /** Fût qui roule : tonneau en bois bombé, douelles, deux cerclages rivetés, bonde. */
 const FUT = 'M8 20c4-2 20-2 24 0c3 8 4 16 4 25s-1 17-4 25c-4 2-20 2-24 0c-3-8-4-16-4-25s1-17 4-25z';
 export const futIcon = (cls: string) => tall(cls, `
@@ -110,6 +125,7 @@ const WEAPON_ICONS: Record<WeaponId, (cls: string) => string> = {
   stout: stoutIcon,
   fut: futIcon,
   gueuze: gueuzeIcon,
+  tabouret: tabouretIcon,
 };
 
 export const weaponIcon = (id: WeaponId, cls: string) => WEAPON_ICONS[id](cls);

@@ -4,7 +4,7 @@ import type { PlayerStats, StatLine } from '../game/playerStats';
 import type { UpgradeDef } from '../config/upgrades';
 
 /** Identifiant d'arme (une entrée de src/weapons/registry.ts). */
-export type WeaponId = 'canette' | 'stout' | 'fut' | 'gueuze';
+export type WeaponId = 'canette' | 'stout' | 'fut' | 'gueuze' | 'tabouret';
 
 /** Améliorations d'une arme gagnées en run : un champ par id de carte, plus son niveau. */
 export type WeaponMods = { level: number } & Record<string, number>;

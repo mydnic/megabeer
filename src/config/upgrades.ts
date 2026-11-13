@@ -90,6 +90,17 @@ export const GUEUZE_UPGRADES: readonly UpgradeDef[] = [
   { id: 'critMult', label: 'multiplicateur critique', value: 0.15, kind: 'mult' },
 ];
 
+/** Améliorations du Tabouret de bar : dégâts, cadence, portée du coup, recul, tabourets en plus (répartis sur le cercle), critiques. */
+export const TABOURET_UPGRADES: readonly UpgradeDef[] = [
+  { id: 'damage', label: 'dégâts', value: 0.15, kind: 'percent' },
+  { id: 'rate', label: "vitesse d'attaque", value: 0.10, kind: 'percent' },
+  { id: 'size', label: 'portée du coup', value: 0.10, kind: 'percent' },
+  { id: 'knock', label: 'recul', value: 0.20, kind: 'percent' },
+  { id: 'projectiles', label: 'tabouret en plus', value: 1, kind: 'flat', whole: true },
+  { id: 'critChance', label: 'chances de critique', value: 0.04, kind: 'points' },
+  { id: 'critMult', label: 'multiplicateur critique', value: 0.15, kind: 'mult' },
+];
+
 /** Écran de level-up. */
 export const LEVEL_UP_SCREEN = {
   cards: 3,

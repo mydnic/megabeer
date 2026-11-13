@@ -144,7 +144,11 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    `tabouret.glb` fourni par l'utilisateur), 3 choix du perso, passif (+3 armure, insensible au recul), déblocage par
    succès. Checkpoint 1 : modèle refait deux fois (l'utilisateur a refusé les formes collées, puis demandé « un truc
    PRO ») ; version actuelle à valider : une pièce sculptée par matière, vrais poings, « SÉCURITÉ » dans le dos.
-   Rendus de contrôle : `--render DOSSIER` (dont des gros plans). Pas encore utilisé en jeu.
+   Rendus de contrôle : `--render DOSSIER` (dont des gros plans). Pas encore utilisé en jeu. **Modèle validé le 2026-11-13.**
+   **Checkpoint 2 fait le 2026-11-13, à valider** : le Tabouret de bar (`weapons/tabouret.ts`, réglages `TABOURET`), un tour
+   complet autour du joueur dès qu'un zombie est à portée, gros recul, tabourets en plus répartis sur le cercle ; en
+   boutique à 100 TUNAS (pas une arme de départ) ; DEV « Donner l'arme ». Piège trouvé : un GLB sans normales (le tabouret)
+   noircit toute l'image ; `bottleView` les calcule désormais. Ensuite : checkpoint 3 (choix du perso, passif, déblocage).
    Checkpoint 1, notes : base D1 `megabeer` (WEUR, id dans
    `wrangler.jsonc`, schéma appliqué), application Discord de l'utilisateur (Client ID dans `wrangler.jsonc`, secret
    posé par `wrangler secret put`, en local dans `.dev.vars`). Commandes Cloudflare : variables d'environnement
