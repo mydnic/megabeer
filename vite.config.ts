@@ -43,6 +43,10 @@ function runLog(): Plugin {
  */
 function buildInfo() {
   const git = (cmd: string) => { try { return execSync(`git ${cmd}`, { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim(); } catch { return ''; } };
+  // Clone sans historique : on le récupère pour compter les commits (sinon, hash et heure seulement)
+  if (git('rev-parse --is-shallow-repository') === 'true') {
+    try { execSync('git fetch --unshallow --quiet', { stdio: 'ignore', timeout: 30000 }); } catch { /* pas de réseau ou pas d'accès */ }
+  }
   const shallow = git('rev-parse --is-shallow-repository') === 'true';
   const count = shallow ? '' : git('rev-list --count HEAD');
   const hash = (process.env.WORKERS_CI_COMMIT_SHA ?? git('rev-parse HEAD')).slice(0, 7);
