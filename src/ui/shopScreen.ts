@@ -3,7 +3,7 @@ import { RARITIES } from '../config/upgrades';
 import { WEAPON_INFO } from '../config/weapons';
 import { itemCardText } from '../game/levelUpCards';
 import type { Profile } from '../meta/profile';
-import { catalog, owned, type ShopEntry } from '../meta/shop';
+import { achievementFor, catalog, owned, type ShopEntry } from '../meta/shop';
 import { SKILL_LINES, SKILL_PRICES } from '../config/skills';
 import { tiersOf } from '../meta/skills';
 import { ACHIEVEMENTS } from '../config/achievements';
@@ -53,6 +53,7 @@ const CSS = `
 .shop-buy svg { width: 22px; height: 22px; }
 .shop-buy:hover, .shop-buy:focus-visible { transform: scale(1.04); outline: 3px solid #ffc93a; outline-offset: 2px; }
 .shop-buy.poor { background: linear-gradient(#8a7a6a, #5a4a3a); color: #e8dccb; cursor: default; }
+.shop-via { grid-column: 1 / 3; justify-self: start; padding: 2px 10px 4px; border: 2px solid #1a120c; border-radius: 12px; background: #ff9f6a; color: #1a120c; font-size: 14px; }
 .shop-msg { min-height: 22px; margin-top: 6px; font-size: 16px; color: #ffb4a0; }
 /* Skill tree : une ligne par catégorie, ses paliers de gauche à droite (chacun demande le précédent) */
 .sk-line { display: grid; grid-template-columns: 130px repeat(5, 1fr); gap: 8px; align-items: stretch; margin: 10px 0; }
@@ -74,6 +75,8 @@ const CSS = `
 .ach .sk-price, .ach .shop-own { grid-column: 2; grid-row: 1 / 3; }
 .ach.locked { background: linear-gradient(#a8977a, #8a785c); box-shadow: 0 4px 0 #1a120c; opacity: .8; }
 .ach-count { font-size: 18px; opacity: .8; }
+.ach .ach-gift { color: #b8401a; }
+.ach .sk-price, .ach .shop-own { grid-row: 1 / 4; }
 @media (max-width: 900px) { .sk-line { grid-template-columns: repeat(5, 1fr); } .sk-name { grid-column: 1 / -1; } }
 @media (max-width: 540px) { .shop-head { flex-wrap: wrap; } .shop-grid { grid-template-columns: 1fr; } .sk-line { grid-template-columns: 1fr 1fr; } }
 `;
@@ -112,7 +115,9 @@ export function createShopScreen(cb: { buy: (key: string) => boolean; buySkill: 
   function card(e: ShopEntry, p: Profile) {
     const have = owned(p, e.key);
     const poor = !have && p.tunas < e.price;
+    const via = achievementFor(e.key);
     const foot = have ? `<span class="shop-own">${CHECK}</span>`
+      : via ? `<span class="shop-via">Succès : ${esc(via.name)}</span>`
       : `<button class="shop-buy${poor ? ' poor' : ''}" data-k="${e.key}">${TUNAS}${e.price}</button>`;
     const box = (color: string, tag: string, icon: string, name: string, text: string) =>
       `<div class="shop-card${have ? '' : ' locked'}" style="--c:${color}">${tag ? `<span class="shop-tag">${tag}</span>` : ''}<div class="shop-ico">${icon}${have ? '' : LOCK}</div><b>${esc(name)}</b><p>${esc(text)}</p>${foot}</div>`;
@@ -133,7 +138,8 @@ export function createShopScreen(cb: { buy: (key: string) => boolean; buySkill: 
     const n = ACHIEVEMENTS.filter((a) => p.achievements.includes(a.id)).length;
     body.innerHTML = `<div class="ach-count">${n} / ${ACHIEVEMENTS.length}</div><div class="ach-grid">${ACHIEVEMENTS.map((a) => {
       const done = p.achievements.includes(a.id);
-      return `<div class="ach${done ? '' : ' locked'}"><b>${esc(a.name)}</b><p>${esc(a.text)}</p>${done ? `<span class="shop-own">${CHECK}</span>` : `<span class="sk-price">${TUNAS}+${a.tunas}</span>`}</div>`;
+      const bonus = (a.unlocks ?? []).map((k) => k.startsWith('item:') ? (ITEMS[k.slice(5) as keyof typeof ITEMS] as ItemDef).name : k).map((n) => `<p class="ach-gift">Débloque : ${esc(n)}</p>`).join('');
+      return `<div class="ach${done ? '' : ' locked'}"><b>${esc(a.name)}</b><p>${esc(a.text)}</p>${bonus}${done ? `<span class="shop-own">${CHECK}</span>` : `<span class="sk-price">${TUNAS}+${a.tunas}</span>`}</div>`;
     }).join('')}</div>`;
   }
   const titleEl = el.querySelector<HTMLElement>('.shop-title')!;

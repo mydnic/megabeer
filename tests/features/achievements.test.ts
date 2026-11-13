@@ -80,3 +80,18 @@ describe('Les succès', () => {
     expect(m.achievements).toEqual(expect.arrayContaining(['premierVerre', 'sonne']));
   });
 });
+
+describe('Les récompenses des succès', () => {
+  it('la Seconde tournée ne s achète pas : « Dernière messe » la débloque, et elle peut alors sortir des coffres', async () => {
+    const { buy, owned, runUnlocks, achievementFor } = await import('../../src/meta/shop');
+    const key = 'item:secondeTournee';
+    expect(achievementFor(key)?.id).toBe('derniereMesse');
+    const rich = { ...emptyProfile(), tunas: 10_000 };
+    expect(buy(rich, key, 1)).toBeNull();
+    expect(owned(rich, key)).toBe(false);
+    expect(runUnlocks(rich).items.has('secondeTournee')).toBe(false);
+    const p = recordRun(rich, { survived: 600, kills: 0, tunas: 0, achievements: ['derniereMesse'] }, 2);
+    expect(owned(p, key)).toBe(true);
+    expect(runUnlocks(p).items.has('secondeTournee')).toBe(true);
+  });
+});

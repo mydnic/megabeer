@@ -7,6 +7,7 @@ import type { WeaponId } from '../weapons/weapon';
 import type { Profile } from './profile';
 import { skillBonuses } from './skills';
 import type { ItemStatId } from '../config/items';
+import { ACHIEVEMENTS } from '../config/achievements';
 
 /** Un article : un perso (`character:<id>`), une arme (`weapon:<id>`) ou un objet (`item:<id>`). */
 export type ShopEntry =
@@ -28,9 +29,15 @@ export function catalog(): ShopEntry[] {
   return [...characters, ...weapons, ...items];
 }
 
-/** L'article est-il débloqué (acheté, ou donné au départ) ? */
+/** Le succès qui débloque cet article, s'il est réservé aux succès (il ne s'achète pas). */
+export const achievementFor = (key: string) => ACHIEVEMENTS.find((a) => a.unlocks?.includes(key));
+
+/** L'article est-il débloqué (acheté, donné au départ, ou gagné par son succès) ? */
 export function owned(p: Profile, key: string) {
   if (isStarting(key)) return true;
+  const a = achievementFor(key);
+  // Gagné par son succès (ou acheté avant qu'il ne soit réservé aux succès : pas repris)
+  if (a) return p.achievements.includes(a.id) || p.unlocks.includes(key);
   return p.unlocks.includes(key);
 }
 
@@ -42,10 +49,10 @@ export function isStarting(key: string) {
   return false;
 }
 
-/** Achète un article : le prix est retiré des TUNAS. Null si déjà débloqué, inconnu, ou pas assez de TUNAS. */
+/** Achète un article : le prix est retiré des TUNAS. Null si déjà débloqué, inconnu, réservé à un succès, ou trop cher. */
 export function buy(p: Profile, key: string, now: number): Profile | null {
   const entry = catalog().find((e) => e.key === key);
-  if (!entry || owned(p, key) || p.tunas < entry.price) return null;
+  if (!entry || achievementFor(key) || owned(p, key) || p.tunas < entry.price) return null;
   return { ...p, tunas: p.tunas - entry.price, unlocks: [...p.unlocks, key], updatedAt: now };
 }
 

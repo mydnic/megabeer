@@ -44,7 +44,8 @@ prix, persos à vendre), `meta/shop.ts` (catalogue, achat, `runUnlocks` appliqu�
 l'accueil (même mise en page que la boutique). Ses bonus de stat s'appliquent au début de chaque run (`game.unlocks.bonuses`). Relancer / Bannir /
 Passer : `game.rerollCards`, `banishCard`, `skipCards`, boutons sous les cartes de level-up (ligne Cartes du skill tree).
 Succès : `config/achievements.ts` (liste, conditions, TUNAS), `game/achievements.ts` (suivi pendant la run, événement
-`achievementUnlocked`, liste dans `runEnded`), gardés dans le profil ; bouton Succès de l'accueil. `yarn dev` fait tourner le Worker et une D1 locale (plugin Cloudflare de Vite).
+`achievementUnlocked`, liste dans `runEnded`), gardés dans le profil ; bouton Succès de l'accueil. Un succès peut débloquer des articles réservés (`unlocks`, qui ne
+s'achètent pas en boutique : `achievementFor` dans `meta/shop.ts`). `yarn dev` fait tourner le Worker et une D1 locale (plugin Cloudflare de Vite).
 
 ```
 yarn dev        # http://localhost:5173

@@ -16,7 +16,8 @@ export type AchievementRule =
   | { kind: 'bins'; n: number }
   | { kind: 'tunas'; n: number };
 
-export type AchievementDef = { id: string; name: string; text: string; tunas: number; rule: AchievementRule };
+/** `unlocks` : articles de la boutique que seul ce succès débloque (ils ne s'achètent pas, GDD section 14). */
+export type AchievementDef = { id: string; name: string; text: string; tunas: number; rule: AchievementRule; unlocks?: readonly string[] };
 
 export const ACHIEVEMENTS: readonly AchievementDef[] = [
   { id: 'premierVerre', name: 'Premier verre', text: 'Terminer une run', tunas: 10, rule: { kind: 'runEnded' } },
@@ -24,7 +25,7 @@ export const ACHIEVEMENTS: readonly AchievementDef[] = [
   { id: 'fermeture', name: "Jusqu'à la fermeture", text: "Survivre jusqu'à 10:00", tunas: 40, rule: { kind: 'survive', seconds: CLOSING.at } },
   { id: 'defierMort', name: 'Défier la Mort', text: 'Tenir 1 min après la fermeture', tunas: 60, rule: { kind: 'survive', seconds: CLOSING.at + 60 } },
   { id: 'sonne', name: 'Sonné', text: 'Tuer le Frère Sonneur', tunas: 30, rule: { kind: 'boss', boss: 'sonneur' } },
-  { id: 'derniereMesse', name: 'Dernière messe', text: "Tuer l'Abbé", tunas: 60, rule: { kind: 'boss', boss: 'abbe' } },
+  { id: 'derniereMesse', name: 'Dernière messe', text: "Tuer l'Abbé", tunas: 60, rule: { kind: 'boss', boss: 'abbe' }, unlocks: ['item:secondeTournee'] },
   { id: 'pompetteConfirme', name: 'Pompette confirmé', text: "Tuer l'Abbé en Pompette", tunas: 100, rule: { kind: 'boss', boss: 'abbe', difficulty: 'pompette' } },
   { id: 'bourreConfirme', name: 'Bourré confirmé', text: "Tuer l'Abbé en Bourré", tunas: 150, rule: { kind: 'boss', boss: 'abbe', difficulty: 'bourre' } },
   { id: 'tourneeGenerale', name: 'Tournée générale', text: '1 000 zombies dans une run', tunas: 50, rule: { kind: 'runKills', n: 1000 } },
