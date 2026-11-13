@@ -63,7 +63,7 @@ export function createDiagnostics(renderer: THREE.WebGLRenderer, enabled: boolea
     sent = true;
     const info = renderer.info;
     const body = JSON.stringify({
-      device: atStart, off: [...DIAG_OFF], lost, errors, samples, extra: extra(),
+      build: __BUILD__, device: atStart, off: [...DIAG_OFF], lost, errors, samples, extra: extra(),
       render: { calls: info.render.calls, triangles: info.render.triangles, programs: info.programs?.length ?? 0, geometries: info.memory.geometries, textures: info.memory.textures },
     });
     void fetch('/api/report', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }).catch(() => {});

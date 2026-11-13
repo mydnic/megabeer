@@ -36,6 +36,7 @@ const CSS = `
 .home-options:hover, .home-options:focus-visible { transform: scale(1.06); outline: none; background: rgba(90,58,28,.9); }
 .home-row { position: relative; z-index: 1; display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
 .home-opt { position: absolute; left: 16px; bottom: 16px; margin: 0; }
+.home-build { position: absolute; left: 0; right: 0; bottom: 8px; text-align: center; font-family: system-ui, sans-serif; font-size: 12px; color: #f3e6cf; opacity: .55; pointer-events: none; }
 .home-row .home-options { margin-top: 0; }
 .home-shop { color: #8fe07a; }
 .home-skills { color: #ffc93a; }
@@ -54,7 +55,7 @@ export function createHomeScreen(onPlay: () => void, onOptions: () => void, onSh
   document.head.appendChild(style);
   const el = document.createElement('div');
   el.className = 'home';
-  el.innerHTML = `<div class="home-logo">MEGABEER</div><button class="home-play">Jouer</button><div class="home-row"><button class="home-options home-shop">Boutique</button><button class="home-options home-skills">Skills</button><button class="home-options home-ach">Succès</button></div><button class="home-options home-opt">Options</button>`;
+  el.innerHTML = `<div class="home-logo">MEGABEER</div><button class="home-play">Jouer</button><div class="home-row"><button class="home-options home-shop">Boutique</button><button class="home-options home-skills">Skills</button><button class="home-options home-ach">Succès</button></div><button class="home-options home-opt">Options</button><div class="home-build">${__BUILD__}</div>`;
   document.body.appendChild(el);
   const btn = el.querySelector<HTMLButtonElement>('.home-play')!;
   btn.addEventListener('click', (e) => { e.stopPropagation(); onPlay(); });
