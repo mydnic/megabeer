@@ -3,14 +3,19 @@
  *
  * - GET  /api/auth/discord   : part se connecter chez Discord (scope identify : pseudo et avatar, rien d'autre).
  * - GET  /api/auth/callback  : retour de Discord ; crée ou met à jour le joueur, ouvre une session (cookie).
- * - GET  /api/me             : le joueur connecté (ou null), et si la connexion Discord est configurée.
+ * - POST /api/auth/email     : envoie un lien de connexion à usage unique à l'adresse donnée (service Resend).
+ * - GET  /api/auth/email/link : page du lien reçu, avec un bouton qui confirme (les antivirus de messagerie ouvrent les
+ *                               liens tout seuls : la connexion ne se fait qu'au clic, en POST).
+ * - POST /api/auth/email/link : confirme le lien ; crée le joueur au besoin et ouvre une session.
+ * - GET  /api/me             : le joueur connecté (ou null), et quelles connexions sont configurées.
  * - POST /api/logout         : ferme la session.
  * - GET  /api/save           : la progression sauvegardée du joueur connecté, ou null.
  * - PUT  /api/save           : remplace la progression (JSON, taille bornée).
  * - POST /api/score          : fin de run d'un joueur connecté ; garde sa meilleure (le plus de kills).
  * - GET  /api/leaderboard    : les 10 meilleures runs, tous joueurs confondus.
  *
- * Secrets (jamais dans le dépôt) : DISCORD_CLIENT_SECRET (`wrangler secret put`, en local dans .dev.vars).
+ * Secrets (jamais dans le dépôt) : DISCORD_CLIENT_SECRET et RESEND_API_KEY (`wrangler secret put`, en local dans .dev.vars).
+ * La connexion par email n'apparaît que si RESEND_API_KEY et MAIL_FROM (expéditeur d'un domaine vérifié chez Resend) existent.
  */
 
 interface Env {
@@ -18,6 +23,8 @@ interface Env {
   ASSETS: Fetcher;
   DISCORD_CLIENT_ID: string;
   DISCORD_CLIENT_SECRET: string;
+  RESEND_API_KEY?: string;
+  MAIL_FROM?: string;
 }
 
 const SESSION_COOKIE = 'mb_session';
@@ -44,8 +51,11 @@ async function route(request: Request, url: URL, env: Env): Promise<Response> {
   if (path === '/api/auth/callback' && method === 'GET') return finishLogin(request, url, env);
   if (path === '/api/me' && method === 'GET') {
     const user = await currentUser(request, env);
-    return json({ user: user && publicUser(user), login: !!(env.DISCORD_CLIENT_ID && env.DISCORD_CLIENT_SECRET) });
+    return json({ user: user && publicUser(user), login: !!(env.DISCORD_CLIENT_ID && env.DISCORD_CLIENT_SECRET), emailLogin: mailReady(env) });
   }
+  if (path === '/api/auth/email' && method === 'POST') return sendMagicLink(request, url, env);
+  if (path === '/api/auth/email/link' && method === 'GET') return magicLinkPage(url);
+  if (path === '/api/auth/email/link' && method === 'POST') return finishMagicLink(request, url, env);
   if (path === '/api/logout' && method === 'POST') return logout(request, env);
   if (path === '/api/save') {
     const user = await currentUser(request, env);
@@ -137,13 +147,85 @@ async function finishLogin(request: Request, url: URL, env: Env) {
   const now = Date.now();
   await env.DB.prepare('INSERT INTO users (id, name, avatar, created_at, last_login) VALUES (?1, ?2, ?3, ?4, ?4) ON CONFLICT(id) DO UPDATE SET name = ?2, avatar = ?3, last_login = ?4')
     .bind(d.id, d.global_name || d.username, d.avatar, now).run();
+  return openSession(d.id, url, env);
+}
+
+/** Ouvre une session pour le joueur (cookie) et revient au jeu. */
+async function openSession(userId: string, url: URL, env: Env) {
   const session = randomToken();
   await env.DB.prepare('INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (?, ?, ?)')
-    .bind(await sha256(session), d.id, now + SESSION_DAYS * 86400e3).run();
+    .bind(await sha256(session), userId, Date.now() + SESSION_DAYS * 86400e3).run();
   const headers = new Headers({ Location: '/' });
   headers.append('Set-Cookie', cookie(SESSION_COOKIE, session, SESSION_DAYS * 86400, url));
   headers.append('Set-Cookie', cookie(STATE_COOKIE, '', 0, url));
   return new Response(null, { status: 302, headers });
+}
+
+// --- Connexion par email (lien magique, envoyé par Resend)
+
+const MAIL = { linkMinutes: 15, maxPending: 3 };
+const mailReady = (env: Env) => !!(env.RESEND_API_KEY && env.MAIL_FROM);
+const EMAIL_RE = /^[^\s@<>"']+@[^\s@<>"']+\.[a-z]{2,}$/i;
+const escHtml = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+const html = (body: string) => new Response(body, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' } });
+
+async function sendMagicLink(request: Request, url: URL, env: Env) {
+  if (!mailReady(env)) return json({ error: 'connexion par email pas configurée' }, 503);
+  let b: { email?: unknown; name?: unknown };
+  try { b = await request.json(); } catch { return json({ error: 'JSON invalide' }, 400); }
+  const email = String(b.email ?? '').trim().toLowerCase();
+  if (email.length > 254 || !EMAIL_RE.test(email)) return json({ error: 'adresse invalide' }, 400);
+  const name = String(b.name ?? '').replace(/[\p{C}<>]/gu, '').trim().slice(0, 24);
+  if (name.length < 2) return json({ error: 'choisis un pseudo (2 caractères au moins)' }, 400);
+  const now = Date.now();
+  await env.DB.prepare('DELETE FROM email_logins WHERE expires_at < ?').bind(now).run();
+  // Pas plus de quelques liens en attente par adresse (on n'inonde pas une boîte mail)
+  const pending = await env.DB.prepare('SELECT COUNT(*) AS n FROM email_logins WHERE email = ?').bind(email).first<{ n: number }>();
+  if ((pending?.n ?? 0) >= MAIL.maxPending) return json({ error: 'trop de liens envoyés : regarde tes mails, ou réessaie dans quelques minutes' }, 429);
+  const token = randomToken();
+  await env.DB.prepare('INSERT INTO email_logins (token_hash, email, name, expires_at) VALUES (?, ?, ?, ?)')
+    .bind(await sha256(token), email, name, now + MAIL.linkMinutes * 60e3).run();
+  const link = `${url.origin}/api/auth/email/link?token=${token}`;
+  const r = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from: env.MAIL_FROM, to: [email], subject: 'Ton lien de connexion à Megabeer',
+      html: `<p>Salut !</p><p>Clique ici pour te connecter à Megabeer (lien valable ${MAIL.linkMinutes} minutes, une seule fois) :</p>`
+        + `<p><a href="${link}" style="font-size:18px">Me connecter</a></p><p>Si tu n'as rien demandé, ignore ce mail.</p>`,
+      text: `Ton lien de connexion à Megabeer (valable ${MAIL.linkMinutes} minutes, une seule fois) : ${link}`,
+    }),
+  });
+  if (!r.ok) { console.error('[mail]', r.status, await r.text()); return json({ error: "l'email n'a pas pu partir" }, 502); }
+  return json({ ok: true });
+}
+
+function magicLinkPage(url: URL) {
+  const token = url.searchParams.get('token') ?? '';
+  return html(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Megabeer</title>
+<body style="margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#2a170b;font-family:system-ui,sans-serif;color:#f3e6cf">
+<form method="post" style="text-align:center"><h1 style="color:#ffc93a">Megabeer</h1><input type="hidden" name="token" value="${escHtml(token)}">
+<button style="font-size:22px;padding:12px 36px;border:4px solid #1a120c;border-radius:18px;background:#f5a623;color:#2a1608;cursor:pointer">Me connecter</button></form></body>`);
+}
+
+async function finishMagicLink(request: Request, url: URL, env: Env) {
+  const form = await request.formData().catch(() => null);
+  const token = String(form?.get('token') ?? '');
+  if (!token) return backToGame(url, 'lien invalide');
+  const hash = await sha256(token);
+  const row = await env.DB.prepare('SELECT email, name, expires_at FROM email_logins WHERE token_hash = ?').bind(hash).first<{ email: string; name: string; expires_at: number }>();
+  const now = Date.now();
+  if (!row || row.expires_at < now) {
+    await env.DB.prepare('DELETE FROM email_logins WHERE token_hash = ?').bind(hash).run();
+    return backToGame(url, 'lien expiré ou déjà utilisé, redemande-en un');
+  }
+  // Usage unique : tous les liens en attente pour cette adresse tombent
+  await env.DB.prepare('DELETE FROM email_logins WHERE email = ?').bind(row.email).run();
+  const id = `mail:${(await sha256(row.email)).slice(0, 32)}`;
+  // Le pseudo n'est posé qu'à la création du compte (l'adresse, elle, n'est jamais affichée ni gardée dans users)
+  await env.DB.prepare('INSERT INTO users (id, name, avatar, created_at, last_login) VALUES (?1, ?2, NULL, ?3, ?3) ON CONFLICT(id) DO UPDATE SET last_login = ?3')
+    .bind(id, row.name, now).run();
+  return openSession(id, url, env);
 }
 
 async function logout(request: Request, env: Env) {

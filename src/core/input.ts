@@ -35,7 +35,8 @@ let canvas: HTMLElement | null = null;
 
 export function initInput(el: HTMLElement) {
   canvas = el;
-  addEventListener('keydown', (e) => { keys.add(e.code); });
+  // Frappe dans un champ texte (connexion par email) : pas une commande du jeu
+  addEventListener('keydown', (e) => { if (!(e.target instanceof HTMLInputElement && e.target.type !== 'range')) keys.add(e.code); });
   addEventListener('keyup', (e) => keys.delete(e.code));
   addEventListener('blur', () => keys.clear());
   el.addEventListener('click', () => { if (!isTouchDevice()) el.requestPointerLock?.()?.catch?.(() => {}); });

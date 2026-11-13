@@ -167,8 +167,8 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
 
   // Compte et progression : invité (navigateur) ou Discord (en ligne) ; chaque run terminée compte
   const progress = createProgress();
-  const accountPanel = createAccountPanel(home.root, { login: () => progress.login(), logout: () => void progress.logout() });
-  progress.onChange(() => accountPanel.update(progress.online, progress.account, progress.profile, progress.canLogin));
+  const accountPanel = createAccountPanel(home.root, { login: () => progress.login(), logout: () => void progress.logout(), emailLink: (m, n) => progress.emailLink(m, n) });
+  progress.onChange(() => accountPanel.update(progress.online, progress.account, progress.profile, progress.canLogin, progress.canEmail));
   // Classement : top 10 en kills sur une run, relu régulièrement tant que l'accueil est affiché, et après chaque run
   const board = createLeaderboardPanel(home.root);
   const refreshBoard = async () => { if (progress.online) board.update(await progress.leaderboard(), !progress.account); };

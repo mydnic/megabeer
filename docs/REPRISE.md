@@ -148,7 +148,17 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    **Checkpoint 2 fait le 2026-11-13, à valider** : le Tabouret de bar (`weapons/tabouret.ts`, réglages `TABOURET`), un tour
    complet autour du joueur dès qu'un zombie est à portée, gros recul, tabourets en plus répartis sur le cercle ; en
    boutique à 100 TUNAS (pas une arme de départ) ; DEV « Donner l'arme ». Piège trouvé : un GLB sans normales (le tabouret)
-   noircit toute l'image ; `bottleView` les calcule désormais. Ensuite : checkpoint 3 (choix du perso, passif, déblocage).
+   noircit toute l'image ; `bottleView` les calcule désormais. Tabouret ralenti x2 à la demande (tour en 0,9 s).
+   **Checkpoint 3 fait le 2026-11-13, à valider** : persos dans `config/characters.ts` (arme de départ, stats, `knockImmune`),
+   `game.character`, le Videur débloqué par le succès « Sonné », son modèle en run (`BuveurVisual.use`).
+   **Base pour le weekend (demande du 2026-11-13), faite, à valider** : accueil refait (logo en haut, Jouer au centre,
+   Boutique/Skills/Succès dessous, Options en bas à gauche, compte en haut à gauche) ; écran avant partie
+   (`ui/setupScreen.ts` : perso, map, difficulté) ; classement top 10 en kills sur une run (`ui/leaderboardPanel.ts`,
+   table `scores`, `/api/score` envoyé à chaque fin de run connectée) ; téléphone en paysage (`ui/touchControls.ts` :
+   joystick, glisser pour la caméra, Saut, Action, Pause ; interface réduite par `zoom` CSS, réglages `TOUCH`) ;
+   connexion par email (lien magique Resend, pseudo choisi, table `email_logins`). **L'email attend l'utilisateur** :
+   compte Resend, domaine vérifié, puis `wrangler secret put RESEND_API_KEY` et la variable `MAIL_FROM` dans
+   `wrangler.jsonc` ; sans eux le bouton n'apparaît pas. Après ça : ajouter du contenu.
    Checkpoint 1, notes : base D1 `megabeer` (WEUR, id dans
    `wrangler.jsonc`, schéma appliqué), application Discord de l'utilisateur (Client ID dans `wrangler.jsonc`, secret
    posé par `wrangler secret put`, en local dans `.dev.vars`). Commandes Cloudflare : variables d'environnement

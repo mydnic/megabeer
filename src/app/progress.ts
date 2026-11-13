@@ -42,6 +42,8 @@ export function createProgress() {
   let online = false;
   /** La connexion Discord est configurée côté serveur. */
   let canLogin = false;
+  /** La connexion par email (lien magique) est configurée côté serveur. */
+  let canEmail = false;
   const listeners: (() => void)[] = [];
   const changed = () => { for (const f of listeners) f(); };
 
@@ -56,13 +58,15 @@ export function createProgress() {
     get profile() { return profile; },
     get online() { return online; },
     get canLogin() { return canLogin; },
+    get canEmail() { return canEmail; },
     onChange(f: () => void) { listeners.push(f); },
 
     /** Au lancement : qui est connecté, et sa progression (avec la progression invitée rattachée la première fois). */
     async init() {
-      const me = await api<{ user: Account | null; login: boolean }>('/api/me');
+      const me = await api<{ user: Account | null; login: boolean; emailLogin?: boolean }>('/api/me');
       online = me !== null;
       canLogin = !!me?.login;
+      canEmail = !!me?.emailLogin;
       account = me?.user ?? null;
       if (account) {
         const remote = await api<{ save: { data: unknown } | null }>('/api/save');
@@ -134,6 +138,14 @@ export function createProgress() {
     },
 
     login() { location.href = '/api/auth/discord'; },
+    /** Demande un lien de connexion par email. Rend null si envoyé, sinon la raison. */
+    async emailLink(email: string, name: string): Promise<string | null> {
+      try {
+        const r = await fetch('/api/auth/email', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, name }) });
+        if (r.ok) return null;
+        return ((await r.json().catch(() => null)) as { error?: string } | null)?.error ?? 'envoi impossible';
+      } catch { return 'serveur injoignable'; }
+    },
     async logout() {
       await api('/api/logout', { method: 'POST' });
       account = null;
