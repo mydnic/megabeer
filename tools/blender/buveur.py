@@ -2,6 +2,10 @@
 Le Buveur : modèle low-poly, squelette et animations, généré entièrement par script.
 
     blender -b --factory-startup -P tools/blender/buveur.py -- --out src/assets/models/buveur.glb [--render DIR]
+    blender -b --factory-startup -P tools/blender/buveur.py -- --variant videur --out src/assets/models/videur.glb [--render DIR]
+
+`--variant videur` : le Videur (perso jouable), même squelette et mêmes animations que le Buveur, corps à part
+(carrure de frigo, crâne rasé, lunettes noires, oreillette, tee-shirt noir, rangers).
 
 Repère Blender : Z en haut, le personnage regarde vers -Y (devient +Z dans le glTF).
 Sa main droite (la pinte) est du côté -X.
@@ -18,6 +22,7 @@ argv = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
 def arg(name, default=None):
     return argv[argv.index(name) + 1] if name in argv else default
 OUT = arg('--out', 'buveur.glb')
+VARIANT = arg('--variant', 'buveur')
 RENDER_DIR = arg('--render')
 FPS = 30
 
@@ -45,6 +50,18 @@ PALETTE = {
     'biere':     (0.93, 0.60, 0.08),
     'mousse':    (1.00, 0.97, 0.88),
     'verre':     (0.80, 0.92, 0.95),
+    # Le Videur
+    'tee':       (0.11, 0.11, 0.13),
+    'tee_bord':  (0.20, 0.20, 0.23),
+    'pantalon':  (0.15, 0.15, 0.18),
+    'ranger':    (0.08, 0.07, 0.07),
+    'semelle':   (0.20, 0.18, 0.16),
+    'lunettes':  (0.04, 0.04, 0.06),
+    'reflet':    (0.45, 0.55, 0.70),
+    'badge':     (0.97, 0.80, 0.18),
+    'boucle':    (0.80, 0.72, 0.40),
+    'peau_v':    (0.86, 0.62, 0.48),
+    'crane':     (0.80, 0.56, 0.44),
 }
 
 def srgb_to_lin(c):
@@ -314,6 +331,65 @@ def build_body():
     # La mèche rabattue sur le crâne
     # Grand sourire béat
     tube_arc('sourire', (0, -0.262, hz - 0.035), 0.085, 0.016, math.radians(205), math.radians(335), 'bouche', 'head')
+
+def build_body_videur():
+    """Le Videur : mêmes os que le Buveur, carrure de frigo, tout en noir."""
+    sk = 'peau_v'
+    # Jambes (pantalon noir) et rangers
+    for s, side in ((1, 'L'), (-1, 'R')):
+        x = 0.15 * s
+        tube_chain(f'jambe.{side}', [(x, 0, 0.86), (x + 0.01 * s, 0, 0.46), (x + 0.02 * s, 0.01, 0.17)],
+                   [0.15, 0.13, 0.125], [f'thigh.{side}', f'shin.{side}'], 'pantalon', seg=14, blend=0.08)
+        fx = x + 0.02 * s
+        limb(f'tige.{side}', (fx, 0.0, 0.07), (fx, 0.0, 0.25), 0.115, 0.13, 'ranger', f'shin.{side}')
+        ellipsoid(f'ranger.{side}', (fx, -0.075, 0.05), (0.11, 0.2, 0.11), 'ranger', f'foot.{side}', seg=14, rings=10, cut_z=0.0)
+        box(f'semelle.{side}', (fx, -0.06, 0.012), (0.2, 0.37, 0.025), 'semelle', f'foot.{side}', bevel=0.008)
+    # Bassin, ceinture et boucle
+    ellipsoid('bassin', (0, 0.01, 0.86), (0.31, 0.25, 0.18), 'pantalon', 'hips')
+    limb('ceinture', (0, 0.0, 0.90), (0, 0.0, 0.96), 0.30, 0.30, 'ranger', 'hips', seg=16)
+    box('boucle', (0, -0.29, 0.93), (0.09, 0.03, 0.06), 'boucle', 'hips', bevel=0.008)
+    # Ventre plat sous le tee-shirt, gros torse en V
+    ellipsoid('ventre', (0, -0.04, 1.03), (0.30, 0.25, 0.20), 'tee', 'belly')
+    # Torse en V : large et plat en haut, plus étroit à la taille
+    ellipsoid('torse', (0, 0.0, 1.27), (0.44, 0.27, 0.21), 'tee', 'chest')
+    ellipsoid('taille', (0, 0.0, 1.12), (0.34, 0.25, 0.18), 'tee', 'chest')
+    for s, side in ((1, 'L'), (-1, 'R')):
+        ellipsoid(f'trapeze.{side}', (0.16 * s, 0.03, 1.38), (0.14, 0.13, 0.08), 'tee', 'chest')
+        # Épaule ronde dans la manche (couvre le haut du bras)
+        ellipsoid(f'epaule.{side}', (0.315 * s, 0.0, 1.35), (0.16, 0.155, 0.17), 'tee', f'upperarm.{side}', seg=12, rings=8)
+    # Petit badge jaune sur le coeur
+    box('badge', (0.15, -0.262, 1.30), (0.09, 0.02, 0.05), 'badge', 'chest', bevel=0.006)
+    # Cou de taureau, col du tee-shirt
+    limb('cou', (0, 0.0, 1.34), (0, 0.0, 1.50), 0.135, 0.125, sk, 'head')
+    limb('col', (0, 0.0, 1.38), (0, 0.0, 1.42), 0.16, 0.15, 'tee_bord', 'chest', seg=14)
+    # Bras énormes ; manches courtes
+    tube_chain('bras.L', [(0.31, 0, 1.37), (0.37, 0.01, 1.08), (0.40, -0.03, 0.82)],
+               [0.115, 0.095, 0.08], ['upperarm.L', 'forearm.L'], sk, seg=12, blend=0.06, dome_start=True)
+    limb('manche.L', (0.325, 0.0, 1.32), (0.355, 0.005, 1.19), 0.135, 0.12, 'tee', 'upperarm.L', seg=12)
+    ellipsoid('main.L', (0.405, -0.035, 0.77), (0.09, 0.085, 0.10), sk, 'hand.L', seg=10, rings=7)
+    tube_chain('bras.R', [(-0.31, 0, 1.37), (-0.36, 0.03, 1.10), (-0.36, -0.27, 1.08)],
+               [0.115, 0.095, 0.08], ['upperarm.R', 'forearm.R'], sk, seg=12, blend=0.05, dome_start=True)
+    limb('manche.R', (-0.325, 0.0, 1.32), (-0.35, 0.02, 1.20), 0.135, 0.12, 'tee', 'upperarm.R', seg=12)
+    # Poing serré
+    ellipsoid('main.R', (-0.35, -0.32, 1.07), (0.09, 0.095, 0.085), sk, 'hand.R', seg=10, rings=7)
+    # Tête : crâne rasé, petite par rapport au corps
+    hz = 1.63
+    ellipsoid('tete', (0, -0.01, hz), (0.225, 0.23, 0.25), sk, 'head', seg=16, rings=11)
+    ellipsoid('machoire', (0, -0.05, hz - 0.11), (0.205, 0.2, 0.12), sk, 'head', seg=14, rings=8)
+    ellipsoid('nez', (0, -0.245, hz - 0.01), (0.05, 0.055, 0.05), sk, 'head', seg=10, rings=7)
+    for s, side in ((1, 'L'), (-1, 'R')):
+        ellipsoid(f'oreille.{side}', (0.225 * s, 0.0, hz), (0.03, 0.055, 0.065), sk, 'head', seg=10, rings=6)
+        # Sourcils froncés, verres noirs
+        box(f'sourcil.{side}', (0.085 * s, -0.215, hz + 0.105), (0.095, 0.025, 0.026), 'ranger', 'head', bevel=0.008, rot=(0, -14 * s, 0))
+        box(f'verre.{side}', (0.085 * s, -0.225, hz + 0.045), (0.105, 0.025, 0.07), 'lunettes', 'head', bevel=0.012)
+        box(f'reflet.{side}', (0.06 * s, -0.24, hz + 0.065), (0.03, 0.006, 0.018), 'reflet', 'head', rot=(0, 30, 0))
+        box(f'branche.{side}', (0.17 * s, -0.12, hz + 0.06), (0.012, 0.21, 0.014), 'lunettes', 'head')
+    box('pont', (0, -0.232, hz + 0.055), (0.05, 0.015, 0.015), 'lunettes', 'head')
+    # Bouche serrée, menton carré
+    box('bouche', (0, -0.218, hz - 0.095), (0.08, 0.015, 0.012), 'bouche', 'head', bevel=0.004)
+    # Oreillette et son fil qui descend dans le col
+    ellipsoid('oreillette', (-0.235, -0.02, hz - 0.005), (0.018, 0.022, 0.025), 'lunettes', 'head', seg=8, rings=6)
+    limb('fil', (-0.235, 0.0, hz - 0.03), (-0.17, 0.06, 1.42), 0.007, 0.007, 'lunettes', 'head', seg=6)
 
 # ---------------------------------------------------------------- armature
 def build_armature():
@@ -608,7 +684,10 @@ def build_clips(arm):
     make_clip(arm, 'death', 42, {0: rest, 5: recoil, 14: buckle, 24: falling, 30: flat, 34: bounce, 42: settled}, loop=False)
 
 # ---------------------------------------------------------------- export
-build_body()
+if VARIANT == 'videur':
+    build_body_videur()
+else:
+    build_body()
 arm = build_armature()
 body = skin(arm)
 build_clips(arm)
@@ -627,7 +706,7 @@ bpy.ops.export_scene.gltf(
     export_optimize_animation_size=False,
 )
 tris = sum(len(p.vertices) - 2 for p in body.data.polygons)
-print(f'BUVEUR_OK triangles={tris} -> {OUT}')
+print(f'BUVEUR_OK variant={VARIANT} triangles={tris} -> {OUT}')
 
 # ---------------------------------------------------------------- aperçus (Workbench)
 if RENDER_DIR:
