@@ -5,7 +5,8 @@ Le Buveur : modèle low-poly, squelette et animations, généré entièrement pa
     blender -b --factory-startup -P tools/blender/buveur.py -- --variant videur --out src/assets/models/videur.glb [--render DIR]
 
 `--variant videur` : le Videur (perso jouable), même squelette et mêmes animations que le Buveur, corps à part
-(carrure de frigo, crâne rasé, lunettes noires, oreillette, tee-shirt noir, rangers).
+(carrure de frigo, crâne rasé, lunettes noires, oreillette, tee-shirt noir, rangers), SCULPTÉ comme le Frère Sonneur :
+volumes fusionnés par remaillage (tools/blender/figure_kit.py), couleurs par zone, poids des os par distance.
 
 Repère Blender : Z en haut, le personnage regarde vers -Y (devient +Z dans le glTF).
 Sa main droite (la pinte) est du côté -X.
@@ -17,6 +18,8 @@ import math
 import sys
 import os
 from mathutils import Vector, Matrix, Euler, Quaternion
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))   # figure_kit (variante videur)
 
 argv = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
 def arg(name, default=None):
@@ -333,63 +336,159 @@ def build_body():
     tube_arc('sourire', (0, -0.262, hz - 0.035), 0.085, 0.016, math.radians(205), math.radians(335), 'bouche', 'head')
 
 def build_body_videur():
-    """Le Videur : mêmes os que le Buveur, carrure de frigo, tout en noir."""
+    """
+    Le Videur, sculpté comme le Frère Sonneur (tools/blender/figure_kit.py) : chaque grande partie (haut du corps avec
+    les bras, bas du corps avec les rangers, tête) est ébauchée en volumes puis FUSIONNÉE en une seule surface par
+    remaillage, lissée et allégée ; couleurs peintes par zone, poids des os par distance (les membres plient en
+    douceur). Mêmes os que le Buveur, donc mêmes animations.
+    """
+    import figure_kit as K
+    from figure_kit import cap, ell, box as kbox, tube, sculpt, paint, weigh, seg_dist, hard, in_ell
+    K.PALETTE = PALETTE
+    K.MATS = MATS
+    K.B = B
+    K.FINAL.clear()
+    V3 = Vector
     sk = 'peau_v'
-    # Jambes (pantalon noir) et rangers
-    for s, side in ((1, 'L'), (-1, 'R')):
-        x = 0.15 * s
-        tube_chain(f'jambe.{side}', [(x, 0, 0.86), (x + 0.01 * s, 0, 0.46), (x + 0.02 * s, 0.01, 0.17)],
-                   [0.15, 0.13, 0.125], [f'thigh.{side}', f'shin.{side}'], 'pantalon', seg=14, blend=0.08)
-        fx = x + 0.02 * s
-        limb(f'tige.{side}', (fx, 0.0, 0.07), (fx, 0.0, 0.25), 0.115, 0.13, 'ranger', f'shin.{side}')
-        ellipsoid(f'ranger.{side}', (fx, -0.075, 0.05), (0.11, 0.2, 0.11), 'ranger', f'foot.{side}', seg=14, rings=10, cut_z=0.0)
-        box(f'semelle.{side}', (fx, -0.06, 0.012), (0.2, 0.37, 0.025), 'semelle', f'foot.{side}', bevel=0.008)
-    # Bassin, ceinture et boucle
-    ellipsoid('bassin', (0, 0.01, 0.86), (0.31, 0.25, 0.18), 'pantalon', 'hips')
-    limb('ceinture', (0, 0.0, 0.90), (0, 0.0, 0.96), 0.30, 0.30, 'ranger', 'hips', seg=16)
-    box('boucle', (0, -0.29, 0.93), (0.09, 0.03, 0.06), 'boucle', 'hips', bevel=0.008)
-    # Ventre plat sous le tee-shirt, gros torse en V
-    ellipsoid('ventre', (0, -0.04, 1.03), (0.30, 0.25, 0.20), 'tee', 'belly')
-    # Torse en V : large et plat en haut, plus étroit à la taille
-    ellipsoid('torse', (0, 0.0, 1.27), (0.44, 0.27, 0.21), 'tee', 'chest')
-    ellipsoid('taille', (0, 0.0, 1.12), (0.34, 0.25, 0.18), 'tee', 'chest')
-    for s, side in ((1, 'L'), (-1, 'R')):
-        ellipsoid(f'trapeze.{side}', (0.16 * s, 0.03, 1.38), (0.14, 0.13, 0.08), 'tee', 'chest')
-        # Épaule ronde dans la manche (couvre le haut du bras)
-        ellipsoid(f'epaule.{side}', (0.315 * s, 0.0, 1.35), (0.16, 0.155, 0.17), 'tee', f'upperarm.{side}', seg=12, rings=8)
-    # Petit badge jaune sur le coeur
-    box('badge', (0.15, -0.262, 1.30), (0.09, 0.02, 0.05), 'badge', 'chest', bevel=0.006)
-    # Cou de taureau, col du tee-shirt
-    limb('cou', (0, 0.0, 1.34), (0, 0.0, 1.50), 0.135, 0.125, sk, 'head')
-    limb('col', (0, 0.0, 1.38), (0, 0.0, 1.42), 0.16, 0.15, 'tee_bord', 'chest', seg=14)
-    # Bras énormes ; manches courtes
-    tube_chain('bras.L', [(0.31, 0, 1.37), (0.37, 0.01, 1.08), (0.40, -0.03, 0.82)],
-               [0.115, 0.095, 0.08], ['upperarm.L', 'forearm.L'], sk, seg=12, blend=0.06, dome_start=True)
-    limb('manche.L', (0.325, 0.0, 1.32), (0.355, 0.005, 1.19), 0.135, 0.12, 'tee', 'upperarm.L', seg=12)
-    ellipsoid('main.L', (0.405, -0.035, 0.77), (0.09, 0.085, 0.10), sk, 'hand.L', seg=10, rings=7)
-    tube_chain('bras.R', [(-0.31, 0, 1.37), (-0.36, 0.03, 1.10), (-0.36, -0.27, 1.08)],
-               [0.115, 0.095, 0.08], ['upperarm.R', 'forearm.R'], sk, seg=12, blend=0.05, dome_start=True)
-    limb('manche.R', (-0.325, 0.0, 1.32), (-0.35, 0.02, 1.20), 0.135, 0.12, 'tee', 'upperarm.R', seg=12)
-    # Poing serré
-    ellipsoid('main.R', (-0.35, -0.32, 1.07), (0.09, 0.095, 0.085), sk, 'hand.R', seg=10, rings=7)
-    # Tête : crâne rasé, petite par rapport au corps
+    SH = {1: V3((0.31, 0.0, 1.36)), -1: V3((-0.31, 0.0, 1.36))}
+    EL = {1: V3((0.37, 0.01, 1.08)), -1: V3((-0.36, 0.03, 1.10))}
+    WR = {1: V3((0.40, -0.03, 0.83)), -1: V3((-0.36, -0.25, 1.08))}
+    HD = {1: V3((0.405, -0.04, 0.76)), -1: V3((-0.36, -0.33, 1.075))}
+
+    # ---- Haut du corps d'un seul tenant : torse, épaules, bras, poings, cou
+    parts = [
+        ell((0, 0.0, 1.26), (0.40, 0.25, 0.19), seg=24, rings=14),     # poitrail large
+        ell((0, 0.02, 1.11), (0.32, 0.23, 0.19)),                       # taille, dorsaux
+        ell((0, -0.04, 1.00), (0.29, 0.23, 0.15)),                      # ventre plat
+        ell((0, 0.10, 1.25), (0.33, 0.13, 0.17)),                       # dos
+        cap(V3((0, 0.02, 1.33)), V3((0, 0.0, 1.50)), 0.135, 0.12),      # cou de taureau
+    ]
+    for sd in (1, -1):
+        parts += [
+            ell((0.12 * sd, -0.12, 1.29), (0.16, 0.12, 0.10)),               # pectoral (fondu dans le torse)
+            ell((0.15 * sd, 0.04, 1.38), (0.15, 0.12, 0.085)),               # trapèze
+            ell(SH[sd] + V3((0.02 * sd, 0, -0.02)), (0.15, 0.145, 0.15)),    # deltoïde
+            *cap(SH[sd], EL[sd], 0.115, 0.092),
+            ell(SH[sd] + (EL[sd] - SH[sd]) * 0.5 + V3((0, -0.03, 0)), (0.10, 0.10, 0.12)),   # biceps
+            *cap(EL[sd], WR[sd], 0.092, 0.078),
+            ell(EL[sd] + (WR[sd] - EL[sd]) * 0.35, (0.095, 0.095, 0.10)),   # avant-bras
+            ell(HD[sd], (0.095, 0.095, 0.095)),                               # poing
+        ]
+    top = sculpt('haut', parts, voxel=0.012, smooth=4, tris=6500)
+
+    def arm_t(p, sd):
+        ab = EL[sd] - SH[sd]
+        return (p - SH[sd]).dot(ab) / ab.length_squared
+    SLEEVE_T = 0.45   # la manche courte s'arrête à 45 % du bras
+    def is_skin(c, n):
+        if c.z > 1.445 and abs(c.x) < 0.2:
+            return True                                                   # cou
+        for sd in (1, -1):
+            # Avant-bras et poing : toujours la peau (au plus près de l'os, le torse n'y touche pas)
+            if seg_dist(c, EL[sd], WR[sd]) < 0.105 or (c - HD[sd]).length < 0.115:
+                return True
+            # Haut du bras, sous la manche courte
+            if arm_t(c, sd) > SLEEVE_T and seg_dist(c, SH[sd], EL[sd]) < 0.135 and not in_ell(c, (0, -0.01, 1.15), (0.33, 0.25, 0.30)):
+                return True
+        return False
+    paint(top, 'tee', [(sk, is_skin)])
+    torso = ['spine', 'belly', 'chest']
+    groups = {b: top.vertex_groups.new(name=b) for b in torso + ['head'] + [f'{a}.{x}' for a in ('upperarm', 'forearm', 'hand') for x in ('L', 'R')]}
+    def by_dist(p, bones, power):
+        ws = [(1.0 / (seg_dist(p, Vector(B[b][0]), Vector(B[b][1])) + 1e-4) ** power, b) for b in bones]
+        tot = sum(w for w, _ in ws)
+        return {b: w / tot for w, b in ws}
+    for vt in top.data.vertices:
+        p = vt.co
+        w = by_dist(p, torso, 5)
+        if p.z > 1.45 and abs(p.x) < 0.18:
+            k = min(1.0, (p.z - 1.45) / 0.05)
+            w = {b: x * (1 - k) for b, x in w.items()}
+            w['head'] = k
+        for sd, side in ((1, 'L'), (-1, 'R')):
+            t = arm_t(p, sd)
+            if t < 0.05 or min(seg_dist(p, SH[sd], EL[sd]), seg_dist(p, EL[sd], WR[sd]), (p - HD[sd]).length) > 0.2:
+                continue
+            r = min(1.0, (t - 0.05) / 0.3)
+            r = r * r * (3 - 2 * r)
+            wa = by_dist(p, [f'upperarm.{side}', f'forearm.{side}', f'hand.{side}'], 6)
+            w = {b: x * (1 - r) for b, x in w.items()}
+            for b, x in wa.items():
+                w[b] = w.get(b, 0) + x * r
+        for b, x in w.items():
+            if x > 0.02:
+                groups[b].add([vt.index], x, 'REPLACE')
+    PARTS.append((top, None))
+    # Ourlet des manches et col : un bourrelet de tissu cache la limite des couleurs
+    for sd, side in ((1, 'L'), (-1, 'R')):
+        c0 = SH[sd] + (EL[sd] - SH[sd]) * SLEEVE_T
+        ax = (EL[sd] - SH[sd]).normalized()
+        u = ax.cross(Vector((0, 1, 0))).normalized()
+        v = ax.cross(u)
+        ring = [c0 + (u * math.cos(a) + v * math.sin(a)) * 0.112 for a in (i * math.tau / 16 for i in range(16))]
+        o = hard(tube(ring, 0.018, seg=6, closed=True), 'tee', f'upperarm.{side}', smooth=True)
+        K.FINAL.remove(o); PARTS.append((o, None))
+    collar = [Vector((0.15 * math.cos(a), 0.01 + 0.13 * math.sin(a), 1.445 - 0.02 * max(0, -math.sin(a)))) for a in (i * math.tau / 18 for i in range(18))]
+    o = hard(tube(collar, 0.02, seg=6, closed=True), 'tee_bord', 'chest', smooth=True)
+    K.FINAL.remove(o); PARTS.append((o, None))
+    # Badge jaune sur le coeur, posé sur le tee-shirt
+    box('badge', (0.15, -0.236, 1.30), (0.085, 0.02, 0.045), 'badge', 'chest', bevel=0.006)
+
+    # ---- Bas du corps d'un seul tenant : bassin, jambes, rangers
+    parts = [ell((0, 0.01, 0.88), (0.30, 0.24, 0.17))]
+    for sd in (1, -1):
+        x = 0.15 * sd
+        hip, knee, ank = V3((x, 0, 0.86)), V3((x + 0.01 * sd, 0, 0.46)), V3((x + 0.02 * sd, 0.01, 0.15))
+        parts += [*cap(hip, knee, 0.15, 0.125), *cap(knee, ank, 0.125, 0.115),
+                  ell((x, 0.03, 0.62), (0.15, 0.15, 0.17)),                            # cuisse
+                  ell((x + 0.02 * sd, -0.07, 0.065), (0.115, 0.21, 0.08), cut_z=0.0),   # ranger
+                  ell((x + 0.02 * sd, 0.0, 0.16), (0.125, 0.13, 0.12))]                # tige de la ranger
+    low = sculpt('bas', parts, voxel=0.013, smooth=3, tris=3200)
+    paint(low, 'pantalon', [('semelle', lambda c, n: c.z < 0.035), ('ranger', lambda c, n: c.z < 0.27)])
+    weigh(low, ['hips', 'thigh.L', 'shin.L', 'foot.L', 'thigh.R', 'shin.R', 'foot.R'], power=5,
+          override=lambda p: 'hips' if p.z > 0.86 else (('foot.L' if p.x > 0 else 'foot.R') if p.z < 0.09 else None))
+    PARTS.append((low, None))
+    # Ceinture et boucle
+    ring = [V3((0.305 * math.cos(a), 0.01 + 0.245 * math.sin(a), 0.945)) for a in (i * math.tau / 20 for i in range(20))]
+    belt = hard(tube(ring, 0.03, seg=8, closed=True, flat=(0.5, 1.4)), 'ranger', 'hips', smooth=True)
+    K.FINAL.remove(belt); PARTS.append((belt, None))
+    buckle = hard(kbox((0, -0.245, 0.945), (0.09, 0.03, 0.065), bevel=0.01), 'boucle', 'hips')
+    K.FINAL.remove(buckle); PARTS.append((buckle, None))
+
+    # ---- Tête sculptée : crâne rasé, mâchoire carrée, arcade lourde
     hz = 1.63
-    ellipsoid('tete', (0, -0.01, hz), (0.225, 0.23, 0.25), sk, 'head', seg=16, rings=11)
-    ellipsoid('machoire', (0, -0.05, hz - 0.11), (0.205, 0.2, 0.12), sk, 'head', seg=14, rings=8)
-    ellipsoid('nez', (0, -0.245, hz - 0.01), (0.05, 0.055, 0.05), sk, 'head', seg=10, rings=7)
-    for s, side in ((1, 'L'), (-1, 'R')):
-        ellipsoid(f'oreille.{side}', (0.225 * s, 0.0, hz), (0.03, 0.055, 0.065), sk, 'head', seg=10, rings=6)
-        # Sourcils froncés, verres noirs
-        box(f'sourcil.{side}', (0.085 * s, -0.215, hz + 0.105), (0.095, 0.025, 0.026), 'ranger', 'head', bevel=0.008, rot=(0, -14 * s, 0))
-        box(f'verre.{side}', (0.085 * s, -0.225, hz + 0.045), (0.105, 0.025, 0.07), 'lunettes', 'head', bevel=0.012)
-        box(f'reflet.{side}', (0.06 * s, -0.24, hz + 0.065), (0.03, 0.006, 0.018), 'reflet', 'head', rot=(0, 30, 0))
-        box(f'branche.{side}', (0.17 * s, -0.12, hz + 0.06), (0.012, 0.21, 0.014), 'lunettes', 'head')
-    box('pont', (0, -0.232, hz + 0.055), (0.05, 0.015, 0.015), 'lunettes', 'head')
-    # Bouche serrée, menton carré
-    box('bouche', (0, -0.218, hz - 0.095), (0.08, 0.015, 0.012), 'bouche', 'head', bevel=0.004)
-    # Oreillette et son fil qui descend dans le col
-    ellipsoid('oreillette', (-0.235, -0.02, hz - 0.005), (0.018, 0.022, 0.025), 'lunettes', 'head', seg=8, rings=6)
-    limb('fil', (-0.235, 0.0, hz - 0.03), (-0.17, 0.06, 1.42), 0.007, 0.007, 'lunettes', 'head', seg=6)
+    def Q(x, y, z):
+        return V3((x, y, hz + z))
+    parts = [
+        ell(Q(0, 0.0, 0.03), (0.215, 0.225, 0.235)),                # crâne
+        ell(Q(0, -0.05, -0.11), (0.20, 0.19, 0.13)),                # mâchoire carrée
+        ell(Q(0, -0.13, -0.17), (0.13, 0.09, 0.07)),                # menton
+        ell(Q(0, -0.185, 0.06), (0.18, 0.06, 0.045)),               # arcade sourcilière
+        ell(Q(0, -0.205, 0.0), (0.035, 0.05, 0.065)),               # arête du nez
+        ell(Q(0, -0.228, -0.04), (0.045, 0.04, 0.038)),             # bout du nez
+        *cap(Q(0, 0.03, -0.30), Q(0, 0.0, -0.12), 0.125, 0.13),     # cou
+    ]
+    for sd in (1, -1):
+        parts += [ell(Q(0.12 * sd, -0.14, -0.05), (0.065, 0.06, 0.045)),               # pommette
+                  ell(Q(0.215 * sd, 0.0, -0.01), (0.032, 0.055, 0.07), rot=(-10, 20 * sd, 0))]   # oreille
+    head = sculpt('tete', parts, voxel=0.009, smooth=4, tris=2600)
+    paint(head, sk)
+    weigh(head, ['head'])
+    PARTS.append((head, None))
+    def acc(obj, material, smooth=True):
+        o = hard(obj, material, 'head', smooth=smooth)
+        K.FINAL.remove(o)
+        PARTS.append((o, None))
+    # Lunettes noires, sourcils froncés, bouche serrée, oreillette
+    for sd in (1, -1):
+        acc(kbox(Q(0.08 * sd, -0.232, 0.03), (0.11, 0.03, 0.07), bevel=0.016), 'lunettes', smooth=False)
+        acc(kbox(Q(0.058 * sd, -0.249, 0.048), (0.03, 0.006, 0.016), rot=(0, 30, 0)), 'reflet', smooth=False)
+        acc(tube([Q(0.13 * sd, -0.21, 0.045), Q(0.2 * sd, -0.12, 0.04), Q(0.215 * sd, -0.02, 0.03)], 0.008, seg=6), 'lunettes')
+        acc(tube([Q(0.035 * sd, -0.222, 0.085), Q(0.09 * sd, -0.218, 0.098), Q(0.14 * sd, -0.2, 0.1)], [0.012, 0.015, 0.009], seg=8), 'ranger')
+    acc(kbox(Q(0, -0.24, 0.04), (0.05, 0.015, 0.014)), 'lunettes', smooth=False)
+    acc(tube([Q(-0.045, -0.208, -0.1), Q(0, -0.214, -0.103), Q(0.045, -0.208, -0.1)], 0.01, seg=6), 'bouche')
+    acc(ell(Q(-0.225, -0.02, -0.01), (0.018, 0.022, 0.025), seg=8, rings=6), 'lunettes')
+    acc(tube([Q(-0.225, 0.0, -0.035), Q(-0.2, 0.05, -0.12), Q(-0.16, 0.07, -0.22)], 0.007, seg=6), 'lunettes')
 
 # ---------------------------------------------------------------- armature
 def build_armature():

@@ -21,4 +21,8 @@
   `Cash Stack by J-Toastie - aLp0P2nXJ2.glb`, Poly Pizza). Licence à confirmer sur la page source (probablement CC-BY,
   crédit obligatoire). Les liasses de TUNAS au sol (`pickups/tunaDropsView.ts`, recolorées par `TUNA_DROPS.colors`).
 
+- `tabouret.glb` : « Stool » par CMHT Oculus (fichier fourni par l'utilisateur, nom d'origine
+  `Stool by CMHT Oculus - dVl5cuOdnMV.glb`, Poly Pizza). Licence à confirmer sur la page source (probablement CC-BY,
+  crédit obligatoire). L'arme Tabouret de bar du Videur.
+
 Les autres GLB de ce dossier sont générés par les scripts de `tools/blender/` (voir CLAUDE.md).
