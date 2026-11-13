@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { ImprovedNoise } from 'three/examples/jsm/math/ImprovedNoise.js';
 import { PLANET_RADIUS as R } from '../../config/world';
-import { DECOR_LAYOUT as D, type DecorModelId } from '../../config/decor';
+import { DECOR_LAYOUT as D, SIGN, type DecorModelId } from '../../config/decor';
 import { abbeySites, heightAt, slopeGradient } from '../terrain';
 
 /** Un élément posé : modèle et transformation locale -> monde (le y local suit la verticale). */
@@ -113,6 +113,32 @@ export function layoutAbbeyPlanet(seed: number): { placements: Placement[]; spaw
     const u = r() * 2 - 1, a = r() * Math.PI * 2, s = Math.sqrt(1 - u * u);
     return new THREE.Vector3(s * Math.cos(a), u, s * Math.sin(a));
   };
+  // ---------------------------------------------------------------- panneau MORTEHAN (façon Hollywood)
+  // Sur une hauteur face à l'abbaye du départ ; chaque lettre posée sur le sol à sa place (relief et courbure suivis)
+  {
+    const home = abbeySites[0].dir, around = clusterFrame(home, 0);
+    const half = ((SIGN.text.length - 1) * SIGN.pitch) / 2;
+    let best: { dirs: THREE.Vector3[]; q: THREE.Quaternion; h: number } | null = null;
+    for (let t = 0; t < SIGN.tries; t++) {
+      const a = r() * Math.PI * 2, dist = SIGN.minDist + r() * (SIGN.maxDist - SIGN.minDist);
+      const c = around.at(Math.cos(a) * dist, Math.sin(a) * dist);
+      // Repère : y = verticale, z = vers l'abbaye (face des lettres), x = sens de lecture vu depuis l'abbaye
+      const z = home.clone().addScaledVector(c, -c.dot(home)).normalize();
+      const x = new THREE.Vector3().crossVectors(c, z).normalize();
+      const dirs = [...SIGN.text].map((_, i) => c.clone().multiplyScalar(R).addScaledVector(x, -half + i * SIGN.pitch).normalize());
+      if (!dirs.every((d) => awayFromAbbey(d, 6))) continue;
+      const hs = dirs.map((d) => heightAt(d));
+      if (Math.max(...hs) - Math.min(...hs) > SIGN.maxRelief) continue;
+      const h = hs.reduce((s, v) => s + v, 0) / hs.length;
+      if (best && h <= best.h) continue;
+      best = { dirs, q: new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, c, z)), h };
+    }
+    if (best) {
+      [...SIGN.text].forEach((ch, i) => add(`sign${ch}` as DecorModelId, placeAt(best.dirs[i], 0, best.q, 0.3)));
+      centers.push(...best.dirs); // ni amas ni arbres dans les lettres
+    }
+  }
+
   for (const [kind, count] of [['ruin', D.ruinClusters], ['graveyard', D.graveyardClusters]] as const) {
     let placed = 0;
     for (let tries = 0; placed < count && tries < count * 60; tries++) {

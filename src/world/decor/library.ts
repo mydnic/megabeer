@@ -3,6 +3,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import colormapUrl from '../../assets/kenney-graveyard-kit/Models/GLB format/Textures/colormap.png?url';
 import abbeyUrl from '../../assets/models/abbaye.glb?url';
+import signUrl from '../../assets/models/mortehan.glb?url';
 import { DECOR_MODELS, type DecorModelId } from '../../config/decor';
 import { decorMaterial } from '../../render/materials';
 import { computeGridShape, type GridShape } from './gridShape';
@@ -32,6 +33,8 @@ export async function loadDecorLibrary(): Promise<Map<DecorModelId, DecorModel>>
   const vertexMat = decorMaterial({ vertexColors: true });
 
   const lib = new Map<DecorModelId, DecorModel>();
+  // Panneau MORTEHAN : un seul fichier, une lettre par objet
+  const signScene = loader.loadAsync(signUrl).then((g) => g.scene);
   const entries = Object.entries(DECOR_MODELS) as [DecorModelId, (typeof DECOR_MODELS)[DecorModelId]][];
   await Promise.all(entries.map(async ([id, def]) => {
     let geometry: THREE.BufferGeometry;
@@ -45,6 +48,11 @@ export async function loadDecorLibrary(): Promise<Map<DecorModelId, DecorModel>>
       const bb = geometry.boundingBox!;
       geometry.translate(-(bb.min.x + bb.max.x) / 2, 0, -(bb.min.z + bb.max.z) / 2);
       material = kenneyMat;
+    } else if (def.source === 'sign') {
+      const part = (await signScene).getObjectByName(def.part!);
+      if (!part) throw new Error(`Lettre introuvable dans mortehan.glb : ${def.part}`);
+      geometry = mergeScene(part, def.scale, true);
+      material = vertexMat;
     } else if (def.source === 'abbey') {
       geometry = mergeScene((await loader.loadAsync(abbeyUrl)).scene, def.scale, true);
       material = vertexMat;

@@ -3,12 +3,16 @@
 /** Échelle du kit Kenney cimetière (pensé en cases de 1 unité, un mur fait 0,73 de haut). */
 const K = 2.4;
 
-type Def = { source: 'kenney' | 'abbey' | 'pine'; file?: string; scale: number; cell: number };
+type Def = { source: 'kenney' | 'abbey' | 'pine' | 'sign'; file?: string; part?: string; scale: number; cell: number };
 const kenney = (file: string, scale = K, cell = 0.15): Def => ({ source: 'kenney', file, scale, cell });
+const sign = (part: string): Def => ({ source: 'sign', part, scale: 1, cell: 0.25 });
 
 export const DECOR_MODELS = {
   abbey: { source: 'abbey', scale: 1, cell: 0.25 } as Def,
   pine: { source: 'pine', scale: 1, cell: 0.15 } as Def,
+  // Panneau MORTEHAN façon Hollywood (tools/blender/panneau.py) : une lettre par modèle, posée chacune sur le sol
+  signM: sign('M'), signO: sign('O'), signR: sign('R'), signT: sign('T'),
+  signE: sign('E'), signH: sign('H'), signA: sign('A'), signN: sign('N'),
   pineCrooked: kenney('pine-crooked', 2.6),
   // Tombes et croix
   graveBevel: kenney('gravestone-bevel'),
@@ -96,6 +100,13 @@ export const DECOR_LAYOUT = {
    */
   spawnClearance: 4,
 } as const;
+
+/**
+ * Panneau MORTEHAN (façon Hollywood) sur une colline face à l'abbaye du départ : lettres de `text` (une entrée signX
+ * dans DECOR_MODELS par lettre), `pitch` m entre deux lettres. Le site est cherché entre `minDist` et `maxDist` m de
+ * l'abbaye, le plus haut possible, avec au plus `maxRelief` m d'écart de sol d'un bout à l'autre.
+ */
+export const SIGN = { text: 'MORTEHAN', pitch: 5.6, minDist: 70, maxDist: 115, maxRelief: 7, tries: 240 } as const;
 
 /** Lumières des lanternes la nuit : un petit nombre de vraies lumières, sur les plus proches. */
 export const DECOR_LIGHTS = {
