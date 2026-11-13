@@ -31,6 +31,19 @@ describe('La progression du joueur', () => {
     expect(m.updatedAt).toBe(9);
   });
 
+  it('tuer l Abbé ouvre la difficulté suivante, une à la fois', () => {
+    let p = emptyProfile();
+    expect(p.difficulties).toEqual(['sobre']);
+    p = recordRun(p, { survived: 500, kills: 9, tunas: 0, difficulty: 'sobre', abbe: false }, 1);
+    expect(p.difficulties).toEqual(['sobre']);
+    p = recordRun(p, { survived: 500, kills: 9, tunas: 0, difficulty: 'sobre', abbe: true }, 2);
+    expect(p.difficulties).toEqual(['sobre', 'pompette']);
+    p = recordRun(p, { survived: 500, kills: 9, tunas: 0, difficulty: 'pompette', abbe: true }, 3);
+    expect(p.difficulties).toEqual(['sobre', 'pompette', 'bourre']);
+    // Relue depuis la sauvegarde, sans valeur inventée
+    expect(readProfile({ difficulties: ['bourre', 'nimportequoi'] }).difficulties).toEqual(['sobre', 'bourre']);
+  });
+
   it('une sauvegarde abîmée ou d un autre format ne plante pas : les champs faux repartent de zéro', () => {
     expect(readProfile(null)).toEqual(emptyProfile());
     expect(readProfile('n importe quoi')).toEqual(emptyProfile());

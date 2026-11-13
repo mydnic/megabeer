@@ -34,6 +34,8 @@ import { PATRON_DOOR } from '../config/bosses';
 import { CLOSING } from '../config/closing';
 import { createPadNav } from '../ui/padNav';
 import { createAccountPanel } from '../ui/accountPanel';
+import { createDifficultyPicker } from '../ui/difficultyPicker';
+import type { DifficultyId } from '../config/spawn';
 import { createShopScreen } from '../ui/shopScreen';
 import { renderPortrait } from '../render/portrait';
 import buveurUrl from '../assets/models/buveur.glb?url';
@@ -116,8 +118,9 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
       loading.hide();
     }
     planet.use();
-    // Les déblocages de la boutique valent pour la run qui commence
+    // Les déblocages de la boutique et la difficulté choisie valent pour la run qui commence
     game.unlocks = runUnlocks(progress.profile);
+    game.difficulty = difficulty.selected;
     game.startRun(planet.decor.randomSpawn());
     starting = false;
   }
@@ -128,6 +131,10 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   const progress = createProgress();
   const accountPanel = createAccountPanel(home.root, { login: () => progress.login(), logout: () => void progress.logout() });
   progress.onChange(() => accountPanel.update(progress.online, progress.account, progress.profile, progress.canLogin));
+  // Difficulté : au-dessus de Jouer, celles débloquées en tuant l'Abbé
+  const difficulty = createDifficultyPicker(home.root, home.root.querySelector('.home-play')!, (d) => { progress.difficulty = d; });
+  progress.onChange(() => difficulty.update(progress.profile.difficulties, progress.difficulty));
+  difficulty.update(progress.profile.difficulties, progress.difficulty);
   // Boutique : persos, armes et objets à débloquer avec les TUNAS
   // Portraits des persos, rendus une fois depuis leur modèle 3D
   const portraits = new Map<string, string>();
@@ -137,10 +144,10 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   void progress.init();
   // TUNAS de la dernière run, pour le bilan de fin
   const lastRun = { tunas: 0, tunasBonus: 0 };
-  game.events.on('runEnded', ({ survived, kills, tunas, tunasBonus }) => {
+  game.events.on('runEnded', ({ survived, kills, tunas, tunasBonus, difficulty: d, abbe }) => {
     lastRun.tunas = tunas;
     lastRun.tunasBonus = tunasBonus;
-    void progress.recordRun({ survived, kills, tunas });
+    void progress.recordRun({ survived, kills, tunas, difficulty: d, abbe });
   });
 
   game.events.on('runStarted', () => { setHud(true); lockCursor(); });
@@ -228,6 +235,10 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
 
   return {
     get optionsOpen() { return options.open; },
+    /** Outils de dev : la progression (TUNAS, difficulté). */
+    progress,
+    /** Outils de dev : choisir une difficulté, même pas encore débloquée. */
+    forceDifficulty(d: DifficultyId) { progress.difficulty = d; difficulty.update([...new Set([...progress.profile.difficulties, d])], d); },
     /** Chaque image : HUD, écran de mort, manette et Espace dans les menus. */
     update(realDt: number, input: InputState) {
       levelUp.input(input.moveX, input.jumpPressed || input.actionPressed);

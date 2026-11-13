@@ -38,7 +38,7 @@ export const SPAWN = {
   riseDepth: 1.8,
 } as const;
 
-/** Difficultés (GDD section 12) : multiplicateurs sur les ennemis. Seule Sobre est jouable pour l'instant. */
+/** Difficultés (GDD section 12) : multiplicateurs sur les ennemis et les TUNAS. Chacune s'ouvre en tuant l'Abbé dans la précédente. */
 export const DIFFICULTIES = {
   sobre: { label: 'Sobre', hp: 1, count: 1, damage: 1, tunas: 1 },
   pompette: { label: 'Pompette', hp: 1.5, count: 1.25, damage: 1.1, tunas: 1.5 },

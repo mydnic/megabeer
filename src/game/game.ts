@@ -87,7 +87,7 @@ export type GameEvents = {
   resumed: Record<string, never>;
   died: Record<string, never>;
   /** Fin de run : `tunas` gagnés au total (liasses + `tunasBonus`, le bonus de fin, à la mort seulement). */
-  runEnded: { reason: RunEnd; survived: number; kills: number; tunas: number; tunasBonus: number };
+  runEnded: { reason: RunEnd; survived: number; kills: number; tunas: number; tunasBonus: number; difficulty: DifficultyId; abbe: boolean };
   /** Retour à l'accueil : tout est remis à zéro. */
   home: Record<string, never>;
   /** Un ennemi tireur lâche un projectile (son point d'impact au sol est `shot.to`). */
@@ -251,6 +251,8 @@ export class Game {
   /** La fermeture du bar (10:00) : les Morts. */
   readonly closing: Closing;
   bossDone = false;
+  /** L'Abbé (boss final) est tombé pendant cette run : la difficulté suivante s'ouvre. */
+  abbeKilled = false;
   /** Tournées du bar (bonus lâchés par les ennemis). */
   readonly tournees: Tournees;
   private rollTournee: () => TourneeId | null;
@@ -442,7 +444,7 @@ export class Game {
   /** Abandon depuis la pause : la run est perdue, retour à l'accueil. */
   abandon() {
     if (this.phase !== 'run') return;
-    this.events.emit('runEnded', { reason: 'abandon', survived: this.runTime, kills: this.kills, tunas: Math.floor(this.tunas + 1e-9), tunasBonus: 0 });
+    this.events.emit('runEnded', { reason: 'abandon', survived: this.runTime, kills: this.kills, tunas: Math.floor(this.tunas + 1e-9), tunasBonus: 0, difficulty: this.difficulty, abbe: this.abbeKilled });
     this.goHome();
   }
 
@@ -923,6 +925,7 @@ export class Game {
       this.boss = null;
       const chest = this.chests.addFreeAt(z.pos);
       if (chest) chest.rarity = boss.kind === 'abbe' ? ABBE.chestRarity : FRERE_SONNEUR.chestRarity;
+      if (boss.kind === 'abbe') this.abbeKilled = true;
       this.tunaDrops.drop(z.pos, TUNAS.boss[boss.kind]);
       this.events.emit('bossKilled', { boss, chest });
     }
@@ -1206,7 +1209,7 @@ export class Game {
     this.events.emit('died', {});
     // Bonus de fin : le temps survécu rapporte des TUNAS (à la mort seulement : abandonner n'est pas une astuce)
     const tunasBonus = Math.floor((this.runTime / 60) * TUNAS.endBonusPerMinute * this.mods.tunas + 1e-9);
-    this.events.emit('runEnded', { reason: 'mort', survived: this.runTime, kills: this.kills, tunas: Math.floor(this.tunas + 1e-9) + tunasBonus, tunasBonus });
+    this.events.emit('runEnded', { reason: 'mort', survived: this.runTime, kills: this.kills, tunas: Math.floor(this.tunas + 1e-9) + tunasBonus, tunasBonus, difficulty: this.difficulty, abbe: this.abbeKilled });
   }
 
   /** Vitesse du temps : ralenti juste après la mort, puis retour progressif. */
@@ -1244,6 +1247,7 @@ export class Game {
     this.tournees.clear();
     this.boss = null;
     this.bossDone = false;
+    this.abbeKilled = false;
     this.door.clear();
     this.closing.clear();
     this.items.length = 0;

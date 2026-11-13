@@ -1,5 +1,8 @@
 import { emptyProfile, isEmpty, mergeProfiles, readProfile, recordRun, type Profile } from '../meta/profile';
 import { buy } from '../meta/shop';
+import { DIFFICULTIES, type DifficultyId } from '../config/spawn';
+
+const DIFF_KEY = 'megabeer.difficulty';
 
 /** Joueur connecté (compte Discord), tel que le renvoie /api/me. */
 export type Account = { id: string; name: string; avatarUrl: string };
@@ -69,7 +72,7 @@ export function createProgress() {
     },
 
     /** Fin de run : elle compte dans la progression, sauvegardée tout de suite. */
-    async recordRun(run: { survived: number; kills: number; tunas: number }) {
+    async recordRun(run: { survived: number; kills: number; tunas: number; difficulty: DifficultyId; abbe: boolean }) {
       profile = recordRun(profile, run, Date.now());
       changed();
       await save();
@@ -83,6 +86,19 @@ export function createProgress() {
       changed();
       void save();
       return true;
+    },
+
+    /** Difficulté choisie sur l'accueil (gardée dans le navigateur). */
+    get difficulty(): DifficultyId {
+      try { const d = localStorage.getItem(DIFF_KEY) as DifficultyId | null; return d && d in DIFFICULTIES ? d : 'sobre'; } catch { return 'sobre'; }
+    },
+    set difficulty(d: DifficultyId) { try { localStorage.setItem(DIFF_KEY, d); } catch { /* stockage indisponible */ } },
+
+    /** Outils de dev : des TUNAS en plus, pour tester la boutique. */
+    devAddTunas(n: number) {
+      profile = { ...profile, tunas: profile.tunas + n, totalTunas: profile.totalTunas + n, updatedAt: Date.now() };
+      changed();
+      void save();
     },
 
     login() { location.href = '/api/auth/discord'; },

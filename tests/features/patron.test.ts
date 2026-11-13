@@ -142,6 +142,7 @@ describe("L'Abbé", () => {
     expect(killed.chest!.free).toBe(true);
     expect(t.game.boss).toBeNull();
     expect(t.game.frozen).toBe(false);
+    expect(t.game.abbeKilled).toBe(true);
     t.play(2);
     expect(t.game.phase).toBe('run');
     expect(t.game.runTime).toBeGreaterThan(time + 1.9);

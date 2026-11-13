@@ -309,5 +309,5 @@ requestAnimationFrame(frame);
 if (import.meta.env.DEV) {
   Object.assign(window, { __game: { game, cost, adaptive, vfx, sprites, rings, player: game.player, rig, camera, buveur, sky, heightAt, THREE, pipeline, renderer, planet, decor: planet.decor, scene, music, horde: game.horde, health: game.health, progression: game.progression, playerStats: game.stats, canette: game.loadout.weapons[0], setTimeScale: (k: number) => { game.devTimeScale = k; } } });
   const { wireDevTools } = await import('./app/devTools');
-  await wireDevTools(game, { music, runLog, seed: () => planet.seed });
+  await wireDevTools(game, { music, runLog, seed: () => planet.seed, addTunas: (n) => screens.progress.devAddTunas(n), setDifficulty: (dd) => screens.forceDifficulty(dd) });
 }

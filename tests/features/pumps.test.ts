@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PUMPS, STAT_BONUSES } from '../../src/config/pumps';
 import { rarityValue } from '../../src/config/upgrades';
 import { rollStatCards } from '../../src/game/pumps';
@@ -7,6 +7,19 @@ import { PLANET_RADIUS } from '../../src/config/world';
 import { WEAPONS } from '../../src/config/weapons';
 import type { StatCard } from '../../src/game/levelUpCards';
 import { createTestGame } from '../support/testGame';
+
+/** Hasard à graine fixe : les pompes tombent toujours au même endroit (sinon le test du fût plein échoue parfois). */
+function seeded(seed: number) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+beforeEach(() => { vi.spyOn(Math, 'random').mockImplementation(seeded(7)); });
+afterEach(() => { vi.restoreAllMocks(); });
 
 /** Une run au sol, calme : pas de zombies, Canette désarmée. */
 function arena() {

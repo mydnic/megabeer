@@ -19,6 +19,8 @@ export async function wireDevTools(game: Game, d: {
   music: ReturnType<typeof createMusic>;
   runLog: ReturnType<typeof createRunLog>;
   seed: () => number;
+  addTunas: (n: number) => void;
+  setDifficulty: (d: DifficultyId) => void;
 }) {
   const { createDevPanel } = await import('../dev/devPanel');
   const { music, runLog } = d;
@@ -54,7 +56,7 @@ export async function wireDevTools(game: Game, d: {
     skipTime(s) { if (inRun()) { game.runTime += s; runLog.event('dev', 'skipTime', s); } },
     triggerMapEvent() { if (inRun()) { game.mechanic.trigger(); runLog.event('dev', 'mapEvent'); } },
     difficulties: (Object.keys(DIFFICULTIES) as DifficultyId[]).map((id) => ({ id, label: DIFFICULTIES[id].label })),
-    setDifficulty(id) { game.difficulty = id as DifficultyId; },
+    setDifficulty(id) { game.difficulty = id as DifficultyId; d.setDifficulty(id as DifficultyId); },
     setPassive(v) { if (inRun()) { game.horde.setPassive(v); runLog.event('dev', 'passive', v ? 1 : 0); } },
     giveXp(xp) { if (inRun()) { game.addXp(xp); runLog.event('dev', 'xp', xp); } },
     levelUp() {
@@ -69,6 +71,7 @@ export async function wireDevTools(game: Game, d: {
     giveItem(id) { if (inRun()) { game.gainItem(id as ItemId); runLog.event('dev', 'item', id); } },
     heal() { if (inRun()) { game.health.reset(); runLog.event('dev', 'heal'); } },
     giveCoins(n) { if (inRun()) { game.coins += n; runLog.event('dev', 'coins', n); } },
+    giveTunas(n) { d.addTunas(n); runLog.event('dev', 'tunas', n); },
     placeBin() {
       if (!inRun()) return;
       const p = game.player;

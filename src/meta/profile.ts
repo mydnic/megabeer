@@ -1,3 +1,5 @@
+import { DIFFICULTIES, type DifficultyId } from '../config/spawn';
+
 // Progression du joueur d'une run à l'autre (GDD section 14) : ce qui est sauvegardé, dans le navigateur pour un invité,
 // en ligne pour un compte Discord. Pur : ni navigateur ni réseau, testé tel quel.
 
@@ -16,13 +18,15 @@ export type Profile = {
   tunas: number;
   /** TUNAS gagnés depuis le début (dépensés compris). */
   totalTunas: number;
-  /** Achats de la boutique (`item:<id>`, `option:<id>`, voir meta/shop.ts). */
+  /** Achats de la boutique (`item:<id>`, `weapon:<id>`, `character:<id>`, voir meta/shop.ts). */
   unlocks: string[];
+  /** Difficultés ouvertes (Sobre d'office ; la suivante s'ouvre en tuant l'Abbé dans la précédente). */
+  difficulties: DifficultyId[];
   /** Dernière modification (ms depuis 1970) : la plus récente gagne entre deux appareils. */
   updatedAt: number;
 };
 
-export const emptyProfile = (): Profile => ({ version: PROFILE_VERSION, runs: 0, bestTime: 0, totalKills: 0, tunas: 0, totalTunas: 0, unlocks: [], updatedAt: 0 });
+export const emptyProfile = (): Profile => ({ version: PROFILE_VERSION, runs: 0, bestTime: 0, totalKills: 0, tunas: 0, totalTunas: 0, unlocks: [], difficulties: ['sobre'], updatedAt: 0 });
 
 const count = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : 0);
 
@@ -37,15 +41,23 @@ export function readProfile(raw: unknown): Profile {
   p.tunas = Math.floor(count(r.tunas));
   p.totalTunas = Math.max(p.tunas, Math.floor(count(r.totalTunas)));
   p.unlocks = Array.isArray(r.unlocks) ? [...new Set(r.unlocks.filter((u): u is string => typeof u === 'string'))] : [];
+  if (Array.isArray(r.difficulties)) p.difficulties = ORDER.filter((d) => d === 'sobre' || (r.difficulties as unknown[]).includes(d));
   p.updatedAt = count(r.updatedAt);
   return p;
 }
 
-/** Le profil après une run terminée : ses TUNAS (liasses et bonus de fin) rejoignent la réserve. */
-export function recordRun(p: Profile, run: { survived: number; kills: number; tunas: number }, now: number): Profile {
+const ORDER = Object.keys(DIFFICULTIES) as DifficultyId[];
+
+/**
+ * Le profil après une run terminée : ses TUNAS (liasses et bonus de fin) rejoignent la réserve ; l'Abbé tué ouvre la
+ * difficulté suivante.
+ */
+export function recordRun(p: Profile, run: { survived: number; kills: number; tunas: number; difficulty?: DifficultyId; abbe?: boolean }, now: number): Profile {
   const won = Math.max(0, Math.floor(run.tunas));
+  const next = run.abbe && run.difficulty ? ORDER[ORDER.indexOf(run.difficulty) + 1] : undefined;
   return {
     ...p,
+    difficulties: next && !p.difficulties.includes(next) ? ORDER.filter((d) => p.difficulties.includes(d) || d === next) : p.difficulties,
     runs: p.runs + 1,
     bestTime: Math.max(p.bestTime, run.survived),
     totalKills: p.totalKills + run.kills,
@@ -68,6 +80,7 @@ export function mergeProfiles(account: Profile, guest: Profile, now: number): Pr
     tunas: account.tunas + guest.tunas,
     totalTunas: account.totalTunas + guest.totalTunas,
     unlocks: [...new Set([...account.unlocks, ...guest.unlocks])],
+    difficulties: ORDER.filter((d) => account.difficulties.includes(d) || guest.difficulties.includes(d)),
     updatedAt: now,
   };
 }

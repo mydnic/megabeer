@@ -82,6 +82,8 @@ describe('Les TUNAS (liasses de billets)', () => {
     t.game.abandon();
     const end = t.events('runEnded').at(-1)!;
     expect(end.reason).toBe('abandon');
+    expect(end.difficulty).toBe('sobre');
+    expect(end.abbe).toBe(false);
     expect(end.tunas).toBe(12);
     expect(end.tunasBonus).toBe(0);
   });

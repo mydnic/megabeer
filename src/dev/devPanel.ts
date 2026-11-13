@@ -45,6 +45,8 @@ export interface DevApi {
   /** Objets de coffre qu'on peut donner, à la rareté choisie (index dans les raretés). */
   items: readonly string[];
   giveItem(id: string): void;
+  /** TUNAS ajoutés au solde de la boutique (marche aussi depuis l'accueil). */
+  giveTunas(n: number): void;
   die(): void;
   cheats: { god: boolean };
   toggleCombatMusic(): string;
@@ -84,7 +86,7 @@ export function createDevPanel(api: DevApi) {
     <fieldset><legend>Monde</legend>
       difficulté <select data-k="diff">${api.difficulties.map((d) => `<option value="${d.id}">${d.label}</option>`).join('')}</select> (run suivante)<br>
       vitesse <select data-k="time"><option>0.1</option><option>0.25</option><option>0.5</option><option selected>1</option><option>2</option><option>4</option></select>
-      <br><button data-a="music">Musique : run</button>
+      <br><button data-a="music">Musique : run</button> <button data-a="tunas">+100 TUNAS</button>
     </fieldset>`;
   document.body.appendChild(el);
 
@@ -98,6 +100,7 @@ export function createDevPanel(api: DevApi) {
     level: () => api.levelUp(),
     heal: () => api.heal(),
     coins: () => api.giveCoins(50),
+    tunas: () => api.giveTunas(100),
     bin: () => api.placeBin(),
     trap: () => api.placeTrap(),
     bell: () => api.dropBell(),
