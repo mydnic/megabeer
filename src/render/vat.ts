@@ -14,15 +14,22 @@ import * as THREE from 'three';
  */
 export const vatUniforms = {
   vatTex: { value: null as THREE.DataTexture | null },
+  /** Rangement de la texture : les lignes sont coupées en colonnes de `vatRows` lignes, de `vatWidth` texels de large. */
+  vatRows: { value: 1 },
+  vatWidth: { value: 1 },
 };
 
 const PARS = /* glsl */ `
 uniform highp sampler2D vatTex;
+uniform int vatRows;
+uniform int vatWidth;
 attribute vec4 aAnim;
 attribute vec4 aSkinIndex;
 attribute vec4 aSkinWeight;
 mat4 vatBone(float row, float bone) {
-  int x = int(bone) * 3, y = int(row);
+  // Ligne row rangée dans la colonne row / vatRows (la texture reste sous la taille maxi des téléphones)
+  int r = int(row), col = r / vatRows;
+  int x = col * vatWidth + int(bone) * 3, y = r - col * vatRows;
   vec4 r0 = texelFetch(vatTex, ivec2(x, y), 0);
   vec4 r1 = texelFetch(vatTex, ivec2(x + 1, y), 0);
   vec4 r2 = texelFetch(vatTex, ivec2(x + 2, y), 0);
@@ -47,6 +54,8 @@ export function patchVat(material: THREE.Material, key: string, flash = 0, fade 
   material.onBeforeCompile = (shader, renderer) => {
     prev?.call(material, shader, renderer);
     shader.uniforms.vatTex = vatUniforms.vatTex;
+    shader.uniforms.vatRows = vatUniforms.vatRows;
+    shader.uniforms.vatWidth = vatUniforms.vatWidth;
     let vs = shader.vertexShader.replace('#include <common>', '#include <common>\n' + PARS);
     vs = vs.replace('void main() {', `void main() {
   bool vatOn = aAnim.w < 0.5;

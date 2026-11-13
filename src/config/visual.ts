@@ -80,3 +80,9 @@ export const PORTRAIT = {
   ambient: 1.6,
   sun: 2.2,
 } as const;
+
+/**
+ * Texture des animations de foule (render/vat.ts) : au plus `maxRows` lignes de haut, le reste en colonnes à côté.
+ * Les téléphones n'acceptent souvent pas plus de 4096 texels par côté (au-delà, la carte graphique plante).
+ */
+export const VAT = { maxRows: 2048 } as const;

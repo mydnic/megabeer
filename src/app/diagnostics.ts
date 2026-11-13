@@ -40,12 +40,24 @@ export function createDiagnostics(renderer: THREE.WebGLRenderer, enabled: boolea
     };
   }
 
+  // Lue tout de suite : après une perte du contexte graphique, la puce n'est plus lisible
+  const atStart = enabled ? device() : null;
+  let lost: Record<string, unknown> | null = null;
+  if (enabled) {
+    renderer.domElement.addEventListener('webglcontextlost', () => {
+      const info = renderer.info;
+      lost = { t: +(performance.now() / 1000).toFixed(2), state: extra(), memory: { ...info.memory }, programs: info.programs?.length ?? 0 };
+      sent = false;
+      send();
+    });
+  }
+
   function send() {
     if (sent) return;
     sent = true;
     const info = renderer.info;
     const body = JSON.stringify({
-      device: device(), errors, samples, extra: extra(),
+      device: atStart, lost, errors, samples, extra: extra(),
       render: { calls: info.render.calls, triangles: info.render.triangles, programs: info.programs?.length ?? 0, geometries: info.memory.geometries, textures: info.memory.textures },
     });
     void fetch('/api/report', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }).catch(() => {});

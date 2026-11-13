@@ -6,6 +6,7 @@ import { ZOMBIE_HURT as H, ZOMBIE_MODELS, ZOMBIE_VISUAL as V, type ZombieModel }
 import kenneyColormap from '../assets/kenney-graveyard-kit/Models/GLB format/Textures/colormap.png?url';
 import { PROTECTOR_LOOK } from '../config/enemies';
 import { characterMaterial } from '../render/materials';
+import { VAT } from '../config/visual';
 import { patchVat, vatUniforms } from '../render/vat';
 import { ZOMBIE_STATES as STATES, type BakedClip, type ZombieState, type ZombieTimings } from './zombie';
 
@@ -155,7 +156,16 @@ export async function loadZombieLibrary() {
     patchVat(depthMaterial, 'zombie-depth');
     lib[b.id] = { geometry: b.geometry, material, depthMaterial, scale: b.scale, clips, fade: !!translucent };
   }
-  const tex = new THREE.DataTexture(data, width, height, THREE.RGBAFormat, THREE.FloatType);
+  // Rangée en colonnes de VAT.maxRows lignes : une seule colonne de plus de 4096 lignes plante certains téléphones
+  const rows = Math.min(height, VAT.maxRows), cols = Math.ceil(height / rows);
+  const packed = new Float32Array(width * cols * rows * 4);
+  for (let r = 0; r < height; r++) {
+    const c = Math.floor(r / rows);
+    packed.set(data.subarray(r * width * 4, (r + 1) * width * 4), ((r - c * rows) * width * cols + c * width) * 4);
+  }
+  const tex = new THREE.DataTexture(packed, width * cols, rows, THREE.RGBAFormat, THREE.FloatType);
+  vatUniforms.vatRows.value = rows;
+  vatUniforms.vatWidth.value = width;
   tex.minFilter = tex.magFilter = THREE.NearestFilter;
   tex.generateMipmaps = false;
   tex.needsUpdate = true;
