@@ -48,7 +48,8 @@ import { CameraRig } from './player/cameraRig';
 import { PintProp } from './player/pintProp';
 import { Pipeline } from './render/pipeline';
 import { createAdaptiveResolution } from './render/adaptiveResolution';
-import { LIGHT_RENDER } from './render/quality';
+import { LIGHT_RENDER, shadowsOn } from './render/quality';
+import { loadSettings } from './core/settings';
 import { createDiagnostics, DIAG_OFF } from './app/diagnostics';
 import { RENDER } from './config/visual';
 import { createSky } from './world/sky';
@@ -70,7 +71,8 @@ const renderer = new THREE.WebGLRenderer({ antialias: LIGHT_RENDER, powerPrefere
 // Rendu léger (téléphone) : résolution plafonnée, sinon jusqu'à 2x pour les écrans haute densité
 renderer.setPixelRatio(Math.min(devicePixelRatio, LIGHT_RENDER ? RENDER.light.pixelRatio : 2));
 renderer.setSize(innerWidth, innerHeight);
-renderer.shadowMap.enabled = true;
+// Ombres : choix des Options (en automatique, coupées en rendu léger : elles font planter des puces PowerVR)
+renderer.shadowMap.enabled = shadowsOn(loadSettings().shadows);
 renderer.shadowMap.type = THREE.PCFShadowMap;
 renderer.info.autoReset = false; // compte toutes les passes de la frame
 document.body.appendChild(renderer.domElement);
@@ -205,7 +207,16 @@ wireMusic(game, audio, music, 'abbaye');
 
 // --- Effets, interface, journal de run
 const effects = wireEffects(game, { buveur, rig, pint, pipeline, audio, shards, wine, wood, sparks, earth, stoutSplash, gueuzeBurst, ash, embers, foam, ice, gift, tin, rings, sprites, vfx, damageNumbers });
-const screens = wireScreens(game, { planet, canvas: renderer.domElement, audio });
+/** Ombres allumées ou coupées en cours de partie : les matériaux sont recompilés. */
+function setShadows(on: boolean) {
+  if (renderer.shadowMap.enabled === on) return;
+  renderer.shadowMap.enabled = on;
+  scene.traverse((o) => {
+    const m = (o as THREE.Mesh).material;
+    if (m) for (const x of Array.isArray(m) ? m : [m]) x.needsUpdate = true;
+  });
+}
+const screens = wireScreens(game, { planet, canvas: renderer.domElement, audio, setShadows });
 // L'accueil est prêt : l'écran de démarrage s'efface
 const bootEl = document.getElementById('boot');
 if (bootEl) { bootEl.classList.add('off'); setTimeout(() => bootEl.remove(), 400); }

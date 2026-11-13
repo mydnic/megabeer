@@ -137,8 +137,9 @@ recopie son état à chaque image. Ne jamais remettre de logique de jeu dans `ma
   `buveurVisual.ts` (animations, squash/stretch, événements sonores), `footIK.ts`, `beerSplash.ts`.
 - `render/` : `pipeline.ts` (RenderPass, GTAO, contours, bloom, profondeur de champ qui réutilise la profondeur
   du GTAO, étalonnage, ACES), `characterOutline.ts`, `materials.ts`, `quality.ts` (rendu léger sur écran tactile ou
-  avec `?rendu=leger` : la scène va droit à l'écran, sans aucune passe d'effets ni contours (les cibles flottantes
-  donnaient un écran blanc sur téléphone), ombre du soleil seul, terrain moins fin, réglages `RENDER.light`),
+  avec `?rendu=leger`, ou choisi dans Options > Graphismes : la scène va droit à l'écran, sans aucune passe d'effets ni contours (les cibles flottantes
+  donnaient un écran blanc sur téléphone), terrain moins fin, réglages `RENDER.light` ; ombres coupées par défaut en rendu léger,
+  elles faisaient perdre le contexte WebGL à une puce PowerVR, réglables dans les Options),
   `adaptiveResolution.ts` (la résolution de
   la scène baisse seule quand la carte graphique sature, réglages `RENDER.adaptive`).
 - `audio/` : `audio.ts` (Web Audio, bus sfx/ambiance/musique, échantillons Kenney),

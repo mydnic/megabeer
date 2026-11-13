@@ -37,6 +37,7 @@ import { createAccountPanel } from '../ui/accountPanel';
 import { ACHIEVEMENTS, ACHIEVEMENT_BANNER } from '../config/achievements';
 import { createSetupScreen } from '../ui/setupScreen';
 import { createTouchControls } from '../ui/touchControls';
+import { LIGHT_RENDER, shadowsOn } from '../render/quality';
 import { createLeaderboardPanel } from '../ui/leaderboardPanel';
 import { CHARACTERS, type CharacterId } from '../config/characters';
 import { LEADERBOARD } from '../config/hud';
@@ -59,7 +60,7 @@ import { jitter } from './sounds';
  * HUD de run, écran de level-up, pause (Échap), écran de mort. Les écrans ne changent jamais l'état
  * du jeu eux-mêmes : ils appellent le noyau (startRun, pickCard, pause...) et suivent ses événements.
  */
-export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasElement; audio: AudioEngine }) {
+export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasElement; audio: AudioEngine; setShadows: (on: boolean) => void }) {
   const { planet, audio } = d;
   // Pas de curseur verrouillé sur écran tactile (il n'y en a pas, et sa perte mettrait en pause)
   const lockCursor = () => { if (!isTouchDevice()) d.canvas.requestPointerLock?.()?.catch?.(() => {}); };
@@ -67,7 +68,16 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   // --- Options (volumes gardés dans le navigateur)
   const settings = loadSettings();
   for (const ch of ['music', 'fx', 'ui'] as const) audio.setUserVolume(ch, settings.volume[ch]);
-  const options = createOptionsPanel(settings, (ch, v) => audio.setUserVolume(ch, v), () => saveSettings(settings));
+  // Graphismes : les ombres changent tout de suite ; la qualité, au prochain chargement (rechargé tout de suite si on est sur l'accueil)
+  let qualityChanged = false;
+  const options = createOptionsPanel(settings, (ch, v) => audio.setUserVolume(ch, v), () => saveSettings(settings), {
+    shadows: (c) => d.setShadows(shadowsOn(c)),
+    quality: () => { qualityChanged = true; },
+    qualityNow: () => (LIGHT_RENDER ? 'légère' : 'complète'),
+  });
+  options.root.addEventListener('transitionend', () => {
+    if (qualityChanged && !options.open && game.phase === 'home') location.reload();
+  });
 
   // --- HUD de run
   const healthHud = createHealthHud(game.health);
