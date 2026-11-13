@@ -17,6 +17,7 @@ export function createHordeView(scene: THREE.Scene, lib: ZombieLibrary) {
   const makeCrowd = (model: ZombieModel, capacity: number) => {
     const k = lib[model];
     const mesh = new THREE.InstancedMesh(k.geometry, k.material, capacity);
+    mesh.userData.diag = 'foule'; // famille coupable avec ?sans=foule (diagnostic du rendu, app/diagnostics.ts)
     const anim = new THREE.InstancedBufferAttribute(new Float32Array(capacity * 4), 4);
     anim.setUsage(THREE.DynamicDrawUsage);
     k.geometry.setAttribute('aAnim', anim);

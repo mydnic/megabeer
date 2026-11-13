@@ -5,12 +5,18 @@ import type * as THREE from 'three';
  * client_reports) ce qu'il faut pour comprendre un écran qui ne s'affiche pas sans avoir l'appareil en main : le
  * navigateur, la puce graphique et ses limites, les erreurs (JavaScript et compilation des shaders), et la couleur
  * de quelques pixels lus à l'écran pendant la chute puis au sol. Aucune donnée de compte.
+ *
+ * `?sans=foule,vfx,marques,ombres,ombrefoule` coupe des familles d'objets (marquées `userData.diag`) pour trouver celle
+ * qui fait planter une carte graphique : le rapport dit ce qui était coupé.
  */
+export const DIAG_OFF = new Set((typeof location === 'undefined' ? '' : new URLSearchParams(location.search).get('sans') ?? '').split(',').filter(Boolean));
+
 export function createDiagnostics(renderer: THREE.WebGLRenderer, enabled: boolean, extra: () => Record<string, unknown>) {
   const errors: string[] = [];
   const note = (s: string) => { if (errors.length < 40) errors.push(s.slice(0, 600)); };
   const samples: Record<string, unknown>[] = [];
-  let want = '', sent = false;
+  let want = '', sent = false, tick = 0;
+  if (DIAG_OFF.has('ombres')) renderer.shadowMap.enabled = false;
 
   if (enabled) {
     addEventListener('error', (e) => note(`error: ${e.message} @ ${e.filename}:${e.lineno}`));
@@ -57,13 +63,22 @@ export function createDiagnostics(renderer: THREE.WebGLRenderer, enabled: boolea
     sent = true;
     const info = renderer.info;
     const body = JSON.stringify({
-      device: atStart, lost, errors, samples, extra: extra(),
+      device: atStart, off: [...DIAG_OFF], lost, errors, samples, extra: extra(),
       render: { calls: info.render.calls, triangles: info.render.triangles, programs: info.programs?.length ?? 0, geometries: info.memory.geometries, textures: info.memory.textures },
     });
     void fetch('/api/report', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }).catch(() => {});
   }
 
   return {
+    /** Chaque image : masque les familles coupées par ?sans= (relu de temps en temps, les objets apparaissent en cours de route). */
+    hide(scene: THREE.Scene) {
+      if (!DIAG_OFF.size || tick++ % 30) return;
+      scene.traverse((o) => {
+        const d = o.userData.diag as string | undefined;
+        if (d && DIAG_OFF.has(d)) o.visible = false;
+        if (d === 'foule' && DIAG_OFF.has('ombrefoule')) o.castShadow = false;
+      });
+    },
     /** Lit des pixels à la prochaine image (`label` : moment de la run). */
     sample(label: string) { if (enabled && !sent) want = label; },
     /** Juste après le rendu de l'image : lecture des pixels demandés. */

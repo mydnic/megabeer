@@ -47,6 +47,7 @@ export function createGroundMarks(scene: THREE.Scene, L: GroundMarkLook) {
     const mesh = new THREE.Mesh(geo, mat);
     mesh.frustumCulled = false;
     mesh.renderOrder = 2;
+    mesh.userData.diag = 'marques'; // ?sans=marques (diagnostic du rendu)
     scene.add(mesh);
     return mesh;
   }

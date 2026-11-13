@@ -101,6 +101,7 @@ function layer(scene: THREE.Scene, smoke: boolean, max: number) {
   mesh.frustumCulled = false;
   mesh.layers.set(LAYER_SKY);
   mesh.renderOrder = smoke ? 3 : 4;
+  mesh.userData.diag = 'vfx'; // ?sans=vfx (diagnostic du rendu)
   scene.add(mesh);
   return { geo, pos, color, data, list: [] as Particle[], free: [] as Particle[], cursor: 0, max };
 }

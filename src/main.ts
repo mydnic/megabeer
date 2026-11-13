@@ -49,7 +49,7 @@ import { PintProp } from './player/pintProp';
 import { Pipeline } from './render/pipeline';
 import { createAdaptiveResolution } from './render/adaptiveResolution';
 import { LIGHT_RENDER } from './render/quality';
-import { createDiagnostics } from './app/diagnostics';
+import { createDiagnostics, DIAG_OFF } from './app/diagnostics';
 import { RENDER } from './config/visual';
 import { createSky } from './world/sky';
 import { createClouds } from './world/clouds';
@@ -75,7 +75,7 @@ renderer.shadowMap.type = THREE.PCFShadowMap;
 renderer.info.autoReset = false; // compte toutes les passes de la frame
 document.body.appendChild(renderer.domElement);
 // Diagnostic du rendu (téléphones, ou ?diag) : appareil, erreurs et pixels lus pendant la run, envoyés au serveur
-const diag = createDiagnostics(renderer, LIGHT_RENDER || new URLSearchParams(location.search).has('diag'), () => {
+const diag = createDiagnostics(renderer, LIGHT_RENDER || DIAG_OFF.size > 0 || new URLSearchParams(location.search).has('diag'), () => {
   const lights: string[] = [];
   scene.traverse((o) => { if ((o as THREE.Light).isLight && o.visible) lights.push(`${o.type}${(o as THREE.Light).castShadow ? '+ombre' : ''}:${(o as THREE.Light).intensity.toFixed(2)}`); });
   return {
@@ -315,6 +315,7 @@ function frame(now: number) {
   pipeline.focusDistance = camera.position.distanceTo(focusPoint.copy(player.renderPos).addScaledVector(player.upDir, 1.1));
   // Accueil : écran séparé, le monde n'est pas rendu
   lap('monde');
+  diag.hide(scene);
   if (game.phase !== 'home') { pipeline.render(); diag.afterRender(); }
   lap('rendu');
   if (game.phase === 'run') adaptive.update(realDt, cost.noyau + cost.interface + cost.vues + cost.effets + cost.monde + cost.rendu);
