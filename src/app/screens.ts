@@ -3,7 +3,7 @@ import { SYNERGIES } from '../config/weapons';
 import { SYNERGY_BANNER } from '../config/hud';
 import { AUDIO } from '../config/audio';
 import type { AudioEngine } from '../audio/audio';
-import type { InputState } from '../core/input';
+import { isTouchDevice, type InputState } from '../core/input';
 import { loadSettings, saveSettings } from '../core/settings';
 import type { Game } from '../game/game';
 import { createAlcoholHud } from '../ui/alcoholHud';
@@ -36,6 +36,7 @@ import { createPadNav } from '../ui/padNav';
 import { createAccountPanel } from '../ui/accountPanel';
 import { ACHIEVEMENTS, ACHIEVEMENT_BANNER } from '../config/achievements';
 import { createSetupScreen } from '../ui/setupScreen';
+import { createTouchControls } from '../ui/touchControls';
 import { createLeaderboardPanel } from '../ui/leaderboardPanel';
 import { CHARACTERS, type CharacterId } from '../config/characters';
 import { LEADERBOARD } from '../config/hud';
@@ -60,7 +61,8 @@ import { jitter } from './sounds';
  */
 export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasElement; audio: AudioEngine }) {
   const { planet, audio } = d;
-  const lockCursor = () => d.canvas.requestPointerLock?.()?.catch?.(() => {});
+  // Pas de curseur verrouillé sur écran tactile (il n'y en a pas, et sa perte mettrait en pause)
+  const lockCursor = () => { if (!isTouchDevice()) d.canvas.requestPointerLock?.()?.catch?.(() => {}); };
 
   // --- Options (volumes gardés dans le navigateur)
   const settings = loadSettings();
@@ -82,6 +84,9 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   const itemHud = createItemHud();
   const tourneeHud = createTourneeHud();
   const bossBar = createBossBar();
+  // Téléphone ou tablette : joystick et boutons à l'écran pendant la run
+  const touchUi = isTouchDevice() ? createTouchControls() : null;
+  if (touchUi) document.documentElement.classList.add('is-touch');
   const setHud = (v: boolean) => {
     healthHud.setVisible(v);
     alcoholHud.setVisible(v);
@@ -295,6 +300,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
         if (!game.menuPaused) game.pause();
         else if (!options.open) game.resume();
       }
+      touchUi?.setVisible(game.phase === 'run' && !game.frozen && !game.menuPaused);
       healthHud.update(realDt);
       alcoholHud.update();
       if (game.phase === 'run' && !game.frozen) pumpGauge.update(game.pumps.focus, game.pumps.filling);

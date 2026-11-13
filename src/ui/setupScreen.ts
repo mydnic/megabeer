@@ -4,7 +4,7 @@ import { createDifficultyPicker } from './difficultyPicker';
 import { pint, svg64 } from './iconKit';
 
 const CSS = `
-.setup { position: fixed; inset: 0; z-index: 31; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.4vh;
+.setup { position: fixed; inset: 0; z-index: 31; display: flex; flex-direction: column; align-items: center; justify-content: safe center; gap: 2.4vh;
   padding: 16px; box-sizing: border-box; overflow-y: auto; font-family: 'Lilita One', system-ui, sans-serif; color: #f3e6cf;
   background: radial-gradient(ellipse at 50% 35%, #5a3418 0%, #2a170b 55%, #120a05 100%); }
 .setup.off { display: none; }
@@ -31,7 +31,7 @@ const CSS = `
   box-shadow: 0 7px 0 #1a120c, inset 0 4px 0 rgba(255,255,255,.45); transition: transform .08s; }
 .setup-back:hover, .setup-back:focus-visible, .setup-play:hover, .setup-play:focus-visible { transform: scale(1.06); outline: none; }
 @media (max-height: 560px) {
-  .setup { gap: 1.2vh; justify-content: flex-start; }
+  .setup { gap: 1.2vh; }
   .setup-card { width: 170px; padding: 6px 8px 8px; } .setup-card img, .setup-card .setup-ph { width: 64px; height: 64px; }
   .setup-card p { font-size: 11px; } .setup-card.map { width: 220px; } .setup h3 { font-size: 13px; margin: 0; }
 }

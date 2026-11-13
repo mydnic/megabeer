@@ -95,3 +95,13 @@ export const PAD_NAV = {
 
 /** Leaderboard de l'accueil (top 10 en kills sur une run) : relu toutes les `refreshEvery` secondes tant qu'il est affiché. */
 export const LEADERBOARD = { refreshEvery: 60 } as const;
+
+/**
+ * Commandes tactiles (téléphone en paysage) : joystick qui apparaît sous le pouce gauche (rayon en px, zone morte en part
+ * du rayon), glisser à droite pour tourner la caméra (multiplie les pixels du doigt, comme la souris).
+ */
+export const TOUCH = {
+  stickRadius: 64, deadzone: 0.12, lookSensitivity: 1.4,
+  /** Interface réduite sur petit écran : à taille réelle à partir de `height` x `width` px, jamais sous `min`. */
+  uiZoom: { height: 720, width: 1280, min: 0.45 },
+} as const;

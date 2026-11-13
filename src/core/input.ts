@@ -21,6 +21,14 @@ export type InputState = {
   backPressed: boolean;
 };
 
+/** Écran tactile (téléphone, tablette) : pas de curseur verrouillé, commandes tactiles à l'écran. */
+export const isTouchDevice = () => matchMedia('(pointer: coarse)').matches && !matchMedia('(pointer: fine)').matches;
+
+/** Commandes tactiles (ui/touchControls.ts) : joystick virtuel, boutons, glisser pour la caméra. */
+export const touch = { moveX: 0, moveY: 0, jump: false, action: false, pause: false };
+/** Glisser du doigt pour tourner la caméra (pixels, comme la souris). */
+export function addTouchLook(dx: number, dy: number) { mouseDX += dx; mouseDY += dy; }
+
 const keys = new Set<string>();
 let mouseDX = 0, mouseDY = 0, wheel = 0, prevJump = false, prevAction = false, prevStart = false, prevBack = false;
 let canvas: HTMLElement | null = null;
@@ -30,7 +38,7 @@ export function initInput(el: HTMLElement) {
   addEventListener('keydown', (e) => { keys.add(e.code); });
   addEventListener('keyup', (e) => keys.delete(e.code));
   addEventListener('blur', () => keys.clear());
-  el.addEventListener('click', () => { el.requestPointerLock?.()?.catch?.(() => {}); });
+  el.addEventListener('click', () => { if (!isTouchDevice()) el.requestPointerLock?.()?.catch?.(() => {}); });
   addEventListener('mousemove', (e) => {
     if (document.pointerLockElement !== canvas) return;
     mouseDX += e.movementX; mouseDY += e.movementY;
@@ -53,6 +61,10 @@ export function readInput(): InputState {
   if (keys.has('KeyA') || keys.has('ArrowLeft')) mx -= 1;
   if (keys.has('Space')) jump = true;
   if (keys.has('KeyE')) action = true;
+  mx += touch.moveX; my += touch.moveY;
+  if (touch.jump) jump = true;
+  if (touch.action) action = true;
+  if (touch.pause) { start = true; touch.pause = false; }
 
   // Manette ignorée quand la fenêtre n'a pas le focus (le navigateur la lit quand même en arrière-plan)
   const pads = document.hasFocus() ? navigator.getGamepads?.() ?? [] : [];
