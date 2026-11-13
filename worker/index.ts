@@ -78,6 +78,7 @@ async function route(request: Request, url: URL, env: Env): Promise<Response> {
       return json({ ok: true, updatedAt: now });
     }
   }
+  if (path === '/api/report' && method === 'POST') return postReport(request, env);
   if (path === '/api/score' && method === 'POST') return postScore(request, env);
   if (path === '/api/leaderboard' && method === 'GET') return leaderboard(request, env);
   return json({ error: 'introuvable' }, 404);
@@ -88,6 +89,17 @@ async function route(request: Request, url: URL, env: Env): Promise<Response> {
 /** Bornes d'une run crédible (le score vient du navigateur : entre potes, on écarte juste l'absurde). */
 const SCORE_MAX = { kills: 200_000, survived: 4 * 3600 };
 const LEADERBOARD_SIZE = 10;
+
+/** Rapport de diagnostic du jeu (rendu sur téléphone) : gardé tel quel, seuls les REPORTS_KEPT derniers restent. */
+const REPORTS_KEPT = 200;
+async function postReport(request: Request, env: Env) {
+  const body = await request.text();
+  if (body.length > 16 * 1024) return json({ error: 'rapport trop gros' }, 413);
+  try { JSON.parse(body); } catch { return json({ error: 'JSON invalide' }, 400); }
+  await env.DB.prepare('INSERT INTO client_reports (at, data) VALUES (?, ?)').bind(Date.now(), body).run();
+  await env.DB.prepare('DELETE FROM client_reports WHERE id <= (SELECT MAX(id) FROM client_reports) - ?').bind(REPORTS_KEPT).run();
+  return json({ ok: true });
+}
 
 async function postScore(request: Request, env: Env) {
   const user = await currentUser(request, env);

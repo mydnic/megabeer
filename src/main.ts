@@ -49,6 +49,7 @@ import { PintProp } from './player/pintProp';
 import { Pipeline } from './render/pipeline';
 import { createAdaptiveResolution } from './render/adaptiveResolution';
 import { LIGHT_RENDER } from './render/quality';
+import { createDiagnostics } from './app/diagnostics';
 import { RENDER } from './config/visual';
 import { createSky } from './world/sky';
 import { createClouds } from './world/clouds';
@@ -73,6 +74,16 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFShadowMap;
 renderer.info.autoReset = false; // compte toutes les passes de la frame
 document.body.appendChild(renderer.domElement);
+// Diagnostic du rendu (téléphones, ou ?diag) : appareil, erreurs et pixels lus pendant la run, envoyés au serveur
+const diag = createDiagnostics(renderer, LIGHT_RENDER || new URLSearchParams(location.search).has('diag'), () => {
+  const lights: string[] = [];
+  scene.traverse((o) => { if ((o as THREE.Light).isLight && o.visible) lights.push(`${o.type}${(o as THREE.Light).castShadow ? '+ombre' : ''}:${(o as THREE.Light).intensity.toFixed(2)}`); });
+  return {
+    light: LIGHT_RENDER, fps: Math.round(fps), scale: adaptive.scale, day: sky.day, phase: game.phase, lights: lights.length, lightList: lights.slice(0, 30),
+    camera: [camera.position.length().toFixed(1), camera.near, camera.far], player: game.player.pos.length().toFixed(1),
+    fog: scene.fog ? JSON.stringify(scene.fog) : null, clear: renderer.getClearColor(new THREE.Color()).getHexString(), clearAlpha: renderer.getClearAlpha(),
+  };
+});
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(CAMERA.fov, innerWidth / innerHeight, 0.1, 1200);
@@ -204,6 +215,11 @@ wireRunLog(game, runLog, () => ({ seed: planet.seed, fps }));
 game.events.on('home', () => adaptive.reset());
 // Le perso choisi avant la partie : son modèle
 game.events.on('runStarted', () => buveur.use(CHARACTERS[game.character].model));
+game.events.on('runStarted', () => {
+  setTimeout(() => diag.sample('chute'), 800);
+  setTimeout(() => diag.sample('sol'), 6000);
+  setTimeout(() => diag.send(), 7000);
+});
 
 // --- Debug (F3)
 const debugEl = document.getElementById('debug')!;
@@ -299,7 +315,7 @@ function frame(now: number) {
   pipeline.focusDistance = camera.position.distanceTo(focusPoint.copy(player.renderPos).addScaledVector(player.upDir, 1.1));
   // Accueil : écran séparé, le monde n'est pas rendu
   lap('monde');
-  if (game.phase !== 'home') pipeline.render();
+  if (game.phase !== 'home') { pipeline.render(); diag.afterRender(); }
   lap('rendu');
   if (game.phase === 'run') adaptive.update(realDt, cost.noyau + cost.interface + cost.vues + cost.effets + cost.monde + cost.rendu);
 
