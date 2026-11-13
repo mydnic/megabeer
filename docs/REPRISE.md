@@ -140,6 +140,11 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    difficultés ouvertes en tuant l'Abbé (choix sur l'accueil) ; DEV « +100 TUNAS ». Montants de TUNAS à caler plus tard.
    **Succès, checkpoints 1 et 2 faits le 2026-11-13, à valider** (16 succès, bouton Succès sur l'accueil ; la Seconde
    tournée débloquée par « Dernière messe », plus en boutique). La méta-progression est complète.
+   **Feature en cours : le Videur (premier nouveau perso)**, ordre validé : 1 modèle, 2 arme (Tabouret de bar, modèle
+   `tabouret.glb` fourni par l'utilisateur), 3 choix du perso, passif (+3 armure, insensible au recul), déblocage par
+   succès. Checkpoint 1 : modèle refait deux fois (l'utilisateur a refusé les formes collées, puis demandé « un truc
+   PRO ») ; version actuelle à valider : une pièce sculptée par matière, vrais poings, « SÉCURITÉ » dans le dos.
+   Rendus de contrôle : `--render DOSSIER` (dont des gros plans). Pas encore utilisé en jeu.
    Checkpoint 1, notes : base D1 `megabeer` (WEUR, id dans
    `wrangler.jsonc`, schéma appliqué), application Discord de l'utilisateur (Client ID dans `wrangler.jsonc`, secret
    posé par `wrangler secret put`, en local dans `.dev.vars`). Commandes Cloudflare : variables d'environnement

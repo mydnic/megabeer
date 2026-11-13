@@ -154,7 +154,7 @@ BD/aquarelle, Valheim, style anime, herbe dense.
 
 ## Modèles maison (Blender)
 
-`tools/blender/buveur.py` (le Buveur, rig et clips), `tools/blender/abbaye.py` et `tools/blender/monk.py`
+`tools/blender/buveur.py` (le Buveur, rig et clips ; `--variant videur` : le Videur, sculpté avec `figure_kit.py`, mêmes os et mêmes clips, sortie `videur.glb`), `tools/blender/abbaye.py` et `tools/blender/monk.py`
 (prépare le Moine de `MONK.blend` pour la foule : textures en un atlas, un seul matériau, animations
 renommées comme les zombies ; `--variant` : lanceur, pelerin (bure rouge, tonneau sans fond autour du ventre) ou tonnelier (bure ardoise, gros tonneau qui roule devant lui, mains dessus), tonneau donné par `--barrel` ; source dans `Desktop/MODELS/personnages/kelgar_monk`) génèrent les GLB
 de `src/assets/models/`, comme `tools/blender/kaykit.py` (personnages KayKit : pièces retirées, recolorés, objet
