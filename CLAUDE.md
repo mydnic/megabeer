@@ -137,7 +137,8 @@ recopie son état à chaque image. Ne jamais remettre de logique de jeu dans `ma
   `buveurVisual.ts` (animations, squash/stretch, événements sonores), `footIK.ts`, `beerSplash.ts`.
 - `render/` : `pipeline.ts` (RenderPass, GTAO, contours, bloom, profondeur de champ qui réutilise la profondeur
   du GTAO, étalonnage, ACES), `characterOutline.ts`, `materials.ts`, `quality.ts` (rendu léger sur écran tactile ou
-  avec `?rendu=leger` : sans AO, halo, flou ni MSAA, ombre du soleil seul, terrain moins fin, réglages `RENDER.light`),
+  avec `?rendu=leger` : la scène va droit à l'écran, sans aucune passe d'effets ni contours (les cibles flottantes
+  donnaient un écran blanc sur téléphone), ombre du soleil seul, terrain moins fin, réglages `RENDER.light`),
   `adaptiveResolution.ts` (la résolution de
   la scène baisse seule quand la carte graphique sature, réglages `RENDER.adaptive`).
 - `audio/` : `audio.ts` (Web Audio, bus sfx/ambiance/musique, échantillons Kenney),

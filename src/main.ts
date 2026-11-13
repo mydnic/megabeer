@@ -64,7 +64,8 @@ import { initInput, readInput } from './core/input';
  */
 
 // --- Rendu
-const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
+// Rendu léger (téléphone) : dessiné droit à l'écran, avec l'anticrénelage natif du canvas (peu coûteux sur mobile)
+const renderer = new THREE.WebGLRenderer({ antialias: LIGHT_RENDER, powerPreference: 'high-performance' });
 // Rendu léger (téléphone) : résolution plafonnée, sinon jusqu'à 2x pour les écrans haute densité
 renderer.setPixelRatio(Math.min(devicePixelRatio, LIGHT_RENDER ? RENDER.light.pixelRatio : 2));
 renderer.setSize(innerWidth, innerHeight);

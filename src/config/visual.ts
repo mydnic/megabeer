@@ -29,7 +29,8 @@ export const RENDER = {
   /** `minIntensity` : sous cette intensité, l'astre ne recalcule plus ses ombres (invisibles de toute façon). */
   shadow: { mapSize: 4096, extent: 40, softness: 3.5, bias: -0.0004, normalBias: 0.05, minIntensity: 0.02 },
   /**
-   * Rendu léger (render/quality.ts) : téléphones et tablettes, ou `?rendu=leger` dans l'adresse. Sans occlusion
+   * Rendu léger (render/quality.ts) : téléphones et tablettes, ou `?rendu=leger` dans l'adresse. La scène est dessinée
+   * droit à l'écran (aucune passe d'effets ni contour des persos : les cibles flottantes donnaient un écran blanc). Sans occlusion
    * ambiante, halo ni profondeur de champ (trop lourds pour une puce mobile, et sources d'artefacts noirs), sans
    * anticrénelage multi-échantillons, ombres plus petites, résolution d'écran plafonnée, terrain moins fin
    * (`terrainDetail` subdivisions au lieu de PLANET.detail).

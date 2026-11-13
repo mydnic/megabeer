@@ -64,7 +64,7 @@ export class Pipeline {
    */
   fade = { amount: 0, saturation: 1, vignette: 0 };
 
-  constructor(private renderer: THREE.WebGLRenderer, scene: THREE.Scene, private camera: THREE.PerspectiveCamera) {
+  constructor(private renderer: THREE.WebGLRenderer, private scene: THREE.Scene, private camera: THREE.PerspectiveCamera) {
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = RENDER.exposure;
     // Les ombres ne sont calculées qu'une fois par frame, pas à chaque passe
@@ -75,8 +75,7 @@ export class Pipeline {
     this.worldCam.layers.set(0);
     this.worldCam.layers.enable(LAYER_CHARACTER);
 
-    // Rendu léger (téléphone) : pas d'anticrénelage multi-échantillons, et l'AO, le halo et le flou coupés plus bas
-    const rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: LIGHT_RENDER ? 0 : 4 });
+    const rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 4 });
     this.composer = new EffectComposer(renderer, rt);
     this.composer.addPass(new RenderPass(scene, camera));
 
@@ -111,7 +110,6 @@ export class Pipeline {
     this.composer.addPass(this.grade);
 
     this.composer.addPass(new OutputPass());
-    if (LIGHT_RENDER) this.ao.enabled = this.bloom.enabled = this.dof.enabled = false;
   }
 
   /**
@@ -146,6 +144,7 @@ uniform sampler2D tDepth; varying vec2 vUv; void main() { gl_FragColor = packDep
   }
 
   setSize(w: number, h: number) {
+    if (LIGHT_RENDER) return; // rendu direct : pas de cibles intermédiaires
     this.composer.setPixelRatio(this.renderer.getPixelRatio());
     this.composer.setSize(w, h);
   }
@@ -170,6 +169,9 @@ uniform sampler2D tDepth; varying vec2 vUv; void main() { gl_FragColor = packDep
     u.uVignette.value = THREE.MathUtils.lerp(g.vignette, Math.max(g.vignette, f.vignette), f.amount);
 
     this.renderer.shadowMap.needsUpdate = true;
+    // Rendu léger (téléphone) : la scène va droit à l'écran (tone mapping et sRGB appliqués par le renderer), sans
+    // aucune passe plein écran. Les images intermédiaires à virgule flottante donnaient un écran blanc sur mobile.
+    if (LIGHT_RENDER) { this.renderer.setRenderTarget(null); this.renderer.render(this.scene, cam); return; }
     this.composer.render();
   }
 }
