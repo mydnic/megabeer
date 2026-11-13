@@ -157,8 +157,8 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    table `scores`, `/api/score` envoyé à chaque fin de run connectée) ; téléphone en paysage (`ui/touchControls.ts` :
    joystick, glisser pour la caméra, Saut, Action, Pause ; interface réduite par `zoom` CSS, réglages `TOUCH`) ;
    connexion par email (lien magique, Cloudflare Email Service : binding `EMAIL`, expéditeur `MAIL_FROM` = megabeer@mail.mydnic.be ; pseudo choisi, table `email_logins`). En local l'envoi est simulé (mail dans la console du serveur). **Prod :**
-   mail.mydnic.be doit être onboardé dans le tableau de bord (Email Service > Email Sending > Onboard Domain), et
-   l'envoi à n'importe quelle adresse demande l'offre Workers Paid (doc Cloudflare). Erreurs d'envoi : codes `E_*` dans
+   **testé et validé en prod par l'utilisateur le 2026-11-13** (mail.mydnic.be onboardé dans Email Sending ; l'envoi à
+   n'importe quelle adresse demande l'offre Workers Paid, doc Cloudflare). Erreurs d'envoi : codes `E_*` dans
    les logs du Worker (`[mail]`). Après ça : ajouter du contenu.
    Checkpoint 1, notes : base D1 `megabeer` (WEUR, id dans
    `wrangler.jsonc`, schéma appliqué), application Discord de l'utilisateur (Client ID dans `wrangler.jsonc`, secret
