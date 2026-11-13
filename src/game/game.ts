@@ -12,6 +12,7 @@ import { createXpDrops } from '../pickups/xpDrops';
 import { COIN_DROPS, COINS } from '../config/coins';
 import { TUNA_DROPS, TUNAS } from '../config/tunas';
 import type { CardOptionId } from '../config/shop';
+import { AchievementTracker } from './achievements';
 import type { RunUnlocks } from '../meta/shop';
 import { createEnemyShots, type EnemyShot } from '../enemies/enemyShots';
 import { PLANET_RADIUS } from '../config/world';
@@ -87,7 +88,9 @@ export type GameEvents = {
   resumed: Record<string, never>;
   died: Record<string, never>;
   /** Fin de run : `tunas` gagnés au total (liasses + `tunasBonus`, le bonus de fin, à la mort seulement). */
-  runEnded: { reason: RunEnd; survived: number; kills: number; tunas: number; tunasBonus: number; difficulty: DifficultyId; abbe: boolean };
+  runEnded: { reason: RunEnd; survived: number; kills: number; tunas: number; tunasBonus: number; difficulty: DifficultyId; abbe: boolean; achievements: string[] };
+  /** Un succès tombe pendant la run (une seule fois, s'il n'était pas déjà gagné). */
+  achievementUnlocked: { id: string; name: string; tunas: number };
   /** Retour à l'accueil : tout est remis à zéro. */
   home: Record<string, never>;
   /** Un ennemi tireur lâche un projectile (son point d'impact au sol est `shot.to`). */
@@ -251,6 +254,8 @@ export class Game {
   /** La fermeture du bar (10:00) : les Morts. */
   readonly closing: Closing;
   bossDone = false;
+  /** Succès : suivi pendant la run (`owned` et `lifetimeKills` donnés par la sauvegarde au départ). */
+  readonly achievements: AchievementTracker;
   /** L'Abbé (boss final) est tombé pendant cette run : la difficulté suivante s'ouvre. */
   abbeKilled = false;
   /** Tournées du bar (bonus lâchés par les ennemis). */
@@ -375,6 +380,18 @@ export class Game {
     this.trapChance = deps.trapChance ?? CHEST_TRAP.chance;
     this.rollCoin = deps.rollCoin ?? (() => Math.random() < COINS.dropChance);
     this.rollTuna = deps.rollTuna ?? (() => Math.random() < TUNAS.dropChance);
+    this.achievements = new AchievementTracker({
+      runTime: () => this.runTime,
+      kills: () => this.kills,
+      weapons: () => this.loadout.weapons.length,
+      tunas: () => this.tunas,
+      difficulty: () => this.difficulty,
+    }, (a) => this.events.emit('achievementUnlocked', { id: a.id, name: a.name, tunas: a.tunas }));
+    this.events.on('eliteKilled', () => this.achievements.elite());
+    this.events.on('itemGained', () => this.achievements.item());
+    this.events.on('binBroken', () => this.achievements.bin());
+    this.events.on('synergyActivated', () => this.achievements.synergy());
+    this.events.on('bossKilled', ({ boss }) => this.achievements.boss(boss.kind));
     this.random = deps.random ?? Math.random;
     this.director = new SpawnDirector({
       player, collider: deps.collider, zombies: () => this.horde.zombies,
@@ -446,7 +463,8 @@ export class Game {
   /** Abandon depuis la pause : la run est perdue, retour à l'accueil. */
   abandon() {
     if (this.phase !== 'run') return;
-    this.events.emit('runEnded', { reason: 'abandon', survived: this.runTime, kills: this.kills, tunas: Math.floor(this.tunas + 1e-9), tunasBonus: 0, difficulty: this.difficulty, abbe: this.abbeKilled });
+    this.achievements.check(true);
+    this.events.emit('runEnded', { reason: 'abandon', survived: this.runTime, kills: this.kills, tunas: Math.floor(this.tunas + 1e-9), tunasBonus: 0, difficulty: this.difficulty, abbe: this.abbeKilled, achievements: [...this.achievements.gained] });
     this.goHome();
   }
 
@@ -561,6 +579,8 @@ export class Game {
         // Boss de mi-run : il arrive tout seul à son heure
         if (!this.bossDone && this.runTime >= FRERE_SONNEUR.arriveAt) this.spawnBoss();
         this.boss?.update(dt);
+        // Succès qui dépendent du temps, des kills, de l'arsenal ou des TUNAS
+        this.achievements.check();
         // Fermeture du bar : à 10:00, la Mort vient chercher le Buveur
         this.closing.update(dt, this.runTime);
         this.mechanic.update(dt);
@@ -1211,7 +1231,8 @@ export class Game {
     this.events.emit('died', {});
     // Bonus de fin : le temps survécu rapporte des TUNAS (à la mort seulement : abandonner n'est pas une astuce)
     const tunasBonus = Math.floor((this.runTime / 60) * TUNAS.endBonusPerMinute * this.mods.tunas + 1e-9);
-    this.events.emit('runEnded', { reason: 'mort', survived: this.runTime, kills: this.kills, tunas: Math.floor(this.tunas + 1e-9) + tunasBonus, tunasBonus, difficulty: this.difficulty, abbe: this.abbeKilled });
+    this.achievements.check(true);
+    this.events.emit('runEnded', { reason: 'mort', survived: this.runTime, kills: this.kills, tunas: Math.floor(this.tunas + 1e-9) + tunasBonus, tunasBonus, difficulty: this.difficulty, abbe: this.abbeKilled, achievements: [...this.achievements.gained] });
   }
 
   /** Vitesse du temps : ralenti juste après la mort, puis retour progressif. */
@@ -1250,6 +1271,7 @@ export class Game {
     this.boss = null;
     this.bossDone = false;
     this.abbeKilled = false;
+    this.achievements.reset();
     this.door.clear();
     this.closing.clear();
     this.items.length = 0;

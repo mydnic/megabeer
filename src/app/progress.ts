@@ -73,7 +73,7 @@ export function createProgress() {
     },
 
     /** Fin de run : elle compte dans la progression, sauvegardée tout de suite. */
-    async recordRun(run: { survived: number; kills: number; tunas: number; difficulty: DifficultyId; abbe: boolean }) {
+    async recordRun(run: { survived: number; kills: number; tunas: number; difficulty: DifficultyId; abbe: boolean; achievements: readonly string[] }) {
       profile = recordRun(profile, run, Date.now());
       changed();
       await save();

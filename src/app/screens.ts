@@ -34,6 +34,7 @@ import { PATRON_DOOR } from '../config/bosses';
 import { CLOSING } from '../config/closing';
 import { createPadNav } from '../ui/padNav';
 import { createAccountPanel } from '../ui/accountPanel';
+import { ACHIEVEMENTS, ACHIEVEMENT_BANNER } from '../config/achievements';
 import { createDifficultyPicker } from '../ui/difficultyPicker';
 import type { DifficultyId } from '../config/spawn';
 import { createShopScreen } from '../ui/shopScreen';
@@ -125,10 +126,13 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
     // Les déblocages de la boutique et la difficulté choisie valent pour la run qui commence
     game.unlocks = runUnlocks(progress.profile);
     game.difficulty = difficulty.selected;
+    // Succès : ceux déjà gagnés ne retombent pas ; les kills de toujours comptent pour « au total »
+    game.achievements.owned = new Set(progress.profile.achievements);
+    game.achievements.lifetimeKills = progress.profile.totalKills;
     game.startRun(planet.decor.randomSpawn());
     starting = false;
   }
-  const home = createHomeScreen(() => void play(), () => options.show(() => home.focus()), () => shop.show('shop', () => home.focus()), () => shop.show('skills', () => home.focus()));
+  const home = createHomeScreen(() => void play(), () => options.show(() => home.focus()), () => shop.show('shop', () => home.focus()), () => shop.show('skills', () => home.focus()), () => shop.show('achievements', () => home.focus()));
   const padNav = createPadNav();
 
   // Compte et progression : invité (navigateur) ou Discord (en ligne) ; chaque run terminée compte
@@ -147,12 +151,15 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   progress.onChange(() => shop.refresh());
   void progress.init();
   // TUNAS de la dernière run, pour le bilan de fin
-  const lastRun = { tunas: 0, tunasBonus: 0 };
-  game.events.on('runEnded', ({ survived, kills, tunas, tunasBonus, difficulty: d, abbe }) => {
-    lastRun.tunas = tunas;
+  const lastRun = { tunas: 0, tunasBonus: 0, achievements: [] as { name: string; tunas: number }[] };
+  game.events.on('runEnded', ({ survived, kills, tunas, tunasBonus, difficulty: d, abbe, achievements }) => {
+    lastRun.achievements = ACHIEVEMENTS.filter((a) => achievements.includes(a.id));
+    lastRun.tunas = tunas + lastRun.achievements.reduce((s, a) => s + a.tunas, 0);
     lastRun.tunasBonus = tunasBonus;
-    void progress.recordRun({ survived, kills, tunas, difficulty: d, abbe });
+    void progress.recordRun({ survived, kills, tunas, difficulty: d, abbe, achievements });
   });
+  // Un succès tombe : bandeau avec ce qu'il rapporte
+  game.events.on('achievementUnlocked', ({ name, tunas }) => { banner.show(`Succès : ${name} !`, `+${tunas} TUNAS`); banner.pulse(); banner.hideAfter(ACHIEVEMENT_BANNER.duration); });
 
   game.events.on('runStarted', () => { setHud(true); lockCursor(); });
   // Cloches de l'Abbaye : le bandeau reste affiché pendant le débarquement et tremble à chaque coup
@@ -276,7 +283,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
       const boss = game.boss;
       if (boss) bossBar.update(boss.zombie.hp / boss.zombie.maxHp, boss.phase);
       tourneeHud.setOffset(boss ? BOSS_HUD.pushDown : 0);
-      if (game.phase === 'dead') deathBanner.update(game.deadTime, game.runTime, game.kills, lastRun.tunas, lastRun.tunasBonus);
+      if (game.phase === 'dead') deathBanner.update(game.deadTime, game.runTime, game.kills, lastRun.tunas, lastRun.tunasBonus, lastRun.achievements);
       // Espace ou bouton A : Continuer sur le bilan de mort (l'accueil passe par la navigation des menus)
       if (input.jumpPressed && !usedA) {
         if (game.phase === 'dead' && deathBanner.ready) game.goHome();

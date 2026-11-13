@@ -42,7 +42,9 @@ la mort, multiplicateur de difficulté dans `DIFFICULTIES`), liasses au sol `gam
 prix, persos à vendre), `meta/shop.ts` (catalogue, achat, `runUnlocks` appliqué à `game.unlocks` au début de chaque run),
 `ui/shopScreen.ts`. Skill tree : `config/skills.ts` (lignes de paliers achetés dans l'ordre, prix), `meta/skills.ts`  ; bouton Skills de
 l'accueil (même mise en page que la boutique). Ses bonus de stat s'appliquent au début de chaque run (`game.unlocks.bonuses`). Relancer / Bannir /
-Passer : `game.rerollCards`, `banishCard`, `skipCards`, boutons sous les cartes de level-up (ligne Cartes du skill tree). `yarn dev` fait tourner le Worker et une D1 locale (plugin Cloudflare de Vite).
+Passer : `game.rerollCards`, `banishCard`, `skipCards`, boutons sous les cartes de level-up (ligne Cartes du skill tree).
+Succès : `config/achievements.ts` (liste, conditions, TUNAS), `game/achievements.ts` (suivi pendant la run, événement
+`achievementUnlocked`, liste dans `runEnded`), gardés dans le profil ; bouton Succès de l'accueil. `yarn dev` fait tourner le Worker et une D1 locale (plugin Cloudflare de Vite).
 
 ```
 yarn dev        # http://localhost:5173

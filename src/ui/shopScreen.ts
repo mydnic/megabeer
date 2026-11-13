@@ -6,6 +6,7 @@ import type { Profile } from '../meta/profile';
 import { catalog, owned, type ShopEntry } from '../meta/shop';
 import { SKILL_LINES, SKILL_PRICES } from '../config/skills';
 import { tiersOf } from '../meta/skills';
+import { ACHIEVEMENTS } from '../config/achievements';
 import { weaponIcon, tunasIcon } from './icons';
 import { pint, svg64 } from './iconKit';
 import { itemIcon } from './itemIcons';
@@ -65,6 +66,14 @@ const CSS = `
 .sk-price { display: inline-flex; align-items: center; gap: 4px; font-size: 15px; opacity: .8; }
 .sk-price svg { width: 18px; height: 18px; }
 .sk-tier .shop-lock { position: static; width: 18px !important; height: 18px !important; }
+.ach-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; margin-top: 8px; }
+.ach { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: center; padding: 10px 12px; border: 3px solid #1a120c; border-radius: 14px;
+  background: linear-gradient(#fff8e2, #f1dcae); color: #2a1608; box-shadow: 0 4px 0 #1a120c, inset 0 0 0 3px #ffc93a; }
+.ach b { font-weight: normal; font-size: 18px; }
+.ach p { grid-column: 1; margin: 0; font-size: 13px; }
+.ach .sk-price, .ach .shop-own { grid-column: 2; grid-row: 1 / 3; }
+.ach.locked { background: linear-gradient(#a8977a, #8a785c); box-shadow: 0 4px 0 #1a120c; opacity: .8; }
+.ach-count { font-size: 18px; opacity: .8; }
 @media (max-width: 900px) { .sk-line { grid-template-columns: repeat(5, 1fr); } .sk-name { grid-column: 1 / -1; } }
 @media (max-width: 540px) { .shop-head { flex-wrap: wrap; } .shop-grid { grid-template-columns: 1fr; } .sk-line { grid-template-columns: 1fr 1fr; } }
 `;
@@ -117,7 +126,16 @@ export function createShopScreen(cb: { buy: (key: string) => boolean; buySkill: 
   }
 
   /** Ce que montre l'écran : la boutique (persos, armes, objets) ou le skill tree (bouton Skills de l'accueil). */
-  let tab: 'shop' | 'skills' = 'shop';
+  let tab: 'shop' | 'skills' | 'achievements' = 'shop';
+
+  /** Les succès : gagnés (coche) et à faire (condition, TUNAS à gagner). */
+  function renderAchievements(p: Profile) {
+    const n = ACHIEVEMENTS.filter((a) => p.achievements.includes(a.id)).length;
+    body.innerHTML = `<div class="ach-count">${n} / ${ACHIEVEMENTS.length}</div><div class="ach-grid">${ACHIEVEMENTS.map((a) => {
+      const done = p.achievements.includes(a.id);
+      return `<div class="ach${done ? '' : ' locked'}"><b>${esc(a.name)}</b><p>${esc(a.text)}</p>${done ? `<span class="shop-own">${CHECK}</span>` : `<span class="sk-price">${TUNAS}+${a.tunas}</span>`}</div>`;
+    }).join('')}</div>`;
+  }
   const titleEl = el.querySelector<HTMLElement>('.shop-title')!;
 
   /** Le skill tree : une ligne par catégorie ; acheté, prochain palier (à acheter), ou fermé (il faut le précédent). */
@@ -146,8 +164,9 @@ export function createShopScreen(cb: { buy: (key: string) => boolean; buySkill: 
   function render() {
     const p = cb.profile();
     wallet.textContent = p.tunas.toLocaleString('fr');
-    titleEl.textContent = tab === 'skills' ? 'Skills' : 'Boutique';
+    titleEl.textContent = tab === 'skills' ? 'Skills' : tab === 'achievements' ? 'Succès' : 'Boutique';
     if (tab === 'skills') { renderSkills(p); return; }
+    if (tab === 'achievements') { renderAchievements(p); return; }
     const all = catalog();
     const section = (title: string, list: ShopEntry[]) => `<h2>${title}</h2><div class="shop-grid">${list.map((e) => card(e, p)).join('')}</div>`;
     const items = all.filter((e): e is Extract<ShopEntry, { kind: 'item' }> => e.kind === 'item');
@@ -180,7 +199,7 @@ export function createShopScreen(cb: { buy: (key: string) => boolean; buySkill: 
     root: el,
     get open() { return !el.classList.contains('off'); },
     /** Ouvre la boutique (`shop`) ou le skill tree (`skills`). */
-    show(mode: 'shop' | 'skills', whenClosed?: () => void) {
+    show(mode: 'shop' | 'skills' | 'achievements', whenClosed?: () => void) {
       tab = mode;
       if (whenClosed) onClose = whenClosed;
       msg.textContent = '';

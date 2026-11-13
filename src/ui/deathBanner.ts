@@ -24,6 +24,7 @@ const CSS = `
 .death-time b { color: #ffc23a; font-weight: normal; }
 .death-tunas { display: inline-flex; align-items: center; gap: 8px; } .death-tunas b { color: #8fe07a; } .death-tunas svg { width: 32px; height: 32px; }
 .death-bonus { display: block; font-size: 16px; opacity: .75; }
+.death-ach { display: block; font-size: 18px; color: #ffc93a; } .death-ach b { color: #8fe07a; }
 .death-btn { font: inherit; font-size: 26px; letter-spacing: .05em; color: #2a1608; cursor: pointer;
   padding: 12px 38px 14px; border: 3px solid #1a120c; border-radius: 16px;
   background: linear-gradient(#ffd45a, #f5a623 60%, #e08a12); box-shadow: 0 5px 0 #1a120c, inset 0 3px 0 rgba(255,255,255,.45);
@@ -68,7 +69,7 @@ export function createDeathBanner(onContinue: () => void) {
     /** Vrai quand le bilan et le bouton sont affichés (Rejouer possible). */
     get ready() { return shown; },
     /** t : temps réel depuis la mort (s), -1 si vivant ; survived : durée de la run (s). */
-    update(t: number, survived: number, kills = 0, tunas = 0, tunasBonus = 0) {
+    update(t: number, survived: number, kills = 0, tunas = 0, tunasBonus = 0, achievements: readonly { name: string; tunas: number }[] = []) {
       if (t < D.delay) {
         band.style.opacity = '0';
         if (shown) { end.classList.remove('on'); shown = false; }
@@ -82,7 +83,8 @@ export function createDeathBanner(onContinue: () => void) {
       if (!shown && t >= D.endDelay) {
         shown = true;
         time.innerHTML = `Tu as tenu <b>${fmt(survived)}</b><br><b>${kills}</b> zombie${kills > 1 ? 's éclatés' : ' éclaté'}`
-          + `<br><span class="death-tunas">${TUNAS_ICON}<b>+${tunas.toLocaleString('fr')}</b> TUNAS</span>${tunasBonus ? `<span class="death-bonus">dont ${tunasBonus.toLocaleString('fr')} pour le temps tenu</span>` : ''}`;
+          + `<br><span class="death-tunas">${TUNAS_ICON}<b>+${tunas.toLocaleString('fr')}</b> TUNAS</span>${tunasBonus ? `<span class="death-bonus">dont ${tunasBonus.toLocaleString('fr')} pour le temps tenu</span>` : ''}`
+          + achievements.map((a) => `<span class="death-ach">Succès : ${a.name} <b>+${a.tunas}</b></span>`).join('');
         end.classList.add('on');
         // La souris est libérée pour cliquer sur le bouton
         if (document.pointerLockElement) document.exitPointerLock();

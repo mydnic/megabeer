@@ -138,6 +138,8 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    2026-11-12, à valider** : persos, armes et objets ; le skill tree (checkpoint 4) fera le reste, dont Relancer / Bannir /
    Passer. **Checkpoint 4 (skill tree) fait le 2026-11-13, à valider** : bouton Skills sur l'accueil, 6 lignes de paliers ;
    difficultés ouvertes en tuant l'Abbé (choix sur l'accueil) ; DEV « +100 TUNAS ». Montants de TUNAS à caler plus tard.
+   **Succès, checkpoint 1 fait le 2026-11-13, à valider** (16 succès, bouton Succès sur l'accueil). Ensuite, checkpoint 2 :
+   la Seconde tournée débloquée par le succès « Dernière messe » au lieu de la boutique.
    Checkpoint 1, notes : base D1 `megabeer` (WEUR, id dans
    `wrangler.jsonc`, schéma appliqué), application Discord de l'utilisateur (Client ID dans `wrangler.jsonc`, secret
    posé par `wrangler secret put`, en local dans `.dev.vars`). Commandes Cloudflare : variables d'environnement
