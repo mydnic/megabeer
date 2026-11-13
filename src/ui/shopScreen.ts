@@ -53,11 +53,6 @@ const CSS = `
 .shop-buy:hover, .shop-buy:focus-visible { transform: scale(1.04); outline: 3px solid #ffc93a; outline-offset: 2px; }
 .shop-buy.poor { background: linear-gradient(#8a7a6a, #5a4a3a); color: #e8dccb; cursor: default; }
 .shop-msg { min-height: 22px; margin-top: 6px; font-size: 16px; color: #ffb4a0; }
-.shop-tabs { display: flex; gap: 8px; }
-.shop-tab { font: inherit; font-size: clamp(22px, 3vw, 32px); letter-spacing: .04em; cursor: pointer; padding: 4px 18px 7px; border: 3px solid #1a120c;
-  border-radius: 16px; color: #f3e6cf; background: rgba(42,22,8,.75); box-shadow: 0 4px 0 #1a120c; transition: transform .08s; }
-.shop-tab.on { color: #2a1608; background: linear-gradient(#ffd45a, #f5a623 60%, #e08a12); }
-.shop-tab:hover, .shop-tab:focus-visible { transform: scale(1.05); outline: none; }
 /* Skill tree : une ligne par catégorie, ses paliers de gauche à droite (chacun demande le précédent) */
 .sk-line { display: grid; grid-template-columns: 130px repeat(5, 1fr); gap: 8px; align-items: stretch; margin: 10px 0; }
 .sk-name { display: flex; align-items: center; font-size: 22px; color: var(--c); text-shadow: -2px 0 #1a120c, 2px 0 #1a120c, 0 -2px #1a120c, 0 2px #1a120c; }
@@ -83,9 +78,9 @@ const WEAPON_COLOR = '#f5a623';
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
 /**
- * La boutique (accueil, bouton Boutique), deux onglets. Boutique : les TUNAS du joueur, puis trois rayons, Persos, Armes
- * et Objets (par rareté) ; un article débloqué l'est pour toutes les runs suivantes. Skill tree : une ligne de paliers par
- * catégorie, achetés dans l'ordre. Souris, clavier ou manette (croix, A pour acheter, B pour
+ * Deux écrans de l'accueil, qui partagent la même mise en page et les TUNAS du joueur. Boutique (bouton Boutique) : trois
+ * rayons, Persos, Armes et Objets (par rareté) ; un article débloqué l'est pour toutes les runs suivantes. Skills (bouton
+ * Skills) : une ligne de paliers par catégorie, achetés dans l'ordre. Souris, clavier ou manette (croix, A pour acheter, B pour
  * revenir : navigation commune des menus).
  */
 export function createShopScreen(cb: { buy: (key: string) => boolean; buySkill: (line: string) => boolean; profile: () => Profile; onClose: () => void; portrait: (id: string) => string | null }) {
@@ -94,7 +89,7 @@ export function createShopScreen(cb: { buy: (key: string) => boolean; buySkill: 
   document.head.appendChild(style);
   const el = document.createElement('div');
   el.className = 'shop off';
-  el.innerHTML = `<div class="shop-head"><div class="shop-tabs"><button class="shop-tab on" data-t="shop">Boutique</button><button class="shop-tab" data-t="skills">Skill tree</button></div><div class="shop-wallet">${TUNAS}<span></span></div><button class="shop-close">Fermer</button></div>
+  el.innerHTML = `<div class="shop-head"><div class="shop-title"></div><div class="shop-wallet">${TUNAS}<span></span></div><button class="shop-close">Fermer</button></div>
     <div class="shop-msg"></div><div class="shop-body"></div>`;
   document.body.appendChild(el);
   const wallet = el.querySelector<HTMLElement>('.shop-wallet span')!;
@@ -121,17 +116,9 @@ export function createShopScreen(cb: { buy: (key: string) => boolean; buySkill: 
     return box(WEAPON_COLOR, '', face ? `<img src="${face}" alt="">` : PINT, e.name, e.pitch);
   }
 
+  /** Ce que montre l'écran : la boutique (persos, armes, objets) ou le skill tree (bouton Skills de l'accueil). */
   let tab: 'shop' | 'skills' = 'shop';
-  for (const t of el.querySelectorAll<HTMLButtonElement>('.shop-tab')) {
-    t.addEventListener('click', (e) => {
-      e.stopPropagation();
-      tab = t.dataset.t as 'shop' | 'skills';
-      msg.textContent = '';
-      render();
-      body.scrollTop = 0;
-    });
-    t.addEventListener('keydown', (e) => { if (e.code === 'Space' || e.code === 'Enter') e.stopPropagation(); });
-  }
+  const titleEl = el.querySelector<HTMLElement>('.shop-title')!;
 
   /** Le skill tree : une ligne par catégorie ; acheté, prochain palier (à acheter), ou fermé (il faut le précédent). */
   function renderSkills(p: Profile) {
@@ -159,7 +146,7 @@ export function createShopScreen(cb: { buy: (key: string) => boolean; buySkill: 
   function render() {
     const p = cb.profile();
     wallet.textContent = p.tunas.toLocaleString('fr');
-    for (const t of el.querySelectorAll<HTMLElement>('.shop-tab')) t.classList.toggle('on', t.dataset.t === tab);
+    titleEl.textContent = tab === 'skills' ? 'Skills' : 'Boutique';
     if (tab === 'skills') { renderSkills(p); return; }
     const all = catalog();
     const section = (title: string, list: ShopEntry[]) => `<h2>${title}</h2><div class="shop-grid">${list.map((e) => card(e, p)).join('')}</div>`;
@@ -192,12 +179,15 @@ export function createShopScreen(cb: { buy: (key: string) => boolean; buySkill: 
   return {
     root: el,
     get open() { return !el.classList.contains('off'); },
-    show(whenClosed?: () => void) {
+    /** Ouvre la boutique (`shop`) ou le skill tree (`skills`). */
+    show(mode: 'shop' | 'skills', whenClosed?: () => void) {
+      tab = mode;
       if (whenClosed) onClose = whenClosed;
       msg.textContent = '';
       render();
       el.classList.remove('off');
-      el.querySelector<HTMLElement>('.shop-tab.on')!.focus({ preventScroll: true });
+      body.scrollTop = 0;
+      (body.querySelector<HTMLElement>('.shop-buy[data-k], .shop-buy[data-s]') ?? el.querySelector<HTMLElement>('.shop-close'))!.focus({ preventScroll: true });
     },
     /** Les TUNAS ont changé (fin de run, connexion) : réaffiche si ouverte. */
     refresh() { if (!el.classList.contains('off')) render(); },

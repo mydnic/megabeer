@@ -37,6 +37,7 @@ const CSS = `
 .home-row { position: relative; z-index: 1; display: flex; gap: 14px; margin-top: -2vh; }
 .home-row .home-options { margin-top: 0; }
 .home-shop { color: #8fe07a; }
+.home-skills { color: #ffc93a; }
 .home-hint { position: relative; z-index: 1; color: #f3e6cf; font-size: 16px; letter-spacing: .04em; margin-top: -2vh;
   text-shadow: -2px 0 #1a120c, 2px 0 #1a120c, 0 -2px #1a120c, 0 2px #1a120c; }
 `;
@@ -44,16 +45,16 @@ const CSS = `
 /**
  * Écran d'accueil provisoire (GDD section 16), séparé du jeu : fond opaque, le monde n'est ni montré
  * ni rendu tant qu'on y est ; la run (et le Buveur sur la planète) commence avec Jouer. Sera remplacé
- * par l'accueil dans l'espace. Boutons : Jouer, Boutique, Options ; les autres (skill tree, persos...)
+ * par l'accueil dans l'espace. Boutons : Jouer, Boutique, Skills, Options ; les autres (succès, persos...)
  * apparaîtront au fil des déblocages.
  */
-export function createHomeScreen(onPlay: () => void, onOptions: () => void, onShop: () => void) {
+export function createHomeScreen(onPlay: () => void, onOptions: () => void, onShop: () => void, onSkills: () => void) {
   const style = document.createElement('style');
   style.textContent = CSS;
   document.head.appendChild(style);
   const el = document.createElement('div');
   el.className = 'home';
-  el.innerHTML = `<div class="home-logo">MEGABEER</div><button class="home-play">Jouer</button><div class="home-hint">Espace ou A</div><div class="home-row"><button class="home-options home-shop">Boutique</button><button class="home-options home-opt">Options</button></div>`;
+  el.innerHTML = `<div class="home-logo">MEGABEER</div><button class="home-play">Jouer</button><div class="home-hint">Espace ou A</div><div class="home-row"><button class="home-options home-shop">Boutique</button><button class="home-options home-skills">Skills</button><button class="home-options home-opt">Options</button></div>`;
   document.body.appendChild(el);
   const btn = el.querySelector<HTMLButtonElement>('.home-play')!;
   btn.addEventListener('click', (e) => { e.stopPropagation(); onPlay(); });
@@ -61,8 +62,10 @@ export function createHomeScreen(onPlay: () => void, onOptions: () => void, onSh
   opt.addEventListener('click', (e) => { e.stopPropagation(); onOptions(); });
   const shop = el.querySelector<HTMLButtonElement>('.home-shop')!;
   shop.addEventListener('click', (e) => { e.stopPropagation(); onShop(); });
-  // Espace sur Options ou Boutique ouvre le panneau, sans lancer la run
-  for (const b of [opt, shop]) b.addEventListener('keydown', (e) => { if (e.code === 'Space' || e.code === 'Enter') e.stopPropagation(); });
+  const skills = el.querySelector<HTMLButtonElement>('.home-skills')!;
+  skills.addEventListener('click', (e) => { e.stopPropagation(); onSkills(); });
+  // Espace sur Options, Boutique ou Skills ouvre le panneau, sans lancer la run
+  for (const b of [opt, shop, skills]) b.addEventListener('keydown', (e) => { if (e.code === 'Space' || e.code === 'Enter') e.stopPropagation(); });
 
   return {
     root: el,

@@ -128,7 +128,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
     game.startRun(planet.decor.randomSpawn());
     starting = false;
   }
-  const home = createHomeScreen(() => void play(), () => options.show(() => home.focus()), () => shop.show(() => home.focus()));
+  const home = createHomeScreen(() => void play(), () => options.show(() => home.focus()), () => shop.show('shop', () => home.focus()), () => shop.show('skills', () => home.focus()));
   const padNav = createPadNav();
 
   // Compte et progression : invité (navigateur) ou Discord (en ligne) ; chaque run terminée compte

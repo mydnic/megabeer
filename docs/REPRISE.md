@@ -136,7 +136,7 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    **Checkpoint 1 (comptes) validé par l'utilisateur le 2026-11-12. Checkpoint 2 (TUNAS) fait le 2026-11-12, à valider en jeu**
    (liasses de billets au sol, détail dans le journal du GDD ; réglages `config/tunas.ts`). **Checkpoint 3 (boutique) fait le
    2026-11-12, à valider** : persos, armes et objets ; le skill tree (checkpoint 4) fera le reste, dont Relancer / Bannir /
-   Passer. **Checkpoint 4 (skill tree) fait le 2026-11-13, à valider** : onglet de la boutique, 6 lignes de paliers ;
+   Passer. **Checkpoint 4 (skill tree) fait le 2026-11-13, à valider** : bouton Skills sur l'accueil, 6 lignes de paliers ;
    difficultés ouvertes en tuant l'Abbé (choix sur l'accueil) ; DEV « +100 TUNAS ». Montants de TUNAS à caler plus tard.
    Checkpoint 1, notes : base D1 `megabeer` (WEUR, id dans
    `wrangler.jsonc`, schéma appliqué), application Discord de l'utilisateur (Client ID dans `wrangler.jsonc`, secret

@@ -40,8 +40,8 @@ ou en ligne ; la progression invitée rejoint le compte à la première connexio
 l'accueil, avec les TUNAS). TUNAS (monnaie permanente) : `config/tunas.ts` (chance de drop, élites, boss, bonus de fin à
 la mort, multiplicateur de difficulté dans `DIFFICULTIES`), liasses au sol `game.tunaDrops` et `pickups/tunaDropsView.ts`. Boutique : `config/shop.ts` (ce qui est donné au départ,
 prix, persos à vendre), `meta/shop.ts` (catalogue, achat, `runUnlocks` appliqué à `game.unlocks` au début de chaque run),
-`ui/shopScreen.ts`. Skill tree : `config/skills.ts` (lignes de paliers achetés dans l'ordre, prix), `meta/skills.ts` ; c'est un onglet de
-l'écran Boutique. Ses bonus de stat s'appliquent au début de chaque run (`game.unlocks.bonuses`). Relancer / Bannir /
+`ui/shopScreen.ts`. Skill tree : `config/skills.ts` (lignes de paliers achetés dans l'ordre, prix), `meta/skills.ts`  ; bouton Skills de
+l'accueil (même mise en page que la boutique). Ses bonus de stat s'appliquent au début de chaque run (`game.unlocks.bonuses`). Relancer / Bannir /
 Passer : `game.rerollCards`, `banishCard`, `skipCards`, boutons sous les cartes de level-up (ligne Cartes du skill tree). `yarn dev` fait tourner le Worker et une D1 locale (plugin Cloudflare de Vite).
 
 ```
