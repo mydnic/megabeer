@@ -7,6 +7,8 @@
  * - POST /api/logout         : ferme la session.
  * - GET  /api/save           : la progression sauvegardée du joueur connecté, ou null.
  * - PUT  /api/save           : remplace la progression (JSON, taille bornée).
+ * - POST /api/score          : fin de run d'un joueur connecté ; garde sa meilleure (le plus de kills).
+ * - GET  /api/leaderboard    : les 10 meilleures runs, tous joueurs confondus.
  *
  * Secrets (jamais dans le dépôt) : DISCORD_CLIENT_SECRET (`wrangler secret put`, en local dans .dev.vars).
  */
@@ -64,7 +66,43 @@ async function route(request: Request, url: URL, env: Env): Promise<Response> {
       return json({ ok: true, updatedAt: now });
     }
   }
+  if (path === '/api/score' && method === 'POST') return postScore(request, env);
+  if (path === '/api/leaderboard' && method === 'GET') return leaderboard(request, env);
   return json({ error: 'introuvable' }, 404);
+}
+
+// --- Leaderboard : le plus de zombies tués en une run
+
+/** Bornes d'une run crédible (le score vient du navigateur : entre potes, on écarte juste l'absurde). */
+const SCORE_MAX = { kills: 200_000, survived: 4 * 3600 };
+const LEADERBOARD_SIZE = 10;
+
+async function postScore(request: Request, env: Env) {
+  const user = await currentUser(request, env);
+  if (!user) return json({ error: 'non connecté' }, 401);
+  let b: { kills?: unknown; survived?: unknown; difficulty?: unknown; character?: unknown };
+  try { b = await request.json(); } catch { return json({ error: 'JSON invalide' }, 400); }
+  const kills = Math.floor(Number(b.kills)), survived = Number(b.survived);
+  if (!Number.isFinite(kills) || kills < 0 || kills > SCORE_MAX.kills || !Number.isFinite(survived) || survived < 0 || survived > SCORE_MAX.survived) {
+    return json({ error: 'score invalide' }, 400);
+  }
+  const difficulty = String(b.difficulty ?? 'sobre').slice(0, 20), character = String(b.character ?? 'buveur').slice(0, 20);
+  // Remplacé seulement s'il bat le record du joueur (plus de kills, ou autant mais tenu plus longtemps)
+  await env.DB.prepare(`INSERT INTO scores (user_id, kills, survived, difficulty, character, at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+    ON CONFLICT(user_id) DO UPDATE SET kills = ?2, survived = ?3, difficulty = ?4, character = ?5, at = ?6
+    WHERE ?2 > scores.kills OR (?2 = scores.kills AND ?3 > scores.survived)`)
+    .bind(user.id, kills, survived, difficulty, character, Date.now()).run();
+  return json({ ok: true });
+}
+
+async function leaderboard(request: Request, env: Env) {
+  const me = await currentUser(request, env);
+  const rows = await env.DB.prepare(`SELECT u.id, u.name, u.avatar, s.kills, s.survived, s.difficulty, s.character
+    FROM scores s JOIN users u ON u.id = s.user_id ORDER BY s.kills DESC, s.survived DESC LIMIT ?`).bind(LEADERBOARD_SIZE)
+    .all<User & { kills: number; survived: number; difficulty: string; character: string }>();
+  return json({
+    entries: rows.results.map((r, i) => ({ rank: i + 1, ...publicUser(r), kills: r.kills, survived: r.survived, difficulty: r.difficulty, character: r.character, me: r.id === me?.id })),
+  });
 }
 
 // --- Connexion Discord (OAuth2, code d'autorisation)
@@ -125,10 +163,13 @@ async function currentUser(request: Request, env: Env): Promise<User | null> {
     .bind(await sha256(token), Date.now()).first<User>();
 }
 
+/** Le joueur tel que le jeu le voit ; avatar Discord (ou celui par défaut), aucun pour un compte email. */
 const publicUser = (u: User) => ({
   id: u.id,
   name: u.name,
-  avatarUrl: u.avatar ? `https://cdn.discordapp.com/avatars/${u.id}/${u.avatar}.png?size=64` : `https://cdn.discordapp.com/embed/avatars/${Number(BigInt(u.id) >> 22n) % 6}.png`,
+  avatarUrl: /^\d+$/.test(u.id)
+    ? u.avatar ? `https://cdn.discordapp.com/avatars/${u.id}/${u.avatar}.png?size=64` : `https://cdn.discordapp.com/embed/avatars/${Number(BigInt(u.id) >> 22n) % 6}.png`
+    : null,
 });
 
 // --- Outils

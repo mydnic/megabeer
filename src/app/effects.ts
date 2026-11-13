@@ -322,9 +322,12 @@ export function wireEffects(game: Game, d: Deps) {
     const P = DEATH.pint;
     const vel = u.multiplyScalar(P.throwUp).addScaledVector(fwd, P.throwForward).addScaledVector(right, P.throwSide).add(player.velocity);
     const spin = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().multiplyScalar(P.spin);
-    pint.setColors(buveur.color('verre'), buveur.color('biere'), buveur.color('mousse'));
-    pintFirstImpact = true;
-    pint.launch(pos, quat, vel, spin);
+    // Le Videur n'a pas de pinte
+    if (buveur.hasPint) {
+      pint.setColors(buveur.color('verre'), buveur.color('biere'), buveur.color('mousse'));
+      pintFirstImpact = true;
+      pint.launch(pos, quat, vel, spin);
+    }
     rig.setFocus(DEATH.camera);
   });
 

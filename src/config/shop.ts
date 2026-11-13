@@ -10,6 +10,7 @@ import type { WeaponId } from '../weapons/weapon';
 /** Persos de la boutique et leur prix (les autres persos du GDD section 5 arriveront ici). */
 export const SHOP_CHARACTERS: readonly { id: string; name: string; pitch: string; price: number }[] = [
   { id: 'buveur', name: 'Le Buveur', pitch: 'Pinte à la main, il lance des canettes', price: 0 },
+  { id: 'videur', name: 'Le Videur', pitch: '+3 armure, insensible au recul, Tabouret de bar', price: 0 },
 ];
 
 /** Persos disponibles dès le départ. */

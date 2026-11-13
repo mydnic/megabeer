@@ -13,6 +13,7 @@ import { COIN_DROPS, COINS } from '../config/coins';
 import { TUNA_DROPS, TUNAS } from '../config/tunas';
 import type { CardOptionId } from '../config/shop';
 import { AchievementTracker } from './achievements';
+import { CHARACTERS, type CharacterId } from '../config/characters';
 import type { RunUnlocks } from '../meta/shop';
 import { createEnemyShots, type EnemyShot } from '../enemies/enemyShots';
 import { PLANET_RADIUS } from '../config/world';
@@ -88,7 +89,7 @@ export type GameEvents = {
   resumed: Record<string, never>;
   died: Record<string, never>;
   /** Fin de run : `tunas` gagnés au total (liasses + `tunasBonus`, le bonus de fin, à la mort seulement). */
-  runEnded: { reason: RunEnd; survived: number; kills: number; tunas: number; tunasBonus: number; difficulty: DifficultyId; abbe: boolean; achievements: string[] };
+  runEnded: { reason: RunEnd; survived: number; kills: number; tunas: number; tunasBonus: number; difficulty: DifficultyId; abbe: boolean; achievements: string[]; character: CharacterId };
   /** Un succès tombe pendant la run (une seule fois, s'il n'était pas déjà gagné). */
   achievementUnlocked: { id: string; name: string; tunas: number };
   /** Retour à l'accueil : tout est remis à zéro. */
@@ -256,6 +257,10 @@ export class Game {
   bossDone = false;
   /** Succès : suivi pendant la run (`owned` et `lifetimeKills` donnés par la sauvegarde au départ). */
   readonly achievements: AchievementTracker;
+  /** Le perso joué ne recule pas sous les coups (le Videur). */
+  get knockImmune() { return !!(CHARACTERS[this.character] as { knockImmune?: boolean }).knockImmune; }
+  /** Perso joué (choisi avant la run) : arme de départ, passif, stats. */
+  character: CharacterId = 'buveur';
   /** L'Abbé (boss final) est tombé pendant cette run : la difficulté suivante s'ouvre. */
   abbeKilled = false;
   /** Tournées du bar (bonus lâchés par les ennemis). */
@@ -444,9 +449,13 @@ export class Game {
   /** Nouvelle run : le joueur tombe du ciel au point de départ. */
   startRun(spawn: Spawn) {
     if (this.phase !== 'home') return;
+    // Le perso choisi : son arme de départ remplace celle de la run précédente
+    const C = CHARACTERS[this.character];
+    this.loadout.setStarting(C.weapon);
     this.resetRun();
     this.phase = 'run';
     this.player.reset(spawn.dir, spawn.facing);
+    for (const b of C.stats) this.applyStatBonus(b.stat, b.value, true);
     // Skill tree : ses bonus de stat valent dès le début de la run
     for (const b of this.unlocks?.bonuses ?? []) this.applyStatBonus(b.stat, b.value, true);
     this.pumps.place(spawn.dir);
@@ -464,7 +473,7 @@ export class Game {
   abandon() {
     if (this.phase !== 'run') return;
     this.achievements.check(true);
-    this.events.emit('runEnded', { reason: 'abandon', survived: this.runTime, kills: this.kills, tunas: Math.floor(this.tunas + 1e-9), tunasBonus: 0, difficulty: this.difficulty, abbe: this.abbeKilled, achievements: [...this.achievements.gained] });
+    this.events.emit('runEnded', { reason: 'abandon', survived: this.runTime, kills: this.kills, tunas: Math.floor(this.tunas + 1e-9), tunasBonus: 0, difficulty: this.difficulty, abbe: this.abbeKilled, achievements: [...this.achievements.gained], character: this.character });
     this.goHome();
   }
 
@@ -1149,14 +1158,14 @@ export class Game {
       this.health.damage(0);
       this.effects.owe(damage);
       this.events.emit('playerHurt', { zombie: z, dir, damage, hp: this.health.hp, blocked: false });
-      this.player.knock(dir, ZOMBIE_ATTACK.knockSpeed, ZOMBIE_ATTACK.knockLift, ZOMBIE_ATTACK.knockDecay);
+      if (!this.knockImmune) this.player.knock(dir, ZOMBIE_ATTACK.knockSpeed, ZOMBIE_ATTACK.knockLift, ZOMBIE_ATTACK.knockDecay);
       return;
     }
     // Invulnérable juste après un coup : ni dégâts ni recul (pas d'enchaînement de coups)
     const took = !this.cheats.god && this.health.damage(damage);
     this.events.emit('playerHurt', { zombie: z, dir, damage, hp: this.health.hp, blocked: !took });
     if (!took) return;
-    this.player.knock(dir, ZOMBIE_ATTACK.knockSpeed, ZOMBIE_ATTACK.knockLift, ZOMBIE_ATTACK.knockDecay);
+    if (!this.knockImmune) this.player.knock(dir, ZOMBIE_ATTACK.knockSpeed, ZOMBIE_ATTACK.knockLift, ZOMBIE_ATTACK.knockDecay);
   }
 
   /**
@@ -1232,7 +1241,7 @@ export class Game {
     // Bonus de fin : le temps survécu rapporte des TUNAS (à la mort seulement : abandonner n'est pas une astuce)
     const tunasBonus = Math.floor((this.runTime / 60) * TUNAS.endBonusPerMinute * this.mods.tunas + 1e-9);
     this.achievements.check(true);
-    this.events.emit('runEnded', { reason: 'mort', survived: this.runTime, kills: this.kills, tunas: Math.floor(this.tunas + 1e-9) + tunasBonus, tunasBonus, difficulty: this.difficulty, abbe: this.abbeKilled, achievements: [...this.achievements.gained] });
+    this.events.emit('runEnded', { reason: 'mort', survived: this.runTime, kills: this.kills, tunas: Math.floor(this.tunas + 1e-9) + tunasBonus, tunasBonus, difficulty: this.difficulty, abbe: this.abbeKilled, achievements: [...this.achievements.gained], character: this.character });
   }
 
   /** Vitesse du temps : ralenti juste après la mort, puis retour progressif. */

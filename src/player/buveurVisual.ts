@@ -19,10 +19,17 @@ export type BuveurSound =
   | { type: 'jump' }
   | { type: 'land'; speed: number; surface: Surface };
 
+/** Un modèle de perso prêt à jouer (le Buveur, le Videur...) : sa scène, ses animations, ses os utiles. */
+type Rig = {
+  scene: THREE.Object3D; mixer: THREE.AnimationMixer; ik: FootIK; actions: Record<Clip, THREE.AnimationAction>;
+  throwAction: THREE.AnimationAction; hand?: THREE.Object3D; pintOffset: THREE.Vector3; pintBone?: THREE.Object3D;
+  handL?: THREE.Object3D; materials: THREE.MeshToonMaterial[]; hasPint: boolean;
+};
+
 /**
- * Modèle animé du Buveur : charge le GLB (généré par tools/blender/buveur.py), passe ses
- * matériaux en toon, choisit l'animation selon l'état du contrôleur et ajoute l'écrasement /
- * étirement et l'inclinaison par code.
+ * Modèle animé du perso joué : charge les GLB des persos (générés par tools/blender/buveur.py, mêmes os et mêmes
+ * animations), passe leurs matériaux en toon, choisit l'animation selon l'état du contrôleur et ajoute l'écrasement /
+ * étirement et l'inclinaison par code. `use(id)` change de perso (un seul modèle visible).
  */
 export class BuveurVisual {
   /** Placé et orienté sur le joueur chaque frame. */
@@ -65,6 +72,11 @@ export class BuveurVisual {
   /** Reçoit les événements sonores (pas, saut, réception). */
   onSound?: (e: BuveurSound) => void;
 
+  private rigs = new Map<string, Rig>();
+  private using = '';
+  /** Le perso joué tient une pinte (le Buveur) : éclaboussures de bière, pinte lancée à la mort. */
+  hasPint = true;
+
   constructor(scene: THREE.Scene) {
     this.root.add(this.lean);
     this.lean.add(this.squashGroup);
@@ -72,15 +84,17 @@ export class BuveurVisual {
     this.splash = new BeerSplash(scene);
   }
 
-  async load() {
-    const gltf = await new GLTFLoader().loadAsync(buveurUrl);
+  /** Charge le modèle d'un perso (`id`), sans l'afficher ; le premier chargé est affiché d'office. */
+  async load(id = 'buveur', url: string = buveurUrl) {
+    const gltf = await new GLTFLoader().loadAsync(url);
+    const materials: THREE.MeshToonMaterial[] = [];
     const mats = new Map<string, THREE.Material>();
     gltf.scene.traverse((o) => {
       const mesh = o as THREE.Mesh;
       if (!mesh.isMesh) return;
       const src = mesh.material as THREE.MeshStandardMaterial;
       let m = mats.get(src.name);
-      if (!m) { m = characterMaterial({ color: src.color }); m.name = src.name; mats.set(src.name, m); this.materials.push(m as THREE.MeshToonMaterial); }
+      if (!m) { m = characterMaterial({ color: src.color }); m.name = src.name; mats.set(src.name, m); materials.push(m as THREE.MeshToonMaterial); }
       mesh.material = m;
       mesh.castShadow = true;
       // Pas d'ombre reçue : la carte d'ombre est trop grossière pour un perso de 1,9 m (taches au dos)
@@ -88,33 +102,53 @@ export class BuveurVisual {
       mesh.layers.set(LAYER_CHARACTER);
       mesh.frustumCulled = false; // la sphère englobante ne suit pas les os
     });
+    gltf.scene.visible = false;
     this.squashGroup.add(gltf.scene);
-    this.ik = new FootIK(gltf.scene, this.root);
+    const ik = new FootIK(gltf.scene, this.root);
     // Haut de la pinte exprimé dans le repère de l'os de la main (pose de repos)
-    this.hand = gltf.scene.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('hand.R'));
-    if (this.hand) {
+    const hand = gltf.scene.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('hand.R'));
+    const pintOffset = new THREE.Vector3();
+    if (hand) {
       gltf.scene.updateMatrixWorld(true);
-      this.pintOffset.set(...BEER_SPLASH.pintTop).applyMatrix4(gltf.scene.matrixWorld)
-        .applyMatrix4(this.hand.matrixWorld.clone().invert());
+      pintOffset.set(...BEER_SPLASH.pintTop).applyMatrix4(gltf.scene.matrixWorld).applyMatrix4(hand.matrixWorld.clone().invert());
     }
-    this.mixer = new THREE.AnimationMixer(gltf.scene);
+    const mixer = new THREE.AnimationMixer(gltf.scene);
+    const actions = {} as Record<Clip, THREE.AnimationAction>;
     for (const name of ['idle', 'run', 'jump', 'fall', 'land', 'death'] as Clip[]) {
       const clip = gltf.animations.find((a) => a.name === name);
-      if (!clip) throw new Error(`Animation manquante dans buveur.glb : ${name}`);
-      const action = this.mixer.clipAction(clip);
+      if (!clip) throw new Error(`Animation manquante dans ${id} : ${name}`);
+      const action = mixer.clipAction(clip);
       if (name === 'jump' || name === 'land' || name === 'death') { action.setLoop(THREE.LoopOnce, 1); action.clampWhenFinished = true; }
-      this.actions[name] = action;
+      actions[name] = action;
     }
-    this.pintBone = gltf.scene.getObjectByName('pint');
-    this.handL = gltf.scene.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('hand.L'));
     // Lancer : clip additif (seul l'écart à sa pose de départ s'ajoute à la course ou à l'attente)
     const throwClip = gltf.animations.find((a) => a.name === 'throw');
-    if (!throwClip) throw new Error('Animation manquante dans buveur.glb : throw');
+    if (!throwClip) throw new Error(`Animation manquante dans ${id} : throw`);
     THREE.AnimationUtils.makeClipAdditive(throwClip);
-    this.throwAction = this.mixer.clipAction(throwClip);
-    this.throwAction.blendMode = THREE.AdditiveAnimationBlendMode;
-    this.throwAction.setLoop(THREE.LoopOnce, 1);
-    this.throwAction.clampWhenFinished = false;
+    const throwAction = mixer.clipAction(throwClip);
+    throwAction.blendMode = THREE.AdditiveAnimationBlendMode;
+    throwAction.setLoop(THREE.LoopOnce, 1);
+    throwAction.clampWhenFinished = false;
+    this.rigs.set(id, {
+      scene: gltf.scene, mixer, ik, actions, throwAction, hand, pintOffset, materials,
+      pintBone: gltf.scene.getObjectByName('pint'), handL: gltf.scene.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('hand.L')),
+      hasPint: materials.some((m) => m.name === 'verre'),
+    });
+    if (!this.using) this.use(id);
+  }
+
+  /** Affiche le perso `id` (déjà chargé) à la place du précédent. */
+  use(id: string) {
+    const r = this.rigs.get(id);
+    if (!r || id === this.using) return;
+    const prev = this.rigs.get(this.using);
+    if (prev) { prev.scene.visible = false; prev.mixer.stopAllAction(); }
+    this.using = id;
+    r.scene.visible = true;
+    this.mixer = r.mixer; this.ik = r.ik; this.actions = r.actions; this.throwAction = r.throwAction;
+    this.hand = r.hand; this.pintOffset = r.pintOffset; this.pintBone = r.pintBone; this.handL = r.handL;
+    this.materials = r.materials; this.hasPint = r.hasPint;
+    this.current = undefined;
     this.play('idle', 0);
   }
 
@@ -284,7 +318,7 @@ export class BuveurVisual {
 
   private updateSplash(dt: number, player: PlayerController, up: THREE.Vector3, ev: PlayerController['events']) {
     const B = BEER_SPLASH;
-    if (this.hand) {
+    if (this.hand && this.hasPint) {
       this.hand.updateWorldMatrix(true, false);
       this.pintPos.copy(this.pintOffset).applyMatrix4(this.hand.matrixWorld);
       const rand = (r: readonly [number, number]) => Math.round(r[0] + Math.random() * (r[1] - r[0]));

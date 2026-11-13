@@ -11,7 +11,7 @@ import type { Game } from '../game/game';
  */
 export function wireRunLog(game: Game, runLog: ReturnType<typeof createRunLog>, meta: () => { seed: number; fps: number }) {
   game.events.on('runStarted', () => runLog.start({
-    character: 'buveur', map: 'abbaye', seed: meta().seed, difficulty: game.difficulty,
+    character: game.character, map: 'abbaye', seed: meta().seed, difficulty: game.difficulty,
     stats: { ...game.stats, maxHp: game.health.max },
     weapons: Object.fromEntries(game.loadout.weapons.map((w) => [w.id, w.id === 'fut' ? FUT : w.id === 'gueuze' ? GUEUZE : w.id === 'tabouret' ? TABOURET : WEAPONS[w.id]])),
     enemies: ENEMIES,

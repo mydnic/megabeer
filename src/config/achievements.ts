@@ -24,7 +24,7 @@ export const ACHIEVEMENTS: readonly AchievementDef[] = [
   { id: 'tenirAlcool', name: "Tenir l'alcool", text: 'Survivre 5 min', tunas: 20, rule: { kind: 'survive', seconds: 300 } },
   { id: 'fermeture', name: "Jusqu'à la fermeture", text: "Survivre jusqu'à 10:00", tunas: 40, rule: { kind: 'survive', seconds: CLOSING.at } },
   { id: 'defierMort', name: 'Défier la Mort', text: 'Tenir 1 min après la fermeture', tunas: 60, rule: { kind: 'survive', seconds: CLOSING.at + 60 } },
-  { id: 'sonne', name: 'Sonné', text: 'Tuer le Frère Sonneur', tunas: 30, rule: { kind: 'boss', boss: 'sonneur' } },
+  { id: 'sonne', name: 'Sonné', text: 'Tuer le Frère Sonneur', tunas: 30, rule: { kind: 'boss', boss: 'sonneur' }, unlocks: ['character:videur'] },
   { id: 'derniereMesse', name: 'Dernière messe', text: "Tuer l'Abbé", tunas: 60, rule: { kind: 'boss', boss: 'abbe' }, unlocks: ['item:secondeTournee'] },
   { id: 'pompetteConfirme', name: 'Pompette confirmé', text: "Tuer l'Abbé en Pompette", tunas: 100, rule: { kind: 'boss', boss: 'abbe', difficulty: 'pompette' } },
   { id: 'bourreConfirme', name: 'Bourré confirmé', text: "Tuer l'Abbé en Bourré", tunas: 150, rule: { kind: 'boss', boss: 'abbe', difficulty: 'bourre' } },

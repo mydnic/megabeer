@@ -30,6 +30,9 @@ export class Loadout {
     return w;
   }
 
+  /** Arme de départ des prochaines runs (celle du perso choisi). */
+  setStarting(id: WeaponId) { this.starting = id; }
+
   /** Nouvelle run : seule l'arme de départ, sans amélioration. */
   reset() {
     this.weapons.length = 0;
