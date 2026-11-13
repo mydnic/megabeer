@@ -226,7 +226,7 @@ export const TABOURET = {
   /** Le tour part si un zombie est à moins de la portée plus cette marge (m). */
   triggerMargin: 0.5,
   /** Durée d'un tour complet (s). */
-  swingTime: 0.45,
+  swingTime: 0.9,
   /** Recul : fois le recul normal, et vitesse donnée vers l'extérieur du cercle (m/s). */
   knock: 4,
   knockSpeed: 9,
