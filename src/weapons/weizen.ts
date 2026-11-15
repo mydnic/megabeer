@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { WEIZEN as W, WEIZEN_UPGRADES } from '../config/arsenal';
+import { SYNERGY_FX, WEIZEN as W, WEIZEN_UPGRADES } from '../config/arsenal';
 import { TARGETING, WEAPON_INFO } from '../config/weapons';
 import type { Zombie } from '../enemies/zombie';
 import type { StatLine } from '../game/playerStats';
@@ -18,6 +18,8 @@ export function createWeizen(ctx: WeaponContext): Weapon {
   const around: Zombie[] = [];
   const picked = new Set<Zombie>();
   const still = new THREE.Vector3();
+  /** Cumul de poison de chaque zombie (synergie Nuage toxique). */
+  const stacks = new Map<Zombie, number>();
   /** Le nuage qui suit le joueur (évolution). */
   const follow: Zone = { pos: new THREE.Vector3(), radius: W.radius, age: 1, life: Infinity, active: false };
 
@@ -71,12 +73,16 @@ export function createWeizen(ctx: WeaponContext): Weapon {
         if (!beat) continue;
         for (const z of ctx.zombiesNear(zone.pos, zone.radius, around)) {
           if (!z.targetable || z.pos.distanceTo(zone.pos) > zone.radius) continue;
-          ctx.hitZombie(weapon, z, W.damage * mods.damage, false, z.pos, still, 0);
+          // Nuage toxique (avec le Vomi) : chaque battement fait plus mal que le précédent
+          let k = 1;
+          if (ctx.synergy('nuageToxique')) { k = Math.min(SYNERGY_FX.nuage.maxStacks, (stacks.get(z) ?? 0) + 1); stacks.set(z, k); }
+          ctx.hitZombie(weapon, z, W.damage * mods.damage * k, false, z.pos, still, 0);
         }
       }
-      if (beat) tick = 0;
+      if (beat) { tick = 0; if (stacks.size > 256) for (const z of stacks.keys()) if (z.dead) stacks.delete(z); }
     },
     reset() {
+      stacks.clear();
       timer = W.firstDelay;
       tick = 0;
       for (const z of zones) z.active = false;

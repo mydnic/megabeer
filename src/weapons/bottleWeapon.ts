@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { SYNERGY_FX } from '../config/arsenal';
 import { TARGETING, WEAPONS, type BottleWeaponId } from '../config/weapons';
 import type { WeaponId, Zone } from './weapon';
 import { anyInRange, pickTarget } from './targeting';
@@ -58,7 +59,7 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
   const W: BottleConfig = config ?? WEAPONS[id as BottleWeaponId];
   /** Zombies qui brûlent (IPA) : dégâts par seconde et temps restant. */
   const burning = new Map<Zombie, { dps: number; left: number }>();
-  let burnTick = 0;
+  let burnTick = 0, flameTick = 0;
   /** Flaques de poison (Vomi) et cumul de poison de chaque zombie dedans. */
   const zones: Zone[] = [];
   const poison = new Map<Zombie, number>();
@@ -121,8 +122,10 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
     b.size = mods.size;
     b.active = true;
     b.pierce = W.pierce + mods.pierce;
-    b.bounces = (W.bounces ?? 0) + (mods.bounces ?? 0);
-    b.ground = W.groundBounces ?? 0;
+    b.bounces = (W.bounces ?? 0) + (mods.bounces ?? 0)
+      + (id === 'flechettes' && ctx.synergy('troisVingt') ? SYNERGY_FX.ricochets.bounces : 0)
+      + (child && ctx.synergy('palettePinball') ? SYNERGY_FX.flipper.bounces : 0);
+    b.ground = (W.groundBounces ?? 0) + (id === 'petanque' && ctx.synergy('carreauFut') ? SYNERGY_FX.carreau.groundBounces : 0);
     b.child = child;
     b.face = face;
     b.back = false;
@@ -170,6 +173,8 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
   /** Jackpot du 421 : le dé explose et frappe tous les zombies autour. */
   function jackpot(at: THREE.Vector3) {
     const J = W.dice!;
+    // Noël au comptoir (avec la Bière de Noël) : le 421 double la couronne quelques secondes
+    if (ctx.synergy('noelAuComptoir')) ctx.trigger('biereNoel');
     const r = J.jackpotRadius * mods.size;
     ctx.explode(weapon, at, r);
     for (const o of ctx.zombiesNear(at, r, side)) {
@@ -252,6 +257,17 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
       if (d < best) { best = d; next = o; }
     }
     if (!next) return false;
+    // Cerises en chaîne (Triple avec la Kriek) : le rebond éclabousse de kriek
+    if (id === 'triple' && ctx.synergy('cerisesEnChaine')) {
+      const C = SYNERGY_FX.cerises;
+      for (const o of ctx.zombiesNear(from.pos, C.radius, side)) {
+        if (!o.targetable || o.pos.distanceTo(from.pos) > C.radius) continue;
+        o.slowMul = Math.min(o.slowMul, 1 - C.slow);
+        o.slowTime = Math.max(o.slowTime, C.slowTime);
+        if (o !== from) ctx.hitZombie(weapon, o, b.expected * C.damage, false, o.pos, tmp.subVectors(o.pos, from.pos), 0.3);
+      }
+      ctx.explode(weapon, from.pos, C.radius);
+    }
     b.bounces--;
     settle(b);
     b.target = next;
@@ -284,12 +300,21 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
       if (segToZombie(prev, b.pos, z) < W.radius * mods.size + W.zombieRadius) {
         const crit = Math.random() < W.critChance + mods.critChance + ctx.stats.critChance + diceCrit;
         const gain = ((W.bounceGain ?? 1) + mods.gain) ** Math.max(0, b.hits.length) * (b.face ? b.face / 3.5 : 1);
-        const dmg = W.damage * mods.damage * gain * (crit ? W.critMult + mods.critMult : 1);
+        const carreau = id === 'petanque' && ctx.synergy('carreauFut') ? SYNERGY_FX.carreau.damage : 1;
+        const dmg = W.damage * mods.damage * gain * carreau * (crit ? W.critMult + mods.critMult : 1);
         if (b.face === 6 && W.dice) diceCrit = Math.min(W.dice.critCap, diceCrit + W.dice.critPerSix);
         if (b.jackpot) { b.jackpot = false; jackpot(b.pos); }
         ctx.hitZombie(weapon, z, b.child ? dmg * (W.fragmentDamage ?? 0.5) : dmg, crit, b.pos, b.vel, W.knock * mods.knock);
         b.hits.push(z);
         splash(b.pos, dmg, z);
+        // Bouchons explosifs (Bouchons avec la Gueuze) : le bouchon explose à l'impact
+        if (id === 'bouchons' && ctx.synergy('bouchonsExplosifs')) {
+          const X = SYNERGY_FX.bouchons;
+          ctx.explode(weapon, b.pos, X.radius);
+          for (const o of ctx.zombiesNear(b.pos, X.radius, side)) {
+            if (o !== z && o.targetable && o.pos.distanceTo(b.pos) <= X.radius) ctx.hitZombie(weapon, o, dmg * X.damage, false, o.pos, tmp.subVectors(o.pos, b.pos), 0.5);
+          }
+        }
         if (W.burn) burning.set(z, { dps: W.damage * mods.damage * W.burn * (mods.burn ?? 1), left: (W.burnTime ?? 3) * ctx.stats.duration });
         if (bounce(b, z)) return true;
         if (b.pierce-- <= 0) { puddle(z.pos); shatter(b); return false; }
@@ -351,6 +376,21 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
       for (let k = 0; k < n; k++) pending.push({ t: first + k * gap, index: k, of: n, face: faces[k] ?? 0, jackpot: (win && k === faces.indexOf(4)) || (!!mods.loaded && faces[k] === 4) });
     },
     updateProjectiles(dt: number) {
+      // Ça flambe / Gastro flambée (IPA avec la Flaque de bière ou le Vomi) : les zombies dans les flaques prennent feu
+      flameTick += dt;
+      if (W.burn && flameTick >= 0.5) { // toutes les demi-secondes, pas à chaque image
+        flameTick = 0;
+        for (const [syn, src] of [['flammes', 'flaqueBiere'], ['flammesVomi', 'vomi']] as const) {
+          if (!ctx.synergy(syn)) continue;
+          for (const zone of ctx.zonesOf(src)) {
+            if (!zone.active) continue;
+            for (const z of ctx.zombiesNear(zone.pos, zone.radius, side)) {
+              if (!z.targetable || z.pos.distanceTo(zone.pos) > zone.radius || burning.has(z)) continue;
+              burning.set(z, { dps: W.damage * mods.damage * SYNERGY_FX.flammes.dps, left: SYNERGY_FX.flammes.time });
+            }
+          }
+        }
+      }
       // Brûlure : un coup toutes les demi-secondes tant qu'elle dure
       if (burning.size) {
         burnTick += dt;
@@ -392,7 +432,7 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
         b.pos.addScaledVector(b.vel, dt);
         b.age += dt;
         // Sous-bock tranchant : à mi-course il fait demi-tour vers le joueur, et peut refrapper au retour
-        if (mods.returns && !b.back && b.age > W.life * 0.45) {
+        if ((mods.returns || (id === 'sousBock' && ctx.synergy('retourAuBar'))) && !b.back && b.age > W.life * 0.45) {
           b.back = true;
           b.hits.length = 0;
           b.pierce = W.pierce + mods.pierce;

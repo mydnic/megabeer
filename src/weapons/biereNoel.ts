@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { BIERE_NOEL as B, BIERE_NOEL_UPGRADES } from '../config/arsenal';
+import { SYNERGY_FX, BIERE_NOEL as B, BIERE_NOEL_UPGRADES } from '../config/arsenal';
 import { WEAPON_INFO } from '../config/weapons';
 import type { Zombie } from '../enemies/zombie';
 import type { StatLine } from '../game/playerStats';
@@ -23,7 +23,9 @@ export function createBiereNoel(ctx: WeaponContext): Weapon {
   const around: Zombie[] = [];
 
   const radius = () => B.radius * mods.size;
-  const count = () => B.count + mods.projectiles + ctx.stats.extraProjectiles;
+  /** Noël au comptoir (synergie avec le 421) : temps restant de la couronne doublée (s). */
+  let boost = 0;
+  const count = () => (B.count + mods.projectiles + ctx.stats.extraProjectiles) * (boost > 0 ? SYNERGY_FX.noel.mult : 1);
 
   function orbiter(i: number): Orbiter {
     let o = projectiles[i];
@@ -50,8 +52,10 @@ export function createBiereNoel(ctx: WeaponContext): Weapon {
     mods,
     projectiles,
     update() { /* l'orbite tourne dans updateProjectiles, même quand le joueur ne peut pas agir */ },
+    trigger() { boost = SYNERGY_FX.noel.time; },
     updateProjectiles(dt: number) {
       clock += dt;
+      boost = Math.max(0, boost - dt);
       const n = count();
       const turn = Math.PI * 2 * B.turnsPerSecond * ctx.stats.fireRate * mods.rate;
       angle = (angle + turn * dt) % (Math.PI * 2);
@@ -95,6 +99,7 @@ export function createBiereNoel(ctx: WeaponContext): Weapon {
       }
     },
     reset() {
+      boost = 0;
       angle = 0;
       clock = 0;
       for (const o of projectiles) { o.active = false; o.hit.clear(); }

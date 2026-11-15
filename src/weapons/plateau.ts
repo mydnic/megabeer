@@ -66,6 +66,8 @@ export function createPlateau(ctx: WeaponContext): Weapon {
       if (!t) return false;
       t.recharge = P.recharge / (ctx.stats.fireRate * mods.rate);
       t.active = false;
+      // Service musclé (avec le Tabouret de bar) : le tabouret part aussitôt pour un tour
+      if (ctx.synergy('serviceMuscle')) ctx.trigger('tabouret');
       // Service en salle (évolution) : le coup est renvoyé à tous les zombies autour
       const r = mods.evolved ? P.reflectRadius : 0.8;
       ctx.explode(weapon, t.pos, r);

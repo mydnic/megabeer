@@ -25,7 +25,7 @@ import type { ThrowRig, Weapon, WeaponContext, WeaponId } from '../weapons/weapo
 import { Emitter } from './emitter';
 import { applyCard, cardKey, rollCards, type Card, applyEvolution, readyToEvolve } from './levelUpCards';
 import { WEAPON_FACTORIES } from '../weapons/registry';
-import { SYNERGIES } from '../config/weapons';
+import { SYNERGIES, type SynergyDef } from '../config/weapons';
 import { activeSynergies, synergiesCompletedBy, type SynergyId } from './synergies';
 import { Pumps, rollStatCards, type Pump } from './pumps';
 import { Chests, rollItemCards, type Chest } from './chests';
@@ -421,6 +421,9 @@ export class Game {
       playerPos: () => player.pos,
       playerFacing: () => player.facing,
       xpGathered: () => this.xpGathered,
+      synergy: (id) => this.hasSynergy(id),
+      zonesOf: (id) => this.loadout.weapons.find((w) => w.id === id)?.zones ?? [],
+      trigger: (id) => { this.loadout.weapons.find((w) => w.id === id)?.trigger?.(); },
       stats: this.stats,
       rig: defaultRig(player),
       groundAt,
@@ -805,11 +808,19 @@ export class Game {
   activeSynergies() { return activeSynergies((id) => this.loadout.has(id)); }
 
   /** Fiches des synergies actives : recalculées seulement quand l'arsenal change (lu à chaque coup). */
-  private synergyCache: { n: number; defs: (typeof SYNERGIES)[SynergyId][] } = { n: -1, defs: [] };
+  private synergyCache: { n: number; ids: SynergyId[]; defs: SynergyDef[] } = { n: -1, ids: [], defs: [] };
   private synergyDefs() {
     const n = this.loadout.version;
-    if (this.synergyCache.n !== n) this.synergyCache = { n, defs: this.activeSynergies().map((s) => SYNERGIES[s]) };
+    if (this.synergyCache.n !== n) {
+      const ids = this.activeSynergies();
+      this.synergyCache = { n, ids, defs: ids.map((s) => SYNERGIES[s] as SynergyDef) };
+    }
     return this.synergyCache.defs;
+  }
+  /** La synergie `id` est-elle active (toutes ses armes équipées) ? */
+  hasSynergy(id: SynergyId) {
+    this.synergyDefs();
+    return this.synergyCache.ids.includes(id);
   }
 
   /**
@@ -931,7 +942,7 @@ export class Game {
     // Synergies actives : une arme marque le zombie (sonné), une autre lui fait plus de dégâts pendant ce temps
     const synergies = this.synergyDefs();
     let combo = false;
-    for (const S of synergies) if (weapon?.id === S.boosted && z.dazed > 0) { damage *= S.mult; combo = true; }
+    for (const S of synergies) if (S.boosted && weapon?.id === S.boosted && z.dazed > 0) { damage *= S.mult ?? 1; combo = true; }
     // Dans le halo d'un porte-reliques : dégâts réduits
     const shield = this.horde.shieldOf(z);
     damage *= 1 - shield;
@@ -952,7 +963,7 @@ export class Game {
       const tournee = this.rollTournee();
       if (tournee) this.tournees.drops.drop(z.pos, TOURNEE_IDS.indexOf(tournee));
     }
-    for (const S of synergies) if (!killed && weapon?.id === S.marker) z.dazed = S.duration * this.stats.duration;
+    for (const S of synergies) if (S.marker && !killed && weapon?.id === S.marker) z.dazed = (S.duration ?? 0) * this.stats.duration;
     if (weapon) this.afterWeaponHit(z, Math.min(damage, hpBefore), killed);
     this.events.emit('zombieHit', { weapon, zombie: z, damage, crit, killed, hpAfter: z.hp, impact: impact.clone(), dir, shielded: shield > 0, combo });
     // Le boss tué laisse un coffre gratuit de haute rareté, et la run continue (l'Abbé aussi : seule la Mort l'arrête)

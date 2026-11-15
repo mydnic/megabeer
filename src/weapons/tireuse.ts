@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { TIREUSE as T, TIREUSE_UPGRADES } from '../config/arsenal';
+import { SYNERGY_FX, TIREUSE as T, TIREUSE_UPGRADES } from '../config/arsenal';
 import { WEAPON_INFO } from '../config/weapons';
 import type { Zombie } from '../enemies/zombie';
 import type { StatLine } from '../game/playerStats';
@@ -17,6 +17,10 @@ export function createTireuse(ctx: WeaponContext): Weapon {
   let tick = 0;
   const up = new THREE.Vector3(), dir = new THREE.Vector3(), d = new THREE.Vector3(), vel = new THREE.Vector3();
   const around: Zombie[] = [];
+  /** Zombies qui brûlent (synergie Jet brûlant) : dégâts par seconde, temps restant. */
+  const burning = new Map<Zombie, { dps: number; left: number }>();
+  let burnTick = 0;
+  const still = new THREE.Vector3();
 
   const range = () => T.range * mods.size;
 
@@ -58,10 +62,23 @@ export function createTireuse(ctx: WeaponContext): Weapon {
         const crit = Math.random() < T.critChance + mods.critChance + ctx.stats.critChance;
         vel.copy(dir).multiplyScalar(5);
         ctx.hitZombie(weapon, z, T.damage * mods.damage * (crit ? T.critMult + mods.critMult : 1), crit, z.pos, vel, T.knock * mods.knock);
+        // Jet brûlant (avec l'IPA) : le zombie arrosé brûle
+        if (ctx.synergy('jetBrulant')) burning.set(z, { dps: T.damage * mods.damage * SYNERGY_FX.jetBrulant.dps, left: SYNERGY_FX.jetBrulant.time });
       }
     },
-    updateProjectiles(dt: number) { spray.update(dt); },
+    updateProjectiles(dt: number) {
+      spray.update(dt);
+      burnTick += dt;
+      if (burnTick < 0.5 || !burning.size) return;
+      for (const [z, f] of burning) {
+        f.left -= burnTick;
+        if (z.dead || f.left <= 0) { burning.delete(z); continue; }
+        ctx.hitZombie(weapon, z, f.dps * burnTick, false, z.pos, still, 0);
+      }
+      burnTick = 0;
+    },
     reset() {
+      burning.clear();
       tick = 0;
       spray.reset();
       Object.assign(mods, MODS0);

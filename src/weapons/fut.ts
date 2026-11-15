@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { SYNERGY_FX } from '../config/arsenal';
 import { FUT as F, TARGETING, WEAPON_INFO } from '../config/weapons';
 import { pickTarget } from './targeting';
 import { FUT_UPGRADES } from '../config/upgrades';
@@ -115,12 +116,18 @@ export function createFut(ctx: WeaponContext): Weapon {
       for (const b of projectiles) {
         if (!b.active) continue;
         b.age += dt;
+        // Glissade (synergie avec la Flaque de bière) : sur une flaque, il file plus vite et va plus loin
+        let speed: number = F.speed;
+        if (ctx.synergy('futFlaque') && ctx.zonesOf('flaqueBiere').some((z) => z.active && z.pos.distanceTo(b.pos) < z.radius)) {
+          speed *= SYNERGY_FX.futFlaque.speed;
+          b.age -= dt * SYNERGY_FX.futFlaque.extend;
+        }
         // Avance sur le grand cercle de sa route, puis se repose sur le sol
-        const step = (F.speed * dt) / b.pos.length();
+        const step = (speed * dt) / b.pos.length();
         b.dir.applyAxisAngle(b.axis, step);
         b.fwd.applyAxisAngle(b.axis, step);
         place(b);
-        b.vel.copy(b.fwd).multiplyScalar(F.speed);
+        b.vel.copy(b.fwd).multiplyScalar(speed);
         crush(b);
         // Contre le décor, ou au bout de sa course : il éclate
         lead.copy(b.pos).addScaledVector(b.fwd, F.radius * b.size);

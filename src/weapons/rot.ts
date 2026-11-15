@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { ROT as RT, ROT_UPGRADES } from '../config/arsenal';
+import { SYNERGY_FX, ROT as RT, ROT_UPGRADES } from '../config/arsenal';
 import { WEAPON_INFO } from '../config/weapons';
 import type { Zombie } from '../enemies/zombie';
 import type { StatLine } from '../game/playerStats';
@@ -16,7 +16,7 @@ export function createRot(ctx: WeaponContext): Weapon {
   let timer: number = RT.firstDelay;
   /** XP ramassée au moment du dernier rot. */
   let lastXp = 0;
-  const d = new THREE.Vector3(), up = new THREE.Vector3();
+  const d = new THREE.Vector3(), up = new THREE.Vector3(), fwd = new THREE.Vector3();
   const around: Zombie[] = [];
 
   const charge = () => Math.max(0, ctx.xpGathered() - lastXp) * mods.charge;
@@ -32,13 +32,24 @@ export function createRot(ctx: WeaponContext): Weapon {
     update(dt: number) {
       timer -= dt;
       if (timer > 0) return;
-      const p = ctx.playerPos(), r = radius();
-      const hit = ctx.zombiesNear(p, r, around).filter((z) => z.targetable && z.pos.distanceTo(p) <= r);
+      const p = ctx.playerPos();
+      // Rot de corne (avec la Corne de brume) : le rot sort en cône devant le joueur, bien plus loin
+      const cone = ctx.synergy('rotDeCorne');
+      const r = radius() * (cone ? SYNERGY_FX.rotDeCorne.range : 1);
+      up.copy(p).normalize();
+      fwd.copy(ctx.playerFacing()).addScaledVector(up, -ctx.playerFacing().dot(up)).normalize();
+      const cos = Math.cos(SYNERGY_FX.rotDeCorne.halfAngle);
+      const hit = ctx.zombiesNear(p, r, around).filter((z) => {
+        if (!z.targetable || z.pos.distanceTo(p) > r) return false;
+        if (!cone) return true;
+        d.subVectors(z.pos, p).addScaledVector(up, -d.subVectors(z.pos, p).dot(up));
+        return d.lengthSq() < 0.25 || d.normalize().dot(fwd) >= cos;
+      });
       if (!hit.length) return;
       timer = RT.cooldown / (ctx.stats.fireRate * mods.rate);
       const dmg = damage();
-      ctx.explode(weapon, p, r);
-      up.copy(p).normalize();
+      if (cone) ctx.explode(weapon, p.clone().addScaledVector(fwd, r * 0.4), r * 0.45);
+      else ctx.explode(weapon, p, r);
       for (const z of hit) {
         d.subVectors(z.pos, p).addScaledVector(up, -d.subVectors(z.pos, p).dot(up)).normalize().multiplyScalar(6);
         ctx.hitZombie(weapon, z, dmg, false, z.pos, d, RT.knock);

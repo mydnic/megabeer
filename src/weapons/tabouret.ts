@@ -131,6 +131,11 @@ export function createTabouret(ctx: WeaponContext): Weapon {
       startSwing();
       place();
     },
+    trigger() {
+      if (swing >= 0) return;
+      startSwing();
+      place();
+    },
     updateProjectiles(dt: number) {
       if (swing < 0) return;
       const prev = swing;

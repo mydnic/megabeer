@@ -254,3 +254,31 @@ export const DES_421: BottleConfig = {
 };
 export const DES_421_LOOK = { file: 'de.glb', length: 0.26, fit: 'max', colors: { Ivoire: 0xf6f0e2, Points: 0x141010 } as Record<string, number> } as const;
 export const DES_421_UPGRADES: readonly UpgradeDef[] = [DMG, RATEU, { id: 'projectiles', label: 'dé en plus', value: 1, kind: 'flat', whole: true }, { id: 'size', label: 'taille du jackpot', value: 0.12, kind: 'percent' }, CRIT, CRITM];
+
+/** Chiffres des synergies (fiches dans SYNERGIES, config/weapons.ts). */
+export const SYNERGY_FX = {
+  /** Glissade : vitesse du fût sur une flaque de bière (x), et durée de course gagnée (s par seconde de glisse). */
+  futFlaque: { speed: 2, extend: 0.6 },
+  /** Ça flambe / Gastro flambée : brûlure des zombies dans une flaque (part des dégâts de l'IPA par seconde, durée s). */
+  flammes: { dps: 0.4, time: 2 },
+  /** Cerises en chaîne : éclaboussure à chaque rebond (rayon m, part des dégâts, ralentissement, durée s). */
+  cerises: { radius: 1.8, damage: 0.6, slow: 0.4, slowTime: 1.5 },
+  /** Bouchons explosifs : explosion à l'impact (rayon m, part des dégâts). */
+  bouchons: { radius: 1.4, damage: 0.7 },
+  /** Jet brûlant : brûlure de la Tireuse (part des dégâts par seconde, durée s). */
+  jetBrulant: { dps: 1.2, time: 2 },
+  /** Noël au comptoir : bouteilles de la couronne multipliées pendant `time` s après un 421. */
+  noel: { mult: 2, time: 6 },
+  /** Nuage toxique : chaque battement ajoute un cumul (dégâts x cumul), jusqu'à `maxStacks`. */
+  nuage: { maxStacks: 6 },
+  /** Ricochets : rebonds des fléchettes. */
+  ricochets: { bounces: 2 },
+  /** Carreau sur le fût : rebonds au sol en plus, dégâts des boules (x). */
+  carreau: { groundBounces: 2, damage: 1.3 },
+  /** Rot de corne : portée du rot en cône (x son rayon), demi-angle du cône (rad). */
+  rotDeCorne: { range: 2.5, halfAngle: 0.6 },
+  /** Haleine de feu : dégâts de l'aura (x). */
+  haleine: { damage: 2 },
+  /** Flipper : rebonds des bouteilles du bac. */
+  flipper: { bounces: 2 },
+} as const;

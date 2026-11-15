@@ -1,5 +1,7 @@
 ﻿// Armes (GDD section 6). Chaque arme est une entrée de config ; les chiffres se calent en jouant.
 
+import type { WeaponId } from '../weapons/weapon';
+
 export const WEAPONS = {
   /** Canette : canette de bière lancée vers le zombie le plus proche (arme de départ du Buveur). */
   canette: {
@@ -193,7 +195,78 @@ export const SYNERGIES = {
     /** Effet détaillé (menu pause). */
     details: 'Un zombie touché par une Stout est sonné 2 s : les canettes lui font double dégâts.',
   },
-} as const satisfies Record<string, { name: string; weapons: readonly BottleWeaponId[]; marker: BottleWeaponId; boosted: BottleWeaponId; duration: number; mult: number; pitch: string; color: string; details: string }>;
+  // Synergies du GDD (section 6), branchées dans chaque arme concernée (ctx.synergy) ; ajoutées le 2026-11-15
+  futFlaque: {
+    name: 'Glissade', weapons: ['fut', 'flaqueBiere'], pitch: 'Le fût file plus vite et plus loin sur la bière', color: '#e8a826',
+    details: "Sur une flaque de bière, le fût roule deux fois plus vite et sa course s'allonge.",
+  },
+  flammes: {
+    name: 'Ça flambe', weapons: ['ipa', 'flaqueBiere'], pitch: "L'IPA met le feu aux flaques de bière", color: '#ff7a2a',
+    details: 'Un zombie dans une flaque de bière prend feu, comme touché par une IPA.',
+  },
+  flammesVomi: {
+    name: 'Gastro flambée', weapons: ['ipa', 'vomi'], pitch: "L'IPA met le feu aux flaques de vomi", color: '#ff9a3a',
+    details: 'Un zombie dans une flaque de vomi prend feu, comme touché par une IPA.',
+  },
+  cerisesEnChaine: {
+    name: 'Cerises en chaîne', weapons: ['kriek', 'triple'], pitch: 'Chaque rebond de la Triple éclabousse', color: '#e2203a',
+    details: 'À chaque rebond, la Triple éclabousse de kriek : dégâts autour et zombies ralentis.',
+  },
+  bouchonsExplosifs: {
+    name: 'Bouchons explosifs', weapons: ['bouchons', 'gueuze'], pitch: "Les bouchons explosent à l'impact", color: '#ff9ab8',
+    details: "Chaque bouchon qui touche un zombie explose : dégâts autour de l'impact.",
+  },
+  jetBrulant: {
+    name: 'Jet brûlant', weapons: ['tireuse', 'ipa'], pitch: 'Le jet de la Tireuse met le feu', color: '#ff8a2a',
+    details: 'Chaque zombie arrosé par la Tireuse brûle quelques secondes.',
+  },
+  serviceMuscle: {
+    name: 'Service musclé', weapons: ['plateau', 'tabouret'], pitch: 'Chaque coup bloqué déclenche un coup de tabouret', color: '#c8ccd4',
+    details: 'Quand un plateau bloque un coup, le tabouret fait aussitôt un tour complet.',
+  },
+  retourAuBar: {
+    name: 'Retour au bar', weapons: ['sousBock', 'decapsuleur'], pitch: 'Les sous-bocks reviennent vers toi', color: '#f3ead6',
+    details: 'Les sous-bocks font demi-tour à mi-course et frappent au retour, comme le décapsuleur.',
+  },
+  noelAuComptoir: {
+    name: 'Noël au comptoir', weapons: ['biereNoel', 'des421'], pitch: 'Un 421 double la couronne de Noël', color: '#2f8a3e',
+    details: 'À chaque jackpot du 421, la Bière de Noël fait tourner deux fois plus de bouteilles pendant quelques secondes.',
+  },
+  nuageToxique: {
+    name: 'Nuage toxique', weapons: ['vomi', 'weizen'], pitch: 'Le nuage de Weizen empoisonne et se cumule', color: '#9ab83a',
+    details: 'Dans un nuage de Weizen, chaque battement fait plus mal que le précédent (poison cumulable).',
+  },
+  troisVingt: {
+    name: 'Ricochets', weapons: ['flechettes', 'triple'], pitch: 'Les fléchettes rebondissent', color: '#e2203a',
+    details: "Chaque fléchette rebondit sur deux autres zombies après l'impact.",
+  },
+  carreauFut: {
+    name: 'Carreau sur le fût', weapons: ['petanque', 'fut'], pitch: 'Les boules ricochent plus et cognent plus fort', color: '#b8bcc4',
+    details: 'Les boules de pétanque rebondissent deux fois de plus et font plus de dégâts.',
+  },
+  rotDeCorne: {
+    name: 'Rot de corne', weapons: ['corne', 'rot'], pitch: 'Le rot sort par la corne : un cône très long', color: '#b8f070',
+    details: 'Le rot part en cône devant toi, bien plus loin, avec ses dégâts de rot.',
+  },
+  haleineFeu: {
+    name: 'Haleine de feu', weapons: ['odeur', 'ipa'], pitch: "L'alcool est inflammable : l'aura brûle", color: '#ff7a2a',
+    details: "L'aura de l'Odeur d'alcool fait deux fois plus de dégâts.",
+  },
+  palettePinball: {
+    name: 'Flipper', weapons: ['bac', 'triple'], pitch: 'Les bouteilles du bac rebondissent', color: '#ffc060',
+    details: "Les bouteilles qui s'échappent du bac rebondissent sur deux zombies.",
+  },
+} as const satisfies Record<string, SynergyDef>;
+
+/**
+ * Une synergie : ses armes (toutes équipées = active), son nom et sa présentation. Black and Tan a en plus une marque
+ * (`marker` sonne le zombie `duration` s) et une arme qui en profite (`boosted` fait `mult` fois ses dégâts) ; les autres
+ * sont lues par leurs armes (ctx.synergy).
+ */
+export type SynergyDef = {
+  name: string; weapons: readonly WeaponId[]; pitch: string; color: string; details: string;
+  marker?: WeaponId; boosted?: WeaponId; duration?: number; mult?: number;
+};
 
 /** Signe au-dessus d'un zombie sonné (Black and Tan) : bulles de mousse qui tournent autour de la tête. */
 export const DAZED_LOOK = {

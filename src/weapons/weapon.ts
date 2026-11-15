@@ -2,6 +2,7 @@ import type * as THREE from 'three';
 import type { Zombie } from '../enemies/zombie';
 import type { PlayerStats, StatLine } from '../game/playerStats';
 import type { UpgradeDef } from '../config/upgrades';
+import type { SynergyId } from '../game/synergies';
 
 /** Identifiant d'arme (une entrée de src/weapons/registry.ts). */
 export type WeaponId = 'canette' | 'stout' | 'fut' | 'gueuze' | 'tabouret' | 'biereNoel' | 'decapsuleur' | 'flaqueBiere' | 'kriek' | 'triple' | 'ipa' | 'sousBock' | 'flechettes' | 'bouchons' | 'petanque' | 'bac' | 'vomi' | 'weizen' | 'tireuse' | 'corne' | 'rot' | 'odeur' | 'plateau' | 'des421';
@@ -32,6 +33,12 @@ export interface WeaponContext {
   playerFacing(): THREE.Vector3;
   /** XP ramassée depuis le début de la run (le Rot sonique se charge avec). */
   xpGathered(): number;
+  /** La synergie `id` est-elle active (toutes ses armes équipées) ? */
+  synergy(id: SynergyId): boolean;
+  /** Zones au sol d'une autre arme équipée (flaques : la synergie Glissade du Fût les lit). */
+  zonesOf(id: WeaponId): readonly Zone[];
+  /** Déclenche une autre arme équipée tout de suite (synergie Service musclé : le tabouret tourne). */
+  trigger(id: WeaponId): void;
   stats: PlayerStats;
   rig: ThrowRig;
   /** Rayon du sol sous un point. */
@@ -89,6 +96,8 @@ export interface Weapon {
   updateProjectiles(dt: number): void;
   /** Un coup arrive sur le joueur (de `from`, ou null) : vrai si l'arme le bloque (Plateau de serveur). */
   absorbHit?(from: Zombie | null): boolean;
+  /** Attaque tout de suite, hors de son rythme (déclenchée par une synergie). */
+  trigger?(): void;
   /** Revient à l'état de départ (nouvelle run). */
   reset(): void;
   /** Stats effectives pour l'écran de pause. */

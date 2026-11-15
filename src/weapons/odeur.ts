@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { ODEUR as O, ODEUR_UPGRADES } from '../config/arsenal';
+import { SYNERGY_FX, ODEUR as O, ODEUR_UPGRADES } from '../config/arsenal';
 import { WEAPON_INFO } from '../config/weapons';
 import type { Zombie } from '../enemies/zombie';
 import type { StatLine } from '../game/playerStats';
@@ -37,7 +37,8 @@ export function createOdeur(ctx: WeaponContext): Weapon {
       for (const z of ctx.zombiesNear(aura.pos, aura.radius, around)) {
         if (!z.targetable || z.pos.distanceTo(aura.pos) > aura.radius) continue;
         z.confused = Math.max(z.confused, O.confuse * mods.confuse * ctx.stats.duration);
-        ctx.hitZombie(weapon, z, O.damage * mods.damage, false, z.pos, still, 0);
+        // Haleine de feu (avec l'IPA) : l'aura brûle
+        ctx.hitZombie(weapon, z, O.damage * mods.damage * (ctx.synergy('haleineFeu') ? SYNERGY_FX.haleine.damage : 1), false, z.pos, still, 0);
       }
     },
     reset() {
