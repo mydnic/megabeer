@@ -11,6 +11,10 @@ import { createTriple } from './triple';
 import { createIpa } from './ipa';
 import { createSousBock } from './sousBock';
 import { createFlechettes } from './flechettes';
+import { createBouchons } from './bouchons';
+import { createPetanque } from './petanque';
+import { createBac } from './bac';
+import { createVomi } from './vomi';
 import type { Weapon, WeaponContext, WeaponId } from './weapon';
 
 /** Toutes les armes du jeu : ajouter une arme = ajouter son créateur ici. */
@@ -28,4 +32,8 @@ export const WEAPON_FACTORIES: Record<WeaponId, (ctx: WeaponContext) => Weapon> 
   ipa: createIpa,
   sousBock: createSousBock,
   flechettes: createFlechettes,
+  bouchons: createBouchons,
+  petanque: createPetanque,
+  bac: createBac,
+  vomi: createVomi,
 };

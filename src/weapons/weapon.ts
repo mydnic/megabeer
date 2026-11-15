@@ -4,7 +4,7 @@ import type { PlayerStats, StatLine } from '../game/playerStats';
 import type { UpgradeDef } from '../config/upgrades';
 
 /** Identifiant d'arme (une entrée de src/weapons/registry.ts). */
-export type WeaponId = 'canette' | 'stout' | 'fut' | 'gueuze' | 'tabouret' | 'biereNoel' | 'decapsuleur' | 'flaqueBiere' | 'kriek' | 'triple' | 'ipa' | 'sousBock' | 'flechettes';
+export type WeaponId = 'canette' | 'stout' | 'fut' | 'gueuze' | 'tabouret' | 'biereNoel' | 'decapsuleur' | 'flaqueBiere' | 'kriek' | 'triple' | 'ipa' | 'sousBock' | 'flechettes' | 'bouchons' | 'petanque' | 'bac' | 'vomi';
 
 /** Améliorations d'une arme gagnées en run : un champ par id de carte, plus son niveau. */
 export type WeaponMods = { level: number } & Record<string, number>;
@@ -59,6 +59,8 @@ export type Projectile = {
   /** Échelle (stat Taille). */
   size: number;
   active: boolean;
+  /** Pas dessiné (éclats d'un bac de bière : seule leur traînée se voit). */
+  hidden?: boolean;
 };
 
 /** Une zone posée au sol par une arme (flaque...) : centre, rayon (m), âge et durée de vie (s). */

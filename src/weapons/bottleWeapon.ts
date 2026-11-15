@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { TARGETING, WEAPONS, type BottleWeaponId } from '../config/weapons';
-import type { WeaponId } from './weapon';
+import type { WeaponId, Zone } from './weapon';
 import { anyInRange, pickTarget } from './targeting';
 import type { UpgradeDef } from '../config/upgrades';
 import type { Zombie } from '../enemies/zombie';
@@ -11,7 +11,7 @@ import type { Projectile, Weapon, WeaponContext, WeaponMods } from './weapon';
  * Une bouteille en vol : zombies qu'elle peut encore traverser, ceux déjà touchés (pas deux fois le
  * même), sa cible et les dégâts qu'elle lui réserve (comptés dans `incoming` jusqu'à sa fin).
  */
-type Bottle = Projectile & { pierce: number; hits: Zombie[]; target: Zombie | null; expected: number; bounces: number };
+type Bottle = Projectile & { pierce: number; hits: Zombie[]; target: Zombie | null; expected: number; bounces: number; ground: number; child: boolean };
 
 /** Réglages d'une arme à bouteilles : ceux de la Canette (config/weapons.ts), plus les briques facultatives. */
 export type BottleConfig = { [K in keyof typeof WEAPONS.canette]: number } & {
@@ -23,12 +23,20 @@ export type BottleConfig = { [K in keyof typeof WEAPONS.canette]: number } & {
   burn?: number; burnTime?: number;
   /** Rotation en vol : par-dessus (bouteille, par défaut), à plat autour de la verticale, ou pointe en avant. */
   spin?: 'over' | 'flat' | 'forward';
+  /** Éventail (Bouchons) : toute la volée part d'un coup vers la même cible, écartée de `fan` rad ; `count` projectiles de base. */
+  fan?: number; count?: number;
+  /** Rebonds au sol (Pétanque) : nombre, et part de la vitesse verticale gardée. */
+  groundBounces?: number; restitution?: number;
+  /** Fragmentation (Bac de bière) : bouteilles qui partent dans toutes les directions à la fin, part des dégâts, vitesse (m/s). */
+  fragments?: number; fragmentDamage?: number; fragmentSpeed?: number;
+  /** Flaque de poison à l'impact (Vomi) : rayon (m), durée (s), dégâts par seconde (part des dégâts) par cumul, cumul maxi. */
+  pool?: { radius: number; life: number; dps: number; maxStacks: number };
   /** Visée : 'near' (les plus proches, par défaut) ou 'strong' (le plus de PV à portée : Fléchettes). */
-  aim?: 'near' | 'strong';
+  aim?: 'near' | 'strong' | 'crowd';
 };
 
 /** Bouteille en attente de lâcher (volée en cours). */
-type Pending = { t: number; index: number };
+type Pending = { t: number; index: number; of: number };
 
 /**
  * Brique « bouteille lancée » (Canette, Stout...) : bouteilles (ou canettes) lancées en cloche vers les zombies les
@@ -45,12 +53,18 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
   /** Zombies qui brûlent (IPA) : dégâts par seconde et temps restant. */
   const burning = new Map<Zombie, { dps: number; left: number }>();
   let burnTick = 0;
+  /** Flaques de poison (Vomi) et cumul de poison de chaque zombie dedans. */
+  const zones: Zone[] = [];
+  const poison = new Map<Zombie, number>();
+  let poisonTick = 0;
+  /** Cible commune de la volée en éventail (Bouchons). */
+  let fanTarget: Zombie | null = null;
   let timer = 0.3;
   /**
    * Améliorations (cartes de level-up), propres à l'arme : multiplicateurs (dégâts, cadence,
    * vitesse, portée, taille, recul) et ajouts (projectiles, perçage, chance et multiplicateur critiques).
    */
-  const MODS0: WeaponMods = { level: 1, damage: 1, rate: 1, projectiles: 0, speed: 1, range: 1, critChance: 0, critMult: 0, size: 1, knock: 1, pierce: 0, bounces: 0, burn: 1 };
+  const MODS0: WeaponMods = { level: 1, damage: 1, rate: 1, projectiles: 0, speed: 1, range: 1, critChance: 0, critMult: 0, size: 1, knock: 1, pierce: 0, bounces: 0, burn: 1, fragments: 0, duration: 1 };
   const mods: WeaponMods = { ...MODS0 };
   const pending: Pending[] = [];
   const projectiles: Bottle[] = [];
@@ -85,10 +99,10 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
   }
 
   /** Lance une bouteille (réutilise un emplacement libre). */
-  function launch(pos: THREE.Vector3, v: THREE.Vector3, target: Zombie) {
+  function launch(pos: THREE.Vector3, v: THREE.Vector3, target: Zombie | null, child = false) {
     let b = projectiles.find((x) => !x.active);
     if (!b) {
-      b = { pos: new THREE.Vector3(), vel: new THREE.Vector3(), up0: new THREE.Vector3(), spinAxis: new THREE.Vector3(), spinRate: 0, gravity: 0, age: 0, size: 1, active: false, pierce: 0, hits: [], target: null, expected: 0, bounces: 0 };
+      b = { pos: new THREE.Vector3(), vel: new THREE.Vector3(), up0: new THREE.Vector3(), spinAxis: new THREE.Vector3(), spinRate: 0, gravity: 0, age: 0, size: 1, active: false, pierce: 0, hits: [], target: null, expected: 0, bounces: 0, ground: 0, child: false };
       projectiles.push(b);
     }
     b.pos.copy(pos);
@@ -100,11 +114,14 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
     b.active = true;
     b.pierce = W.pierce + mods.pierce;
     b.bounces = (W.bounces ?? 0) + (mods.bounces ?? 0);
+    b.ground = W.groundBounces ?? 0;
+    b.child = child;
+    b.hidden = child;
     b.hits.length = 0;
     // Réserve ses dégâts sur sa cible : les tirs suivants visent ailleurs si elle est condamnée
     b.target = target;
-    b.expected = W.damage * mods.damage;
-    target.incoming += b.expected;
+    b.expected = W.damage * mods.damage * (child ? W.fragmentDamage ?? 0.5 : 1);
+    if (target) target.incoming += b.expected;
     // Tourne « par-dessus » : axe horizontal perpendiculaire à la trajectoire
     b.up0.copy(pos).normalize();
     b.spinAxis.crossVectors(v, b.up0).normalize();
@@ -112,13 +129,23 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
     // À plat (sous-bock) : face vers le ciel, il tourne autour de la verticale ; pointe en avant (fléchette)
     if (W.spin === 'flat') b.spinAxis.copy(b.up0);
     else if (W.spin === 'forward') { b.up0.copy(v).normalize(); b.spinAxis.copy(b.up0); }
+    return b;
   }
 
   /** Lâche une bouteille de la main vers une cible de la volée (voir targeting.ts). */
-  function release() {
+  function release(k = 0, n = 1) {
     ctx.rig.handPos(hand);
     const range = W.range * mods.range;
-    let z = W.aim === 'strong' ? strongest(hand, range, volley) : pickTarget(ctx.zombies(), hand, range, TARGETING.spread, volley);
+    // Éventail : toute la volée vers la même cible, chaque projectile écarté de son angle
+    if (W.fan) {
+      if (k === 0 || !fanTarget || !fanTarget.targetable) fanTarget = pickTarget(ctx.zombies(), hand, range, TARGETING.spread);
+      if (!fanTarget) return;
+      solve(hand, fanTarget, vel);
+      vel.applyAxisAngle(tmp.copy(hand).normalize(), (k - (n - 1) / 2) * W.fan);
+      launch(hand, vel, k === Math.floor(n / 2) ? fanTarget : null);
+      return;
+    }
+    let z = W.aim === 'strong' ? strongest(hand, range, volley) : W.aim === 'crowd' ? crowd(hand, range) : pickTarget(ctx.zombies(), hand, range, TARGETING.spread, volley);
     // Plus de bouteilles que de zombies : les suivantes repartent sur les cibles déjà prises, un peu écartées
     const again = !z;
     z ??= pickTarget(ctx.zombies(), hand, range, TARGETING.spread);
@@ -127,6 +154,46 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
     solve(hand, z, vel);
     if (again) vel.applyAxisAngle(tmp.copy(hand).normalize(), (Math.random() - 0.5) * 0.25);
     launch(hand, vel, z);
+  }
+
+  /** Le zombie au cœur du plus gros groupe à portée (Vomi) : celui qui a le plus de voisins proches. */
+  function crowd(from: THREE.Vector3, range: number) {
+    let best: Zombie | null = null, most = -1, seen = 0;
+    for (const z of ctx.zombies()) {
+      if (!z.targetable || z.pos.distanceTo(from) > range) continue;
+      if (++seen > 48) break; // assez pour trouver un groupe, sans parcourir toute la horde
+      let n = 0;
+      for (const o of ctx.zombiesNear(z.pos, 2.5, side)) if (o.targetable && o.pos.distanceTo(z.pos) < 2.5) n++;
+      if (n > most) { most = n; best = z; }
+    }
+    return best;
+  }
+
+  /** Flaque de poison posée au sol (Vomi). */
+  function puddle(at: THREE.Vector3) {
+    const P = W.pool;
+    if (!P) return;
+    let z = zones.find((x) => !x.active);
+    if (!z) { z = { pos: new THREE.Vector3(), radius: 1, age: 0, life: 1, active: false }; zones.push(z); }
+    z.pos.copy(at);
+    z.radius = P.radius * mods.size;
+    z.life = P.life * mods.duration * ctx.stats.duration;
+    z.age = 0;
+    z.active = true;
+  }
+
+  /** Fin d'un projectile qui se fragmente (Bac de bière) : des bouteilles partent dans toutes les directions. */
+  function shatter(b: Bottle) {
+    const n = (W.fragments ?? 0) + (W.fragments ? mods.fragments : 0);
+    if (!n || b.child) return;
+    const up = b.pos.clone().normalize();
+    const e1 = new THREE.Vector3().crossVectors(up, Math.abs(up.y) < 0.9 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0)).normalize();
+    const start = b.pos.clone().addScaledVector(up, 0.4);
+    for (let i = 0; i < n; i++) {
+      const v = e1.clone().applyAxisAngle(up, (i / n) * Math.PI * 2 + Math.random() * 0.3).multiplyScalar(W.fragmentSpeed ?? 9).addScaledVector(up, 4);
+      launch(start, v, null, true).hits.push(...b.hits); // pas sur le zombie que le bac vient de toucher
+    }
+    ctx.explode(weapon, b.pos, 1.5);
   }
 
   /** Le zombie le plus solide à portée (Fléchettes) : le plus de PV, sans ceux déjà condamnés par les tirs en vol. */
@@ -193,15 +260,31 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
         const crit = Math.random() < W.critChance + mods.critChance + ctx.stats.critChance;
         const gain = (W.bounceGain ?? 1) ** Math.max(0, b.hits.length);
         const dmg = W.damage * mods.damage * gain * (crit ? W.critMult + mods.critMult : 1);
-        ctx.hitZombie(weapon, z, dmg, crit, b.pos, b.vel, W.knock * mods.knock);
+        ctx.hitZombie(weapon, z, b.child ? dmg * (W.fragmentDamage ?? 0.5) : dmg, crit, b.pos, b.vel, W.knock * mods.knock);
         b.hits.push(z);
         splash(b.pos, dmg, z);
         if (W.burn) burning.set(z, { dps: W.damage * mods.damage * W.burn * (mods.burn ?? 1), left: (W.burnTime ?? 3) * ctx.stats.duration });
         if (bounce(b, z)) return true;
-        if (b.pierce-- <= 0) return false;
+        if (b.pierce-- <= 0) { puddle(z.pos); shatter(b); return false; }
       }
     }
-    if (b.pos.length() <= ctx.groundAt(b.pos)) { splash(b.pos, W.damage * mods.damage, null); ctx.hitGround(weapon, b.pos, b.vel); return false; }
+    const g = ctx.groundAt(b.pos);
+    if (b.pos.length() <= g) {
+      // Rebond au sol (Pétanque) : la boule repart, plus bas, et continue de rouler
+      if (b.ground > 0) {
+        b.ground--;
+        const up = tmp.copy(b.pos).normalize();
+        const vn = b.vel.dot(up);
+        if (vn < 0) b.vel.addScaledVector(up, -(1 + (W.restitution ?? 0.5)) * vn);
+        b.pos.setLength(g + 0.01);
+        return true;
+      }
+      splash(b.pos, W.damage * mods.damage, null);
+      puddle(b.pos);
+      shatter(b);
+      ctx.hitGround(weapon, b.pos, b.vel);
+      return false;
+    }
     return true;
   }
 
@@ -211,13 +294,14 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
     upgrades,
     mods,
     projectiles,
+    zones,
     update(dt: number) {
       const s = ctx.stats;
       const interval = W.cooldown / (s.fireRate * mods.rate);
       // Lâchers en attente (volée en cours)
       for (let i = pending.length - 1; i >= 0; i--) {
         pending[i].t -= dt;
-        if (pending[i].t <= 0) { release(); pending.splice(i, 1); }
+        if (pending[i].t <= 0) { release(pending[i].index, pending[i].of); pending.splice(i, 1); }
       }
       timer -= dt;
       if (timer > 0) return;
@@ -228,11 +312,11 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
       // Geste accéléré quand la cadence monte (un geste complet tient dans l'intervalle)
       const rate = Math.min(W.maxGestureRate, Math.max(1, W.gestureDuration / interval));
       ctx.rig.gesture(rate);
-      const n = 1 + s.volleyBonus() + mods.projectiles;
+      const n = (W.count ?? 1) + s.volleyBonus() + mods.projectiles;
       const first = W.releaseDelay / rate;
       // Rafale : les bouteilles d'une volée partent à la suite, l'écart se resserre avec la cadence
-      const gap = Math.min(W.volleyGap, interval / (n + 1));
-      for (let k = 0; k < n; k++) pending.push({ t: first + k * gap, index: k });
+      const gap = W.fan ? 0 : Math.min(W.volleyGap, interval / (n + 1));
+      for (let k = 0; k < n; k++) pending.push({ t: first + k * gap, index: k, of: n });
     },
     updateProjectiles(dt: number) {
       // Brûlure : un coup toutes les demi-secondes tant qu'elle dure
@@ -247,6 +331,27 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
           burnTick = 0;
         }
       }
+      // Flaques de poison : chaque demi-seconde, un zombie dedans gagne un cumul et prend des dégâts selon son cumul
+      if (W.pool) {
+        poisonTick += dt;
+        const tick = poisonTick >= 0.5;
+        for (const zone of zones) {
+          if (!zone.active) continue;
+          zone.age += dt;
+          if (zone.age >= zone.life) { zone.active = false; continue; }
+          if (!tick) continue;
+          for (const z of ctx.zombiesNear(zone.pos, zone.radius, side)) {
+            if (!z.targetable || z.pos.distanceTo(zone.pos) > zone.radius) continue;
+            const stacks = Math.min(W.pool.maxStacks, (poison.get(z) ?? 0) + 1);
+            poison.set(z, stacks);
+            ctx.hitZombie(weapon, z, W.damage * mods.damage * W.pool.dps * stacks * poisonTick, false, z.pos, tmp.set(0, 0, 0), 0);
+          }
+        }
+        if (tick) {
+          poisonTick = 0;
+          if (poison.size > 256) for (const z of poison.keys()) if (z.dead) poison.delete(z);
+        }
+      }
       for (const b of projectiles) {
         if (!b.active) continue;
         prev.copy(b.pos);
@@ -259,6 +364,8 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
     },
     reset() {
       burning.clear();
+      poison.clear();
+      for (const z of zones) z.active = false;
       timer = 0.3;
       pending.length = 0;
       for (const b of projectiles) { b.active = false; settle(b); }

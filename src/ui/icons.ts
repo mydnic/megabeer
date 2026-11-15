@@ -195,6 +195,36 @@ const flechettesIcon = (cls: string) => tall(cls, `
 <path d="M28 62L32 76" stroke="${K}" stroke-width="3.600" stroke-linecap="round"/>
 <path d="M28 62L32 76" stroke="#d8dce2" stroke-width="1.800" stroke-linecap="round"/>`);
 
+/** Bouchons de champagne : un bouchon de liège en champignon sous sa capsule dorée, trois traits de vitesse. */
+const bouchonsIcon = (cls: string) => tall(cls, `
+<path d="M8 70l-4 4M14 74l-3 6M26 74l3 6M32 70l4 4" stroke="${K}" stroke-width="2" stroke-linecap="round" opacity=".55"/>
+${P('M13 44h14v20c0 2.200-1.800 4-4 4h-6c-2.200 0-4-1.800-4-4z', '#c89a5a', 'vol', 3)}
+<path d="M14.500 52h11M14.500 58h11" stroke="#9a7038" stroke-width="1.200"/>
+${P('M8 44c0-9 5-15 12-15s12 6 12 15z', '#d8aa68', 'vol', 3)}
+${E(20, 29.500, 9, 3, G.gold, 'vol', 2.400)}
+<path d="M12 36c2-3 5-4 8-4" stroke="#fff" stroke-opacity=".5" stroke-width="1.600" fill="none" stroke-linecap="round"/>`);
+
+/** Boules de pétanque : une boule d'acier striée, et le cochonnet rouge à côté. */
+const petanqueIcon = (cls: string) => tall(cls, `
+${P('M20 32a14 14 0 1 1 0 28a14 14 0 1 1 0-28z', G.steel, 'vol', 3)}
+<path d="M7 44c4 3 9 4 13 4s9-1 13-4M10 36c3 6 6 14 6 23M30 36c-3 6-6 14-6 23" stroke="#4a4e56" stroke-width="1.500" fill="none"/>
+<path d="M12 39c2-3 5-4 8-4" stroke="#fff" stroke-opacity=".6" stroke-width="2" fill="none" stroke-linecap="round"/>
+${P('M30 66a5 5 0 1 1 0 10a5 5 0 1 1 0-10z', '#e2203a', 'vol', 2.400)}`);
+
+/** Bac de bière : un casier jaune ajouré, six goulots bruns capsulés qui dépassent. */
+const bacIcon = (cls: string) => tall(cls, `
+<path d="M9 36v-10h5v10M17.500 36v-12h5v12M26 36v-10h5v10" fill="#5a3416" stroke="${K}" stroke-width="2"/>
+${R(8.500, 22.500, 6, 3, 1, G.gold, '', 1.400)}${R(17, 20.500, 6, 3, 1, G.gold, '', 1.400)}${R(25.500, 22.500, 6, 3, 1, G.gold, '', 1.400)}
+${P('M3 36h34v32c0 2.200-1.800 4-4 4H7c-2.200 0-4-1.800-4-4z', '#e8a018', 'vol', 3)}
+<path d="M9 44h22M9 52h22M9 60h22" stroke="#a86a08" stroke-width="1.600"/>
+<path d="M12 40v26M20 40v26M28 40v26" stroke="#a86a08" stroke-width="1.600"/>`);
+
+/** Flaque de vomi : une flaque verdâtre avec des morceaux, et des bulles toxiques qui s'en échappent. */
+const vomiIcon = (cls: string) => tall(cls, `
+${P('M3 64c0-6 6-9 12-8c3-4 9-5 13-1c5-1 9 2 9 6c0 5-6 9-17 9S3 69 3 64z', '#9ab83a', 'vol', 3)}
+<circle cx="13" cy="62" r="1.800" fill="#e8d06a"/><circle cx="24" cy="60" r="1.500" fill="#e8a03a"/><circle cx="28" cy="65" r="1.300" fill="#e8d06a"/>
+<circle cx="15" cy="46" r="3.200" fill="#b8d84a" stroke="${K}" stroke-width="1.400"/><circle cx="24" cy="38" r="2.500" fill="#b8d84a" stroke="${K}" stroke-width="1.300"/><circle cx="19" cy="29" r="1.800" fill="#b8d84a" stroke="${K}" stroke-width="1.200"/>`);
+
 /** Icône de chaque arme (ajouter une arme = ajouter son icône ici). */
 const WEAPON_ICONS: Record<WeaponId, (cls: string) => string> = {
   canette: canetteIcon,
@@ -210,6 +240,10 @@ const WEAPON_ICONS: Record<WeaponId, (cls: string) => string> = {
   ipa: ipaIcon,
   sousBock: sousBockIcon,
   flechettes: flechettesIcon,
+  bouchons: bouchonsIcon,
+  petanque: petanqueIcon,
+  bac: bacIcon,
+  vomi: vomiIcon,
 };
 
 export const weaponIcon = (id: WeaponId, cls: string) => WEAPON_ICONS[id](cls);

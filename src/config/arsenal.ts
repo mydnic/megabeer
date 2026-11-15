@@ -169,3 +169,31 @@ export const BOTTLE_SOUNDS = {
   sousBock: { sample: 'impactPlank_medium', volume: 0.35, pitch: 1.4, gap: 0.04 },
   flechettes: { sample: 'impactMetal_light', volume: 0.4, pitch: 1.5, gap: 0.03 },
 } as const;
+
+/** Bouchons de champagne (n° 17) : une rafale de bouchons part d'un coup en éventail vers un zombie. */
+export const BOUCHONS: BottleConfig = { ...THROWN, cooldown: 1.9, damage: 7, count: 5, fan: 0.17, speed: 25, gravity: 6, life: 1.2, radius: 0.13, spin: 'forward', spinRate: 4 };
+export const BOUCHONS_LOOK = { file: 'bouchon.glb', length: 0.2, colors: { Liege: 0xc89a5a, Capsule: 0xe8c040 } as Record<string, number> } as const;
+export const BOUCHONS_UPGRADES: readonly UpgradeDef[] = [DMG, RATEU, { id: 'projectiles', label: 'bouchon en plus', value: 1, kind: 'flat', whole: true }, { id: 'speed', label: 'vitesse des bouchons', value: 0.10, kind: 'percent' }, CRIT, CRITM];
+
+/** Boules de pétanque (n° 21) : lancées en cloche, elles rebondissent au sol et roulent dans la horde. */
+export const PETANQUE: BottleConfig = { ...THROWN, cooldown: 1.9, damage: 14, speed: 13, gravity: 16, groundBounces: 3, restitution: 0.45, pierce: 6, knock: 2, life: 3.5, radius: 0.18 };
+export const PETANQUE_LOOK = { file: 'boule.glb', length: 0.32, fit: 'max', colors: { Metal: 0xb8bcc4, Stries: 0x4a4e56 } as Record<string, number> } as const;
+export const PETANQUE_UPGRADES: readonly UpgradeDef[] = [DMG, RATEU, { id: 'projectiles', label: 'boule en plus', value: 1, kind: 'flat', whole: true }, { id: 'pierce', label: 'zombie renversé en plus', value: 2, kind: 'flat', whole: true }, { id: 'knock', label: 'recul', value: 0.15, kind: 'percent' }, CRIT, CRITM];
+
+/** Bac de bière (n° 23) : le bac éclate à l'impact en bouteilles qui partent dans toutes les directions. */
+export const BAC: BottleConfig = { ...THROWN, cooldown: 2.6, damage: 20, speed: 12, gravity: 14, radius: 0.25, fragments: 8, fragmentDamage: 0.5, fragmentSpeed: 9 };
+export const BAC_LOOK = { file: 'bac.glb', length: 0.6, fit: 'max', colors: { Bac: 0xe8a018, Verre: 0x4a2a10, Capsule: 0xe8c040 } as Record<string, number> } as const;
+export const BAC_UPGRADES: readonly UpgradeDef[] = [DMG, RATEU, { id: 'projectiles', label: 'bac en plus', value: 1, kind: 'flat', whole: true }, { id: 'fragments', label: 'bouteilles en plus dans le bac', value: 2, kind: 'flat', whole: true }, RANGE, CRIT, CRITM];
+
+/** Flaque de vomi (n° 3) : lancée en cloche sur le plus gros groupe, elle laisse une flaque de poison qui se cumule. */
+export const VOMI: BottleConfig = { ...THROWN, cooldown: 2.8, damage: 6, speed: 12, gravity: 14, aim: 'crowd', radius: 0.2, pool: { radius: 2.2, life: 4, dps: 0.6, maxStacks: 6 } };
+export const VOMI_LOOK = { file: 'boule.glb', length: 0.34, fit: 'max', colors: { Metal: 0x9ab83a, Stries: 0x6a8a1a } as Record<string, number> } as const;
+export const VOMI_ZONE = { color: 0x9ab83a, rim: 0x5e7a1e, opacity: 0.78, lift: 0.07, fadeIn: 0.2, fadeOut: 0.8 } as const;
+export const VOMI_UPGRADES: readonly UpgradeDef[] = [DMG, RATEU, { id: 'projectiles', label: 'flaque en plus', value: 1, kind: 'flat', whole: true }, { id: 'size', label: 'taille des flaques', value: 0.12, kind: 'percent' }, { id: 'duration', label: 'durée des flaques', value: 0.15, kind: 'percent' }];
+
+export const MORE_SOUNDS = {
+  bouchons: { sample: 'impactPlank_medium', volume: 0.3, pitch: 1.8, gap: 0.03 },
+  petanque: { sample: 'impactMetal_heavy', volume: 0.4, pitch: 1.2, gap: 0.05 },
+  bac: { sample: 'impactGlass_heavy', volume: 0.45, pitch: 1.0, gap: 0.04 },
+  vomi: { sample: 'impactSoft_heavy', volume: 0.35, pitch: 1.3, gap: 0.08 },
+} as const;

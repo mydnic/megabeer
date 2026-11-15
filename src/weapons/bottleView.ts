@@ -76,11 +76,11 @@ export async function createBottleView(scene: THREE.Scene, L: BottleLook = CANET
     /** Recopie la position et l'orientation de chaque projectile actif. */
     sync(projectiles: readonly Projectile[]) {
       let n = 0;
-      for (const b of projectiles) if (b.active) n++;
+      for (const b of projectiles) if (b.active && !b.hidden) n++;
       if (n > capacity) { while (capacity < n) capacity *= 2; build(); }
       let i = 0;
       for (const b of projectiles) {
-        if (!b.active) continue;
+        if (!b.active || b.hidden) continue;
         q.setFromUnitVectors(Y, b.up0).premultiply(spin.setFromAxisAngle(b.spinAxis, b.spinRate * Math.PI * 2 * b.age));
         mat4.compose(b.pos, q, s.setScalar(baseScale * b.size));
         for (const m of meshes) m.setMatrixAt(i, mat4);

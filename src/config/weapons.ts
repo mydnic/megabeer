@@ -267,6 +267,10 @@ export const WEAPON_INFO = {
   ipa: { name: "IPA", pitch: "Amère et brûlante : le zombie touché prend feu quelques secondes" },
   sousBock: { name: "Dessous de verre", pitch: "Lancé à plat comme un frisbee : il file droit et traverse plusieurs zombies" },
   flechettes: { name: "Fléchettes", pitch: "Tir tendu et précis sur le zombie le plus solide, souvent critique" },
+  bouchons: { name: "Bouchons de champagne", pitch: "Une rafale de bouchons part en éventail : large, rapide, festif" },
+  petanque: { name: "Boules de pétanque", pitch: "Lancées en cloche, elles rebondissent et roulent dans la horde" },
+  bac: { name: "Bac de bière", pitch: "Le bac éclate à l'impact : ses bouteilles partent dans toutes les directions" },
+  vomi: { name: "Flaque de vomi", pitch: "Lancée sur le plus gros groupe : une flaque de poison qui fait de plus en plus mal" },
 } as const satisfies Record<string, { name: string; pitch: string }>;
 
 /** Apparence de la Canette (canette de soda Kenney, découpée par tools/blender/props.py). */

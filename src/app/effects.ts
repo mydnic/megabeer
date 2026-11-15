@@ -90,9 +90,11 @@ export function wireEffects(game: Game, d: Deps) {
   game.events.on('projectileHitGround', ({ weapon, pos, vel }) => {
     // Le fût qui éclate : éclats de bois et une grosse giclée de bière
     if (weapon.id === 'fut') { wood.burst(pos, soft.copy(vel).normalize().multiplyScalar(0.3)); buveur.splashAt(pos, 30); vfx.dust(pos, 9, 0.8, 5); vfx.pop(pos, VFX.hit.color, 1.6); return; }
-    buveur.splashAt(pos, 10);
+    // Selon l'arme (config/weaponFx.ts) : giclée de bière et éclats de verre, ou juste la poussière
+    const G = WEAPON_FX[weapon.id].ground ?? { splash: 10, glass: true };
+    if (G.splash) buveur.splashAt(pos, G.splash);
     vfx.dust(pos, 3, 0.35, 2);
-    if (weapon.id !== 'canette') shards.burst(pos, soft.copy(vel).normalize().multiplyScalar(0.3));
+    if (G.glass) shards.burst(pos, soft.copy(vel).normalize().multiplyScalar(0.3));
   });
   // Bouteille d'un moine qui éclate au sol
   game.events.on('enemyShotLanded', ({ shot }) => {
