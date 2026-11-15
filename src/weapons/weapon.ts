@@ -4,7 +4,7 @@ import type { PlayerStats, StatLine } from '../game/playerStats';
 import type { UpgradeDef } from '../config/upgrades';
 
 /** Identifiant d'arme (une entrée de src/weapons/registry.ts). */
-export type WeaponId = 'canette' | 'stout' | 'fut' | 'gueuze' | 'tabouret' | 'biereNoel' | 'decapsuleur' | 'flaqueBiere' | 'kriek' | 'triple' | 'ipa' | 'sousBock' | 'flechettes' | 'bouchons' | 'petanque' | 'bac' | 'vomi';
+export type WeaponId = 'canette' | 'stout' | 'fut' | 'gueuze' | 'tabouret' | 'biereNoel' | 'decapsuleur' | 'flaqueBiere' | 'kriek' | 'triple' | 'ipa' | 'sousBock' | 'flechettes' | 'bouchons' | 'petanque' | 'bac' | 'vomi' | 'weizen' | 'tireuse' | 'corne' | 'rot' | 'odeur' | 'plateau';
 
 /** Améliorations d'une arme gagnées en run : un champ par id de carte, plus son niveau. */
 export type WeaponMods = { level: number } & Record<string, number>;
@@ -28,6 +28,10 @@ export interface WeaponContext {
    */
   zombiesNear(p: THREE.Vector3, r: number, out: Zombie[]): Zombie[];
   playerPos(): THREE.Vector3;
+  /** Où regarde le joueur (direction de sa course), dans le plan du sol. */
+  playerFacing(): THREE.Vector3;
+  /** XP ramassée depuis le début de la run (le Rot sonique se charge avec). */
+  xpGathered(): number;
   stats: PlayerStats;
   rig: ThrowRig;
   /** Rayon du sol sous un point. */
@@ -83,6 +87,8 @@ export interface Weapon {
   update(dt: number): void;
   /** Fait voler les projectiles (même après la mort du joueur). */
   updateProjectiles(dt: number): void;
+  /** Un coup arrive sur le joueur (de `from`, ou null) : vrai si l'arme le bloque (Plateau de serveur). */
+  absorbHit?(from: Zombie | null): boolean;
   /** Revient à l'état de départ (nouvelle run). */
   reset(): void;
   /** Stats effectives pour l'écran de pause. */

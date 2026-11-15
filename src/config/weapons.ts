@@ -271,6 +271,12 @@ export const WEAPON_INFO = {
   petanque: { name: "Boules de pétanque", pitch: "Lancées en cloche, elles rebondissent et roulent dans la horde" },
   bac: { name: "Bac de bière", pitch: "Le bac éclate à l'impact : ses bouteilles partent dans toutes les directions" },
   vomi: { name: "Flaque de vomi", pitch: "Lancée sur le plus gros groupe : une flaque de poison qui fait de plus en plus mal" },
+  weizen: { name: "Weizen", pitch: "Un nuage de mousse se pose sur un groupe et y reste : tout ce qui est dedans trinque" },
+  tireuse: { name: "Tireuse", pitch: "Un jet de bière continu en cône sur le zombie le plus proche" },
+  corne: { name: "Corne de brume", pitch: "Un coup de corne devant toi : peu de dégâts, mais la horde vole et le couloir s'ouvre" },
+  rot: { name: "Rot sonique", pitch: "Une onde autour de toi qui se charge avec les capsules ramassées : fonce, puis rote" },
+  odeur: { name: "Odeur d'alcool", pitch: "Une aura autour de toi : les zombies trop près titubent et prennent des petits dégâts" },
+  plateau: { name: "Plateau de serveur", pitch: "Des plateaux tournent autour de toi et bloquent chacun un coup, puis se rechargent" },
 } as const satisfies Record<string, { name: string; pitch: string }>;
 
 /** Apparence de la Canette (canette de soda Kenney, découpée par tools/blender/props.py). */

@@ -15,6 +15,12 @@ import { createBouchons } from './bouchons';
 import { createPetanque } from './petanque';
 import { createBac } from './bac';
 import { createVomi } from './vomi';
+import { createWeizen } from './weizen';
+import { createTireuse } from './tireuse';
+import { createCorne } from './corne';
+import { createRot } from './rot';
+import { createOdeur } from './odeur';
+import { createPlateau } from './plateau';
 import type { Weapon, WeaponContext, WeaponId } from './weapon';
 
 /** Toutes les armes du jeu : ajouter une arme = ajouter son créateur ici. */
@@ -36,4 +42,10 @@ export const WEAPON_FACTORIES: Record<WeaponId, (ctx: WeaponContext) => Weapon> 
   petanque: createPetanque,
   bac: createBac,
   vomi: createVomi,
+  weizen: createWeizen,
+  tireuse: createTireuse,
+  corne: createCorne,
+  rot: createRot,
+  odeur: createOdeur,
+  plateau: createPlateau,
 };

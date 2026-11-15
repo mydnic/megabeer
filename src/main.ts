@@ -299,7 +299,7 @@ function frame(now: number) {
   rings.update(dt);
   // Traînées des projectiles, scintillement des cloches au sol (figés avec le jeu ; plus sur l'XP ni les capsules, retiré le 2026-11-12)
   if (dt > 0) {
-    for (const id of Object.keys(bottleViews) as WeaponId[]) {
+    for (const id of Object.keys(VFX.trail.colors) as WeaponId[]) {
       const color = VFX.trail.colors[id];
       if (color !== undefined) for (const b of projectiles(id)) if (b.active) vfx.trail(b.pos, color, VFX.trail.size * b.size);
     }

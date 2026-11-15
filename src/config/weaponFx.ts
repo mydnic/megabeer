@@ -4,7 +4,7 @@
 
 import type { WeaponId } from '../weapons/weapon';
 import type { ZoneLook } from '../fx/zoneView';
-import { BIERE_NOEL, BIERE_NOEL_LOOK, BIERE_NOEL_SOUND, DECAPSULEUR, DECAPSULEUR_LOOK, DECAPSULEUR_SOUND, FLAQUE_BIERE, FLAQUE_BIERE_ZONE, FLAQUE_BIERE_SOUND, KRIEK, KRIEK_LOOK, BOTTLE_SOUNDS, TRIPLE, TRIPLE_LOOK, IPA, IPA_LOOK, SOUS_BOCK, SOUS_BOCK_LOOK, FLECHETTES, FLECHETTES_LOOK, BOUCHONS, BOUCHONS_LOOK, MORE_SOUNDS, PETANQUE, PETANQUE_LOOK, BAC, BAC_LOOK, VOMI, VOMI_LOOK, VOMI_ZONE } from './arsenal';
+import { BIERE_NOEL, BIERE_NOEL_LOOK, BIERE_NOEL_SOUND, DECAPSULEUR, DECAPSULEUR_LOOK, DECAPSULEUR_SOUND, FLAQUE_BIERE, FLAQUE_BIERE_ZONE, FLAQUE_BIERE_SOUND, KRIEK, KRIEK_LOOK, BOTTLE_SOUNDS, TRIPLE, TRIPLE_LOOK, IPA, IPA_LOOK, SOUS_BOCK, SOUS_BOCK_LOOK, FLECHETTES, FLECHETTES_LOOK, BOUCHONS, BOUCHONS_LOOK, MORE_SOUNDS, PETANQUE, PETANQUE_LOOK, BAC, BAC_LOOK, VOMI, VOMI_LOOK, VOMI_ZONE, WEIZEN, WEIZEN_ZONE, ZONE_SOUNDS, TIREUSE, CORNE, ROT, ODEUR, ODEUR_ZONE, PLATEAU, PLATEAU_LOOK } from './arsenal';
 import { CANETTE_LOOK, FUT, FUT_LOOK, FUT_SOUND, GUEUZE, GUEUZE_LOOK, STOUT_IMPACT, STOUT_LOOK, TABOURET, TABOURET_LOOK, TABOURET_SOUND, WEAPONS } from './weapons';
 
 /** Modèle d'un projectile en vol : fichier, longueur en jeu (m), couleur par nom de matériau du modèle. */
@@ -21,6 +21,11 @@ export type WeaponFx = {
   impact: { splash?: number; glass?: boolean; stout?: boolean };
   /** Au sol (projectile qui retombe sans toucher) : giclée de bière, éclats de verre ; absent : giclée et verre. */
   ground?: { splash?: number; glass?: boolean };
+  /**
+   * Explosion de l'arme (ctx.explode) : gerbe rose de la Gueuze (par défaut), bière et verre (Bac), ou onde au sol de
+   * la couleur donnée (Rot, Corne de brume) ; son de l'explosion (sinon celui de la Gueuze).
+   */
+  blast?: { style: 'gueuze' | 'glass' | 'ring'; color?: number; sound?: WeaponSound };
   /** Son au coup sur un zombie. */
   hitSound?: WeaponSound;
   /** Réglages de l'arme, notés dans le journal de run. */
@@ -43,6 +48,12 @@ export const WEAPON_FX: Record<WeaponId, WeaponFx> = {
   flechettes: { look: FLECHETTES_LOOK, impact: {}, ground: {}, hitSound: BOTTLE_SOUNDS.flechettes, settings: FLECHETTES },
   bouchons: { look: BOUCHONS_LOOK, impact: {}, ground: {}, hitSound: MORE_SOUNDS.bouchons, settings: BOUCHONS },
   petanque: { look: PETANQUE_LOOK, impact: {}, ground: {}, hitSound: MORE_SOUNDS.petanque, settings: PETANQUE },
-  bac: { look: BAC_LOOK, impact: { splash: 16, glass: true }, hitSound: MORE_SOUNDS.bac, settings: BAC },
+  bac: { look: BAC_LOOK, impact: { splash: 16, glass: true }, blast: { style: 'glass', sound: { sample: 'impactGlass_heavy', volume: 0.6, pitch: 0.9 } }, hitSound: MORE_SOUNDS.bac, settings: BAC },
   vomi: { look: VOMI_LOOK, zone: VOMI_ZONE, impact: {}, ground: {}, hitSound: MORE_SOUNDS.vomi, settings: VOMI },
+  weizen: { zone: WEIZEN_ZONE, impact: {}, hitSound: ZONE_SOUNDS.weizen, settings: WEIZEN },
+  tireuse: { impact: { splash: 4 }, hitSound: ZONE_SOUNDS.tireuse, settings: TIREUSE },
+  corne: { impact: {}, blast: { style: 'ring', color: 0xd8f0ff, sound: { sample: 'impactSoft_heavy', volume: 0.6, pitch: 0.45 } }, hitSound: ZONE_SOUNDS.corne, settings: CORNE },
+  rot: { impact: {}, blast: { style: 'ring', color: 0xb8f070, sound: { sample: 'impactPunch_heavy', volume: 0.7, pitch: 0.5 } }, hitSound: ZONE_SOUNDS.rot, settings: ROT },
+  odeur: { zone: ODEUR_ZONE, impact: {}, hitSound: ZONE_SOUNDS.odeur, settings: ODEUR },
+  plateau: { look: PLATEAU_LOOK, impact: {}, blast: { style: 'ring', color: 0xe8ecf2, sound: { sample: 'impactPlate_heavy', volume: 0.6, pitch: 1.0 } }, settings: PLATEAU },
 };

@@ -417,6 +417,8 @@ export class Game {
       zombies: () => this.horde.zombies,
       zombiesNear: (p, r, out) => this.horde.near(p, r, out),
       playerPos: () => player.pos,
+      playerFacing: () => player.facing,
+      xpGathered: () => this.xpGathered,
       stats: this.stats,
       rig: defaultRig(player),
       groundAt,
@@ -1118,7 +1120,11 @@ export class Game {
 
   // ------------------------------------------------------------------ interne
 
+  /** XP ramassée pendant la run (le Rot sonique se charge avec). */
+  xpGathered = 0;
+
   private collectXp(amount: number) {
+    this.xpGathered += amount;
     this.events.emit('xpCollected', { amount });
     this.addXp(amount);
   }
@@ -1135,6 +1141,12 @@ export class Game {
         if (push.lengthSq() < 1e-6) push.copy(this.player.facing);
         z.damage(0, push.normalize(), TOURNEE_FX.casque.knock);
       }
+      this.events.emit('playerHurt', { zombie: z, dir, damage: 0, hp: this.health.hp, blocked: true });
+      return;
+    }
+    // Plateau de serveur : un plateau bloque le coup (puis courte invulnérabilité, comme un coup)
+    if (!this.cheats.god && this.health.invuln <= 0 && !this.health.dead && this.loadout.weapons.some((w) => w.absorbHit?.(z))) {
+      this.health.invuln = PLAYER_STATS.invulnTime;
       this.events.emit('playerHurt', { zombie: z, dir, damage: 0, hp: this.health.hp, blocked: true });
       return;
     }
@@ -1253,6 +1265,7 @@ export class Game {
   }
 
   private resetRun() {
+    this.xpGathered = 0;
     this.deadTime = -1;
     this.arriving = false;
     this.menuPaused = false;

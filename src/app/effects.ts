@@ -122,9 +122,13 @@ export function wireEffects(game: Game, d: Deps) {
     vfx.explosion(numPos, 1.4, VFX.wine);
   });
   // Gueuze qui explose : gerbe de bière framboise, éclats de verre, la caméra tremble si c'est près
-  game.events.on('weaponExploded', ({ pos, radius }) => {
+  game.events.on('weaponExploded', ({ weapon, pos, radius }) => {
     up.copy(pos).normalize();
     numPos.copy(pos).addScaledVector(up, 0.3);
+    // Selon l'arme (config/weaponFx.ts) : bière et verre (Bac), onde au sol (Rot, Corne), sinon la gerbe de la Gueuze
+    const X = WEAPON_FX[weapon.id].blast;
+    if (X?.style === 'glass') { buveur.splashAt(numPos, 22); shards.burst(numPos, still); vfx.explosion(numPos, radius, VFX.glass); return; }
+    if (X?.style === 'ring') { d.rings.spawn(pos, radius, X.color ?? 0xffffff); vfx.dust(pos, 6, 0.5, radius); return; }
     gueuzeBurst.burst(numPos, still);
     shards.burst(numPos, still);
     vfx.explosion(numPos, radius, VFX.gueuze);

@@ -66,6 +66,8 @@ export class Zombie {
   incoming = 0;
   /** Sonné par une synergie (Black and Tan) : temps restant (s). Il ne l'arrête pas, c'est une marque. */
   dazed = 0;
+  /** Confus (Odeur d'alcool) : temps restant (s) ; il titube, de travers, plus lentement. */
+  confused = 0;
   /** Ralenti (Seau à glace) : multiplicateur de vitesse et temps restant (s). */
   slowMul = 1;
   slowTime = 0;
@@ -189,6 +191,7 @@ export class Zombie {
     this.throwTimer = Math.max(0, this.throwTimer - dt);
     this.summonTimer = Math.max(0, this.summonTimer - dt);
     this.dazed = Math.max(0, this.dazed - dt);
+    this.confused = Math.max(0, this.confused - dt);
     this.frozen = Math.max(0, this.frozen - dt);
     if ((this.slowTime = Math.max(0, this.slowTime - dt)) === 0) this.slowMul = 1;
     if (this.rise > 0 && !this.dead) {

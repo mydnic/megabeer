@@ -179,9 +179,12 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
   game.events.on('revived', () => audio.play(I.revive.sample, I.revive.volume, I.revive.rate, 0, 'ui'));
   game.events.on('freeChestSpawned', () => audio.play(I.freeChest.sample, I.freeChest.volume, I.freeChest.rate));
   // La Gueuze explose : verre qui éclate et souffle sourd
-  game.events.on('weaponExploded', ({ pos }) => {
+  game.events.on('weaponExploded', ({ weapon, pos }) => {
     const S = GUEUZE_BLAST.sound, k = near(pos, S.hearDist);
     if (k <= 0) return;
+    // Son propre à l'arme (config/weaponFx.ts), sinon celui de la Gueuze
+    const own = WEAPON_FX[weapon.id].blast?.sound;
+    if (own) { audio.play(own.sample, own.volume * k, own.pitch * jitter(0.08)); return; }
     audio.play(S.glass, S.glassVolume * k, jitter(0.08));
     audio.play(S.boom, S.boomVolume * k, S.boomPitch * jitter(0.08));
   });

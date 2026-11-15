@@ -192,6 +192,12 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
       want.lerp(side, M.detourBlend).normalize();
       speed = z.def.speed * z.speedMul * z.slowMul;
     }
+    // Confus (Odeur d'alcool) : il titube de côté, plus lentement
+    if (z.confused > 0) {
+      side.crossVectors(up, want).multiplyScalar(Math.sin(z.stateTime * 5 + z.speedMul * 20) * 1.4);
+      want.add(side).normalize();
+      speed *= 0.6;
+    }
     before.copy(z.pos);
     z.pos.addScaledVector(want, speed * dt);
     // Poussé hors du décor tout de suite (pour mesurer s'il est bloqué) ; il est reposé au sol une fois, après l'écartement

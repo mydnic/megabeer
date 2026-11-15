@@ -197,3 +197,43 @@ export const MORE_SOUNDS = {
   bac: { sample: 'impactGlass_heavy', volume: 0.45, pitch: 1.0, gap: 0.04 },
   vomi: { sample: 'impactSoft_heavy', volume: 0.35, pitch: 1.3, gap: 0.08 },
 } as const;
+
+// ------------------------------------------------------------------------------------------------ armes de zone
+
+/** Weizen (n° 7) : un nuage de mousse se pose en l'air sur un groupe et y reste ; tout zombie dedans prend des coups. */
+export const WEIZEN = { cooldown: 3.2, firstDelay: 1, damage: 5, tick: 0.5, radius: 2.6, life: 5, range: 15, height: 1.3 } as const;
+export const WEIZEN_ZONE = { color: 0xfff6dc, rim: 0xead7a2, opacity: 0.6, lift: 1.3, fadeIn: 0.3, fadeOut: 1 } as const;
+export const WEIZEN_UPGRADES: readonly UpgradeDef[] = [DMG, RATEU, { id: 'projectiles', label: 'nuage en plus', value: 1, kind: 'flat', whole: true }, { id: 'size', label: 'taille du nuage', value: 0.12, kind: 'percent' }, { id: 'duration', label: 'durée du nuage', value: 0.15, kind: 'percent' }];
+
+/** Tireuse (n° 15) : un jet continu de bière en cône vers le zombie le plus proche, à moyenne portée. */
+export const TIREUSE = { damage: 4, tick: 0.2, range: 4.6, halfAngle: 0.55, knock: 0.5, critChance: 0.05, critMult: 2, drops: 3, dropSpeed: 13, dropLife: 0.34 } as const;
+export const TIREUSE_UPGRADES: readonly UpgradeDef[] = [DMG, { id: 'rate', label: 'débit du jet', value: 0.10, kind: 'percent' }, { id: 'size', label: 'portée du jet', value: 0.10, kind: 'percent' }, { id: 'knock', label: 'recul', value: 0.20, kind: 'percent' }, CRIT, CRITM];
+
+/** Corne de brume (n° 20) : un coup de corne en cône devant le joueur, gros recul, presque pas de dégâts : ouvre un couloir. */
+export const CORNE = { cooldown: 3.4, firstDelay: 1, damage: 3, range: 7.5, halfAngle: 0.65, knock: 6, knockSpeed: 16, drops: 11, dropSpeed: 18, dropLife: 0.4 } as const;
+export const CORNE_UPGRADES: readonly UpgradeDef[] = [RATEU, { id: 'size', label: 'portée de la corne', value: 0.12, kind: 'percent' }, { id: 'knock', label: 'recul', value: 0.20, kind: 'percent' }, DMG];
+
+/**
+ * Rot sonique (n° 22) : une onde autour du joueur, qui se charge avec l'XP ramassée depuis le dernier rot : plus on
+ * fonce dans les capsules, plus le prochain rot est fort et large.
+ */
+export const ROT = { cooldown: 5, firstDelay: 2, damage: 10, perXp: 0.5, maxDamage: 260, radius: 3.4, radiusPerXp: 0.025, maxRadius: 8, knock: 1.5 } as const;
+export const ROT_UPGRADES: readonly UpgradeDef[] = [DMG, RATEU, { id: 'size', label: "taille de l'onde", value: 0.10, kind: 'percent' }, { id: 'charge', label: 'charge par capsule', value: 0.20, kind: 'percent' }];
+
+/** Odeur d'alcool (n° 24) : une aura permanente autour du joueur ; dégâts faibles et continus, les zombies titubent. */
+export const ODEUR = { damage: 3, tick: 0.5, radius: 2.6, confuse: 1.6 } as const;
+export const ODEUR_ZONE = { color: 0xd6e07a, rim: 0xa8b83a, opacity: 0.32, lift: 0.08, fadeIn: 0.01, fadeOut: 0.01 } as const;
+export const ODEUR_UPGRADES: readonly UpgradeDef[] = [DMG, { id: 'size', label: "rayon de l'aura", value: 0.10, kind: 'percent' }, { id: 'confuse', label: 'durée de la confusion', value: 0.15, kind: 'percent' }, { id: 'rate', label: "cadence de l'aura", value: 0.10, kind: 'percent' }];
+
+/** Plateau de serveur (n° 16) : des plateaux tournent autour du joueur et bloquent chacun un coup, puis se rechargent. */
+export const PLATEAU = { count: 1, radius: 1.35, height: 1.1, turnsPerSecond: 0.35, recharge: 7 } as const;
+export const PLATEAU_LOOK = { file: 'plateau.glb', length: 0.62, fit: 'max', colors: { Plateau: 0xc8ccd4, Rebord: 0x8a8e98 } as Record<string, number> } as const;
+export const PLATEAU_UPGRADES: readonly UpgradeDef[] = [{ id: 'projectiles', label: 'plateau en plus', value: 1, kind: 'flat', whole: true }, { id: 'rate', label: 'recharge plus rapide', value: 0.12, kind: 'percent' }];
+
+export const ZONE_SOUNDS = {
+  weizen: { sample: 'impactSoft_medium', volume: 0.25, pitch: 1.4, gap: 0.12 },
+  tireuse: { sample: 'impactSoft_medium', volume: 0.25, pitch: 1.6, gap: 0.1 },
+  corne: { sample: 'impactSoft_heavy', volume: 0.35, pitch: 0.7, gap: 0.08 },
+  rot: { sample: 'impactPunch_heavy', volume: 0.3, pitch: 0.8, gap: 0.05 },
+  odeur: { sample: 'impactSoft_medium', volume: 0.15, pitch: 1.2, gap: 0.2 },
+} as const;

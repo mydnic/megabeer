@@ -225,6 +225,50 @@ ${P('M3 64c0-6 6-9 12-8c3-4 9-5 13-1c5-1 9 2 9 6c0 5-6 9-17 9S3 69 3 64z', '#9ab
 <circle cx="13" cy="62" r="1.800" fill="#e8d06a"/><circle cx="24" cy="60" r="1.500" fill="#e8a03a"/><circle cx="28" cy="65" r="1.300" fill="#e8d06a"/>
 <circle cx="15" cy="46" r="3.200" fill="#b8d84a" stroke="${K}" stroke-width="1.400"/><circle cx="24" cy="38" r="2.500" fill="#b8d84a" stroke="${K}" stroke-width="1.300"/><circle cx="19" cy="29" r="1.800" fill="#b8d84a" stroke="${K}" stroke-width="1.200"/>`);
 
+/** Weizen : un grand verre de blanche trouble, et un nuage de mousse qui déborde au-dessus. */
+const weizenIcon = (cls: string) => tall(cls, `
+${P('M11 36h18l-2 42c0 2-1.500 3-3.500 3h-7c-2 0-3.500-1-3.500-3z', '#f2c45a', 'vol', 3)}
+<path d="M13 50h14M13.500 62h13" stroke="#fff" stroke-opacity=".35" stroke-width="1.400"/>
+${P('M5 30c0-6 5-9 9-8c2-5 10-6 13-1c5-1 9 3 8 8c3 2 2 8-3 8H9c-4 0-6-4-4-7z', G.foam, 'vol', 3)}
+<circle cx="14" cy="14" r="3" fill="${G.foam}" stroke="${K}" stroke-width="1.400"/><circle cx="25" cy="10" r="2.200" fill="${G.foam}" stroke="${K}" stroke-width="1.200"/>`);
+
+/** Tireuse : une colonne de pompe chromée, poignée rouge, et le jet de bière qui part de côté. */
+const tireuseIcon = (cls: string) => tall(cls, `
+${P('M6 80V30c0-2 1.500-3.500 3.500-3.500h8c2 0 3.500 1.500 3.500 3.500v8h-5v-4H11V80z', G.steel, 'vol', 2.500)}
+${P('M10 26.500l-1.600-12c-.2-1.200.8-2.200 2-2.200h3.200c1.200 0 2.200 1 2 2.200l-1.600 12z', '#c8102e', 'vol', 2.200)}
+${R(3, 78, 20, 6, 2, G.dark, 'sh', 2.500)}
+<path d="M21 38c6-1 10 2 14 8" stroke="${K}" stroke-width="6" fill="none" stroke-linecap="round"/>
+<path d="M21 38c6-1 10 2 14 8" stroke="${G.beer}" stroke-width="3.400" fill="none" stroke-linecap="round"/>
+<circle cx="33" cy="54" r="1.600" fill="${G.beer}"/><circle cx="36" cy="60" r="1.200" fill="${G.beer}"/>`);
+
+/** Corne de brume : un pavillon rouge et blanc, la poire en caoutchouc, et des ondes qui en sortent. */
+const corneIcon = (cls: string) => tall(cls, `
+${P('M4 52l18-10v20z', '#c8102e', 'vol', 3)}
+<path d="M10 48.500v7M16 45v14" stroke="#fff" stroke-width="2"/>
+${P('M22 46h6v12h-6z', G.steel, 'vol', 2.400)}
+${P('M28 44c5 0 8 3.600 8 8s-3 8-8 8z', '#2a2a30', 'vol', 2.400)}
+<path d="M6 36c-3 4-3 12 0 16M2 32c-4 6-4 18 0 24" stroke="${K}" stroke-width="1.600" fill="none" stroke-linecap="round" opacity=".6"/>`);
+
+/** Rot sonique : une bulle de rot verte qui éclate, entourée de cercles d'onde. */
+const rotIcon = (cls: string) => tall(cls, `
+<circle cx="20" cy="48" r="17" fill="none" stroke="#b8f070" stroke-width="2.400" opacity=".6"/>
+<circle cx="20" cy="48" r="12.500" fill="none" stroke="#b8f070" stroke-width="2.400" opacity=".85"/>
+${P('M20 39a9 9 0 1 1 0 18a9 9 0 1 1 0-18z', '#d8f8a0', 'vol', 2.600)}
+<path d="M16 45c1.500-2 4-2.600 6-2" stroke="#fff" stroke-width="1.600" fill="none" stroke-linecap="round"/>
+${label(20, 22, 7, 'BRAAP', '#5a8a1a', 'Arial Black, Arial, sans-serif', 30)}`);
+
+/** Odeur d'alcool : trois volutes jaune-vert qui montent d'une pinte vide renversée. */
+const odeurIcon = (cls: string) => tall(cls, `
+${P('M9 62h22l-2 18c0 1.500-1 2.500-2.500 2.500h-13C12 82.500 11 81.500 11 80z', 'rgba(255,255,255,.35)', 'vol', 2.600)}
+<path d="M13 58c-4-6 4-10 0-16s4-10 0-16M20 56c-4-6 4-10 0-16s4-10 0-16M27 58c-4-6 4-10 0-16s4-10 0-16" stroke="${K}" stroke-width="5" fill="none" stroke-linecap="round"/>
+<path d="M13 58c-4-6 4-10 0-16s4-10 0-16M20 56c-4-6 4-10 0-16s4-10 0-16M27 58c-4-6 4-10 0-16s4-10 0-16" stroke="#d6e07a" stroke-width="2.600" fill="none" stroke-linecap="round"/>`);
+
+/** Plateau de serveur : un plateau rond en métal brossé, debout comme un bouclier, avec son reflet. */
+const plateauIcon = (cls: string) => tall(cls, `
+${P('M20 26a17 21 0 1 1 0 42a17 21 0 1 1 0-42z', '#8a8e98', 'vol', 3)}
+${E(20, 47, 13, 16.500, '#c8ccd4', 'vol', 1.600)}
+<path d="M11 38c2-5 6-8 10-8" stroke="#fff" stroke-opacity=".7" stroke-width="2.400" fill="none" stroke-linecap="round"/>`);
+
 /** Icône de chaque arme (ajouter une arme = ajouter son icône ici). */
 const WEAPON_ICONS: Record<WeaponId, (cls: string) => string> = {
   canette: canetteIcon,
@@ -244,6 +288,12 @@ const WEAPON_ICONS: Record<WeaponId, (cls: string) => string> = {
   petanque: petanqueIcon,
   bac: bacIcon,
   vomi: vomiIcon,
+  weizen: weizenIcon,
+  tireuse: tireuseIcon,
+  corne: corneIcon,
+  rot: rotIcon,
+  odeur: odeurIcon,
+  plateau: plateauIcon,
 };
 
 export const weaponIcon = (id: WeaponId, cls: string) => WEAPON_ICONS[id](cls);
