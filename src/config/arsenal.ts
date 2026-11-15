@@ -2,6 +2,7 @@
 // apparence et ses cartes d'amélioration. Les cinq premières vivent dans config/weapons.ts et config/upgrades.ts.
 
 import type { UpgradeDef } from './upgrades';
+import type { BottleConfig } from '../weapons/bottleWeapon';
 
 const DMG: UpgradeDef = { id: 'damage', label: 'dégâts', value: 0.15, kind: 'percent' };
 const CRIT: UpgradeDef = { id: 'critChance', label: 'chances de critique', value: 0.04, kind: 'points' };
@@ -122,3 +123,49 @@ export const FLAQUE_BIERE_UPGRADES: readonly UpgradeDef[] = [
   { id: 'duration', label: 'durée des flaques', value: 0.15, kind: 'percent' },
   { id: 'stun', label: "durée de l'étourdissement", value: 0.15, kind: 'percent' },
 ];
+
+// ------------------------------------------------------------------------------------------------ armes à bouteilles
+// Même brique que la Canette (weapons/bottleWeapon.ts) : réglages de base communs, puis ce qui change.
+
+
+const THROWN = {
+  cooldown: 1.5, damage: 12, critChance: 0.05, critMult: 2, range: 17, speed: 17, gravity: 14, spinRate: 2.2,
+  radius: 0.16, zombieHeight: 1.8, zombieRadius: 0.4, gestureDuration: 0.6, maxGestureRate: 4, volleyGap: 0.07,
+  releaseDelay: 0.22, aimHeight: 1.1, life: 3, knock: 1, pierce: 0,
+} as const;
+const PROJ: UpgradeDef = { id: 'projectiles', label: 'projectile en plus', value: 1, kind: 'flat', whole: true };
+const RANGE: UpgradeDef = { id: 'range', label: 'portée', value: 0.10, kind: 'percent' };
+const RATEU: UpgradeDef = { id: 'rate', label: "vitesse d'attaque", value: 0.10, kind: 'percent' };
+
+/** Kriek (n° 4) : bouteille de bière à la cerise qui éclabousse à l'impact : dégâts autour et zombies ralentis. */
+export const KRIEK: BottleConfig = { ...THROWN, cooldown: 1.7, damage: 11, splashRadius: 2.1, splashDamage: 0.6, slow: 0.4, slowTime: 1.6 };
+export const KRIEK_LOOK = { file: 'bouteille_gueuze.glb', length: 0.42, colors: { Verre: 0x5a0a18, Bouchon: 0xe2203a } as Record<string, number> } as const;
+export const KRIEK_UPGRADES: readonly UpgradeDef[] = [DMG, RATEU, PROJ, { id: 'size', label: "taille de l'éclaboussure", value: 0.12, kind: 'percent' }, RANGE, CRIT, CRITM];
+
+/** Triple (n° 5) : bouteille qui rebondit d'un zombie à l'autre (3 zombies d'une chaîne). */
+export const TRIPLE: BottleConfig = { ...THROWN, cooldown: 1.6, damage: 13, speed: 19, gravity: 11, bounces: 2, bounceRange: 6.5, bounceGain: 1 };
+export const TRIPLE_LOOK = { file: 'bouteille_stout.glb', length: 0.42, colors: { Verre: 0xa86a14, Etiquette: 0xf2e3b0, Bouchon: 0xe8b33a } as Record<string, number> } as const;
+export const TRIPLE_UPGRADES: readonly UpgradeDef[] = [DMG, RATEU, PROJ, { id: 'bounces', label: 'rebond en plus', value: 1, kind: 'flat', whole: true }, RANGE, CRIT, CRITM];
+
+/** IPA (n° 6) : bouteille amère qui met le feu : le zombie touché brûle quelques secondes. */
+export const IPA: BottleConfig = { ...THROWN, cooldown: 1.4, damage: 10, burn: 0.45, burnTime: 3 };
+export const IPA_LOOK = { file: 'bouteille_gueuze.glb', length: 0.42, colors: { Verre: 0x2e6b2a, Bouchon: 0xf08a1a } as Record<string, number> } as const;
+export const IPA_UPGRADES: readonly UpgradeDef[] = [DMG, RATEU, PROJ, { id: 'burn', label: 'dégâts de brûlure', value: 0.20, kind: 'percent' }, RANGE, CRIT, CRITM];
+
+/** Dessous de verre (n° 11) : lancé à plat comme un frisbee, il file droit et traverse plusieurs zombies. */
+export const SOUS_BOCK: BottleConfig = { ...THROWN, cooldown: 1.5, damage: 10, speed: 21, gravity: 1.5, spinRate: 6, pierce: 3, life: 1.3, aimHeight: 1.0, spin: 'flat' };
+export const SOUS_BOCK_LOOK = { file: 'sousbock.glb', length: 0.4, fit: 'max', colors: { Carton: 0xf3ead6, Impression: 0xc8102e } as Record<string, number> } as const;
+export const SOUS_BOCK_UPGRADES: readonly UpgradeDef[] = [DMG, RATEU, PROJ, { id: 'pierce', label: 'zombie traversé en plus', value: 1, kind: 'flat', whole: true }, { id: 'speed', label: 'vitesse des projectiles', value: 0.10, kind: 'percent' }, CRIT, CRITM];
+
+/** Fléchettes (n° 19) : tir tendu et précis sur le zombie le plus solide à portée, souvent critique. */
+export const FLECHETTES: BottleConfig = { ...THROWN, cooldown: 1.3, damage: 17, critChance: 0.15, critMult: 2.5, speed: 30, gravity: 2, range: 20, aim: 'strong', spin: 'forward', spinRate: 3 };
+export const FLECHETTES_LOOK = { file: 'flechette.glb', length: 0.38, colors: { Metal: 0xd8dce2, Corps: 0x24242a, Ailettes: 0xe2203a } as Record<string, number> } as const;
+export const FLECHETTES_UPGRADES: readonly UpgradeDef[] = [DMG, RATEU, PROJ, RANGE, { id: 'critChance', label: 'chances de critique', value: 0.06, kind: 'points' }, { id: 'critMult', label: 'multiplicateur critique', value: 0.25, kind: 'mult' }];
+
+export const BOTTLE_SOUNDS = {
+  kriek: { sample: 'impactGlass_medium', volume: 0.4, pitch: 1.15, gap: 0.04 },
+  triple: { sample: 'impactGlass_light', volume: 0.4, pitch: 0.95, gap: 0.04 },
+  ipa: { sample: 'impactGlass_medium', volume: 0.35, pitch: 1.0, gap: 0.04 },
+  sousBock: { sample: 'impactPlank_medium', volume: 0.35, pitch: 1.4, gap: 0.04 },
+  flechettes: { sample: 'impactMetal_light', volume: 0.4, pitch: 1.5, gap: 0.03 },
+} as const;

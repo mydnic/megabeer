@@ -149,6 +149,52 @@ ${E(14, 68, 4, 1.6, G.foam, '', 1)}${E(26, 72, 3.2, 1.3, G.foam, '', 1)}
 <path d="M30 36l6 8" stroke="${G.foam}" stroke-width="3.400" stroke-linecap="round"/>
 <path d="M14 56c-2 3-1 6 2 7" stroke="${G.beer}" stroke-width="3" fill="none" stroke-linecap="round"/>`);
 
+/** Kriek : la bouteille fine de la Gueuze en verre rouge sombre, étiquette crème avec deux cerises, capsule rouge. */
+const kriekIcon = (cls: string) => tall(cls, `
+<path d="${GUEUZE}" fill="#5a0a18"/>
+<rect x="8.500" y="48" width="23" height="27" rx="2" fill="#f1e4c4" stroke="#c8102e" stroke-width="1.600"/>
+<path d="M17.500 55c1-2 2.500-3 4.500-3.400M21.500 51.600c.4 2 1.200 3.200 2.600 3.800" stroke="#3f8a30" stroke-width="1.100" fill="none"/>
+<circle cx="17" cy="58.500" r="3.200" fill="#d2142e" stroke="${K}" stroke-width=".8"/><circle cx="24" cy="58.800" r="3.200" fill="#b00e26" stroke="${K}" stroke-width=".8"/>
+${label(20, 70.5, 6.5, 'Kriek', '#a00e22', "Georgia, 'Times New Roman', serif", 17)}
+${shell(GUEUZE)}
+${R(14.500, 2.500, 11, 6.500, 1.500, '#e2203a', 'vol', 2.500)}`);
+
+/** Triple : la bouteille de la Stout en verre ambré, étiquette crème marquée de trois croix d'abbaye, capsule dorée. */
+const tripleIcon = (cls: string) => tall(cls, `
+<path d="${STOUT}" fill="#a86a14"/>
+<rect x="5.500" y="49" width="29" height="30" fill="#f2e3b0"/><path d="M5.500 49h29M5.500 79h29" stroke="#8a5a10" stroke-width="1.600"/>
+<path d="M12 53v6M9 56h6M20 53v6M17 56h6M28 53v6M25 56h6" stroke="#8a1a1a" stroke-width="1.600"/>
+${label(20, 71, 9, 'Triple', '#5a3a10', "Georgia, 'Times New Roman', serif", 25)}
+${shell(STOUT)}
+${R(13.500, 2.500, 13, 6.500, 1.500, G.gold, 'vol', 2.500)}`);
+
+/** IPA : la bouteille fine en verre vert, étiquette orange marquée IPA avec une flamme, capsule orange. */
+const ipaIcon = (cls: string) => tall(cls, `
+<path d="${GUEUZE}" fill="#2e6b2a"/>
+<rect x="8.500" y="48" width="23" height="27" rx="2" fill="#f08a1a" stroke="#fff3d6" stroke-width="1.600"/>
+<path d="M20 51c3 3 5 5 5 8a5 5 0 0 1-10 0c0-2 1-3 2-4c0 2 1 3 2 3c0-3-1-5 1-7z" fill="#ffd84a" stroke="#b8400a" stroke-width=".9"/>
+${label(20, 71.5, 8, 'IPA', '#fff', 'Arial Black, Arial, sans-serif', 15)}
+${shell(GUEUZE)}
+${R(14.500, 2.500, 11, 6.500, 1.500, '#f08a1a', 'vol', 2.500)}`);
+
+/** Dessous de verre : sous-bock rond en carton crème, cercle rouge imprimé, une rayure de vitesse. */
+const sousBockIcon = (cls: string) => tall(cls, `
+<path d="M4 28h-3M5 36h-4M4 44h-3" stroke="${K}" stroke-width="1.600" stroke-linecap="round" opacity=".5"/>
+${P('M20 26a15 15 0 1 1 0 30a15 15 0 1 1 0-30z', '#f3ead6', 'vol', 3)}
+<circle cx="20" cy="41" r="10" fill="none" stroke="#c8102e" stroke-width="2.400"/>
+<circle cx="20" cy="41" r="6.500" fill="#c8102e"/>
+${label(20, 43, 4.500, 'BAR', '#fff', 'Arial Black, Arial, sans-serif', 9)}`);
+
+/** Fléchettes : une fléchette en diagonale, pointe en acier, fût noir, ailettes rouges. */
+const flechettesIcon = (cls: string) => tall(cls, `
+<path d="M9 20l6 1-1 6z" fill="#e2203a" stroke="${K}" stroke-width="1.600" stroke-linejoin="round"/>
+<path d="M13 16l3 7 4-2z" fill="#ff4a5a" stroke="${K}" stroke-width="1.600" stroke-linejoin="round"/>
+<path d="M15 24L28 62" stroke="${K}" stroke-width="7" stroke-linecap="round"/>
+<path d="M15 24L28 62" stroke="#2a2a30" stroke-width="4" stroke-linecap="round"/>
+<path d="M18 33l2.500 7" stroke="#e8c76a" stroke-width="1.400"/>
+<path d="M28 62L32 76" stroke="${K}" stroke-width="3.600" stroke-linecap="round"/>
+<path d="M28 62L32 76" stroke="#d8dce2" stroke-width="1.800" stroke-linecap="round"/>`);
+
 /** Icône de chaque arme (ajouter une arme = ajouter son icône ici). */
 const WEAPON_ICONS: Record<WeaponId, (cls: string) => string> = {
   canette: canetteIcon,
@@ -159,6 +205,11 @@ const WEAPON_ICONS: Record<WeaponId, (cls: string) => string> = {
   biereNoel: noelIcon,
   decapsuleur: decapsuleurIcon,
   flaqueBiere: flaqueBiereIcon,
+  kriek: kriekIcon,
+  triple: tripleIcon,
+  ipa: ipaIcon,
+  sousBock: sousBockIcon,
+  flechettes: flechettesIcon,
 };
 
 export const weaponIcon = (id: WeaponId, cls: string) => WEAPON_ICONS[id](cls);

@@ -262,6 +262,11 @@ export const WEAPON_INFO = {
   biereNoel: { name: 'Bière de Noël', pitch: 'Des bouteilles tournent autour de toi et cognent tout ce qui approche' },
   decapsuleur: { name: "Décapsuleur", pitch: "Un boomerang : il part, revient, et frappe à l'aller comme au retour" },
   flaqueBiere: { name: "Flaque de bière", pitch: "Tu laisses une traînée de bière : les zombies glissent, tombent et restent sonnés" },
+  kriek: { name: "Kriek", pitch: "Bière à la cerise : elle éclabousse à l'impact et ralentit les zombies autour" },
+  triple: { name: "Triple", pitch: "Elle rebondit d'un zombie à l'autre : trois coups pour une bouteille" },
+  ipa: { name: "IPA", pitch: "Amère et brûlante : le zombie touché prend feu quelques secondes" },
+  sousBock: { name: "Dessous de verre", pitch: "Lancé à plat comme un frisbee : il file droit et traverse plusieurs zombies" },
+  flechettes: { name: "Fléchettes", pitch: "Tir tendu et précis sur le zombie le plus solide, souvent critique" },
 } as const satisfies Record<string, { name: string; pitch: string }>;
 
 /** Apparence de la Canette (canette de soda Kenney, découpée par tools/blender/props.py). */
