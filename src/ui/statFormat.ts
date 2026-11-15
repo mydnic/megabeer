@@ -13,6 +13,7 @@ export function formatValue(l: StatLine) {
     case 'speed': return `${fmt(l.value)} m/s`;
     case 'percent': return `${fmt(l.value * 100, l.value < 2 ? 1 : 0)} %`;
     case 'count': return String(Math.round(l.value));
+    case 'seconds': return `${fmt(l.value)} s`;
     default: return fmt(l.value);
   }
 }

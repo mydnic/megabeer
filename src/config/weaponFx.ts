@@ -3,7 +3,8 @@
 // (son au coup) et app/runLogging.ts (réglages notés dans le journal de run).
 
 import type { WeaponId } from '../weapons/weapon';
-import { BIERE_NOEL, BIERE_NOEL_LOOK, BIERE_NOEL_SOUND, DECAPSULEUR, DECAPSULEUR_LOOK, DECAPSULEUR_SOUND } from './arsenal';
+import type { ZoneLook } from '../fx/zoneView';
+import { BIERE_NOEL, BIERE_NOEL_LOOK, BIERE_NOEL_SOUND, DECAPSULEUR, DECAPSULEUR_LOOK, DECAPSULEUR_SOUND, FLAQUE_BIERE, FLAQUE_BIERE_ZONE, FLAQUE_BIERE_SOUND } from './arsenal';
 import { CANETTE_LOOK, FUT, FUT_LOOK, FUT_SOUND, GUEUZE, GUEUZE_LOOK, STOUT_IMPACT, STOUT_LOOK, TABOURET, TABOURET_LOOK, TABOURET_SOUND, WEAPONS } from './weapons';
 
 /** Modèle d'un projectile en vol : fichier, longueur en jeu (m), couleur par nom de matériau du modèle. */
@@ -14,6 +15,8 @@ export type WeaponSound = { sample: string; volume: number; pitch: number; gap?:
 export type WeaponFx = {
   /** Modèle des projectiles (absent : l'arme n'a pas de projectile à dessiner, ou les dessine elle-même). */
   look?: WeaponLook;
+  /** Zones au sol de l'arme (flaques) : leur apparence. */
+  zone?: ZoneLook;
   /** Sur un zombie touché : giclée de bière blonde (nombre de gouttes), éclats de verre, gerbe de bière brune. */
   impact: { splash?: number; glass?: boolean; stout?: boolean };
   /** Son au coup sur un zombie. */
@@ -30,4 +33,5 @@ export const WEAPON_FX: Record<WeaponId, WeaponFx> = {
   tabouret: { look: TABOURET_LOOK, impact: {}, hitSound: { ...TABOURET_SOUND.hit, gap: TABOURET_SOUND.hitGap }, settings: TABOURET },
   biereNoel: { look: BIERE_NOEL_LOOK, impact: { splash: 6 }, hitSound: BIERE_NOEL_SOUND, settings: BIERE_NOEL },
   decapsuleur: { look: DECAPSULEUR_LOOK, impact: { splash: 4 }, hitSound: DECAPSULEUR_SOUND, settings: DECAPSULEUR },
+  flaqueBiere: { zone: FLAQUE_BIERE_ZONE, impact: { splash: 8 }, hitSound: FLAQUE_BIERE_SOUND, settings: FLAQUE_BIERE },
 };

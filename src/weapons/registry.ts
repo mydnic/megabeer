@@ -5,6 +5,7 @@ import { createStout } from './stout';
 import { createTabouret } from './tabouret';
 import { createBiereNoel } from './biereNoel';
 import { createDecapsuleur } from './decapsuleur';
+import { createFlaqueBiere } from './flaqueBiere';
 import type { Weapon, WeaponContext, WeaponId } from './weapon';
 
 /** Toutes les armes du jeu : ajouter une arme = ajouter son créateur ici. */
@@ -16,4 +17,5 @@ export const WEAPON_FACTORIES: Record<WeaponId, (ctx: WeaponContext) => Weapon> 
   tabouret: createTabouret,
   biereNoel: createBiereNoel,
   decapsuleur: createDecapsuleur,
+  flaqueBiere: createFlaqueBiere,
 };

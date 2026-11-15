@@ -4,7 +4,7 @@ import type { PlayerStats, StatLine } from '../game/playerStats';
 import type { UpgradeDef } from '../config/upgrades';
 
 /** Identifiant d'arme (une entrée de src/weapons/registry.ts). */
-export type WeaponId = 'canette' | 'stout' | 'fut' | 'gueuze' | 'tabouret' | 'biereNoel' | 'decapsuleur';
+export type WeaponId = 'canette' | 'stout' | 'fut' | 'gueuze' | 'tabouret' | 'biereNoel' | 'decapsuleur' | 'flaqueBiere';
 
 /** Améliorations d'une arme gagnées en run : un champ par id de carte, plus son niveau. */
 export type WeaponMods = { level: number } & Record<string, number>;
@@ -61,6 +61,9 @@ export type Projectile = {
   active: boolean;
 };
 
+/** Une zone posée au sol par une arme (flaque...) : centre, rayon (m), âge et durée de vie (s). */
+export type Zone = { pos: THREE.Vector3; radius: number; age: number; life: number; active: boolean };
+
 /**
  * Une arme équipée. Ajouter une arme = un fichier qui implémente cette interface + une entrée dans
  * le registre et la config ; le reste du jeu (cartes, HUD, pause) passe par elle.
@@ -72,6 +75,8 @@ export interface Weapon {
   readonly upgrades: readonly UpgradeDef[];
   readonly mods: WeaponMods;
   readonly projectiles: readonly Projectile[];
+  /** Zones au sol à dessiner (armes à flaques). */
+  readonly zones?: readonly Zone[];
   /** Attaque (appelée en run, quand le joueur peut agir). */
   update(dt: number): void;
   /** Fait voler les projectiles (même après la mort du joueur). */

@@ -91,3 +91,34 @@ export const DECAPSULEUR_UPGRADES: readonly UpgradeDef[] = [
   { id: 'size', label: 'taille', value: 0.10, kind: 'percent' },
   CRIT, CRITM,
 ];
+
+/**
+ * Flaque de bière (n° 13) : le joueur laisse derrière lui une traînée de flaques en se déplaçant (une tous les
+ * `dropEvery` m). Un zombie qui marche dedans glisse et tombe : étourdi `stun` s et quelques dégâts, puis il ne peut
+ * pas reglisser avant `slipCooldown` s. Contrôle plus que dégâts.
+ */
+export const FLAQUE_BIERE = {
+  damage: 5,
+  critChance: 0,
+  critMult: 2,
+  /** Distance parcourue entre deux flaques (m, divisée par la Vitesse d'attaque), rayon (m, x Taille), durée (s). */
+  dropEvery: 1.5,
+  radius: 1.15,
+  life: 3.5,
+  /** Étourdi au sol (s), et délai avant de pouvoir reglisser (s). */
+  stun: 1.1,
+  slipCooldown: 2.6,
+  /** Corps d'un zombie (m) : il glisse dès que ses pieds touchent la flaque. */
+  zombieRadius: 0.25,
+} as const;
+
+export const FLAQUE_BIERE_ZONE = { color: 0xe8a826, rim: 0xb86e12, opacity: 0.8, lift: 0.06, fadeIn: 0.15, fadeOut: 0.8 } as const;
+export const FLAQUE_BIERE_SOUND = { sample: 'impactSoft_medium', volume: 0.35, pitch: 1.3, gap: 0.08 } as const;
+
+export const FLAQUE_BIERE_UPGRADES: readonly UpgradeDef[] = [
+  DMG,
+  { id: 'rate', label: 'flaques plus serrées', value: 0.10, kind: 'percent' },
+  { id: 'size', label: 'taille des flaques', value: 0.10, kind: 'percent' },
+  { id: 'duration', label: 'durée des flaques', value: 0.15, kind: 'percent' },
+  { id: 'stun', label: "durée de l'étourdissement", value: 0.15, kind: 'percent' },
+];

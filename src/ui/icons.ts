@@ -140,6 +140,15 @@ ${P('M11 44V24c0-6.600 4-11 9-11s9 4.400 9 11v20z', G.steel, 'vol', 3)}
 ${E(29, 31, 5.5, 5.5, G.gold, 'vol', 2.2)}
 <path d="M25.500 31h7M29 27.500v7" stroke="#a07a20" stroke-width="1"/>`);
 
+/** Flaque de bière : une pinte renversée sur le flanc, la bière qui s'étale en flaque mousseuse. */
+const flaqueBiereIcon = (cls: string) => tall(cls, `
+${P('M3 70c0-6 7-9 17-9s17 3 17 9-7 10-17 10S3 76 3 70z', G.beer, 'vol', 3)}
+${E(14, 68, 4, 1.6, G.foam, '', 1)}${E(26, 72, 3.2, 1.3, G.foam, '', 1)}
+<path d="M10 50l20-14 6 8-20 14z" fill="rgba(255,255,255,.35)" stroke="${K}" stroke-width="2.600" stroke-linejoin="round"/>
+<path d="M12.500 53l14-10 3 4-14 10z" fill="${G.beer}"/>
+<path d="M30 36l6 8" stroke="${G.foam}" stroke-width="3.400" stroke-linecap="round"/>
+<path d="M14 56c-2 3-1 6 2 7" stroke="${G.beer}" stroke-width="3" fill="none" stroke-linecap="round"/>`);
+
 /** Icône de chaque arme (ajouter une arme = ajouter son icône ici). */
 const WEAPON_ICONS: Record<WeaponId, (cls: string) => string> = {
   canette: canetteIcon,
@@ -149,6 +158,7 @@ const WEAPON_ICONS: Record<WeaponId, (cls: string) => string> = {
   tabouret: tabouretIcon,
   biereNoel: noelIcon,
   decapsuleur: decapsuleurIcon,
+  flaqueBiere: flaqueBiereIcon,
 };
 
 export const weaponIcon = (id: WeaponId, cls: string) => WEAPON_ICONS[id](cls);

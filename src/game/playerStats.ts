@@ -11,7 +11,7 @@ export type StatLine = {
   bonus: number;
   bonusKind: 'percent' | 'plus';
 };
-export type StatUnit = 'count' | 'mult' | 'perSecond' | 'meters' | 'speed' | 'percent' | 'number';
+export type StatUnit = 'count' | 'mult' | 'perSecond' | 'meters' | 'speed' | 'percent' | 'number' | 'seconds';
 
 /**
  * Stats du joueur modifiables pendant une run (cartes, objets, skill tree) : départ = valeurs du
