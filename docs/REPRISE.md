@@ -160,6 +160,11 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    **testé et validé en prod par l'utilisateur le 2026-11-13** (mail.mydnic.be onboardé dans Email Sending ; l'envoi à
    n'importe quelle adresse demande l'offre Workers Paid, doc Cloudflare). Erreurs d'envoi : codes `E_*` dans
    les logs du Worker (`[mail]`). Après ça : ajouter du contenu.
+   **Roster d'armes complet le 2026-11-15, à valider en jouant** (demande : « enchaîner sur toutes les armes ») : 18
+   armes ajoutées (n° 3 à 24 sauf 10, à inventer), toutes en boutique à 100 TUNAS, chacune avec ses tests. Chiffres
+   de départ dans `config/arsenal.ts`, pas encore équilibrés en partie ; pas encore d'évolutions ni de synergies
+   pour les nouvelles armes (GDD section 6). Mobile : rendu léger en 2x et caméra plus proche (`touchDistance`).
+   Vérifier en jeu sans afficher le navigateur : `?minuterie` (la boucle tourne sur une minuterie, en dev).
    Checkpoint 1, notes : base D1 `megabeer` (WEUR, id dans
    `wrangler.jsonc`, schéma appliqué), application Discord de l'utilisateur (Client ID dans `wrangler.jsonc`, secret
    posé par `wrangler secret put`, en local dans `.dev.vars`). Commandes Cloudflare : variables d'environnement

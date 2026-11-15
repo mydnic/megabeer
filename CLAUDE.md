@@ -101,10 +101,16 @@ recopie son état à chaque image. Ne jamais remettre de logique de jeu dans `ma
   montée en difficulté, courbe dans `config/spawn.ts`), `mechanics/` (mécanique propre à chaque map, interface
   `MapMechanic` et registre : Abbaye = les cloches), `emitter.ts`.
 - `weapons/` : `weapon.ts` (**interface `Weapon`** et `WeaponContext`), `registry.ts`, une arme
-  par fichier (`canette.ts`, `stout.ts`, `fut.ts` : le tonneau qui roule, `gueuze.ts` : la grenade, `tabouret.ts` : le Tabouret de bar du Videur, mêlée circulaire), les bouteilles lancées partageant la brique `bottleWeapon.ts` (visée, volées,
-  perçage, recul), leur rendu à part (`bottleView.ts`, une vue par arme).
-  **Ajouter une arme** = un fichier qui implémente `Weapon`, une entrée dans le registre, sa config
-  et ses cartes, son icône (`ui/icons.ts`), son rendu, et ses tests. Rien d'autre à toucher.
+  par fichier : les 23 armes du roster V1 (la n° 10 reste à inventer). Les projectiles lancés partagent la brique
+  `bottleWeapon.ts` (visée proche, solide ou groupe, volées, perçage, recul, et en option : rebonds, éclaboussure qui
+  ralentit, brûlure, éventail, rebonds au sol, fragmentation, flaque de poison, vol à plat ou pointe en avant) ; les
+  autres ont leur fichier (orbite `biereNoel.ts`, boomerang `decapsuleur.ts`, traînée `flaqueBiere.ts`, nuage
+  `weizen.ts`, jet `tireuse.ts`, corne `corne.ts`, rot `rot.ts`, aura `odeur.ts`, plateaux qui bloquent `plateau.ts`,
+  `spray.ts` : gouttes de jet pour l'affichage). Réglages des armes ajoutées après les cinq premières :
+  `config/arsenal.ts`. Rendu : `bottleView.ts` (projectiles), `fx/zoneView.ts` (zones au sol : flaques, nuages, aura).
+  **Ajouter une arme** = un fichier qui implémente `Weapon`, une entrée dans le registre, sa config et ses cartes
+  (`config/arsenal.ts`), sa ligne dans `config/weaponFx.ts` (modèle, zone, impact, effet au sol, explosion, son),
+  `WEAPON_INFO`, son icône (`ui/icons.ts`), son modèle (petits objets : `tools/blender/armes.py`), et ses tests.
   **Icônes** : un seul style (couleur, volume, contour épais) fourni par `ui/iconKit.ts` (dégradés partagés,
   formes `P` `C` `E` `R`, pinte, capsule, étincelle) ; armes, pompe, coffre et capsule dans `ui/icons.ts`, une
   icône par objet de coffre dans `ui/itemIcons.ts`, une par tournée du bar dans `ui/tourneeIcons.ts` (`iconDataUrl` : la

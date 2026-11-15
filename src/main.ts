@@ -339,9 +339,16 @@ function frame(now: number) {
       'ZQSD bouger, Espace sauter, souris caméra (clic), molette zoom, F3 masquer',
     ].join('\n');
   }
-  requestAnimationFrame(frame);
+  nextFrame(frame);
 }
-requestAnimationFrame(frame);
+// En dev, avec ?minuterie : la boucle tourne sur une minuterie (outils de test qui pilotent le jeu dans un navigateur
+// dont l'affichage est en pause, où requestAnimationFrame ne se déclenche plus)
+const TIMER_LOOP = import.meta.env.DEV && new URLSearchParams(location.search).has('minuterie');
+function nextFrame(cb: FrameRequestCallback) {
+  if (TIMER_LOOP) setTimeout(() => cb(performance.now()), 16);
+  else requestAnimationFrame(cb);
+}
+nextFrame(frame);
 
 if (import.meta.env.DEV) {
   Object.assign(window, { __game: { game, cost, adaptive, vfx, sprites, rings, player: game.player, rig, camera, buveur, sky, heightAt, THREE, pipeline, renderer, planet, decor: planet.decor, scene, music, horde: game.horde, health: game.health, progression: game.progression, playerStats: game.stats, canette: game.loadout.weapons[0], setTimeScale: (k: number) => { game.devTimeScale = k; } } });

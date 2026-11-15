@@ -1108,6 +1108,16 @@ L'ordre après l'étape 7 est indicatif : il se rediscute à chaque feature vali
 
 ## 21. Journal des décisions et questions restantes
 
+### Tranché le 2026-11-15 (roster d'armes)
+
+- L'utilisateur a demandé d'enchaîner toutes les armes du roster V1 d'un coup (au lieu d'une par une validée) : les
+  n° 3 à 24 sont faites, sauf la n° 10 (à inventer). Toutes s'achètent en boutique à 100 TUNAS.
+- Choix faits sans l'utilisateur, à valider en jouant : Bière de Noël en orbite permanente (pas de cycle) ; Tireuse
+  qui vise le zombie le plus proche (pas la direction de course) ; Corne de brume dans la direction de course ; Rot
+  qui part dès qu'un zombie est à portée, chargé par l'XP ramassée depuis le dernier rot ; Plateau qui bloque tout
+  coup (contact, bouteille, piège), un par plateau, puis se recharge 7 s ; Weizen en nuage posé à hauteur de tête.
+- Restent à faire : évolutions et synergies des nouvelles armes, équilibrage de leurs chiffres.
+
 ### Tranché le 2026-11-06
 
 | Sujet | Décision |

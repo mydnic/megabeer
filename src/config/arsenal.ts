@@ -202,7 +202,7 @@ export const MORE_SOUNDS = {
 
 /** Weizen (n° 7) : un nuage de mousse se pose en l'air sur un groupe et y reste ; tout zombie dedans prend des coups. */
 export const WEIZEN = { cooldown: 3.2, firstDelay: 1, damage: 5, tick: 0.5, radius: 2.6, life: 5, range: 15, height: 1.3 } as const;
-export const WEIZEN_ZONE = { color: 0xfff6dc, rim: 0xead7a2, opacity: 0.6, lift: 1.3, fadeIn: 0.3, fadeOut: 1 } as const;
+export const WEIZEN_ZONE = { color: 0xfff6dc, rim: 0xead7a2, opacity: 0.32, lift: 2.3, fadeIn: 0.3, fadeOut: 1 } as const;
 export const WEIZEN_UPGRADES: readonly UpgradeDef[] = [DMG, RATEU, { id: 'projectiles', label: 'nuage en plus', value: 1, kind: 'flat', whole: true }, { id: 'size', label: 'taille du nuage', value: 0.12, kind: 'percent' }, { id: 'duration', label: 'durée du nuage', value: 0.15, kind: 'percent' }];
 
 /** Tireuse (n° 15) : un jet continu de bière en cône vers le zombie le plus proche, à moyenne portée. */
