@@ -47,3 +47,47 @@ export const BIERE_NOEL_UPGRADES: readonly UpgradeDef[] = [
   CRIT, CRITM,
 ];
 
+
+/**
+ * Décapsuleur (n° 14) : boomerang lancé vers un zombie ; il file, ralentit, revient vers le joueur et frappe chaque
+ * zombie traversé une fois à l'aller et une fois au retour. Les décapsuleurs en plus partent en éventail.
+ */
+export const DECAPSULEUR = {
+  cooldown: 2.4,
+  firstDelay: 0.6,
+  damage: 16,
+  critChance: 0.05,
+  critMult: 2,
+  /** Portée de détection de la cible (m), vitesse au lancer (m/s), rappel vers le joueur (m/s²). */
+  range: 14,
+  speed: 17,
+  pull: 16,
+  /** Hauteur de vol au-dessus du sol (m), contact du décapsuleur et corps d'un zombie (m). */
+  height: 1.1,
+  hitRadius: 0.4,
+  zombieRadius: 0.4,
+  /** Rattrapé à cette distance du joueur au retour (m) ; durée de vie maxi (s). */
+  catchDist: 0.9,
+  life: 4,
+  /** Écart entre deux décapsuleurs d'une volée (rad), tours par seconde sur lui-même. */
+  spread: 0.4,
+  spinRate: 4,
+  knock: 1,
+} as const;
+
+export const DECAPSULEUR_LOOK = {
+  file: 'decapsuleur.glb',
+  length: 0.42,
+  colors: { Metal: 0xd4d8de, Manche: 0xc8102e } as Record<string, number>,
+} as const;
+
+export const DECAPSULEUR_SOUND = { sample: 'impactMetal_light', volume: 0.4, pitch: 1.1, gap: 0.04 } as const;
+
+export const DECAPSULEUR_UPGRADES: readonly UpgradeDef[] = [
+  DMG,
+  { id: 'rate', label: "vitesse d'attaque", value: 0.10, kind: 'percent' },
+  { id: 'projectiles', label: 'décapsuleur en plus', value: 1, kind: 'flat', whole: true },
+  { id: 'speed', label: 'portée du lancer', value: 0.10, kind: 'percent' },
+  { id: 'size', label: 'taille', value: 0.10, kind: 'percent' },
+  CRIT, CRITM,
+];

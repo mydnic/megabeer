@@ -260,6 +260,7 @@ export const WEAPON_INFO = {
   gueuze: { name: 'Gueuze', pitch: 'Lancée sur le plus gros groupe, elle mousse puis explose' },
   tabouret: { name: 'Tabouret de bar', pitch: 'Un grand tour autour de toi : tout ce qui approche prend un coup et vole' },
   biereNoel: { name: 'Bière de Noël', pitch: 'Des bouteilles tournent autour de toi et cognent tout ce qui approche' },
+  decapsuleur: { name: "Décapsuleur", pitch: "Un boomerang : il part, revient, et frappe à l'aller comme au retour" },
 } as const satisfies Record<string, { name: string; pitch: string }>;
 
 /** Apparence de la Canette (canette de soda Kenney, découpée par tools/blender/props.py). */

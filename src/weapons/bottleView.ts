@@ -7,7 +7,8 @@ import type { Projectile } from './weapon';
 const urls = import.meta.glob(['../assets/quaternius-food-pack/*.glb', '../assets/models/*.glb'], { query: '?url', import: 'default', eager: true }) as Record<string, string>;
 
 /** Apparence d'une bouteille : modèle, longueur en jeu (m), couleur par matériau du modèle. */
-export type BottleLook = { file: string; length: number; colors: Record<string, number> };
+/** `fit` : 'max' met la plus grande dimension à `length` (objets plats ou ronds), sinon la longueur le long de Y. */
+export type BottleLook = { file: string; length: number; colors: Record<string, number>; fit?: 'axis' | 'max' };
 
 /** Nombre de projectiles prévus au départ ; la place double quand elle manque. */
 const INITIAL = 64;
@@ -27,7 +28,8 @@ export async function createBottleView(scene: THREE.Scene, L: BottleLook = CANET
   template.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(template);
   const center = box.getCenter(new THREE.Vector3());
-  const baseScale = L.length / (box.max.y - box.min.y);
+  const ext = box.getSize(new THREE.Vector3());
+  const baseScale = L.length / (L.fit === 'max' ? Math.max(ext.x, ext.y, ext.z) : ext.y);
   const recenter = new THREE.Matrix4().makeTranslation(-center.x, -center.y, -center.z);
 
   // Une pièce par maillage du modèle : géométrie ramenée dans le repère de la bouteille, cel-shading et couleurs de l'arme

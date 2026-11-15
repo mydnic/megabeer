@@ -130,6 +130,16 @@ ${label(20, 71, 9.5, 'Noël', '#fff', "Georgia, 'Times New Roman', serif", 22)}
 ${shell(STOUT)}
 ${R(13.5, 2.5, 13, 6.5, 1.5, G.gold, 'vol', 2.5)}`);
 
+/** Décapsuleur : manche rouge arrondi, tête en métal ajourée, une capsule accrochée au bec. */
+const decapsuleurIcon = (cls: string) => tall(cls, `
+${P('M13 46h14v30c0 3.900-3.100 7-7 7s-7-3.100-7-7z', '#c8102e', 'vol', 3)}
+${label(20, 66, 5.5, 'BAR', '#fff', 'Arial Black, Arial, sans-serif', 10)}
+${P('M11 44V24c0-6.600 4-11 9-11s9 4.400 9 11v20z', G.steel, 'vol', 3)}
+<path d="M15 25c0-3.300 2.200-5.500 5-5.500s5 2.200 5 5.500v4H15z" fill="${K}"/>
+<path d="M22 29h6v4h-6z" fill="${K}"/>
+${E(29, 31, 5.5, 5.5, G.gold, 'vol', 2.2)}
+<path d="M25.500 31h7M29 27.500v7" stroke="#a07a20" stroke-width="1"/>`);
+
 /** Icône de chaque arme (ajouter une arme = ajouter son icône ici). */
 const WEAPON_ICONS: Record<WeaponId, (cls: string) => string> = {
   canette: canetteIcon,
@@ -138,6 +148,7 @@ const WEAPON_ICONS: Record<WeaponId, (cls: string) => string> = {
   gueuze: gueuzeIcon,
   tabouret: tabouretIcon,
   biereNoel: noelIcon,
+  decapsuleur: decapsuleurIcon,
 };
 
 export const weaponIcon = (id: WeaponId, cls: string) => WEAPON_ICONS[id](cls);

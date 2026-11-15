@@ -3,11 +3,11 @@
 // (son au coup) et app/runLogging.ts (réglages notés dans le journal de run).
 
 import type { WeaponId } from '../weapons/weapon';
-import { BIERE_NOEL, BIERE_NOEL_LOOK, BIERE_NOEL_SOUND } from './arsenal';
+import { BIERE_NOEL, BIERE_NOEL_LOOK, BIERE_NOEL_SOUND, DECAPSULEUR, DECAPSULEUR_LOOK, DECAPSULEUR_SOUND } from './arsenal';
 import { CANETTE_LOOK, FUT, FUT_LOOK, FUT_SOUND, GUEUZE, GUEUZE_LOOK, STOUT_IMPACT, STOUT_LOOK, TABOURET, TABOURET_LOOK, TABOURET_SOUND, WEAPONS } from './weapons';
 
 /** Modèle d'un projectile en vol : fichier, longueur en jeu (m), couleur par nom de matériau du modèle. */
-export type WeaponLook = { file: string; length: number; colors: Record<string, number> };
+export type WeaponLook = { file: string; length: number; colors: Record<string, number>; fit?: 'axis' | 'max' };
 /** Un son : échantillon (audio/), volume, hauteur ; `gap` : écart minimal entre deux (s), pour les armes qui touchent en masse. */
 export type WeaponSound = { sample: string; volume: number; pitch: number; gap?: number };
 
@@ -29,4 +29,5 @@ export const WEAPON_FX: Record<WeaponId, WeaponFx> = {
   gueuze: { look: GUEUZE_LOOK, impact: {}, settings: GUEUZE },
   tabouret: { look: TABOURET_LOOK, impact: {}, hitSound: { ...TABOURET_SOUND.hit, gap: TABOURET_SOUND.hitGap }, settings: TABOURET },
   biereNoel: { look: BIERE_NOEL_LOOK, impact: { splash: 6 }, hitSound: BIERE_NOEL_SOUND, settings: BIERE_NOEL },
+  decapsuleur: { look: DECAPSULEUR_LOOK, impact: { splash: 4 }, hitSound: DECAPSULEUR_SOUND, settings: DECAPSULEUR },
 };
