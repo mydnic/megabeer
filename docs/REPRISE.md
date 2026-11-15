@@ -169,6 +169,12 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    synergies (`SYNERGIES` dans `config/weapons.ts`, chiffres `SYNERGY_FX` dans `config/arsenal.ts`), PWA (manifeste,
    icônes `tools/icons/pwa_icons.py`, `sw.js` sans cache, bouton « Installer l'appli »). À valider en jouant ;
    simplifications listées dans le journal du GDD (section 21).
+   **Parties jouées en prod** : chaque run envoie son journal (table `run_logs`) ; `node tools/runs/prod.mjs` (liste,
+   `--stats` par arme, `--dump ID`), avec CLOUDFLARE_ACCOUNT_ID et CLOUDFLARE_API_TOKEN en variables d'environnement.
+   **Le Père Noël fait le 2026-11-15, à valider en jeu** (2e nouveau perso) : modèle « Surprised Santa » (fourni par
+   l'utilisateur) monté sur le squelette du Buveur par `tools/blender/pere_noel.py`, 300 TUNAS. Prochains persos :
+   Le Crado, Le Barman, Le Moine brasseur, Le Supporter, La Serveuse, Le Cop (GDD section 5) ; l'utilisateur cherche
+   les modèles en ligne, la même méthode les monte sur le squelette du Buveur.
    Checkpoint 1, notes : base D1 `megabeer` (WEUR, id dans
    `wrangler.jsonc`, schéma appliqué), application Discord de l'utilisateur (Client ID dans `wrangler.jsonc`, secret
    posé par `wrangler secret put`, en local dans `.dev.vars`). Commandes Cloudflare : variables d'environnement
