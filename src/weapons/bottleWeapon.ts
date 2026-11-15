@@ -188,9 +188,9 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
     if (!n || b.child) return;
     const up = b.pos.clone().normalize();
     const e1 = new THREE.Vector3().crossVectors(up, Math.abs(up.y) < 0.9 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0)).normalize();
-    const start = b.pos.clone().addScaledVector(up, 0.4);
+    const start = b.pos.clone().addScaledVector(up, 0.1);
     for (let i = 0; i < n; i++) {
-      const v = e1.clone().applyAxisAngle(up, (i / n) * Math.PI * 2 + Math.random() * 0.3).multiplyScalar(W.fragmentSpeed ?? 9).addScaledVector(up, 4);
+      const v = e1.clone().applyAxisAngle(up, (i / n) * Math.PI * 2 + Math.random() * 0.3).multiplyScalar(W.fragmentSpeed ?? 9).addScaledVector(up, 1.5); // à hauteur de torse, pas par-dessus les têtes
       launch(start, v, null, true).hits.push(...b.hits); // pas sur le zombie que le bac vient de toucher
     }
     ctx.explode(weapon, b.pos, 1.5);

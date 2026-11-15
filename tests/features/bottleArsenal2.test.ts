@@ -1,9 +1,17 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BAC, BOUCHONS, VOMI } from '../../src/config/arsenal';
 import { catalog } from '../../src/meta/shop';
 import type { Zombie } from '../../src/enemies/zombie';
 import type { WeaponId } from '../../src/weapons/weapon';
 import { createTestGame } from '../support/testGame';
+
+/** Hasard à graine fixe : mêmes cibles et mêmes tirs à chaque passage. */
+function seeded(seed: number) {
+  let s = seed >>> 0;
+  return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 2 ** 32; };
+}
+beforeEach(() => { vi.spyOn(Math, 'random').mockImplementation(seeded(5)); });
+afterEach(() => { vi.restoreAllMocks(); });
 
 function arena(id: WeaponId) {
   const t = createTestGame();
