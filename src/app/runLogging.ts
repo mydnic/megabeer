@@ -1,7 +1,9 @@
 import { WEAPON_FX } from '../config/weaponFx';
+import { isTouchDevice } from '../core/input';
+import { LIGHT_RENDER } from '../render/quality';
 import { RARITIES } from '../config/upgrades';
 import { ENEMIES } from '../config/enemies';
-import type { createRunLog } from '../dev/runLog';
+import type { createRunLog } from './runLog';
 import type { Game } from '../game/game';
 
 /**
@@ -12,6 +14,7 @@ import type { Game } from '../game/game';
 export function wireRunLog(game: Game, runLog: ReturnType<typeof createRunLog>, meta: () => { seed: number; fps: number }) {
   game.events.on('runStarted', () => runLog.start({
     character: game.character, map: 'abbaye', seed: meta().seed, difficulty: game.difficulty,
+    build: __BUILD__, touch: typeof matchMedia !== 'undefined' && isTouchDevice(), light: LIGHT_RENDER,
     stats: { ...game.stats, maxHp: game.health.max },
     weapons: Object.fromEntries(game.loadout.weapons.map((w) => [w.id, WEAPON_FX[w.id].settings])),
     enemies: ENEMIES,
@@ -51,7 +54,12 @@ export function wireRunLog(game: Game, runLog: ReturnType<typeof createRunLog>, 
   game.events.on('chestDenied', ({ price, coins }) => runLog.event('chestDenied', price, coins));
   game.events.on('bellsLanding', ({ enemy }) => runLog.event('bells', enemy));
   game.events.on('bellsSurgeEnded', ({ count }) => runLog.event('bellsEnd', count));
-  game.events.on('runEnded', ({ reason, survived, kills }) => runLog.end(reason, { survived, kills }));
+  // Fin de run : l'arsenal final (niveau, évolution), les objets, les synergies, le niveau atteint
+  game.events.on('runEnded', ({ reason, survived, kills }) => runLog.end(reason, {
+    survived, kills, level: game.progression.level,
+    loadout: game.loadout.weapons.map((w) => `${w.id}:${w.mods.level}${w.mods.evolved ? ':evolue' : ''}`),
+    items: game.items.map((i) => i.item), synergies: game.activeSynergies(),
+  }));
   game.events.on('tick', ({ dt }) => runLog.tick(dt, () => {
     let alive = 0, near5 = 0, near10 = 0;
     for (const z of game.horde.zombies) {

@@ -5,7 +5,7 @@ import { WEAPON_FACTORIES } from '../weapons/registry';
 import type { WeaponId } from '../weapons/weapon';
 import { ENEMIES, type EnemyId } from '../config/enemies';
 import type { createMusic } from '../audio/music';
-import type { createRunLog } from '../dev/runLog';
+import type { createRunLog } from './runLog';
 import type { Game } from '../game/game';
 import { TOURNEE_IDS } from '../game/tournees';
 import type { TourneeId } from '../config/tournees';

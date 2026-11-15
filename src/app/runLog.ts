@@ -1,6 +1,8 @@
 /**
- * Journal de run (dev uniquement, GDD section 20) : tout ce qui se passe pendant une run est noté,
- * puis envoyé au serveur de dev à la fin (logs/runs/<id>.json) pour analyser l'équilibrage.
+ * Journal de run (GDD section 20) : tout ce qui se passe pendant une run est noté, puis envoyé à la fin pour analyser
+ * l'équilibrage. En dev : au serveur de dev (logs/runs/<id>.json), en entier. En prod : au Worker (/api/runlog, table
+ * run_logs de la base D1, lue avec tools/runs/prod.mjs), sans le détail de chaque coup, goutte d'XP ni apparition
+ * (des milliers par seconde en fin de partie) : leurs totaux restent dans `summary`.
  *
  * Format compact : `events` est une liste de [t, type, ...données] (t = temps de jeu en s, 2
  * décimales) ; `snapshots` est un état complet chaque seconde ; `summary` des totaux prêts à lire.
@@ -9,7 +11,11 @@
 type Snapshot = Record<string, number | string>;
 
 export function createRunLog() {
-  const enabled = import.meta.env.DEV;
+  const enabled = true;
+  const dev = import.meta.env.DEV;
+  const endpoint = dev ? '/__runlog' : '/api/runlog';
+  /** Événements trop nombreux pour la prod (leurs totaux sont dans le résumé). */
+  const noisy = new Set(dev ? [] : ['hit', 'xp', 'spawn']);
   let id = '';
   let started = 0;
   let t = 0;
@@ -43,8 +49,9 @@ export function createRunLog() {
       snapshots, events,
     });
     // sendBeacon survit à la fermeture de l'onglet
-    if (!navigator.sendBeacon?.('/__runlog', new Blob([body], { type: 'application/json' }))) {
-      void fetch('/__runlog', { method: 'POST', body, keepalive: true }).catch(() => {});
+    // sendBeacon est limité à 64 Ko : au-delà, fetch (il n'est plus garanti si l'onglet se ferme)
+    if (body.length > 60_000 || !navigator.sendBeacon?.(endpoint, new Blob([body], { type: 'application/json' }))) {
+      void fetch(endpoint, { method: 'POST', body, keepalive: body.length < 60_000, credentials: 'same-origin', headers: { 'Content-Type': 'application/json' } }).catch(() => {});
     }
   }
   if (enabled) addEventListener('pagehide', () => { if (open) { meta.end = 'page fermée'; send(); } });
@@ -74,7 +81,7 @@ export function createRunLog() {
       t += dt;
       if (t >= nextSnap) { snapshots.push({ t: r2(t), ...snapshot() }); nextSnap += 1; }
     },
-    event(type: string, ...data: (string | number)[]) { if (open) events.push([r2(t), type, ...data]); },
+    event(type: string, ...data: (string | number)[]) { if (open && !noisy.has(type)) events.push([r2(t), type, ...data]); },
 
     spawn(model: string) { if (!open) return; add(sum.spawns, model, 1); this.event('spawn', model); },
     /** Coup donné : arme, cible, dégâts, PV restants (négatif = dégâts perdus), critique (1) ou non. */

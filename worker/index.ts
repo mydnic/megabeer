@@ -79,6 +79,7 @@ async function route(request: Request, url: URL, env: Env): Promise<Response> {
     }
   }
   if (path === '/api/report' && method === 'POST') return postReport(request, env);
+  if (path === '/api/runlog' && method === 'POST') return postRunLog(request, env);
   if (path === '/api/score' && method === 'POST') return postScore(request, env);
   if (path === '/api/leaderboard' && method === 'GET') return leaderboard(request, env);
   return json({ error: 'introuvable' }, 404);
@@ -98,6 +99,25 @@ async function postReport(request: Request, env: Env) {
   try { JSON.parse(body); } catch { return json({ error: 'JSON invalide' }, 400); }
   await env.DB.prepare('INSERT INTO client_reports (at, data) VALUES (?, ?)').bind(Date.now(), body).run();
   await env.DB.prepare('DELETE FROM client_reports WHERE id <= (SELECT MAX(id) FROM client_reports) - ?').bind(REPORTS_KEPT).run();
+  return json({ ok: true });
+}
+
+/**
+ * Journal d'une partie (prod) : gardé en entier pour l'équilibrage, avec le joueur connecté s'il y en a un. Quelques
+ * colonnes lisibles d'un coup d'oeil (durée, kills, fin) ; seuls les RUN_LOGS_KEPT derniers restent.
+ */
+const RUN_LOGS_KEPT = 3000;
+async function postRunLog(request: Request, env: Env) {
+  const body = await request.text();
+  if (body.length > 1_500_000) return json({ error: 'journal trop gros' }, 413);
+  let log: { meta?: Record<string, unknown> };
+  try { log = JSON.parse(body); } catch { return json({ error: 'JSON invalide' }, 400); }
+  const meta = log.meta ?? {};
+  const user = await currentUser(request, env);
+  const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+  await env.DB.prepare('INSERT INTO run_logs (at, user_id, build, duration, kills, end_reason, data) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    .bind(Date.now(), user?.id ?? null, String(meta.build ?? '').slice(0, 60), num(meta.durationGame), num(meta.kills), String(meta.end ?? '').slice(0, 40), body).run();
+  await env.DB.prepare('DELETE FROM run_logs WHERE id <= (SELECT MAX(id) FROM run_logs) - ?').bind(RUN_LOGS_KEPT).run();
   return json({ ok: true });
 }
 

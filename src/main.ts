@@ -41,7 +41,7 @@ import { createBellDropsView } from './pickups/bellDropsView';
 import { createTourneeDropsView } from './pickups/tourneeDropsView';
 import { createSnackDropsView } from './pickups/snackDropsView';
 import { createDamageNumbers } from './ui/damageNumbers';
-import { createRunLog } from './dev/runLog';
+import { createRunLog } from './app/runLog';
 import { BuveurVisual } from './player/buveurVisual';
 import videurUrl from './assets/models/videur.glb?url';
 import { CHARACTERS } from './config/characters';
