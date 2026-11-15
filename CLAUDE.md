@@ -53,6 +53,7 @@ yarn build      # tsc --noEmit puis vite build : à lancer après chaque changem
 yarn test       # tests fonctionnels (vitest, Node, sans navigateur) : à lancer après chaque changement
 yarn deploy     # build + wrangler deploy (seulement sur demande)
 node tools/bench/run.mjs          # banc de mesure du noyau en fin de partie (ms par image) ; --prof : profil CPU
+node tools/runs/prod.mjs          # parties jouées en prod (base D1) ; --stats : par arme ; --dump ID : journal complet
 ```
 
 **Performances** : la fin de partie (des centaines d'ennemis et de projectiles) ne doit pas ralentir. Avant et

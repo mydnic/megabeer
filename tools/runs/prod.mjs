@@ -13,8 +13,9 @@ const args = process.argv.slice(2);
 const opt = (name) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] ?? true : null; };
 
 function query(sql) {
-  const out = execFileSync(process.platform === 'win32' ? 'npx.cmd' : 'npx', ['wrangler', 'd1', 'execute', 'megabeer', '--remote', '--json', '--command', sql], {
-    encoding: 'utf8', maxBuffer: 256 * 1024 * 1024, shell: process.platform === 'win32', stdio: ['ignore', 'pipe', 'pipe'],
+  // wrangler lancé par Node lui-même (sans shell) : la requête arrive entière, même sous Windows
+  const out = execFileSync(process.execPath, ['node_modules/wrangler/bin/wrangler.js', 'd1', 'execute', 'megabeer', '--remote', '--json', '--command', sql], {
+    encoding: 'utf8', maxBuffer: 256 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'],
   });
   return JSON.parse(out.slice(out.indexOf('[')))[0].results;
 }
