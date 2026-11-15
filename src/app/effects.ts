@@ -11,6 +11,7 @@ import type { PintProp } from '../player/pintProp';
 import type { Pipeline } from '../render/pipeline';
 import { KAMIKAZE_LOOK } from '../config/enemies';
 import { GUEUZE_BLAST } from '../config/weapons';
+import { WEAPON_FX } from '../config/weaponFx';
 import type { createShards } from '../fx/shards';
 import type { createDamageNumbers } from '../ui/damageNumbers';
 import { jitter } from './sounds';
@@ -72,11 +73,12 @@ export function wireEffects(game: Game, d: Deps) {
   const chest = (h = 1) => numPos.copy(game.player.pos).addScaledVector(up.copy(game.player.pos).normalize(), h);
 
   game.events.on('zombieHit', ({ weapon, zombie, impact, dir, damage, crit, shielded, combo, killed }) => {
-    // La Stout éclate en bière brune ; la Canette gicle en bière blonde, sans verre (elle est en métal) ;
-    // le fût écrase sans se briser (il éclate à la fin de sa course) ; la Gueuze a sa propre explosion
-    if (weapon?.id === 'stout') stoutSplash.burst(impact, dir);
-    else if (weapon?.id !== 'fut' && weapon?.id !== 'gueuze' && weapon?.id !== 'tabouret') buveur.splashAt(impact, 14);
-    if (weapon?.id !== 'canette' && weapon?.id !== 'fut' && weapon?.id !== 'gueuze' && weapon?.id !== 'tabouret') shards.burst(impact, dir);
+    // Impact propre à chaque arme (config/weaponFx.ts) : gerbe brune (Stout), giclée blonde, éclats de verre ; sans
+    // arme (objets, synergies), une giclée et du verre
+    const I = weapon ? WEAPON_FX[weapon.id].impact : { splash: 14, glass: true };
+    if (I.stout) stoutSplash.burst(impact, dir);
+    if (I.splash) buveur.splashAt(impact, I.splash);
+    if (I.glass) shards.burst(impact, dir);
     if (shielded) sparks.burst(impact, dir);
     // Éclat lumineux du coup ; critique ou combo : grosse étoile ; ennemi tué : il part en fumée
     if (crit || combo) vfx.crit(impact); else vfx.hit(impact);

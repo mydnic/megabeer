@@ -1,4 +1,5 @@
-import { CANETTE_IMPACT, FUT_SOUND, GUEUZE_BLAST, STOUT_IMPACT, TABOURET_SOUND } from '../config/weapons';
+import { CANETTE_IMPACT, FUT_SOUND, GUEUZE_BLAST } from '../config/weapons';
+import { WEAPON_FX } from '../config/weaponFx';
 import type * as THREE from 'three';
 import { BELL_SOUND } from '../config/abbey';
 import { AUDIO } from '../config/audio';
@@ -142,25 +143,19 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
     audio.play('impactWood_heavy', K.woodVolume * k, jitter(0.08));
     audio.play('impactSoft_heavy', K.splashVolume * k, 0.8 * jitter(0.08));
   });
-  // La Stout qui éclate sur un zombie : un choc sourd en plus du verre
+  // Son au coup propre à chaque arme (config/weaponFx.ts), espacé pour celles qui touchent beaucoup de zombies d'un coup
+  const lastHit = new Map<string, number>();
   game.events.on('zombieHit', ({ weapon }) => {
-    if (weapon?.id === 'stout') audio.play(STOUT_IMPACT.sample, STOUT_IMPACT.volume, STOUT_IMPACT.pitch * jitter(0.06));
+    const H = weapon && WEAPON_FX[weapon.id].hitSound;
+    if (!H) return;
+    const now = performance.now() / 1000;
+    if (H.gap && now - (lastHit.get(weapon.id) ?? -1) < H.gap) return;
+    lastHit.set(weapon.id, now);
+    audio.play(H.sample, H.volume, H.pitch * jitter(0.08));
   });
-  // Le Fût qui roule : il part dans un grondement de bois, écrase chaque zombie, éclate au bout de sa course
-  game.events.on('zombieHit', ({ weapon }) => {
-    if (weapon?.id === 'fut') audio.play(FUT_SOUND.crush.sample, FUT_SOUND.crush.volume, FUT_SOUND.crush.pitch * jitter(0.08));
-  });
+  // Le Fût qui roule éclate au bout de sa course
   game.events.on('projectileHitGround', ({ weapon }) => {
     if (weapon.id === 'fut') audio.play(FUT_SOUND.burst.sample, FUT_SOUND.burst.volume, FUT_SOUND.burst.pitch * jitter(0.08));
-  });
-  // Le Tabouret de bar : un choc de bois sur chaque zombie frappé (espacés, la mêlée en touche beaucoup d'un coup)
-  let lastStool = -1;
-  game.events.on('zombieHit', ({ weapon }) => {
-    if (weapon?.id !== 'tabouret') return;
-    const now = performance.now() / 1000;
-    if (now - lastStool < TABOURET_SOUND.hitGap) return;
-    lastStool = now;
-    audio.play(TABOURET_SOUND.hit.sample, TABOURET_SOUND.hit.volume, TABOURET_SOUND.hit.pitch * jitter(0.1));
   });
   // Objets à effet
   const I = AUDIO.items;

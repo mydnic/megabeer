@@ -4,7 +4,7 @@ import { CANETTE_LOOK } from '../config/weapons';
 import { characterMaterial, LAYER_CHARACTER } from '../render/materials';
 import type { Projectile } from './weapon';
 
-const urls = import.meta.glob(['../assets/quaternius-food-pack/*.glb', '../assets/models/bouteille_*.glb', '../assets/models/canette.glb', '../assets/models/fut.glb', '../assets/models/tabouret.glb'], { query: '?url', import: 'default', eager: true }) as Record<string, string>;
+const urls = import.meta.glob(['../assets/quaternius-food-pack/*.glb', '../assets/models/*.glb'], { query: '?url', import: 'default', eager: true }) as Record<string, string>;
 
 /** Apparence d'une bouteille : modèle, longueur en jeu (m), couleur par matériau du modèle. */
 export type BottleLook = { file: string; length: number; colors: Record<string, number> };

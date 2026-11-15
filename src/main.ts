@@ -19,7 +19,7 @@ import { createRingWaveView } from './fx/ringWaveView';
 import { createSprites } from './fx/sprites';
 import { createVfx } from './fx/vfx';
 import { BARREL_SHARDS, TIN_SHARDS, EARTH_CLODS, GUEUZE_BURST, ASH_BURST, EMBERS, FOAM_POP, ICE_SHARDS, GIFT_SPARKS, SHIELD_SPARKS, STOUT_SPLASH, VFX, WINE_BURST } from './config/fx';
-import { CANETTE_LOOK, FUT_LOOK, GUEUZE_LOOK, STOUT_LOOK, TABOURET_LOOK } from './config/weapons';
+import { WEAPON_FX } from './config/weaponFx';
 import type { WeaponId } from './weapons/weapon';
 import { createKamikazeView } from './enemies/kamikazeView';
 import { createProtectorView } from './enemies/protectorView';
@@ -111,11 +111,9 @@ const loading = {
   planet: boot(createPlanet(scene)),
   zombieLib: boot(loadZombieLibrary()),
   coinView: boot(createCoinDropsView(scene)),
-  canette: boot(createBottleView(scene, CANETTE_LOOK)),
-  stout: boot(createBottleView(scene, STOUT_LOOK)),
-  fut: boot(createBottleView(scene, FUT_LOOK)),
-  gueuze: boot(createBottleView(scene, GUEUZE_LOOK)),
-  tabouret: boot(createBottleView(scene, TABOURET_LOOK)),
+  // Une vue de projectiles par arme qui en a (modèle dans config/weaponFx.ts)
+  weaponViews: boot(Promise.all((Object.keys(WEAPON_FX) as WeaponId[]).filter((id) => WEAPON_FX[id].look)
+    .map(async (id) => [id, await createBottleView(scene, WEAPON_FX[id].look)] as const))),
   enemyShotsView: boot(createEnemyShotsView(scene)),
   pumpsView: boot(createPumpsView(scene)),
   chestsView: boot(createChestsView(scene)),
@@ -148,14 +146,8 @@ game.setThrowRig({ gesture: (rate) => buveur.throwGesture(rate), handPos: (out) 
 const hordeView = createHordeView(scene, zombieLib);
 const xpView = createXpDropsView(scene);
 const coinView = await loading.coinView;
-// Une vue de bouteilles par arme (chaque arme a sa bouteille)
-const bottleViews: Record<WeaponId, Awaited<ReturnType<typeof createBottleView>>> = {
-  canette: await loading.canette,
-  stout: await loading.stout,
-  fut: await loading.fut,
-  gueuze: await loading.gueuze,
-  tabouret: await loading.tabouret,
-};
+// Une vue de projectiles par arme qui en a
+const bottleViews = Object.fromEntries(await loading.weaponViews) as Partial<Record<WeaponId, Awaited<ReturnType<typeof createBottleView>>>>;
 const enemyShotsView = await loading.enemyShotsView;
 const groundAt = (p: THREE.Vector3) => game.player.supportAt(p, p.length());
 const shards = createShards(scene, groundAt);
@@ -268,7 +260,7 @@ function frame(now: number) {
   xpView.sync(game.xp.drops);
   coinView.sync(game.coinDrops.drops);
   tunaView.sync(game.tunaDrops.drops);
-  for (const id of Object.keys(bottleViews) as WeaponId[]) bottleViews[id].sync(projectiles(id));
+  for (const id of Object.keys(bottleViews) as WeaponId[]) bottleViews[id]!.sync(projectiles(id));
   enemyShotsView.sync(game.shots.shots);
   kamikazeView.sync(game.horde.zombies);
   protectorView.sync(game.horde.zombies);
