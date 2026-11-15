@@ -165,6 +165,10 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    de départ dans `config/arsenal.ts`, pas encore équilibrés en partie ; pas encore d'évolutions ni de synergies
    pour les nouvelles armes (GDD section 6). Mobile : rendu léger en 2x et caméra plus proche (`touchDistance`).
    Vérifier en jeu sans afficher le navigateur : `?minuterie` (la boucle tourne sur une minuterie, en dev).
+   **Le 2026-11-15, suite** : arme n° 10 inventée (le 421), évolutions des 24 armes (`config/evolutions.ts`), 16
+   synergies (`SYNERGIES` dans `config/weapons.ts`, chiffres `SYNERGY_FX` dans `config/arsenal.ts`), PWA (manifeste,
+   icônes `tools/icons/pwa_icons.py`, `sw.js` sans cache, bouton « Installer l'appli »). À valider en jouant ;
+   simplifications listées dans le journal du GDD (section 21).
    Checkpoint 1, notes : base D1 `megabeer` (WEUR, id dans
    `wrangler.jsonc`, schéma appliqué), application Discord de l'utilisateur (Client ID dans `wrangler.jsonc`, secret
    posé par `wrangler secret put`, en local dans `.dev.vars`). Commandes Cloudflare : variables d'environnement

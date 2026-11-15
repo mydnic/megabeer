@@ -231,7 +231,7 @@ Les armes de départ des persos font partie du roster (déblocage pour les autre
 | 7 | Weizen | Nuage persistant | Zone en l'air | **Mousse infinie** : le nuage suit le joueur (+ Bière sans alcool) |
 | 8 | Gueuze | Grenade à retardement | Explosion en zone sur la cible | **Gueuze Lambic** : explosions en chaîne (+ Ventre à bière) |
 | 9 | Bière de Noël | Orbite | Défense rapprochée | **Couronne de Noël** : orbite double, sens inverse (+ Bonnet du Père Noël) |
-| 10 | *À inventer* | | | La Pils tiède a été retirée le 2026-11-09 (« on va en inventer une autre mieux ») ; son évolution passera par le Trèfle de comptoir |
+| 10 | Le 421 | Dés lancés (dégâts selon la face) | Trois dés de comptoir : chaque 6 ajoute du critique pour la run, 4-2-1 dans la même volée fait jackpot (le 4 explose). Inventée le 2026-11-15 (inspirée du Dice de Megabonk) | **Dés pipés** : plus jamais de 1, chaque 4 fait jackpot (+ Trèfle de comptoir) |
 | 11 | Dessous de verre | Projectile perçant | Traverse les lignes | **Sous-bock tranchant** : revient vers le joueur (+ Aimant à capsules) |
 | 12 | Fût qui roule | Projectile roulant perçant | Écrase en ligne | **Rouleau compresseur** : fût géant, rebondit sur le décor (+ Godasses de bar) |
 | 13 | Flaque de bière | Traînée au sol derrière le joueur + glissade | Contrôle : les ennemis glissent et tombent | **Inondation** : traînée large, les ennemis tombés restent étourdis plus longtemps (+ Seau à glace) |
@@ -275,7 +275,7 @@ Les armes de départ des persos font partie du roster (déblocage pour les autre
 | Tireuse + IPA | Jet brûlant |
 | Plateau + Tabouret | Chaque coup bloqué déclenche un coup de tabouret |
 | Dessous de verre + Décapsuleur | Tous les projectiles reviennent vers le joueur |
-| Bière de Noël + n° 10 (à inventer) | À redéfinir avec la nouvelle arme (l'ancienne : l'orbite fait pleuvoir des bouteilles) |
+| Bière de Noël + Le 421 | « Noël au comptoir » (2026-11-15) : chaque jackpot du 421 double les bouteilles de la couronne pendant 6 s |
 | Vomi + Weizen | Nuage toxique (le poison cumulable s'applique en l'air) |
 | Fléchettes + Triple | Les fléchettes rebondissent |
 | Canette + Stout | "Black and Tan" (combo, décidé le 2026-11-09) : un zombie touché par une Stout est sonné 2 s (bulles de mousse qui tournent au-dessus de sa tête, il continue d'avancer) ; pendant ce temps, les canettes lui font double dégâts (chiffre affiché en gros). L'ancienne version (chaque tir lance aussi une Stout) est écartée : simple bonus de dégâts, invisible |
@@ -1116,7 +1116,20 @@ L'ordre après l'étape 7 est indicatif : il se rediscute à chaque feature vali
   qui vise le zombie le plus proche (pas la direction de course) ; Corne de brume dans la direction de course ; Rot
   qui part dès qu'un zombie est à portée, chargé par l'XP ramassée depuis le dernier rot ; Plateau qui bloque tout
   coup (contact, bouteille, piège), un par plateau, puis se recharge 7 s ; Weizen en nuage posé à hauteur de tête.
-- Restent à faire : évolutions et synergies des nouvelles armes, équilibrage de leurs chiffres.
+- Restent à faire : équilibrage des chiffres.
+
+### Tranché le 2026-11-15 (évolutions, synergies, arme n° 10)
+
+- **Arme n° 10 : le 421** (jeu de dés de comptoir), inspirée du Dice de Megabonk (megabonk.org) : voir le roster.
+- **Évolutions faites pour les 24 armes** (`config/evolutions.ts`) : arme au niveau 8 + son objet = carte « Évolution ».
+  Simplifications assumées, à revoir en jouant : Gastro (flaques plus grandes et plus longues, elles ne se
+  propagent pas d'elles-mêmes), Gueuze Lambic (deux gueuzes de plus et explosions plus larges, pas d'explosions en
+  chaîne), Rouleau compresseur (fût géant, il ne rebondit pas sur le décor), Le Carreau (les boules renversent plus,
+  elles n'éjectent pas les zombies dans les autres), Palette de bières (deux fois plus de bouteilles, elles ne
+  s'éclatent pas à leur tour), Haleine de fin de soirée (aura plus large, les zombies confus ne se frappent pas).
+- **Synergies faites** (les 15 de la liste, `SYNERGIES` et `SYNERGY_FX`). Simplification : Pétanque + Fût (« Carreau
+  sur le fût ») donne +2 rebonds et +30 % de dégâts aux boules, sans ricochet sur le fût lui-même.
+- Mobile : contours deux fois plus fins sur écran tactile, caméra à 9 m ; application installable (PWA).
 
 ### Tranché le 2026-11-06
 

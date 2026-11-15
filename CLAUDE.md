@@ -101,7 +101,9 @@ recopie son état à chaque image. Ne jamais remettre de logique de jeu dans `ma
   montée en difficulté, courbe dans `config/spawn.ts`), `mechanics/` (mécanique propre à chaque map, interface
   `MapMechanic` et registre : Abbaye = les cloches), `emitter.ts`.
 - `weapons/` : `weapon.ts` (**interface `Weapon`** et `WeaponContext`), `registry.ts`, une arme
-  par fichier : les 23 armes du roster V1 (la n° 10 reste à inventer). Les projectiles lancés partagent la brique
+  par fichier : les 24 armes du roster V1. Évolutions : `config/evolutions.ts` (niveau 8 + objet = carte Évolution,
+  bonus de réglages et `mods.evolved` lu par l'arme). Synergies : `SYNERGIES` (`config/weapons.ts`) lues par les armes
+  avec `ctx.synergy(id)` (chiffres `SYNERGY_FX`) ; `ctx.zonesOf` et `ctx.trigger` pour celles qui relient deux armes. Les projectiles lancés partagent la brique
   `bottleWeapon.ts` (visée proche, solide ou groupe, volées, perçage, recul, et en option : rebonds, éclaboussure qui
   ralentit, brûlure, éventail, rebonds au sol, fragmentation, flaque de poison, vol à plat ou pointe en avant) ; les
   autres ont leur fichier (orbite `biereNoel.ts`, boomerang `decapsuleur.ts`, traînée `flaqueBiere.ts`, nuage
