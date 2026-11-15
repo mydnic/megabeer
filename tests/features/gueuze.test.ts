@@ -1,6 +1,14 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GUEUZE as G } from '../../src/config/weapons';
 import { createTestGame } from '../support/testGame';
+
+/** Hasard à graine fixe : la bouteille suit toujours la même trajectoire (au hasard, elle frôlait parfois un zombie). */
+function seeded(seed: number) {
+  let s = seed >>> 0;
+  return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 2 ** 32; };
+}
+beforeEach(() => { vi.spyOn(Math, 'random').mockImplementation(seeded(4)); });
+afterEach(() => { vi.restoreAllMocks(); });
 
 /** Une run au sol sans zombies, la Gueuze équipée et la Canette désarmée ; aucun critique. */
 function arena() {
