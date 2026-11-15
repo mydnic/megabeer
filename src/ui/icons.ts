@@ -269,6 +269,15 @@ ${P('M20 26a17 21 0 1 1 0 42a17 21 0 1 1 0-42z', '#8a8e98', 'vol', 3)}
 ${E(20, 47, 13, 16.500, '#c8ccd4', 'vol', 1.600)}
 <path d="M11 38c2-5 6-8 10-8" stroke="#fff" stroke-opacity=".7" stroke-width="2.400" fill="none" stroke-linecap="round"/>`);
 
+/** Le 421 : trois dés de comptoir en escalier, faces 4, 2 et 1 visibles. */
+const des421Icon = (cls: string) => tall(cls, `
+${R(3, 54, 18, 18, 3.500, '#f6f0e2', 'vol', 2.600)}
+<circle cx="8" cy="59" r="1.800" fill="${K}"/><circle cx="16" cy="59" r="1.800" fill="${K}"/><circle cx="8" cy="67" r="1.800" fill="${K}"/><circle cx="16" cy="67" r="1.800" fill="${K}"/>
+${R(19, 38, 18, 18, 3.500, '#f6f0e2', 'vol', 2.600)}
+<circle cx="24" cy="43" r="1.800" fill="${K}"/><circle cx="32" cy="51" r="1.800" fill="${K}"/>
+${R(8, 20, 16, 16, 3.200, '#f6f0e2', 'vol', 2.600)}
+<circle cx="16" cy="28" r="2.200" fill="#c8102e"/>`);
+
 /** Icône de chaque arme (ajouter une arme = ajouter son icône ici). */
 const WEAPON_ICONS: Record<WeaponId, (cls: string) => string> = {
   canette: canetteIcon,
@@ -294,6 +303,7 @@ const WEAPON_ICONS: Record<WeaponId, (cls: string) => string> = {
   rot: rotIcon,
   odeur: odeurIcon,
   plateau: plateauIcon,
+  des421: des421Icon,
 };
 
 export const weaponIcon = (id: WeaponId, cls: string) => WEAPON_ICONS[id](cls);

@@ -230,6 +230,8 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   game.events.on('freeChestSpawned', () => { banner.show('Coffre gratuit !', 'Le Bonnet du Père Noël en a posé un près de toi'); banner.hideAfter(2.5); });
   game.events.on('lastCallRung', () => { banner.show(LAST_CALL_TEXT.banner, LAST_CALL_TEXT.sub); banner.pulse(); banner.hideAfter(2.5); });
   game.events.on('tourneeTaken', ({ id }) => { const T = TOURNEES[id]; banner.show(`${T.name} !`, T.text); banner.pulse(); banner.hideAfter(2); });
+  // Le 421 : le jackpot (4-2-1 dans la même volée) s'annonce
+  game.events.on('weaponExploded', ({ weapon }) => { if (weapon.id === 'des421') { banner.show('421 !', 'Jackpot : le 4 explose'); banner.pulse(); banner.hideAfter(1.6); } });
   // Boss : sa barre de vie, un bandeau à son arrivée et quand il passe en phase 2
   const BOSS_TEXT = {
     sonneur: { come: 'Saute par-dessus les ondes de sa cloche', rage: ['Il est furieux !', 'Plus rapide, et deux ondes à chaque coup'], fall: 'Un coffre légendaire t\'attend' },

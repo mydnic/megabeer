@@ -11,7 +11,7 @@ import type { Projectile, Weapon, WeaponContext, WeaponMods } from './weapon';
  * Une bouteille en vol : zombies qu'elle peut encore traverser, ceux déjà touchés (pas deux fois le
  * même), sa cible et les dégâts qu'elle lui réserve (comptés dans `incoming` jusqu'à sa fin).
  */
-type Bottle = Projectile & { pierce: number; hits: Zombie[]; target: Zombie | null; expected: number; bounces: number; ground: number; child: boolean };
+type Bottle = Projectile & { pierce: number; hits: Zombie[]; target: Zombie | null; expected: number; bounces: number; ground: number; child: boolean; face: number; jackpot: boolean };
 
 /** Réglages d'une arme à bouteilles : ceux de la Canette (config/weapons.ts), plus les briques facultatives. */
 export type BottleConfig = { [K in keyof typeof WEAPONS.canette]: number } & {
@@ -31,12 +31,18 @@ export type BottleConfig = { [K in keyof typeof WEAPONS.canette]: number } & {
   fragments?: number; fragmentDamage?: number; fragmentSpeed?: number;
   /** Flaque de poison à l'impact (Vomi) : rayon (m), durée (s), dégâts par seconde (part des dégâts) par cumul, cumul maxi. */
   pool?: { radius: number; life: number; dps: number; maxStacks: number };
+  /**
+   * Dés (le 421) : chaque projectile est un dé tiré de 1 à 6, ses dégâts x face / 3,5 ; chaque 6 ajoute `critPerSix`
+   * de chances de critique pour le reste de la run (jusqu'à `critCap`) ; une volée qui sort 4, 2 et 1 fait jackpot :
+   * le 4 explose à l'impact (`jackpotDamage` x les dégâts, rayon `jackpotRadius` m). `minFace` : plus petite face.
+   */
+  dice?: { critPerSix: number; critCap: number; jackpotDamage: number; jackpotRadius: number; minFace?: number };
   /** Visée : 'near' (les plus proches, par défaut) ou 'strong' (le plus de PV à portée : Fléchettes). */
   aim?: 'near' | 'strong' | 'crowd';
 };
 
 /** Bouteille en attente de lâcher (volée en cours). */
-type Pending = { t: number; index: number; of: number };
+type Pending = { t: number; index: number; of: number; face: number; jackpot: boolean };
 
 /**
  * Brique « bouteille lancée » (Canette, Stout...) : bouteilles (ou canettes) lancées en cloche vers les zombies les
@@ -57,6 +63,8 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
   const zones: Zone[] = [];
   const poison = new Map<Zombie, number>();
   let poisonTick = 0;
+  /** Chances de critique gagnées avec les 6 des dés (le 421), pour la run. */
+  let diceCrit = 0;
   /** Cible commune de la volée en éventail (Bouchons). */
   let fanTarget: Zombie | null = null;
   let timer = 0.3;
@@ -99,10 +107,10 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
   }
 
   /** Lance une bouteille (réutilise un emplacement libre). */
-  function launch(pos: THREE.Vector3, v: THREE.Vector3, target: Zombie | null, child = false) {
+  function launch(pos: THREE.Vector3, v: THREE.Vector3, target: Zombie | null, child = false, face = 0, jackpot = false) {
     let b = projectiles.find((x) => !x.active);
     if (!b) {
-      b = { pos: new THREE.Vector3(), vel: new THREE.Vector3(), up0: new THREE.Vector3(), spinAxis: new THREE.Vector3(), spinRate: 0, gravity: 0, age: 0, size: 1, active: false, pierce: 0, hits: [], target: null, expected: 0, bounces: 0, ground: 0, child: false };
+      b = { pos: new THREE.Vector3(), vel: new THREE.Vector3(), up0: new THREE.Vector3(), spinAxis: new THREE.Vector3(), spinRate: 0, gravity: 0, age: 0, size: 1, active: false, pierce: 0, hits: [], target: null, expected: 0, bounces: 0, ground: 0, child: false, face: 0, jackpot: false };
       projectiles.push(b);
     }
     b.pos.copy(pos);
@@ -116,6 +124,8 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
     b.bounces = (W.bounces ?? 0) + (mods.bounces ?? 0);
     b.ground = W.groundBounces ?? 0;
     b.child = child;
+    b.face = face;
+    b.jackpot = jackpot;
     b.hidden = child;
     b.hits.length = 0;
     // Réserve ses dégâts sur sa cible : les tirs suivants visent ailleurs si elle est condamnée
@@ -133,7 +143,7 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
   }
 
   /** Lâche une bouteille de la main vers une cible de la volée (voir targeting.ts). */
-  function release(k = 0, n = 1) {
+  function release(k = 0, n = 1, face = 0, jackpot = false) {
     ctx.rig.handPos(hand);
     const range = W.range * mods.range;
     // Éventail : toute la volée vers la même cible, chaque projectile écarté de son angle
@@ -153,7 +163,18 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
     volley.add(z);
     solve(hand, z, vel);
     if (again) vel.applyAxisAngle(tmp.copy(hand).normalize(), (Math.random() - 0.5) * 0.25);
-    launch(hand, vel, z);
+    launch(hand, vel, z, false, face, jackpot);
+  }
+
+  /** Jackpot du 421 : le dé explose et frappe tous les zombies autour. */
+  function jackpot(at: THREE.Vector3) {
+    const J = W.dice!;
+    const r = J.jackpotRadius * mods.size;
+    ctx.explode(weapon, at, r);
+    for (const o of ctx.zombiesNear(at, r, side)) {
+      if (!o.targetable || o.pos.distanceTo(at) > r) continue;
+      ctx.hitZombie(weapon, o, W.damage * mods.damage * J.jackpotDamage, true, o.pos, tmp.subVectors(o.pos, at), 2);
+    }
   }
 
   /** Le zombie au cœur du plus gros groupe à portée (Vomi) : celui qui a le plus de voisins proches. */
@@ -257,9 +278,11 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
     for (const z of ctx.zombiesNear(b.pos, 3, around)) {
       if (!z.targetable || b.hits.includes(z) || z.pos.distanceToSquared(b.pos) > 9) continue;
       if (segToZombie(prev, b.pos, z) < W.radius * mods.size + W.zombieRadius) {
-        const crit = Math.random() < W.critChance + mods.critChance + ctx.stats.critChance;
-        const gain = (W.bounceGain ?? 1) ** Math.max(0, b.hits.length);
+        const crit = Math.random() < W.critChance + mods.critChance + ctx.stats.critChance + diceCrit;
+        const gain = (W.bounceGain ?? 1) ** Math.max(0, b.hits.length) * (b.face ? b.face / 3.5 : 1);
         const dmg = W.damage * mods.damage * gain * (crit ? W.critMult + mods.critMult : 1);
+        if (b.face === 6 && W.dice) diceCrit = Math.min(W.dice.critCap, diceCrit + W.dice.critPerSix);
+        if (b.jackpot) { b.jackpot = false; jackpot(b.pos); }
         ctx.hitZombie(weapon, z, b.child ? dmg * (W.fragmentDamage ?? 0.5) : dmg, crit, b.pos, b.vel, W.knock * mods.knock);
         b.hits.push(z);
         splash(b.pos, dmg, z);
@@ -282,6 +305,7 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
       splash(b.pos, W.damage * mods.damage, null);
       puddle(b.pos);
       shatter(b);
+      if (b.jackpot) jackpot(b.pos);
       ctx.hitGround(weapon, b.pos, b.vel);
       return false;
     }
@@ -301,7 +325,7 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
       // Lâchers en attente (volée en cours)
       for (let i = pending.length - 1; i >= 0; i--) {
         pending[i].t -= dt;
-        if (pending[i].t <= 0) { release(pending[i].index, pending[i].of); pending.splice(i, 1); }
+        if (pending[i].t <= 0) { const q = pending[i]; release(q.index, q.of, q.face, q.jackpot); pending.splice(i, 1); }
       }
       timer -= dt;
       if (timer > 0) return;
@@ -316,7 +340,10 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
       const first = W.releaseDelay / rate;
       // Rafale : les bouteilles d'une volée partent à la suite, l'écart se resserre avec la cadence
       const gap = W.fan ? 0 : Math.min(W.volleyGap, interval / (n + 1));
-      for (let k = 0; k < n; k++) pending.push({ t: first + k * gap, index: k, of: n });
+      // Dés (le 421) : les faces de la volée sont tirées d'un coup ; 4, 2 et 1 ensemble font jackpot (sur le 4)
+      const faces = W.dice ? Array.from({ length: n }, () => (W.dice!.minFace ?? 1) + Math.floor(Math.random() * (7 - (W.dice!.minFace ?? 1)))) : [];
+      const win = W.dice ? [4, 2, 1].every((f) => faces.includes(f)) : false;
+      for (let k = 0; k < n; k++) pending.push({ t: first + k * gap, index: k, of: n, face: faces[k] ?? 0, jackpot: win && k === faces.indexOf(4) });
     },
     updateProjectiles(dt: number) {
       // Brûlure : un coup toutes les demi-secondes tant qu'elle dure
@@ -363,6 +390,7 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
       }
     },
     reset() {
+      diceCrit = 0;
       burning.clear();
       poison.clear();
       for (const z of zones) z.active = false;

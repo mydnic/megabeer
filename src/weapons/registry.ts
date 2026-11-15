@@ -21,6 +21,7 @@ import { createCorne } from './corne';
 import { createRot } from './rot';
 import { createOdeur } from './odeur';
 import { createPlateau } from './plateau';
+import { createDes421 } from './des421';
 import type { Weapon, WeaponContext, WeaponId } from './weapon';
 
 /** Toutes les armes du jeu : ajouter une arme = ajouter son créateur ici. */
@@ -48,4 +49,5 @@ export const WEAPON_FACTORIES: Record<WeaponId, (ctx: WeaponContext) => Weapon> 
   rot: createRot,
   odeur: createOdeur,
   plateau: createPlateau,
+  des421: createDes421,
 };

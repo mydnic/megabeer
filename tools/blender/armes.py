@@ -11,6 +11,7 @@ Variantes (--variant) :
 - boule : boule de pétanque (Metal) striée (Stries).
 - bac : bac de bière en plastique (Bac) rempli de goulots (Verre, Capsule).
 - plateau : plateau de serveur rond (Plateau) et son rebord (Rebord).
+- de : dé de comptoir (Ivoire) à points noirs (Points), pour le 421.
 
 Usage (Blender 5.2) :
   blender -b --factory-startup -P tools/blender/armes.py -- --variant decapsuleur --out src/assets/models/decapsuleur.glb
@@ -129,6 +130,26 @@ elif v == 'plateau':
     tray, rim = mat('Plateau', (0.72, 0.74, 0.78)), mat('Rebord', (0.55, 0.57, 0.62))
     cyl(0.18, 0.008, (0, 0, 0), tray, verts=28, rot=(H, 0, 0))
     torus(0.18, 0.008, (0, 0, 0.004), rim, rot=(0, 0, 0), major=28, minor=6)
+elif v == 'de':
+    # Dé de comptoir : cube blanc aux arêtes adoucies, points noirs (faces 1 à 6)
+    ivory, pip = mat('Ivoire', (0.96, 0.94, 0.88)), mat('Points', (0.08, 0.06, 0.05))
+    bpy.ops.mesh.primitive_cube_add(size=0.05, location=(0, 0, 0))
+    cube = last()
+    bev = cube.modifiers.new('arrondi', 'BEVEL')
+    bev.width, bev.segments = 0.006, 3
+    bpy.context.view_layer.objects.active = cube
+    bpy.ops.object.modifier_apply(modifier='arrondi')
+    tag(cube, ivory)
+    h, r, s = 0.0252, 0.0045, 0.012
+    faces = {  # normale (axe, signe) -> positions des points dans la face
+        ('z', 1): [(0, 0)], ('z', -1): [(-s, -s), (-s, 0), (-s, s), (s, -s), (s, 0), (s, s)],
+        ('x', 1): [(-s, -s), (s, s)], ('x', -1): [(-s, -s), (-s, s), (s, -s), (s, s), (0, 0)],
+        ('y', 1): [(-s, -s), (0, 0), (s, s)], ('y', -1): [(-s, -s), (-s, s), (s, -s), (s, s)],
+    }
+    for (axis, sign), dots in faces.items():
+        for a, b in dots:
+            loc = {'x': (sign * h, a, b), 'y': (a, sign * h, b), 'z': (a, b, sign * h)}[axis]
+            sphere(r, loc, pip, seg=8, rings=6)
 else:
     raise SystemExit(f'variante inconnue : {v}')
 

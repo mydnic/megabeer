@@ -277,6 +277,7 @@ export const WEAPON_INFO = {
   rot: { name: "Rot sonique", pitch: "Une onde autour de toi qui se charge avec les capsules ramassées : fonce, puis rote" },
   odeur: { name: "Odeur d'alcool", pitch: "Une aura autour de toi : les zombies trop près titubent et prennent des petits dégâts" },
   plateau: { name: "Plateau de serveur", pitch: "Des plateaux tournent autour de toi et bloquent chacun un coup, puis se rechargent" },
+  des421: { name: "Le 421", pitch: "Trois dés de comptoir : chaque 6 aiguise tes critiques, et 4-2-1 fait tout sauter" },
 } as const satisfies Record<string, { name: string; pitch: string }>;
 
 /** Apparence de la Canette (canette de soda Kenney, découpée par tools/blender/props.py). */
