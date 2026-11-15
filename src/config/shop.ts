@@ -11,6 +11,7 @@ import type { WeaponId } from '../weapons/weapon';
 export const SHOP_CHARACTERS: readonly { id: string; name: string; pitch: string; price: number }[] = [
   { id: 'buveur', name: 'Le Buveur', pitch: 'Pinte à la main, il lance des canettes', price: 0 },
   { id: 'videur', name: 'Le Videur', pitch: '+3 armure, insensible au recul, Tabouret de bar', price: 0 },
+  { id: 'pereNoel', name: 'Le Père Noël', pitch: 'Un cadeau toutes les 2 min, Bière de Noël', price: 300 },
 ];
 
 /** Persos disponibles dès le départ. */

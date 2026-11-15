@@ -16,6 +16,8 @@ export type CharacterDef = {
   stats: readonly { stat: ItemStatId; value: number }[];
   /** Insensible au recul : les coups des ennemis ne le repoussent pas. */
   knockImmune?: boolean;
+  /** Un coffre gratuit (un petit fût cadeau) apparaît près de lui toutes les `freeChestEvery` s. */
+  freeChestEvery?: number;
 };
 
 export const CHARACTERS = {
@@ -26,6 +28,11 @@ export const CHARACTERS = {
     name: 'Le Videur', pitch: '+3 armure, insensible au recul, costaud mais lent. Tabouret de bar.', weapon: 'tabouret', model: 'videur',
     stats: [{ stat: 'armor', value: 3 }, { stat: 'maxHp', value: 30 }, { stat: 'moveSpeed', value: -0.1 }],
     knockImmune: true,
+  },
+  pereNoel: {
+    name: 'Le Père Noël', pitch: 'Un cadeau près de lui toutes les 2 min. Costaud mais lent. Bière de Noël.', weapon: 'biereNoel', model: 'pere_noel',
+    stats: [{ stat: 'maxHp', value: 25 }, { stat: 'moveSpeed', value: -0.08 }],
+    freeChestEvery: 120,
   },
 } as const satisfies Record<string, CharacterDef>;
 

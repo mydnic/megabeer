@@ -73,6 +73,26 @@ describe('Les persos jouables', () => {
     expect(t.events('runEnded').at(-1)?.character).toBe('videur');
   });
 
+  it('le Père Noël reçoit un cadeau (un coffre gratuit) près de lui à intervalle régulier', () => {
+    const t = runWith('pereNoel');
+    const every = CHARACTERS.pereNoel.freeChestEvery;
+    t.play(every - 2);
+    expect(t.events('freeChestSpawned')).toHaveLength(0);
+    t.play(3);
+    expect(t.events('freeChestSpawned')).toHaveLength(1);
+    // Le Buveur, lui, n'en reçoit pas
+    const b = runWith('buveur');
+    b.play(every + 1);
+    expect(b.events('freeChestSpawned')).toHaveLength(0);
+  });
+
+  it('le Père Noël s achète en boutique', () => {
+    const p = { ...emptyProfile(), tunas: 1e6 };
+    expect(owned(p, 'character:pereNoel')).toBe(false);
+    const bought = buy(p, 'character:pereNoel', 0)!;
+    expect(owned(bought, 'character:pereNoel')).toBe(true);
+  });
+
   it('le Videur se débloque avec le succès Sonné, pas en boutique', () => {
     const a = ACHIEVEMENTS.find((x) => x.unlocks?.includes('character:videur'))!;
     expect(a).toBeDefined();

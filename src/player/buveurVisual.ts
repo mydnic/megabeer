@@ -122,8 +122,16 @@ export class BuveurVisual {
       actions[name] = action;
     }
     // Lancer : clip additif (seul l'écart à sa pose de départ s'ajoute à la course ou à l'attente)
-    const throwClip = gltf.animations.find((a) => a.name === 'throw');
-    if (!throwClip) throw new Error(`Animation manquante dans ${id} : throw`);
+    const source = gltf.animations.find((a) => a.name === 'throw');
+    if (!source) throw new Error(`Animation manquante dans ${id} : throw`);
+    // Copie profonde avant de le rendre additif : un GLB peut partager les mêmes données entre clips (une échelle
+    // constante à 1), et makeClipAdditive les modifie sur place (1 - 1 = 0 : tout le perso écrasé en un point)
+    const throwClip = new THREE.AnimationClip(source.name, source.duration,
+      source.tracks.map((t) => {
+        const copy = new (t.constructor as new (n: string, ti: Float32Array, v: Float32Array) => THREE.KeyframeTrack)(t.name, t.times.slice(), t.values.slice());
+        copy.setInterpolation(t.getInterpolation());
+        return copy;
+      }));
     THREE.AnimationUtils.makeClipAdditive(throwClip);
     const throwAction = mixer.clipAction(throwClip);
     throwAction.blendMode = THREE.AdditiveAnimationBlendMode;

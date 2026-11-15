@@ -49,6 +49,7 @@ import { createShopScreen } from '../ui/shopScreen';
 import { renderPortrait } from '../render/portrait';
 import buveurUrl from '../assets/models/buveur.glb?url';
 import videurUrl from '../assets/models/videur.glb?url';
+import pereNoelUrl from '../assets/models/pere_noel.glb?url';
 import { runUnlocks } from '../meta/shop';
 import { createProgress } from './progress';
 import { TOURNEES } from '../config/tournees';
@@ -191,7 +192,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   // Boutique : persos, armes et objets à débloquer avec les TUNAS
   // Portraits des persos, rendus une fois depuis leur modèle 3D
   const portraits = new Map<string, string>();
-  const models: Record<string, string> = { buveur: buveurUrl, videur: videurUrl };
+  const models: Record<string, string> = { buveur: buveurUrl, videur: videurUrl, pere_noel: pereNoelUrl };
   for (const id of Object.keys(CHARACTERS) as CharacterId[]) {
     void renderPortrait(models[CHARACTERS[id].model]).then((u) => { portraits.set(id, u); shop.refresh(); setup.refresh(); }).catch((e) => console.error('[portrait]', e));
   }
@@ -228,7 +229,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
     banner.hideAfter(duration);
   });
   game.events.on('revived', () => { banner.show('Seconde tournée !', 'Tu reviens à la vie'); banner.pulse(); banner.hideAfter(2.5); });
-  game.events.on('freeChestSpawned', () => { banner.show('Coffre gratuit !', 'Le Bonnet du Père Noël en a posé un près de toi'); banner.hideAfter(2.5); });
+  game.events.on('freeChestSpawned', () => { banner.show('Coffre gratuit !', 'Un cadeau est apparu près de toi'); banner.hideAfter(2.5); });
   game.events.on('lastCallRung', () => { banner.show(LAST_CALL_TEXT.banner, LAST_CALL_TEXT.sub); banner.pulse(); banner.hideAfter(2.5); });
   game.events.on('tourneeTaken', ({ id }) => { const T = TOURNEES[id]; banner.show(`${T.name} !`, T.text); banner.pulse(); banner.hideAfter(2); });
   // Une arme évolue : bandeau avec son nouveau nom

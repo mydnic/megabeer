@@ -1103,8 +1103,12 @@ export class Game {
       const damage = this.effects.power.musicWave * this.stats.damage * spawnCurveAt(this.runTime).hpMul * this.mods.hp;
       this.shockwave(M.radius * this.stats.size, M.knock, damage);
     }
+    // Le Père Noël (passif du perso) : un coffre gratuit près de lui à intervalle régulier
+    const every = (CHARACTERS[this.character] as { freeChestEvery?: number }).freeChestEvery;
+    let gift = false;
+    if (every && this.phase === 'run' && (this.giftIn -= dt) <= 0) { this.giftIn += every; gift = true; }
     // Bonnet du Père Noël : un coffre gratuit tombe près du joueur
-    if (fx.freeChest) {
+    if (fx.freeChest || gift) {
       const chest = this.chests.addFree(this.player.pos, this.player.facing, ITEM_EFFECTS.freeChest.dist);
       if (chest) this.events.emit('freeChestSpawned', { chest });
     }
@@ -1136,6 +1140,8 @@ export class Game {
 
   /** XP ramassée pendant la run (le Rot sonique se charge avec). */
   xpGathered = 0;
+  /** Temps avant le prochain cadeau du Père Noël (s). */
+  private giftIn = 0;
 
   private collectXp(amount: number) {
     this.xpGathered += amount;
@@ -1281,6 +1287,7 @@ export class Game {
 
   private resetRun() {
     this.xpGathered = 0;
+    this.giftIn = (CHARACTERS[this.character] as { freeChestEvery?: number }).freeChestEvery ?? 0;
     this.deadTime = -1;
     this.arriving = false;
     this.menuPaused = false;

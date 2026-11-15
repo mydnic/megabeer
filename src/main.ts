@@ -44,6 +44,7 @@ import { createDamageNumbers } from './ui/damageNumbers';
 import { createRunLog } from './app/runLog';
 import { BuveurVisual } from './player/buveurVisual';
 import videurUrl from './assets/models/videur.glb?url';
+import pereNoelUrl from './assets/models/pere_noel.glb?url';
 import { CHARACTERS } from './config/characters';
 import { CameraRig } from './player/cameraRig';
 import { PintProp } from './player/pintProp';
@@ -143,6 +144,7 @@ const buveur = new BuveurVisual(scene);
 buveur.load().catch((e) => console.error(e));
 // Le Videur (perso débloqué par un succès) : chargé à côté, affiché quand on le choisit
 buveur.load('videur', videurUrl).catch((e) => console.error(e));
+buveur.load('pere_noel', pereNoelUrl).catch((e) => console.error(e));
 game.setThrowRig({ gesture: (rate) => buveur.throwGesture(rate), handPos: (out) => buveur.leftHandPos(out) });
 const hordeView = createHordeView(scene, zombieLib);
 const xpView = createXpDropsView(scene);

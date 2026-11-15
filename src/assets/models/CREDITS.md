@@ -24,5 +24,8 @@
 - `tabouret.glb` : « Stool » par CMHT Oculus (fichier fourni par l'utilisateur, nom d'origine
   `Stool by CMHT Oculus - dVl5cuOdnMV.glb`, Poly Pizza). Licence à confirmer sur la page source (probablement CC-BY,
   crédit obligatoire). L'arme Tabouret de bar du Videur.
+- `pere_noel.glb` : « Surprised Santa » par Matt Connors (fichier fourni par l'utilisateur, nom d'origine
+  `Surprised Santa by Matt Connors - 3Q7goR4wcNE.glb`, Poly Pizza / Poly by Google). Licence à confirmer sur la page
+  source (probablement CC-BY, crédit obligatoire). Monté sur le squelette du Buveur par `tools/blender/pere_noel.py`.
 
 Les autres GLB de ce dossier sont générés par les scripts de `tools/blender/` (voir CLAUDE.md).
