@@ -4,6 +4,9 @@ import { CHARACTER_LOOK } from '../config/visual';
 import { LIGHTING } from '../config/lighting';
 import { LAYER_CHARACTER } from './materials';
 import { patchVat } from './vat';
+import { isTouchDevice } from '../core/input';
+
+const TOUCH_SCREEN = typeof matchMedia !== 'undefined' && isTouchDevice();
 
 const O = CHARACTER_LOOK.outline;
 
@@ -125,7 +128,8 @@ export class CharacterOutlinePass extends Pass {
     this.edgeMat.uniforms.uTexel.value.set(1 / w, 1 / h);
     this.compMat.uniforms.uTexel.value.set(1 / w, 1 / h);
     // Épaisseur max (objets proches) ; chaque bord la réduit selon sa distance (passe de bords)
-    this.compMat.uniforms.uRadius.value = O.radius * Math.max(1, h / 1080);
+    // Écran tactile (téléphone) : trait plus fin, l'écran est petit et le trait mangeait les persos
+    this.compMat.uniforms.uRadius.value = O.radius * Math.max(1, h / 1080) * (TOUCH_SCREEN ? O.touchScale : 1);
   }
 
   render(renderer: THREE.WebGLRenderer, writeBuffer: THREE.WebGLRenderTarget, readBuffer: THREE.WebGLRenderTarget) {

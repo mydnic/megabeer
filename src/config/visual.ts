@@ -48,6 +48,8 @@ export const CHARACTER_LOOK = {
   outline: {
     /** Demi-épaisseur du trait de silhouette, en pixels à 1080p, caméra proche. */
     radius: 1.5,
+    /** Sur écran tactile (téléphone), le trait est multiplié par ce facteur. */
+    touchScale: 0.5,
     /** Le trait garde sa pleine épaisseur jusqu'à cette distance caméra (m), puis s'affine. */
     fullUntil: 6,
     minScale: 0.25,

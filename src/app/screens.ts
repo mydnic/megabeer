@@ -36,6 +36,7 @@ import { createPadNav } from '../ui/padNav';
 import { createAccountPanel } from '../ui/accountPanel';
 import { ACHIEVEMENTS, ACHIEVEMENT_BANNER } from '../config/achievements';
 import { createSetupScreen } from '../ui/setupScreen';
+import { wireInstall } from './install';
 import { createTouchControls } from '../ui/touchControls';
 import { LIGHT_RENDER, shadowsOn } from '../render/quality';
 import { createLeaderboardPanel } from '../ui/leaderboardPanel';
@@ -173,6 +174,8 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   const forced = new Set<DifficultyId>();
   const openSetup = () => setup.show({ lockedBy, character: progress.character, difficulties: [...new Set([...progress.profile.difficulties, ...forced])], difficulty: progress.difficulty });
   const home = createHomeScreen(openSetup, () => options.show(() => home.focus()), () => shop.show('shop', () => home.focus()), () => shop.show('skills', () => home.focus()), () => shop.show('achievements', () => home.focus()));
+  // Application installable : bouton « Installer l'appli » quand le navigateur le propose
+  wireInstall(home.root);
   const padNav = createPadNav();
 
   // Compte et progression : invité (navigateur) ou Discord (en ligne) ; chaque run terminée compte
