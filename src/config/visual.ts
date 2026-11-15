@@ -35,7 +35,7 @@ export const RENDER = {
    * anticrénelage multi-échantillons, ombres plus petites, résolution d'écran plafonnée, terrain moins fin
    * (`terrainDetail` subdivisions au lieu de PLANET.detail).
    */
-  light: { pixelRatio: 1, shadowMapSize: 1024, minScale: 0.5, terrainDetail: 120 },
+  light: { pixelRatio: 2, shadowMapSize: 1024, minScale: 0.5, terrainDetail: 120 },
 } as const;
 
 /** Matériau par défaut du décor : plastique mat (aspect « maquette »). */

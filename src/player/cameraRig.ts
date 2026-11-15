@@ -1,8 +1,11 @@
 import * as THREE from 'three';
 import { CAMERA as C } from '../config/world';
 import { groundRadius } from '../world/terrain';
-import type { InputState } from '../core/input';
+import { isTouchDevice, type InputState } from '../core/input';
 import type { PlayerController } from './controller';
+
+/** Distance de repos de la caméra : plus proche sur écran tactile (téléphone). */
+const BASE_DISTANCE = typeof matchMedia !== 'undefined' && isTouchDevice() ? C.touchDistance : C.distance;
 
 /**
  * Caméra orbitale dans le repère local du joueur : la verticale de la caméra est la normale
@@ -10,13 +13,13 @@ import type { PlayerController } from './controller';
  */
 export class CameraRig {
   pitch: number = C.pitch;
-  distance: number = C.distance;
-  private distTarget: number = C.distance;
+  distance: number = BASE_DISTANCE;
+  private distTarget: number = BASE_DISTANCE;
   private target = new THREE.Vector3();
   private up = new THREE.Vector3();
   private desired = new THREE.Vector3();
   private dir = new THREE.Vector3();
-  private blockedDist: number = C.distance;
+  private blockedDist: number = BASE_DISTANCE;
   private tmp = new THREE.Vector3();
   private initialized = false;
   /** Tremblement en cours (0 à 1) : l'amplitude suit son carré, il s'amortit tout seul. */
@@ -30,7 +33,7 @@ export class CameraRig {
   setFocus(f: { distance: number; pitch: number; sharpness: number } | null) {
     this.focus = f;
     // Fin du cadrage imposé : retour direct au cadrage de départ (nouvelle run, coupe franche)
-    if (!f) { this.distTarget = this.distance = this.blockedDist = C.distance; this.pitch = C.pitch; }
+    if (!f) { this.distTarget = this.distance = this.blockedDist = BASE_DISTANCE; this.pitch = C.pitch; }
   }
 
   /** Ajoute un tremblement (coup reçu, explosion...). */

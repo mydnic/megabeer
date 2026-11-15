@@ -36,6 +36,8 @@ export const PLAYER_PHYSICS = {
 
 export const CAMERA = {
   distance: 16, distanceMin: 6, distanceMax: 40,
+  /** Distance sur écran tactile (téléphone : petit écran, le perso doit rester lisible). */
+  touchDistance: 11,
   pitch: 0.5, pitchMin: -0.85, pitchMax: 1.35,
   /**
    * Quand le sol (ou un relief) se trouve entre le perso et la caméra, elle glisse vers le perso le
