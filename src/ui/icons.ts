@@ -119,6 +119,17 @@ ${P('M14.500 14.500l-1.700-10.700c-.2-1.200.8-2.300 2-2.300h4.400c1.200 0 2.200 
 ${L('M22.200 52l1.500 24', '#fff', 1.6, 0.7)}`);
 };
 
+/** Bière de Noël : la bouteille de la Stout en verre vert sapin, étiquette rouge « Noël », houx et baies, capsule dorée. */
+const noelIcon = (cls: string) => tall(cls, `
+<path d="${STOUT}" fill="#1f5a2c"/>
+<rect x="5.500" y="49" width="29" height="30" fill="#c8102e"/><path d="M5.500 49h29M5.500 79h29" stroke="#e8c76a" stroke-width="1.600"/>
+<path d="M13 56c2-2 5-2 7 0c-2 2-5 2-7 0zM27 56c-2-2-5-2-7 0c2 2 5 2 7 0z" fill="#2f8a3e" stroke="${K}" stroke-width=".8"/>
+<circle cx="19" cy="57.600" r="1.500" fill="#ff4a4a" stroke="${K}" stroke-width=".6"/><circle cx="21.200" cy="58.200" r="1.500" fill="#ff4a4a" stroke="${K}" stroke-width=".6"/>
+${label(20, 71, 9.5, 'Noël', '#fff', "Georgia, 'Times New Roman', serif", 22)}
+<path d="M11 74.500h18" stroke="#e8c76a" stroke-width=".9"/>
+${shell(STOUT)}
+${R(13.5, 2.5, 13, 6.5, 1.5, G.gold, 'vol', 2.5)}`);
+
 /** Icône de chaque arme (ajouter une arme = ajouter son icône ici). */
 const WEAPON_ICONS: Record<WeaponId, (cls: string) => string> = {
   canette: canetteIcon,
@@ -126,6 +137,7 @@ const WEAPON_ICONS: Record<WeaponId, (cls: string) => string> = {
   fut: futIcon,
   gueuze: gueuzeIcon,
   tabouret: tabouretIcon,
+  biereNoel: noelIcon,
 };
 
 export const weaponIcon = (id: WeaponId, cls: string) => WEAPON_ICONS[id](cls);
