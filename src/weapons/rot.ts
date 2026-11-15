@@ -42,6 +42,8 @@ export function createRot(ctx: WeaponContext): Weapon {
       for (const z of hit) {
         d.subVectors(z.pos, p).addScaledVector(up, -d.subVectors(z.pos, p).dot(up)).normalize().multiplyScalar(6);
         ctx.hitZombie(weapon, z, dmg, false, z.pos, d, RT.knock);
+        // Rot du siècle (évolution) : l'onde étourdit
+        if (mods.evolved) z.frozen = Math.max(z.frozen, RT.stun * ctx.stats.duration);
       }
       lastXp = ctx.xpGathered();
     },

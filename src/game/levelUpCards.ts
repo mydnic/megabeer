@@ -5,6 +5,7 @@ import type { SynergyId } from './synergies';
 import { STAT_BONUSES, type PumpTier, type StatId } from '../config/pumps';
 import { ITEMS, ITEM_EFFECTS, type ItemDef } from '../config/items';
 import type { StatLine } from './playerStats';
+import { EVOLUTION, EVOLUTIONS } from '../config/evolutions';
 
 /** Amélioration d'une arme équipée, avec sa rareté. */
 export type UpgradeCard = { kind: 'upgrade'; weapon: Weapon; upgrade: UpgradeDef; tier: number };
@@ -12,8 +13,10 @@ export type UpgradeCard = { kind: 'upgrade'; weapon: Weapon; upgrade: UpgradeDef
 export type NewWeaponCard = { kind: 'weapon'; weaponId: WeaponId; synergies: SynergyId[] };
 /** Bonus de stat d'une pompe à bière : sa rareté (index dans RARITIES), sa valeur (déjà multipliée), la qualité de la pompe. */
 export type StatCard = { kind: 'stat'; stat: StatId; value: number; rarity: number; tier: PumpTier };
-/** Une carte proposée : level-up (amélioration, nouvelle arme) ou pompe (bonus de stat). */
-export type Card = UpgradeCard | NewWeaponCard | StatCard | ItemCard;
+/** Évolution d'une arme (niveau 8 ou plus et son objet d'évolution possédé, config/evolutions.ts). */
+export type EvolutionCard = { kind: 'evolution'; weapon: Weapon };
+/** Une carte proposée : level-up (amélioration, nouvelle arme, évolution) ou pompe (bonus de stat). */
+export type Card = UpgradeCard | NewWeaponCard | StatCard | ItemCard | EvolutionCard;
 
 /** Tire un tier de rareté selon la LUCK (les tiers hauts gagnent du poids, plafonné). */
 export function rollTier(luck: number) {
@@ -29,6 +32,7 @@ const pickOne = <T>(list: readonly T[]) => list[Math.floor(Math.random() * list.
 /** Clé d'une carte pour Bannir : l'arme (nouvelle arme) ou l'amélioration de cette arme. */
 export function cardKey(c: Card) {
   if (c.kind === 'weapon') return c.weaponId;
+  if (c.kind === 'evolution') return `evo:${c.weapon.id}`;
   if (c.kind === 'upgrade') return `${c.weapon.id}:${c.upgrade.id}`;
   return c.kind === 'item' ? `item:${c.item}` : `stat:${c.stat}`;
 }
@@ -47,8 +51,11 @@ function upgradeCard(weapon: Weapon, luck: number, banned: (key: string) => bool
  * équipées, une des cartes est toujours une nouvelle arme. Moins de choix possibles = moins de cartes. `banned` : cartes
  * retirées pour la run (Bannir, clés de `cardKey`).
  */
-export function rollCards(n: number, luck: number, equipped: readonly Weapon[], available: readonly WeaponId[], guaranteeBelow = 3, banned: (key: string) => boolean = () => false): Card[] {
+export function rollCards(n: number, luck: number, equipped: readonly Weapon[], available: readonly WeaponId[], guaranteeBelow = 3, banned: (key: string) => boolean = () => false, ready: readonly Weapon[] = []): Card[] {
   const cards: Card[] = [];
+  // Une arme prête à évoluer : sa carte Évolution est toujours proposée (une seule par tirage), l'arme n'a pas d'autre carte
+  const evo = ready.find((w) => !banned(`evo:${w.id}`));
+  if (evo && n > 0) { cards.push({ kind: 'evolution', weapon: evo }); equipped = equipped.filter((w) => w !== evo); }
   const news = available.filter((id) => !banned(id));
   const take = (id: WeaponId) => { news.splice(news.indexOf(id), 1); cards.push({ kind: 'weapon', weaponId: id, synergies: [] }); };
   if (equipped.length < guaranteeBelow && news.length && n > 0) take(pickOne(news));
@@ -116,6 +123,18 @@ export function cardStatChange(c: UpgradeCard): { before: StatLine | null; after
     if (Math.abs(b.value - a.value) > 1e-9) return { before: b, after: a };
   }
   return null;
+}
+
+/** Fait évoluer une arme : ses bonus d'évolution s'ajoutent, `evolved` passe à 1, elle monte d'un niveau. */
+export function applyEvolution(w: Weapon) {
+  w.mods.level++;
+  w.mods.evolved = 1;
+  for (const [k, v] of Object.entries(EVOLUTIONS[w.id].mods)) w.mods[k] = (w.mods[k] ?? 0) + v;
+}
+
+/** Armes équipées prêtes à évoluer : niveau suffisant, pas encore évoluées, objet d'évolution possédé. */
+export function readyToEvolve(equipped: readonly Weapon[], owns: (item: string) => boolean) {
+  return equipped.filter((w) => !w.mods.evolved && w.mods.level >= EVOLUTION.level && owns(EVOLUTIONS[w.id].item));
 }
 
 /** Applique une amélioration à son arme (améliorations additives, l'arme monte d'un niveau). */

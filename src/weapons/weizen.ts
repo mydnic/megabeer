@@ -18,6 +18,8 @@ export function createWeizen(ctx: WeaponContext): Weapon {
   const around: Zombie[] = [];
   const picked = new Set<Zombie>();
   const still = new THREE.Vector3();
+  /** Le nuage qui suit le joueur (évolution). */
+  const follow: Zone = { pos: new THREE.Vector3(), radius: W.radius, age: 1, life: Infinity, active: false };
 
   function cloud(at: THREE.Vector3) {
     let z = zones.find((x) => !x.active);
@@ -53,6 +55,13 @@ export function createWeizen(ctx: WeaponContext): Weapon {
       if (any) timer = W.cooldown / (ctx.stats.fireRate * mods.rate);
     },
     updateProjectiles(dt: number) {
+      // Mousse infinie (évolution) : un nuage permanent suit le joueur
+      if (mods.evolved) {
+        follow.active = true;
+        follow.pos.copy(ctx.playerPos());
+        follow.radius = W.radius * mods.size;
+        if (!zones.includes(follow)) zones.push(follow);
+      }
       tick += dt;
       const beat = tick >= W.tick;
       for (const zone of zones) {
@@ -71,6 +80,7 @@ export function createWeizen(ctx: WeaponContext): Weapon {
       timer = W.firstDelay;
       tick = 0;
       for (const z of zones) z.active = false;
+      zones.splice(zones.indexOf(follow) >>> 0, zones.includes(follow) ? 1 : 0);
       Object.assign(mods, MODS0);
     },
     stats(): StatLine[] {

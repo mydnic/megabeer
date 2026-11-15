@@ -34,7 +34,7 @@ export type WeaponFx = {
 
 export const WEAPON_FX: Record<WeaponId, WeaponFx> = {
   canette: { look: CANETTE_LOOK, impact: { splash: 14 }, ground: { splash: 10 }, settings: WEAPONS.canette },
-  stout: { look: STOUT_LOOK, impact: { glass: true, stout: true }, hitSound: STOUT_IMPACT, settings: WEAPONS.stout },
+  stout: { look: STOUT_LOOK, impact: { glass: true, stout: true }, blast: { style: 'ring', color: 0xd8a070, sound: { sample: 'impactPunch_heavy', volume: 0.5, pitch: 0.6 } }, hitSound: STOUT_IMPACT, settings: WEAPONS.stout },
   fut: { look: FUT_LOOK, impact: {}, hitSound: FUT_SOUND.crush, settings: FUT },
   gueuze: { look: GUEUZE_LOOK, impact: {}, settings: GUEUZE },
   tabouret: { look: TABOURET_LOOK, impact: {}, hitSound: { ...TABOURET_SOUND.hit, gap: TABOURET_SOUND.hitGap }, settings: TABOURET },
@@ -43,7 +43,7 @@ export const WEAPON_FX: Record<WeaponId, WeaponFx> = {
   flaqueBiere: { zone: FLAQUE_BIERE_ZONE, impact: { splash: 8 }, hitSound: FLAQUE_BIERE_SOUND, settings: FLAQUE_BIERE },
   kriek: { look: KRIEK_LOOK, impact: { glass: true }, hitSound: BOTTLE_SOUNDS.kriek, settings: KRIEK },
   triple: { look: TRIPLE_LOOK, impact: { splash: 10, glass: true }, hitSound: BOTTLE_SOUNDS.triple, settings: TRIPLE },
-  ipa: { look: IPA_LOOK, impact: { glass: true }, hitSound: BOTTLE_SOUNDS.ipa, settings: IPA },
+  ipa: { look: IPA_LOOK, impact: { glass: true }, blast: { style: 'ring', color: 0xff8a2a, sound: { sample: 'impactSoft_heavy', volume: 0.5, pitch: 0.8 } }, hitSound: BOTTLE_SOUNDS.ipa, settings: IPA },
   sousBock: { look: SOUS_BOCK_LOOK, impact: {}, ground: {}, hitSound: BOTTLE_SOUNDS.sousBock, settings: SOUS_BOCK },
   flechettes: { look: FLECHETTES_LOOK, impact: {}, ground: {}, hitSound: BOTTLE_SOUNDS.flechettes, settings: FLECHETTES },
   bouchons: { look: BOUCHONS_LOOK, impact: {}, ground: {}, hitSound: MORE_SOUNDS.bouchons, settings: BOUCHONS },

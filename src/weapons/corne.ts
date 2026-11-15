@@ -31,7 +31,8 @@ export function createCorne(ctx: WeaponContext): Weapon {
       const p = ctx.playerPos();
       up.copy(p).normalize();
       dir.copy(ctx.playerFacing()).addScaledVector(up, -ctx.playerFacing().dot(up)).normalize();
-      const cos = Math.cos(C.halfAngle), r = range();
+      // Hymne du stade (évolution) : l'onde part à 360 degrés
+      const cos = mods.evolved ? -2 : Math.cos(C.halfAngle), r = range();
       const inCone: Zombie[] = [];
       for (const z of ctx.zombiesNear(p, r, around)) {
         if (!z.targetable) continue;
@@ -44,11 +45,13 @@ export function createCorne(ctx: WeaponContext): Weapon {
       if (!inCone.length) return;
       timer = C.cooldown / (ctx.stats.fireRate * mods.rate);
       spray.emit(p, dir, C.drops, C.halfAngle, C.dropSpeed * mods.size, C.dropLife, 0.6);
-      ctx.explode(weapon, p.clone().addScaledVector(dir, r * 0.35), r * 0.45);
+      if (mods.evolved) ctx.explode(weapon, p, r);
+      else ctx.explode(weapon, p.clone().addScaledVector(dir, r * 0.35), r * 0.45);
       for (const z of inCone) {
         // Repoussé droit devant le joueur, loin
         vel.subVectors(z.pos, p).addScaledVector(up, -vel.subVectors(z.pos, p).dot(up)).normalize().multiplyScalar(C.knockSpeed);
         ctx.hitZombie(weapon, z, C.damage * mods.damage, false, z.pos, vel, C.knock * mods.knock);
+        if (mods.evolved) z.frozen = Math.max(z.frozen, C.stun * ctx.stats.duration);
       }
     },
     updateProjectiles(dt: number) { spray.update(dt); },

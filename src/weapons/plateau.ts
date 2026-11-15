@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { PLATEAU as P, PLATEAU_UPGRADES } from '../config/arsenal';
 import { WEAPON_INFO } from '../config/weapons';
 import type { StatLine } from '../game/playerStats';
+import type { Zombie } from '../enemies/zombie';
 import type { Projectile, Weapon, WeaponContext, WeaponMods } from './weapon';
 
 /** Un plateau : temps restant avant d'être de nouveau prêt à bloquer (0 : prêt). */
@@ -17,6 +18,7 @@ export function createPlateau(ctx: WeaponContext): Weapon {
   const projectiles: Tray[] = [];
   let angle = 0, clock = 0;
   const up = new THREE.Vector3(), e1 = new THREE.Vector3(), e2 = new THREE.Vector3(), d = new THREE.Vector3();
+  const around: Zombie[] = [];
 
   const count = () => P.count + mods.projectiles + ctx.stats.extraProjectiles;
   function tray(i: number): Tray {
@@ -64,7 +66,16 @@ export function createPlateau(ctx: WeaponContext): Weapon {
       if (!t) return false;
       t.recharge = P.recharge / (ctx.stats.fireRate * mods.rate);
       t.active = false;
-      ctx.explode(weapon, t.pos, 0.8);
+      // Service en salle (évolution) : le coup est renvoyé à tous les zombies autour
+      const r = mods.evolved ? P.reflectRadius : 0.8;
+      ctx.explode(weapon, t.pos, r);
+      if (mods.evolved) {
+        const p = ctx.playerPos();
+        for (const z of ctx.zombiesNear(p, r, around)) {
+          if (!z.targetable || z.pos.distanceTo(p) > r) continue;
+          ctx.hitZombie(weapon, z, P.reflectDamage, false, z.pos, d.subVectors(z.pos, p).normalize().multiplyScalar(8), 3);
+        }
+      }
       return true;
     },
     reset() {

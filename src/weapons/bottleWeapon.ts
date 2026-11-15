@@ -11,7 +11,7 @@ import type { Projectile, Weapon, WeaponContext, WeaponMods } from './weapon';
  * Une bouteille en vol : zombies qu'elle peut encore traverser, ceux déjà touchés (pas deux fois le
  * même), sa cible et les dégâts qu'elle lui réserve (comptés dans `incoming` jusqu'à sa fin).
  */
-type Bottle = Projectile & { pierce: number; hits: Zombie[]; target: Zombie | null; expected: number; bounces: number; ground: number; child: boolean; face: number; jackpot: boolean };
+type Bottle = Projectile & { pierce: number; hits: Zombie[]; target: Zombie | null; expected: number; bounces: number; ground: number; child: boolean; face: number; jackpot: boolean; back: boolean };
 
 /** Réglages d'une arme à bouteilles : ceux de la Canette (config/weapons.ts), plus les briques facultatives. */
 export type BottleConfig = { [K in keyof typeof WEAPONS.canette]: number } & {
@@ -72,7 +72,7 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
    * Améliorations (cartes de level-up), propres à l'arme : multiplicateurs (dégâts, cadence,
    * vitesse, portée, taille, recul) et ajouts (projectiles, perçage, chance et multiplicateur critiques).
    */
-  const MODS0: WeaponMods = { level: 1, damage: 1, rate: 1, projectiles: 0, speed: 1, range: 1, critChance: 0, critMult: 0, size: 1, knock: 1, pierce: 0, bounces: 0, burn: 1, fragments: 0, duration: 1 };
+  const MODS0: WeaponMods = { level: 1, damage: 1, rate: 1, projectiles: 0, speed: 1, range: 1, critChance: 0, critMult: 0, size: 1, knock: 1, pierce: 0, bounces: 0, burn: 1, fragments: 0, duration: 1, splash: 0, gain: 0 };
   const mods: WeaponMods = { ...MODS0 };
   const pending: Pending[] = [];
   const projectiles: Bottle[] = [];
@@ -110,7 +110,7 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
   function launch(pos: THREE.Vector3, v: THREE.Vector3, target: Zombie | null, child = false, face = 0, jackpot = false) {
     let b = projectiles.find((x) => !x.active);
     if (!b) {
-      b = { pos: new THREE.Vector3(), vel: new THREE.Vector3(), up0: new THREE.Vector3(), spinAxis: new THREE.Vector3(), spinRate: 0, gravity: 0, age: 0, size: 1, active: false, pierce: 0, hits: [], target: null, expected: 0, bounces: 0, ground: 0, child: false, face: 0, jackpot: false };
+      b = { pos: new THREE.Vector3(), vel: new THREE.Vector3(), up0: new THREE.Vector3(), spinAxis: new THREE.Vector3(), spinRate: 0, gravity: 0, age: 0, size: 1, active: false, pierce: 0, hits: [], target: null, expected: 0, bounces: 0, ground: 0, child: false, face: 0, jackpot: false, back: false };
       projectiles.push(b);
     }
     b.pos.copy(pos);
@@ -125,6 +125,7 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
     b.ground = W.groundBounces ?? 0;
     b.child = child;
     b.face = face;
+    b.back = false;
     b.jackpot = jackpot;
     b.hidden = child;
     b.hits.length = 0;
@@ -151,7 +152,7 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
       if (k === 0 || !fanTarget || !fanTarget.targetable) fanTarget = pickTarget(ctx.zombies(), hand, range, TARGETING.spread);
       if (!fanTarget) return;
       solve(hand, fanTarget, vel);
-      vel.applyAxisAngle(tmp.copy(hand).normalize(), (k - (n - 1) / 2) * W.fan);
+      vel.applyAxisAngle(tmp.copy(hand).normalize(), (k - (n - 1) / 2) * (mods.ring ? (Math.PI * 2) / n : W.fan));
       launch(hand, vel, k === Math.floor(n / 2) ? fanTarget : null);
       return;
     }
@@ -229,12 +230,15 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
 
   /** Éclaboussure (Kriek) : dégâts réduits et ralentissement autour du point d'impact. */
   function splash(at: THREE.Vector3, dmg: number, except: Zombie | null) {
-    const r = (W.splashRadius ?? 0) * mods.size;
+    const r = ((W.splashRadius ?? 0) + mods.splash) * mods.size;
     if (r <= 0) return;
+    if (W.splashRadius === undefined) ctx.explode(weapon, at, r); // onde de l'évolution (Imperial Stout, Double IPA)
     for (const o of ctx.zombiesNear(at, r, side)) {
       if (!o.targetable || o.pos.distanceTo(at) > r) continue;
       if (W.slow) { o.slowMul = Math.min(o.slowMul, 1 - W.slow); o.slowTime = Math.max(o.slowTime, (W.slowTime ?? 1) * ctx.stats.duration); }
       if (o !== except) ctx.hitZombie(weapon, o, dmg * (W.splashDamage ?? 0.5), false, o.pos, tmp.subVectors(o.pos, at), 0.3);
+      // Double IPA : la brûlure se propage aux voisins
+      if (W.burn && mods.evolved) burning.set(o, { dps: W.damage * mods.damage * W.burn * mods.burn, left: (W.burnTime ?? 3) * ctx.stats.duration });
     }
   }
 
@@ -279,7 +283,7 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
       if (!z.targetable || b.hits.includes(z) || z.pos.distanceToSquared(b.pos) > 9) continue;
       if (segToZombie(prev, b.pos, z) < W.radius * mods.size + W.zombieRadius) {
         const crit = Math.random() < W.critChance + mods.critChance + ctx.stats.critChance + diceCrit;
-        const gain = (W.bounceGain ?? 1) ** Math.max(0, b.hits.length) * (b.face ? b.face / 3.5 : 1);
+        const gain = ((W.bounceGain ?? 1) + mods.gain) ** Math.max(0, b.hits.length) * (b.face ? b.face / 3.5 : 1);
         const dmg = W.damage * mods.damage * gain * (crit ? W.critMult + mods.critMult : 1);
         if (b.face === 6 && W.dice) diceCrit = Math.min(W.dice.critCap, diceCrit + W.dice.critPerSix);
         if (b.jackpot) { b.jackpot = false; jackpot(b.pos); }
@@ -341,9 +345,10 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
       // Rafale : les bouteilles d'une volée partent à la suite, l'écart se resserre avec la cadence
       const gap = W.fan ? 0 : Math.min(W.volleyGap, interval / (n + 1));
       // Dés (le 421) : les faces de la volée sont tirées d'un coup ; 4, 2 et 1 ensemble font jackpot (sur le 4)
-      const faces = W.dice ? Array.from({ length: n }, () => (W.dice!.minFace ?? 1) + Math.floor(Math.random() * (7 - (W.dice!.minFace ?? 1)))) : [];
+      const low = mods.loaded ? 2 : W.dice?.minFace ?? 1;
+      const faces = W.dice ? Array.from({ length: n }, () => low + Math.floor(Math.random() * (7 - low))) : [];
       const win = W.dice ? [4, 2, 1].every((f) => faces.includes(f)) : false;
-      for (let k = 0; k < n; k++) pending.push({ t: first + k * gap, index: k, of: n, face: faces[k] ?? 0, jackpot: win && k === faces.indexOf(4) });
+      for (let k = 0; k < n; k++) pending.push({ t: first + k * gap, index: k, of: n, face: faces[k] ?? 0, jackpot: (win && k === faces.indexOf(4)) || (!!mods.loaded && faces[k] === 4) });
     },
     updateProjectiles(dt: number) {
       // Brûlure : un coup toutes les demi-secondes tant qu'elle dure
@@ -386,6 +391,14 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
         b.vel.addScaledVector(up, -b.gravity * dt);
         b.pos.addScaledVector(b.vel, dt);
         b.age += dt;
+        // Sous-bock tranchant : à mi-course il fait demi-tour vers le joueur, et peut refrapper au retour
+        if (mods.returns && !b.back && b.age > W.life * 0.45) {
+          b.back = true;
+          b.hits.length = 0;
+          b.pierce = W.pierce + mods.pierce;
+          b.vel.subVectors(ctx.playerPos(), b.pos).addScaledVector(up, -tmp.subVectors(ctx.playerPos(), b.pos).dot(up)).normalize().multiplyScalar(W.speed * mods.speed);
+          b.age = W.life * 0.5; // le retour dure autant que l'aller
+        }
         if (b.age > W.life || !fly(b)) { b.active = false; settle(b); }
       }
     },

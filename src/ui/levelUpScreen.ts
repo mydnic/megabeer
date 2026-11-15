@@ -1,4 +1,5 @@
 import { ITEMS } from '../config/items';
+import { EVOLUTION, EVOLUTIONS, weaponTitle } from '../config/evolutions';
 import { LEVEL_UP_SCREEN as L, RARITIES } from '../config/upgrades';
 import { cardStatChange, cardText, itemCardText, statCardText, type Card, type UpgradeCard } from '../game/levelUpCards';
 import { formatValue } from './statFormat';
@@ -239,7 +240,14 @@ export function createLevelUpScreen(onPick: (card: Card) => void, onHover: () =>
       list.forEach((c, i) => {
         const d = document.createElement('div');
         const key = `<div class="lu-shine"></div><div class="lu-key">${i + 1}</div>`;
-        if (c.kind === 'weapon') {
+        if (c.kind === 'evolution') {
+          // Évolution : cadre à part, le nom de l'arme évoluée et ce qu'elle gagne
+          const E = EVOLUTIONS[c.weapon.id];
+          d.className = 'lu-card new';
+          d.style.setProperty('--c', EVOLUTION.color);
+          d.innerHTML = `${key}<div class="lu-tier">Évolution !</div>${art(weaponIcon(c.weapon.id, 'lu-bottle'))}
+            <div class="lu-name">${E.name}</div><div class="lu-eff">${E.text}</div>`;
+        } else if (c.kind === 'weapon') {
           // Nouvelle arme : cadre à part, sa présentation à la place d'un effet chiffré
           const info = WEAPON_INFO[c.weaponId];
           d.className = 'lu-card new';
@@ -270,7 +278,7 @@ export function createLevelUpScreen(onPick: (card: Card) => void, onHover: () =>
           d.className = `lu-card t${c.tier}`;
           d.style.setProperty('--c', r.color);
           d.innerHTML = `${key}<div class="lu-tier">${r.name}</div>${art(weaponIcon(c.weapon.id, 'lu-bottle'))}
-            <div class="lu-name">${c.weapon.name}</div><div class="lu-eff">${cardText(c)}</div>${delta(c)}`;
+            <div class="lu-name">${weaponTitle(c.weapon)}</div><div class="lu-eff">${cardText(c)}</div>${delta(c)}`;
         }
         d.style.setProperty('--i', String(i));
         d.addEventListener('mouseenter', () => select(i));

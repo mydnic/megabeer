@@ -29,6 +29,8 @@ export const BIERE_NOEL = {
   knock: 1.2,
   /** Nombre de bouteilles au départ. */
   count: 2,
+  /** Couronne de Noël (évolution) : rayon de la seconde couronne (fois le rayon de l'orbite). */
+  outerRing: 1.7,
 } as const;
 
 export const BIERE_NOEL_LOOK = {
@@ -210,14 +212,16 @@ export const TIREUSE = { damage: 4, tick: 0.2, range: 4.6, halfAngle: 0.55, knoc
 export const TIREUSE_UPGRADES: readonly UpgradeDef[] = [DMG, { id: 'rate', label: 'débit du jet', value: 0.10, kind: 'percent' }, { id: 'size', label: 'portée du jet', value: 0.10, kind: 'percent' }, { id: 'knock', label: 'recul', value: 0.20, kind: 'percent' }, CRIT, CRITM];
 
 /** Corne de brume (n° 20) : un coup de corne en cône devant le joueur, gros recul, presque pas de dégâts : ouvre un couloir. */
-export const CORNE = { cooldown: 3.4, firstDelay: 1, damage: 3, range: 7.5, halfAngle: 0.65, knock: 6, knockSpeed: 16, drops: 11, dropSpeed: 18, dropLife: 0.4 } as const;
+/** `stun` : Hymne du stade (évolution), zombies étourdis (s). */
+export const CORNE = { cooldown: 3.4, firstDelay: 1, damage: 3, range: 7.5, halfAngle: 0.65, knock: 6, knockSpeed: 16, drops: 11, dropSpeed: 18, dropLife: 0.4, stun: 1.4 } as const;
 export const CORNE_UPGRADES: readonly UpgradeDef[] = [RATEU, { id: 'size', label: 'portée de la corne', value: 0.12, kind: 'percent' }, { id: 'knock', label: 'recul', value: 0.20, kind: 'percent' }, DMG];
 
 /**
  * Rot sonique (n° 22) : une onde autour du joueur, qui se charge avec l'XP ramassée depuis le dernier rot : plus on
  * fonce dans les capsules, plus le prochain rot est fort et large.
  */
-export const ROT = { cooldown: 5, firstDelay: 2, damage: 10, perXp: 0.5, maxDamage: 260, radius: 3.4, radiusPerXp: 0.025, maxRadius: 8, knock: 1.5 } as const;
+/** `stun` : Rot du siècle (évolution), zombies étourdis (s). */
+export const ROT = { cooldown: 5, firstDelay: 2, damage: 10, perXp: 0.5, maxDamage: 260, radius: 3.4, radiusPerXp: 0.025, maxRadius: 8, knock: 1.5, stun: 1.2 } as const;
 export const ROT_UPGRADES: readonly UpgradeDef[] = [DMG, RATEU, { id: 'size', label: "taille de l'onde", value: 0.10, kind: 'percent' }, { id: 'charge', label: 'charge par capsule', value: 0.20, kind: 'percent' }];
 
 /** Odeur d'alcool (n° 24) : une aura permanente autour du joueur ; dégâts faibles et continus, les zombies titubent. */
@@ -226,7 +230,8 @@ export const ODEUR_ZONE = { color: 0xd6e07a, rim: 0xa8b83a, opacity: 0.32, lift:
 export const ODEUR_UPGRADES: readonly UpgradeDef[] = [DMG, { id: 'size', label: "rayon de l'aura", value: 0.10, kind: 'percent' }, { id: 'confuse', label: 'durée de la confusion', value: 0.15, kind: 'percent' }, { id: 'rate', label: "cadence de l'aura", value: 0.10, kind: 'percent' }];
 
 /** Plateau de serveur (n° 16) : des plateaux tournent autour du joueur et bloquent chacun un coup, puis se rechargent. */
-export const PLATEAU = { count: 1, radius: 1.35, height: 1.1, turnsPerSecond: 0.35, recharge: 7 } as const;
+/** `reflectDamage`, `reflectRadius` : Service en salle (évolution), le coup bloqué renvoyé aux zombies autour. */
+export const PLATEAU = { count: 1, radius: 1.35, height: 1.1, turnsPerSecond: 0.35, recharge: 7, reflectDamage: 45, reflectRadius: 3.5 } as const;
 export const PLATEAU_LOOK = { file: 'plateau.glb', length: 0.62, fit: 'max', colors: { Plateau: 0xc8ccd4, Rebord: 0x8a8e98 } as Record<string, number> } as const;
 export const PLATEAU_UPGRADES: readonly UpgradeDef[] = [{ id: 'projectiles', label: 'plateau en plus', value: 1, kind: 'flat', whole: true }, { id: 'rate', label: 'recharge plus rapide', value: 0.12, kind: 'percent' }];
 

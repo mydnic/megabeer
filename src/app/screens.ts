@@ -36,6 +36,7 @@ import { createPadNav } from '../ui/padNav';
 import { createAccountPanel } from '../ui/accountPanel';
 import { ACHIEVEMENTS, ACHIEVEMENT_BANNER } from '../config/achievements';
 import { createSetupScreen } from '../ui/setupScreen';
+import { EVOLUTIONS, weaponTitle } from '../config/evolutions';
 import { wireInstall } from './install';
 import { createTouchControls } from '../ui/touchControls';
 import { LIGHT_RENDER, shadowsOn } from '../render/quality';
@@ -230,6 +231,8 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   game.events.on('freeChestSpawned', () => { banner.show('Coffre gratuit !', 'Le Bonnet du Père Noël en a posé un près de toi'); banner.hideAfter(2.5); });
   game.events.on('lastCallRung', () => { banner.show(LAST_CALL_TEXT.banner, LAST_CALL_TEXT.sub); banner.pulse(); banner.hideAfter(2.5); });
   game.events.on('tourneeTaken', ({ id }) => { const T = TOURNEES[id]; banner.show(`${T.name} !`, T.text); banner.pulse(); banner.hideAfter(2); });
+  // Une arme évolue : bandeau avec son nouveau nom
+  game.events.on('weaponEvolved', ({ weapon }) => { const E = EVOLUTIONS[weapon.id]; banner.show(`Évolution : ${E.name} !`, E.text); banner.pulse(); banner.hideAfter(3); });
   // Le 421 : le jackpot (4-2-1 dans la même volée) s'annonce
   game.events.on('weaponExploded', ({ weapon }) => { if (weapon.id === 'des421') { banner.show('421 !', 'Jackpot : le 4 explose'); banner.pulse(); banner.hideAfter(1.6); } });
   // Boss : sa barre de vie, un bandeau à son arrivée et quand il passe en phase 2
@@ -354,7 +357,7 @@ function pauseStats(game: Game): PauseStats {
     const w = game.loadout.weapons[i];
     if (!w) return null;
     const syn = active.find((S) => (S.weapons as readonly string[]).includes(w.id));
-    return { title: w.name, icon: weaponIcon(w.id, ''), level: w.mods.level, rows: w.stats().map(toRow), synergy: syn && { name: syn.name, color: syn.color } };
+    return { title: weaponTitle(w), icon: weaponIcon(w.id, ''), level: w.mods.level, rows: w.stats().map(toRow), synergy: syn && { name: syn.name, color: syn.color } };
   });
   const synergies = active.map((S) => ({ name: S.name, color: S.color, icons: S.weapons.map((id) => weaponIcon(id, '')), details: S.details }));
   return { player, weapons, synergies };

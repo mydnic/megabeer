@@ -23,7 +23,7 @@ import { Progression } from '../player/progression';
 import type { DecorCollider } from '../world/decor/collider';
 import type { ThrowRig, Weapon, WeaponContext, WeaponId } from '../weapons/weapon';
 import { Emitter } from './emitter';
-import { applyCard, cardKey, rollCards, type Card } from './levelUpCards';
+import { applyCard, cardKey, rollCards, type Card, applyEvolution, readyToEvolve } from './levelUpCards';
 import { WEAPON_FACTORIES } from '../weapons/registry';
 import { SYNERGIES } from '../config/weapons';
 import { activeSynergies, synergiesCompletedBy, type SynergyId } from './synergies';
@@ -85,6 +85,8 @@ export type GameEvents = {
   /** Passer : le level-up est refusé (sans compensation). */
   cardsSkipped: Record<string, never>;
   cardPicked: { card: Card };
+  /** Une arme a évolué (carte Évolution choisie). */
+  weaponEvolved: { weapon: Weapon };
   paused: Record<string, never>;
   resumed: Record<string, never>;
   died: Record<string, never>;
@@ -508,6 +510,7 @@ export class Game {
     else if (card.kind === 'item') this.gainItem(card.item);
     else {
       if (card.kind === 'weapon') this.equip(card.weaponId);
+      else if (card.kind === 'evolution') { applyEvolution(card.weapon); this.events.emit('weaponEvolved', { weapon: card.weapon }); }
       else applyCard(card);
       this.progression.pending--;
     }
@@ -1228,7 +1231,8 @@ export class Game {
   private offerCards(first: boolean) {
     // Armes débloquées en boutique pas encore équipées
     const available = this.loadout.full ? [] : (Object.keys(WEAPON_FACTORIES) as WeaponId[]).filter((id) => !this.loadout.has(id) && (!this.unlocks || this.unlocks.weapons.has(id)));
-    const cards = rollCards(LEVEL_UP_SCREEN.cards, this.stats.luck, this.loadout.weapons, available, LEVEL_UP_SCREEN.newWeaponBelow, (k) => this.banned.has(k));
+    const ready = readyToEvolve(this.loadout.weapons, (item) => this.items.some((i) => i.item === item));
+    const cards = rollCards(LEVEL_UP_SCREEN.cards, this.stats.luck, this.loadout.weapons, available, LEVEL_UP_SCREEN.newWeaponBelow, (k) => this.banned.has(k), ready);
     if (!cards.length) { this.progression.pending = 0; this.offer = null; this.offerKind = null; return; }
     // Une nouvelle arme annonce les synergies qu'elle activerait
     for (const c of cards) if (c.kind === 'weapon') c.synergies = synergiesCompletedBy(c.weaponId, (x) => this.loadout.has(x));

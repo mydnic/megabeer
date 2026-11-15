@@ -61,10 +61,15 @@ export function createBiereNoel(ctx: WeaponContext): Weapon {
         const o = orbiter(i);
         o.active = i < n;
         if (!o.active) continue;
-        const a = angle + (i / n) * Math.PI * 2;
+        // Couronne de Noël (évolution) : une bouteille sur deux tourne sur une seconde couronne, plus large, en sens inverse
+        const outer = !!mods.evolved && i % 2 === 1;
+        const k = outer ? (i - 1) / 2 : mods.evolved ? i / 2 : i;
+        const per = mods.evolved ? (outer ? Math.floor(n / 2) : Math.ceil(n / 2)) : n;
+        const a = (outer ? -angle : angle) + (k / Math.max(1, per)) * Math.PI * 2;
+        const rr = outer ? r * B.outerRing : r;
         d.copy(e1).multiplyScalar(Math.cos(a)).addScaledVector(e2, Math.sin(a));
-        o.pos.copy(p).addScaledVector(d, r).addScaledVector(up, B.height);
-        o.vel.crossVectors(up, d).multiplyScalar(turn * r);
+        o.pos.copy(p).addScaledVector(d, rr).addScaledVector(up, B.height);
+        o.vel.crossVectors(up, d).multiplyScalar(turn * rr * (outer ? -1 : 1));
         // Couchée dans le sens de la course, elle tourne sur elle-même
         o.up0.copy(o.vel).normalize();
         o.spinAxis.copy(d);
