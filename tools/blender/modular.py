@@ -58,7 +58,10 @@ VARIANTS = {
         'sway': {'idle': (4, 6, 8), 'run': (3, 7, 6)},
     },
     'barman': {
-        'parts': ['Adventurer_Head', 'Farmer_Body', 'Suit_Legs', 'Suit_Feet'],
+        'parts': ['Farmer_Body', 'Suit_Legs', 'Suit_Feet'],
+        # Tête faite ici (pas celle du pack) : côtés rasés, cheveux plaqués, chignon, moustache en guidon
+        'head': {'skin': (0.84, 0.60, 0.46), 'hair': (0.17, 0.10, 0.05), 'stubble': (0.30, 0.22, 0.17),
+                 'eye': (0.04, 0.03, 0.03), 'brow': (0.14, 0.08, 0.04), 'tache': (0.22, 0.12, 0.05)},
         'height': 1.84,
         'colors': {'Skin': (0.84, 0.60, 0.46), 'Beige': (0.84, 0.60, 0.46), 'LightBlue': (0.20, 0.12, 0.07),
                    'Brown': (0.93, 0.93, 0.90), 'Suit': (0.05, 0.05, 0.06), 'Black': (0.03, 0.03, 0.03),
@@ -187,6 +190,88 @@ if 'bare_hands' in V:
         for poly in o.data.polygons:
             if poly.material_index == src and sum(hand_w(vi) for vi in poly.vertices) / len(poly.vertices) > 0.5:
                 poly.material_index = skin
+
+# --- Tête faite main (variante 'head'), dans le style à facettes du pack ; rigide sur l'os de la tête, le cou suit
+# aussi l'os du cou. Repère du pack : visage vers -Y, menton vers z = 1,57, sommet du crâne vers z = 1,85.
+def build_head(H):
+    bm = bmesh.new()
+    mats = []
+
+    def mat(key):
+        if key not in mats:
+            mats.append(key)
+        return mats.index(key)
+
+    def blob(center, scale, mi, seg=10, rings=7, rot=None):
+        g = bmesh.ops.create_uvsphere(bm, u_segments=seg, v_segments=rings, radius=1.0)
+        M = Matrix.Translation(Vector(center)) @ (rot or Matrix()) @ Matrix.Diagonal((*scale, 1.0))
+        bmesh.ops.transform(bm, matrix=M, verts=g['verts'])
+        for f in {f for v in g['verts'] for f in v.link_faces}:
+            f.material_index = mi
+        return g['verts']
+
+    skin, hair, stub, eye, brow, tache = (mat(k) for k in ('skin', 'hair', 'stubble', 'eye', 'brow', 'tache'))
+    # Crâne, mâchoire carrée, cou
+    skull = blob((0, -0.035, 1.715), (0.103, 0.122, 0.128), skin, seg=12, rings=9)
+    blob((0, -0.07, 1.605), (0.086, 0.088, 0.068), skin, seg=10, rings=6)
+    g = bmesh.ops.create_cone(bm, segments=8, radius1=0.054, radius2=0.05, depth=0.17)
+    bmesh.ops.transform(bm, matrix=Matrix.Translation((0, -0.035, 1.545)), verts=g['verts'])
+    for f in {f for v in g['verts'] for f in v.link_faces}:
+        f.material_index = skin
+    # Côtés rasés : les faces du crâne au-dessus des oreilles, sauf le visage, prennent la couleur de la barbe de trois jours
+    for f in {f for v in skull for f in v.link_faces}:
+        c = f.calc_center_median()
+        if c.z > 1.675 and c.y > -0.115:
+            f.material_index = stub
+    # Cheveux plaqués en arrière sur le dessus, chignon noué derrière le sommet
+    blob((0, -0.03, 1.80), (0.062, 0.118, 0.06), hair, seg=10, rings=6)
+    blob((0, 0.055, 1.845), (0.043, 0.04, 0.043), hair, seg=8, rings=6)
+    blob((0, 0.035, 1.822), (0.022, 0.02, 0.016), brow, seg=8, rings=4)          # l'élastique
+    # Nez fort, oreilles, yeux, sourcils épais
+    blob((0, -0.170, 1.665), (0.026, 0.038, 0.042), skin, seg=6, rings=4)
+    for sd in (-1, 1):
+        blob((sd * 0.103, -0.03, 1.68), (0.014, 0.028, 0.04), skin, seg=6, rings=4)
+        blob((sd * 0.04, -0.149, 1.712), (0.014, 0.006, 0.011), eye, seg=6, rings=4)
+        blob((sd * 0.043, -0.152, 1.738), (0.03, 0.012, 0.01), brow, seg=6, rings=3,
+             rot=Matrix.Rotation(math.radians(-10 * sd), 4, 'Y'))
+    # Moustache en guidon : une mèche épaisse sous le nez, deux pointes qui s'affinent et remontent
+    path = [(0.0, -0.188, 1.636, 0.014), (0.03, -0.183, 1.632, 0.013), (0.058, -0.168, 1.626, 0.010),
+            (0.078, -0.150, 1.638, 0.007), (0.084, -0.142, 1.658, 0.005), (0.077, -0.140, 1.672, 0.003)]
+    for sd in (-1, 1):
+        prev = None
+        for (x, y, z, r) in path:
+            ring = []
+            for k in range(6):
+                a = k / 6 * math.tau
+                ring.append(bm.verts.new((sd * x + r * 0.4 * math.cos(a) * 0, y + r * math.cos(a), z + r * math.sin(a))))
+            if prev:
+                for k in range(6):
+                    f = bm.faces.new((prev[k], prev[(k + 1) % 6], ring[(k + 1) % 6], ring[k]))
+                    f.material_index = tache
+            prev = ring
+        bm.faces.new(prev).material_index = tache
+    me = bpy.data.meshes.new('Tete')
+    bm.to_mesh(me); bm.free()
+    for p_ in me.polygons:
+        p_.use_smooth = False
+    head = bpy.data.objects.new('Tete', me)
+    scene.collection.objects.link(head)
+    for key in mats:
+        head.data.materials.append(new_mat(f'Tete_{key}', H[key]))
+    # Poids : la tête suit l'os de la tête, le bas du cou glisse vers l'os du cou
+    gh = head.vertex_groups.new(name='Head'); gn = head.vertex_groups.new(name='Neck')
+    for v in head.data.vertices:
+        t = max(0.0, min(1.0, (v.co.z - 1.50) / 0.09))
+        gh.add([v.index], t, 'REPLACE')
+        if t < 1:
+            gn.add([v.index], 1 - t, 'REPLACE')
+    head.parent = arm
+    a = head.modifiers.new('rig', 'ARMATURE'); a.object = arm
+    return head
+
+
+if 'head' in V:
+    meshes.append(build_head(V['head']))
 
 # --- 4. Silhouette : petit ventre de bière (le torse est poussé vers l'avant, en douceur)
 body = next(o for o in meshes if o.name.endswith('_Body'))

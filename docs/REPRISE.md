@@ -192,7 +192,8 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    variante par perso : pièces mélangées, couleurs, ventre, accessoires ; clips du pack recalculés sans l'IK du pack, pieds
    rattachés aux tibias, tangage d'ivrogne ; saut, chute, atterrissage faits main). Passif `poisonStacks: 2`
    (`ctx.poisonStacksPerTick`), 300 TUNAS.
-   **Le Barman fait le 2026-11-18, à valider en jeu** (`modular.py --variant barman`) : tête barbue de l'aventurier, chemise
+   **Le Barman fait le 2026-11-18, à valider en jeu** (`modular.py --variant barman`) : tête faite main (`build_head` :
+   côtés rasés, cheveux plaqués, chignon, moustache en guidon, sourcils épais ; celle du pack faisait trop générique), chemise
    blanche (corps du fermier recoloré, gants devenus mains nues), tablier de cuir long (porté surtout par le bassin),
    torchon bleu sur l'épaule, nœud papillon rouge. Animations à lui : repos `Idle_Neutral` où il essuie le comptoir,
    course coudes serrés, lancer = geste `Interact`. Passif `levelUpCards: 4` (l'écran de level-up passe sur une ligne
