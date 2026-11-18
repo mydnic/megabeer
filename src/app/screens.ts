@@ -54,6 +54,7 @@ import copUrl from '../assets/models/cop.glb?url';
 import marieUrl from '../assets/models/marie.glb?url';
 import barmanUrl from '../assets/models/barman.glb?url';
 import serveuseUrl from '../assets/models/serveuse.glb?url';
+import pilierUrl from '../assets/models/pilier.glb?url';
 import { runUnlocks } from '../meta/shop';
 import { createProgress } from './progress';
 import { TOURNEES } from '../config/tournees';
@@ -196,7 +197,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   // Boutique : persos, armes et objets à débloquer avec les TUNAS
   // Portraits des persos, rendus une fois depuis leur modèle 3D
   const portraits = new Map<string, string>();
-  const models: Record<string, string> = { buveur: buveurUrl, videur: videurUrl, pere_noel: pereNoelUrl, cop: copUrl, marie: marieUrl, barman: barmanUrl, serveuse: serveuseUrl };
+  const models: Record<string, string> = { buveur: buveurUrl, videur: videurUrl, pere_noel: pereNoelUrl, cop: copUrl, marie: marieUrl, barman: barmanUrl, serveuse: serveuseUrl, pilier: pilierUrl };
   for (const id of Object.keys(CHARACTERS) as CharacterId[]) {
     void renderPortrait(models[CHARACTERS[id].model]).then((u) => { portraits.set(id, u); shop.refresh(); setup.refresh(); }).catch((e) => console.error('[portrait]', e));
   }

@@ -196,6 +196,14 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    en T, puis squelette de la Universal Animation Library) ; clips : Idle_Talking_Loop (il râle), Sprint_Loop,
    Spell_Simple_Shoot (doigt pointé) pour le lancer, Sitting_Enter pour la mort (il s'éteint assis). Le saut reprend les
    clips du Cop (la bibliothèque n'en a qu'un jeu). Origine et licence du modèle à confirmer.
+   **Le Pilier de bar fait le 2026-11-18, à valider en jeu** : passif Accoudé (`anchor` : immobile, l'ancrage monte en
+   4 s jusqu'à +60 % dégâts et +3 PV/s, retombe en 1,2 s quand il bouge ; `game.anchor`, rond doré `ANCHOR_RING` dans
+   `main.ts`), Le 421, +30 PV, -15 % vitesse, 300 TUNAS. Modèle `tools/blender/pilier.py` (sculpt « free pack cartoon base
+   mesh », licence à confirmer par l'utilisateur) : ventre gonflé, bras amincis, découpe nette par plans en pièces
+   (marcel à bretelles, pantalon, ceinture, charentaises), coques épaissies, casquette plate, moustache, nez rouge, yeux
+   peints ; squelette provisoire à poids automatiques pour la pose en T, puis la Universal Animation Library à poids
+   automatiques (doigts exclus). Clips : repos Idle_Loop ralenti qui tangue, marche Walk_Loop qui se dandine, lancer
+   Interact, mort faite main (il tombe en arrière d'un bloc). Pas vu tourner en jeu (panneau masqué).
    **La Serveuse faite et validée par l'utilisateur le 2026-11-18** (modèle, patinage, plateau en main, nouveau Plateau) : « Debbie the Roller Waitress » (SAB64, Sketchfab, CC-BY 4.0 :
    crédit obligatoire, voir CREDITS.md ; le jeu n'a pas encore d'écran de crédits), serveuse de diner sur patins,
    `tools/blender/serveuse.py` : squelette MikuMikuDance (os reconnus par leur numéro final), pose A remise en T, poids

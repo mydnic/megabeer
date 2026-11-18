@@ -13,7 +13,7 @@ import { COIN_DROPS, COINS } from '../config/coins';
 import { TUNA_DROPS, TUNAS } from '../config/tunas';
 import type { CardOptionId } from '../config/shop';
 import { AchievementTracker } from './achievements';
-import { CHARACTERS, type CharacterId } from '../config/characters';
+import { CHARACTERS, type CharacterDef, type CharacterId } from '../config/characters';
 import type { RunUnlocks } from '../meta/shop';
 import { createEnemyShots, type EnemyShot } from '../enemies/enemyShots';
 import { PLANET_RADIUS } from '../config/world';
@@ -940,7 +940,7 @@ export class Game {
   hitZombie(z: Zombie, damage: number, crit: boolean, impact: THREE.Vector3, vel: THREE.Vector3, weapon: Weapon | null = null, knock = 1) {
     if (z.intangible) return false; // un fantôme intouchable : le coup le traverse
     // Stat Dégâts du joueur : toutes ses armes ; objets qui visent certains ennemis
-    if (weapon) damage *= this.stats.damage * this.itemDamageMul(z) * this.tournees.damageMul;
+    if (weapon) damage *= this.stats.damage * this.itemDamageMul(z) * this.tournees.damageMul * this.anchorDamageMul();
     knock *= this.stats.knockback;
     const hpBefore = Math.max(0, z.hp);
     // Synergies actives : une arme marque le zombie (sonné), une autre lui fait plus de dégâts pendant ce temps
@@ -1083,6 +1083,13 @@ export class Game {
     // Régénération ; Casquette à bière : en plus quand le joueur ne bouge pas
     let regen = this.stats.regen + this.tournees.regen;
     if (this.effects.power.standRegen > 0 && this.player.velocity.length() < ITEM_EFFECTS.standRegen.still) regen += this.effects.power.standRegen;
+    // Accoudé (le Pilier de bar) : l'ancrage monte quand il ne bouge pas, retombe dès qu'il bouge
+    const anchor = (CHARACTERS[this.character] as { anchor?: CharacterDef['anchor'] }).anchor;
+    if (anchor) {
+      const still = this.player.velocity.length() < anchor.still;
+      this.anchor = THREE.MathUtils.clamp(this.anchor + (still ? dt / anchor.buildTime : -dt / anchor.dropTime), 0, 1);
+      regen += this.anchor * anchor.regen;
+    }
     if (regen > 0) this.health.heal(regen * dt);
     // Écharpe de supporter : entouré, il court plus vite (et prend l'armure en plus)
     if (this.effects.has('crowdBoost')) {
@@ -1149,6 +1156,13 @@ export class Game {
   xpGathered = 0;
   /** Temps avant le prochain cadeau du Père Noël (s). */
   private giftIn = 0;
+  /** Ancrage du Pilier de bar, de 0 (il bouge) à 1 (accoudé depuis assez longtemps). */
+  anchor = 0;
+  /** Multiplicateur de dégâts de l'ancrage (1 pour les autres persos). */
+  anchorDamageMul() {
+    const a = (CHARACTERS[this.character] as { anchor?: CharacterDef['anchor'] }).anchor;
+    return a ? 1 + this.anchor * a.damage : 1;
+  }
   /** Temps restant du sprint de la Serveuse (après une esquive). */
   private sprintIn = 0;
   /** Contrôle d'alcoolémie (le Cop) : quand chaque ennemi peut de nouveau être figé (temps de run). */
@@ -1311,6 +1325,7 @@ export class Game {
     this.xpGathered = 0;
     this.stunReady = new WeakMap();
     this.sprintIn = 0;
+    this.anchor = 0;
     this.giftIn = (CHARACTERS[this.character] as { freeChestEvery?: number }).freeChestEvery ?? 0;
     this.deadTime = -1;
     this.arriving = false;

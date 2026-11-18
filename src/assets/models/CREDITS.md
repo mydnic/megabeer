@@ -40,5 +40,8 @@
   https://sketchfab.com/3d-models/debbie-the-roller-waitress-b12d84e31b86423fb7b447649ced51c7, licence CC-BY 4.0
   (crédit obligatoire). Modifié : plateau de nourriture et pièces cachées retirés, maillage allégé, monté par
   `tools/blender/serveuse.py` sur le squelette de la Universal Animation Library de Quaternius (CC0), clips ajoutés.
+- `pilier.glb` : le Pilier de bar, tiré du modèle « free pack cartoon base mesh » (Sketchfab, fourni par l'utilisateur,
+  sculpt nu sans squelette ; auteur et licence à confirmer), retouché, habillé et monté par `tools/blender/pilier.py` sur
+  le squelette de la Universal Animation Library de Quaternius (CC0), clips en partie faits main.
 
 Les autres GLB de ce dossier sont générés par les scripts de `tools/blender/` (voir CLAUDE.md).

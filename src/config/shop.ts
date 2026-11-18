@@ -15,6 +15,7 @@ export const SHOP_CHARACTERS: readonly { id: string; name: string; pitch: string
   { id: 'futurMarie', name: 'Le Futur Marié', pitch: 'Poison deux fois plus rapide, Flaque de vomi', price: 300 },
   { id: 'barman', name: 'Le Barman', pitch: 'Robot misanthrope, 4 cartes au level-up, Tireuse à bière', price: 300 },
   { id: 'serveuse', name: 'La Serveuse', pitch: 'Esquive et coups de vitesse sur patins, Plateau de serveur', price: 300 },
+  { id: 'pilier', name: 'Le Pilier de bar', pitch: 'Plus fort et soigné quand il ne bouge pas, Le 421', price: 300 },
   { id: 'cop', name: 'Le Cop', pitch: "Qui le touche reste figé, Rot sonique", price: 300 },
 ];
 

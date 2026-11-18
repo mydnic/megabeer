@@ -26,6 +26,12 @@ export type CharacterDef = {
   poisonStacks?: number;
   /** Contrôle d'alcoolémie : un ennemi qui le touche au contact est figé `duration` s, au plus une fois toutes les `cooldown` s (pas les boss). */
   contactStun?: { duration: number; cooldown: number };
+  /**
+   * Accoudé (le Pilier de bar) : tant qu'il ne bouge pas (vitesse sous `still` m/s), son ancrage monte de 0 à 1 en
+   * `buildTime` s ; dès qu'il bouge, il retombe à 0 en `dropTime` s. À plein ancrage : dégâts x (1 + `damage`) et
+   * `regen` PV par seconde en plus.
+   */
+  anchor?: { still: number; buildTime: number; dropTime: number; damage: number; regen: number };
 };
 
 export const CHARACTERS = {
@@ -62,9 +68,17 @@ export const CHARACTERS = {
     stats: [{ stat: 'dodge', value: 0.1 }, { stat: 'maxHp', value: -10 }, { stat: 'attackSpeed', value: 0.1 }],
     dodgeSprint: { speedMul: 1.5, duration: 1.2 },
   },
+  pilier: {
+    name: 'Le Pilier de bar', pitch: "Accoudé : plus il reste sans bouger, plus il cogne fort et se soigne. Costaud, très lent. Le 421.", weapon: 'des421', model: 'pilier',
+    stats: [{ stat: 'maxHp', value: 30 }, { stat: 'moveSpeed', value: -0.15 }],
+    anchor: { still: 0.3, buildTime: 4, dropTime: 1.2, damage: 0.6, regen: 3 },
+  },
 } as const satisfies Record<string, CharacterDef>;
 
 export type CharacterId = keyof typeof CHARACTERS;
+
+/** Rond au sol sous le Pilier de bar, dont l'opacité suit son ancrage (rayon en m ; le reste comme l'anneau du Rot). */
+export const ANCHOR_RING = { radius: 0.9, color: 0xffc04a, width: 0.14, lift: 0.05, opacity: 0.85, segments: 48, dashes: 6, dashSpeed: 0.15 } as const;
 
 /** Maps jouables (une seule pour l'instant ; l'id est celui de game/mechanics). */
 export const MAPS = {

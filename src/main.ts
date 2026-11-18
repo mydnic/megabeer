@@ -50,7 +50,8 @@ import copUrl from './assets/models/cop.glb?url';
 import marieUrl from './assets/models/marie.glb?url';
 import barmanUrl from './assets/models/barman.glb?url';
 import serveuseUrl from './assets/models/serveuse.glb?url';
-import { CHARACTERS } from './config/characters';
+import pilierUrl from './assets/models/pilier.glb?url';
+import { ANCHOR_RING, CHARACTERS } from './config/characters';
 import { CameraRig } from './player/cameraRig';
 import { PintProp } from './player/pintProp';
 import { Pipeline } from './render/pipeline';
@@ -154,6 +155,7 @@ buveur.load('cop', copUrl).catch((e) => console.error(e));
 buveur.load('marie', marieUrl).catch((e) => console.error(e));
 buveur.load('barman', barmanUrl).catch((e) => console.error(e));
 buveur.load('serveuse', serveuseUrl).catch((e) => console.error(e));
+buveur.load('pilier', pilierUrl).catch((e) => console.error(e));
 game.setThrowRig({ gesture: (rate) => buveur.throwGesture(rate), handPos: (out) => buveur.leftHandPos(out) });
 const hordeView = createHordeView(scene, zombieLib);
 const xpView = createXpDropsView(scene);
@@ -164,6 +166,9 @@ const zoneViews = (Object.keys(WEAPON_FX) as WeaponId[]).filter((id) => WEAPON_F
 // Un anneau de portée par arme qui en affiche une (Rot sonique)
 const ringViews = (Object.keys(WEAPON_FX) as WeaponId[]).filter((id) => WEAPON_FX[id].ring)
   .map((id) => [id, createRangeRingView(scene, WEAPON_FX[id].ring!, (p, feetR) => game.player.supportAt(p, feetR))] as const);
+// Ancrage du Pilier de bar : un rond doré sous ses pieds, d'autant plus net qu'il est accoudé depuis longtemps
+const anchorRing = createRangeRingView(scene, ANCHOR_RING, (p, feetR) => game.player.supportAt(p, feetR));
+const anchorZone = { pos: new THREE.Vector3(), radius: ANCHOR_RING.radius, age: 0, life: Infinity, active: false, strength: 0 };
 // Une vue de projectiles par arme qui en a
 const bottleViews = Object.fromEntries(await loading.weaponViews) as Partial<Record<WeaponId, Awaited<ReturnType<typeof createBottleView>>>>;
 const enemyShotsView = await loading.enemyShotsView;
@@ -281,6 +286,10 @@ function frame(now: number) {
   for (const id of Object.keys(bottleViews) as WeaponId[]) bottleViews[id]!.sync(projectiles(id));
   for (const [id, view] of zoneViews) view.sync(game.loadout.weapons.find((w) => w.id === id)?.zones ?? []);
   for (const [id, view] of ringViews) view.sync(game.phase === 'run' ? game.loadout.weapons.find((w) => w.id === id)?.zones?.[0] : undefined, game.player.pos.length(), dt);
+  anchorZone.active = game.phase === 'run' && game.anchor > 0.02;
+  anchorZone.strength = game.anchor;
+  anchorZone.pos.copy(game.player.renderPos);
+  anchorRing.sync(anchorZone, game.player.pos.length(), dt);
   enemyShotsView.sync(game.shots.shots);
   kamikazeView.sync(game.horde.zombies);
   protectorView.sync(game.horde.zombies);

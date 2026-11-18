@@ -159,6 +159,7 @@ PV à 0 : fin de run (défaite), bilan, TUNAS gagnés conservés [EXISTE].
 | Le Futur Marié (ex-Crado) | Flaque de vomi | Le poison s'empile 2 fois plus vite | -PV, +vitesse, +ramassage | TUNAS |
 | Le Barman | Tireuse | Le level-up propose 4 cartes au lieu de 3 | -dégâts | TUNAS |
 | Le Moine brasseur | Triple | +1 PV/s de régénération, soins des snacks doublés | +PV, -dégâts | Succès : finir une run sur la map Abbaye |
+| Le Pilier de bar | Le 421 | **Accoudé** : sans bouger, l'ancrage monte en 4 s (jusqu'à +60 % dégâts et +3 PV/s), retombe en 1,2 s dès qu'il bouge | +PV, --vitesse | TUNAS |
 | Le Supporter | Corne de brume | +2% dégâts par ennemi proche, plafonné à +30% | +vitesse, -armure | TUNAS |
 | La Serveuse | Plateau de serveur | +10% esquive de base, chaque esquive donne un sprint court | -PV, +vitesse d'attaque | TUNAS |
 | Le Videur | Tabouret de bar | +3 armure de base, insensible au recul | ++PV, --vitesse | Succès : tuer un boss |
@@ -1119,6 +1120,13 @@ L'ordre après l'étape 7 est indicatif : il se rediscute à chaque feature vali
 - Restent à faire : équilibrage des chiffres.
 
 ### Tranché le 2026-11-18 (persos)
+
+- **Le Pilier de bar** (nouveau perso, proposé à la place du Supporter dont le passif devenait un +30 % fixe : en fin de
+  partie on est toujours entouré) : il joue à l'inverse de la Serveuse, on choisit où se planter puis quand fuir.
+  Passif Accoudé (`anchor` dans `config/characters.ts`), rond doré sous ses pieds qui s'affirme avec l'ancrage. Le 421
+  au départ, +30 PV, -15 % vitesse, 300 TUNAS. Modèle : sculpt cartoon fourni, habillé par script (marcel, pantalon,
+  ceinture, charentaises, casquette plate, moustache, nez rouge), `tools/blender/pilier.py`. Le Supporter reste au GDD,
+  à revoir (piste : une jauge d'ambiance qui monte à chaque zombie tué).
 
 - **Le Crado devient le Futur Marié** (enterrement de vie de garçon) : le Crado ressemblait trop au Buveur. Même fiche
   (Flaque de vomi, poison deux fois plus rapide, -15 PV, +10 % vitesse, +1 m de ramassage). Modèle tiré du pack Ultimate

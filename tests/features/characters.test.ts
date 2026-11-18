@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CHARACTERS, type CharacterId } from '../../src/config/characters';
 import { ACHIEVEMENTS } from '../../src/config/achievements';
@@ -205,6 +206,45 @@ describe('Les persos jouables', () => {
     const p = { ...emptyProfile(), tunas: 1e6 };
     expect(owned(p, 'character:serveuse')).toBe(false);
     expect(owned(buy(p, 'character:serveuse', 0)!, 'character:serveuse')).toBe(true);
+  });
+
+  it('le Pilier de bar accoudé se soigne ; s il marche, non (le Buveur ne se soigne pas sans bouger)', () => {
+    const A = CHARACTERS.pilier.anchor;
+    const healed = (id: CharacterId, input = {}) => {
+      const t = runWith(id);
+      t.game.loadout.weapons[0].mods.rate = -1e6; // pas de tirs
+      t.game.health.hp = t.game.health.max - 60;
+      const before = t.game.health.hp;
+      t.play(A.buildTime + 3, input);
+      return t.game.health.hp - before;
+    };
+    expect(healed('pilier')).toBeGreaterThan(A.regen * 2);
+    expect(healed('pilier', { moveY: 1 })).toBeLessThan(1);
+    expect(healed('buveur')).toBeLessThan(1);
+  });
+
+  it('le Pilier de bar cogne plus fort une fois accoudé, et perd son ancrage dès qu il marche', () => {
+    const A = CHARACTERS.pilier.anchor;
+    const t = runWith('pilier');
+    const w = t.game.loadout.weapons[0];
+    w.mods.rate = -1e6;
+    const z = t.game.spawnZombie('zombie', t.inFront(8), t.game.player.facing.clone())!;
+    z.hp = 1e6; z.frozen = 1e6;
+    const hit = () => { const hp = z.hp; t.game.hitZombie(z, 10, false, z.pos.clone(), new THREE.Vector3(), w, 0); return hp - z.hp; };
+    t.play(0.2, { moveY: 1 });
+    const moving = hit();
+    t.play(A.buildTime + 0.5);
+    const anchored = hit();
+    expect(anchored).toBeCloseTo(moving * (1 + A.damage), 1);
+    t.play(A.dropTime + 0.3, { moveY: 1 });
+    expect(hit()).toBeCloseTo(moving, 1);
+  });
+
+  it('le Pilier de bar commence avec le 421 et s achète en boutique', () => {
+    expect(CHARACTERS.pilier.weapon).toBe('des421');
+    const p = { ...emptyProfile(), tunas: 1e6 };
+    expect(owned(p, 'character:pilier')).toBe(false);
+    expect(owned(buy(p, 'character:pilier', 0)!, 'character:pilier')).toBe(true);
   });
 
   it('le Videur se débloque avec le succès Sonné, pas en boutique', () => {
