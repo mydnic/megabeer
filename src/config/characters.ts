@@ -71,7 +71,7 @@ export const CHARACTERS = {
   pilier: {
     name: 'Le Pilier de bar', pitch: "Accoudé : plus il reste sans bouger, plus il cogne fort et se soigne. Costaud, très lent. Le 421.", weapon: 'des421', model: 'pilier',
     stats: [{ stat: 'maxHp', value: 30 }, { stat: 'moveSpeed', value: -0.15 }],
-    anchor: { still: 0.3, buildTime: 4, dropTime: 1.2, damage: 0.6, regen: 3 },
+    anchor: { still: 0.3, buildTime: 6, dropTime: 1.2, damage: 0.3, regen: 1.5 },
   },
 } as const satisfies Record<string, CharacterDef>;
 

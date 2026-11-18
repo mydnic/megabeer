@@ -6,7 +6,7 @@ Universal Animation Library (Quaternius, CC0).
 Le script :
 1. retouche la silhouette (ventre plus gros, bras et épaules moins musclés : ce n'est pas le Videur) ;
 2. découpe le corps net le long de plans (ceinture, ourlets, emmanchures, encolure) et range chaque face dans sa pièce
-   (peau, marcel, pantalon, ceinture, charentaises) ; nez rougi, yeux peints ;
+   (peau, tee-shirt, pantalon, ceinture, charentaises) ; nez rougi, yeux peints ;
 3. pose un squelette provisoire sur ses articulations (relevées sur des rendus quadrillés, `JOINTS`), poids
    automatiques, membres tournés dans la direction du mannequin (pose en T), pose appliquée au maillage ;
 4. replace les articulations du mannequin sur les siennes, poids automatiques (doigts exclus : la main suit d'un bloc) ;
@@ -65,15 +65,14 @@ COLORS = {SKIN: (0.86, 0.60, 0.47), TANK: (0.93, 0.91, 0.84), PANTS: (0.42, 0.33
           SHOE: (0.48, 0.16, 0.14), NOSE: (0.88, 0.38, 0.36), EYE_W: (0.95, 0.95, 0.93), EYE_I: (0.12, 0.08, 0.05),
           BROW: (0.62, 0.60, 0.58), CAP: (0.30, 0.27, 0.22), MOUSTACHE: (0.70, 0.68, 0.66)}
 # Coques des vêtements : décalage au-dessus de la peau et épaisseur (m du fichier)
-SHELL = {TANK: 0.022, PANTS: 0.035, BELT: 0.055, SHOE: 0.04}
+SHELL = {TANK: 0.028, PANTS: 0.035, BELT: 0.055, SHOE: 0.04}
 # Plans de coupe (point, normale) ; découpe : ceinture entre deux plans horizontaux
 WAIST = (1.43, 1.53)
 CUFF = 0.25
 NECK = ((0, 0.3, 2.50), (0, -0.4, 1))
-ARMHOLE = ((0.52, 0, 2.10), (1, 0, 0.23))  # le côté gauche ; le droit en miroir
-STRAP = (0.20, 0.36)  # bretelles du marcel (distance au milieu, du fichier)
-# Haut des bretelles : devant sous `front_z`, derrière (y au-delà de `back_y`) jusqu'à `back_z` (sinon elles montent sur la mâchoire)
-STRAP_TOP = {'front_z': 2.56, 'back_y': 0.25, 'back_z': 2.75}
+# Manches du tee-shirt : coupées net en travers du bras, à cette part de l'épaule au coude (un marcel laissait l'épaule
+# nue, et la peau de l'épaule, qui se déforme le plus, passait par-dessus les bretelles dès qu'il levait le bras)
+SLEEVE = 0.45
 
 CLIPS = {'Idle_Loop': 'idle_src', 'Walk_Loop': 'run', 'Jump_Start': 'jump', 'Jump_Loop': 'fall', 'Jump_Land': 'land', 'Interact': 'throw'}
 RENAME = {'thigh_l': 'thigh.L', 'calf_l': 'shin.L', 'foot_l': 'foot.L', 'hand_l': 'hand.L',
@@ -198,10 +197,11 @@ def cut(co, no):
 
 cut((0, 0, WAIST[0]), (0, 0, 1)); cut((0, 0, WAIST[1]), (0, 0, 1)); cut((0, 0, CUFF), (0, 0, 1))
 cut(*NECK)
-cut((0, 0, STRAP_TOP['front_z']), (0, 0, 1)); cut((0, 0, STRAP_TOP['back_z']), (0, 0, 1)); cut((0, STRAP_TOP['back_y'], 0), (0, 1, 0))
-for x_ in STRAP:
-    cut((x_, 0, 0), (1, 0, 0)); cut((-x_, 0, 0), (1, 0, 0))
-cut(ARMHOLE[0], ARMHOLE[1]); cut((-ARMHOLE[0][0], ARMHOLE[0][1], ARMHOLE[0][2]), (-ARMHOLE[1][0], ARMHOLE[1][1], ARMHOLE[1][2]))
+sleeves = {}
+for s_ in ('l', 'r'):
+    a_, b_ = joint(f'shoulder.{s_}'), joint(f'elbow.{s_}')
+    sleeves[s_] = (a_.lerp(b_, SLEEVE), (b_ - a_).normalized())
+    cut(*sleeves[s_])
 
 
 def side_of(p, co, no):
@@ -211,9 +211,10 @@ def side_of(p, co, no):
 nose_tip = max((v.co for v in bm.verts if v.co.z > 2.8 and abs(v.co.x) < 0.05), key=lambda c: -c.y)
 for f in bm.faces:
     c = f.calc_center_median()
-    arm = side_of(c, *ARMHOLE) > 0 if c.x > 0 else side_of(c, (-ARMHOLE[0][0], ARMHOLE[0][1], ARMHOLE[0][2]), (-ARMHOLE[1][0], 0, ARMHOLE[1][2])) > 0
-    if abs(c.x) > 0.75:
-        f.material_index = SKIN  # bras et mains (les doigts descendent jusqu'à la ceinture)
+    # Bras nu : au-delà de la manche (seulement côté bras : le plan de coupe traverse aussi le bas du corps)
+    arm = abs(c.x) > 0.4 and c.z > 1.6 and side_of(c, *sleeves['l' if c.x > 0 else 'r']) > 0
+    if abs(c.x) > 0.75 and c.z < 1.75:
+        f.material_index = SKIN  # mains (les doigts descendent jusqu'à la ceinture)
     elif c.z < CUFF:
         f.material_index = SHOE
     elif c.z < WAIST[0]:
@@ -222,8 +223,6 @@ for f in bm.faces:
         f.material_index = BELT
     elif side_of(c, *NECK) < 0 and not arm:
         f.material_index = TANK
-    elif STRAP[0] < abs(c.x) < STRAP[1] and not arm and (c.z < STRAP_TOP['front_z'] or (c.y > STRAP_TOP['back_y'] and c.z < STRAP_TOP['back_z'])):
-        f.material_index = TANK  # bretelles
     else:
         f.material_index = SKIN
 bm.to_mesh(body.data)
@@ -556,7 +555,9 @@ if args.render:
                                               ('tete', 'idle', 10, (1.2, -3.6, 2.6), 0.8), ('trois_quarts', 'idle', 40, (3, -3, 0.95), 2.4),
                                               ('dos', 'idle', 40, (-2, 4, 0.95), 2.4), ('marche1', 'run', 4, (3, -3, 0.95), 2.4),
                                               ('marche2', 'run', 14, (3, -3, 0.95), 2.4), ('lancer', 'throw', 20, (3, -3, 0.95), 2.4),
-                                              ('saut', 'fall', 10, (3, -3, 0.95), 2.4), ('mort', 'death', 40, (4, 0.8, 0.4), 2.8)):
+                                              ('saut', 'fall', 10, (3, -3, 0.95), 2.4), ('mort', 'death', 40, (4, 0.8, 0.4), 2.8),
+                                              ('epaules', 'idle', 10, (1.4, 2.6, 3.0), 1.1), ('epaules_face', 'idle', 30, (-1.2, -2.8, 2.8), 1.1),
+                                              ('epaules_marche', 'run', 8, (-1.4, 2.6, 3.0), 1.1), ('epaules_lancer', 'throw', 20, (1.6, -2.4, 2.9), 1.1)):
         rig.animation_data.action = bpy.data.actions.get(act_name) if act_name else None
         if act_name and hasattr(rig.animation_data, 'action_slot') and rig.animation_data.action.slots:
             rig.animation_data.action_slot = rig.animation_data.action.slots[0]
@@ -566,7 +567,7 @@ if args.render:
         sc.frame_set(frame)
         cam.ortho_scale = scale
         co.location = loc
-        target = Vector((0, 0.8 if name == 'mort' else 0, 1.6 if name == 'tete' else loc[2]))
+        target = Vector((0, 0.8 if name == 'mort' else 0, 1.6 if name == 'tete' else 1.35 if name.startswith('epaules') else loc[2]))
         co.rotation_euler = (target - Vector(loc)).to_track_quat('-Z', 'Y').to_euler()
         sc.render.filepath = os.path.join(args.render, f'{name}.png')
         bpy.ops.render.render(write_still=True)

@@ -31,7 +31,7 @@ function dummy(t: ReturnType<typeof createTestGame>, dist: number, side = 0): Zo
 }
 
 describe('Le 421', () => {
-  it('lance trois dés à la fois', () => {
+  it('lance tous ses dés à la fois (deux au départ)', () => {
     const { t, w } = arena();
     dummy(t, 7);
     t.playUntil(() => w.projectiles.filter((p) => p.active).length >= DES_421.count!, 3);
@@ -52,6 +52,7 @@ describe('Le 421', () => {
     const { t, w } = arena();
     dummy(t, 6);
     const near = dummy(t, 6, 1.5);
+    w.mods.projectiles = 1; // le troisième dé (carte « dé en plus »)
     queue.push(0.55, 0.2, 0.01); // faces 4, 2, 1
     t.play(3);
     expect(t.events('weaponExploded').filter((e) => e.weapon === w).length).toBe(1);

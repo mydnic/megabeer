@@ -250,12 +250,13 @@ export const ZONE_SOUNDS = {
 } as const;
 
 /**
- * Le 421 (n° 10, inventé le 2026-11-15, d'après le jeu de dés de comptoir) : trois dés lancés sur les zombies ; chaque
- * dé frappe selon sa face, chaque 6 ajoute un peu de critique pour la run, et 4-2-1 dans la même volée fait jackpot :
- * le 4 explose. Évolution avec le Trèfle de comptoir.
+ * Le 421 (n° 10, inventé le 2026-11-15, d'après le jeu de dés de comptoir) : des dés lancés sur les zombies (deux au
+ * départ depuis le 2026-11-18 : trois d'emblée, c'était trop fort ; la carte « dé en plus » donne le troisième) ; chaque
+ * dé frappe selon sa face, chaque 6 ajoute un peu de critique pour la run, et 4-2-1 dans la même volée (il faut donc
+ * trois dés) fait jackpot : le 4 explose. Évolution avec le Trèfle de comptoir.
  */
 export const DES_421: BottleConfig = {
-  ...THROWN, count: 3, cooldown: 2.0, damage: 9, speed: 15, gravity: 14, spinRate: 3, radius: 0.14,
+  ...THROWN, count: 2, cooldown: 2.0, damage: 9, speed: 15, gravity: 14, spinRate: 3, radius: 0.14,
   dice: { critPerSix: 0.004, critCap: 0.15, jackpotDamage: 6, jackpotRadius: 3.2 },
 };
 export const DES_421_LOOK = { file: 'de.glb', length: 0.26, fit: 'max', colors: { Ivoire: 0xf6f0e2, Points: 0x141010 } as Record<string, number> } as const;

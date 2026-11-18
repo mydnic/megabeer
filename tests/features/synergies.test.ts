@@ -54,6 +54,7 @@ describe('Les synergies entre armes', () => {
     const { t, ws } = arena('biereNoel', 'des421');
     const [noel, dice] = ws;
     dice.mods.critChance = -1;
+    dice.mods.projectiles = 1; // le troisième dé, pour faire 4-2-1
     dummy(t, 6);
     t.play(0.2);
     expect(noel.projectiles.filter((p) => p.active)).toHaveLength(BIERE_NOEL.count);
