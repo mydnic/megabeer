@@ -196,6 +196,12 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    en T, puis squelette de la Universal Animation Library) ; clips : Idle_Talking_Loop (il râle), Sprint_Loop,
    Spell_Simple_Shoot (doigt pointé) pour le lancer, Sitting_Enter pour la mort (il s'éteint assis). Le saut reprend les
    clips du Cop (la bibliothèque n'en a qu'un jeu). Origine et licence du modèle à confirmer.
+   **Ménage des issues GitHub le 2026-11-18** (demande : les relire, faire le ménage, puis les traiter une par une) :
+   #3, #4, #6, #9, #10, #11 fermées (déjà faites dans le jeu refait). Restent, dans l'ordre : #13 (écran d'erreur au
+   démarrage : **fait, à valider** : filet en script classique dans `index.html`, qui attrape aussi les erreurs des imports,
+   message sur l'écran de démarrage, détail de l'erreur et bouton Recharger ; test de WebGL2 avant le rendu dans
+   `main.ts`), #8 (véhicules), #7 (Super Saiyan : touche d'action à trancher), #5 (Trilogie LOTR), #14 (braindump : radio,
+   alliés, boss et objets de pop culture ; l'utilisateur veut ses références telles quelles, sans remarque de droits).
    **Roster des persos arrêté le 2026-11-18 (décision de l'utilisateur) : 8 persos** (Buveur, Videur, Père Noël, Cop,
    Futur Marié, Barman, Serveuse, Pilier de bar). Le Moine brasseur et le Supporter restent au GDD pour plus tard.
    **Le Pilier de bar fait et validé par l'utilisateur le 2026-11-18** : passif Accoudé (`anchor` : immobile, l'ancrage monte en

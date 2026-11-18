@@ -75,6 +75,10 @@ import { initInput, readInput } from './core/input';
 
 // --- Rendu
 // Rendu léger (téléphone) : dessiné droit à l'écran, avec l'anticrénelage natif du canvas (peu coûteux sur mobile)
+// Sans WebGL2, three.js ne peut rien dessiner : on le dit (le filet de index.html affiche le message) au lieu de planter plus loin
+const probe = document.createElement('canvas').getContext('webgl2');
+if (!probe) throw new Error('WebGL2 indisponible sur ce navigateur');
+probe.getExtension('WEBGL_lose_context')?.loseContext();
 const renderer = new THREE.WebGLRenderer({ antialias: LIGHT_RENDER, powerPreference: 'high-performance' });
 // Rendu léger (téléphone) : résolution plafonnée, sinon jusqu'à 2x pour les écrans haute densité
 renderer.setPixelRatio(Math.min(devicePixelRatio, LIGHT_RENDER ? RENDER.light.pixelRatio : 2));

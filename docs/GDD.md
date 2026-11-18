@@ -971,7 +971,7 @@ Au premier lancement, le menu n'a **qu'un bouton : Jouer**. Les autres (Boutique
 - Bestiaire / encyclopédie des objets découverts (optionnel).
 - Options : volume musique / effets, sensibilité caméra, qualité graphique, chiffres de dégâts on/off, remappage.
 - [DÉCIDÉ] Option **zone morte de la manette** réglable (sticks et gâchettes séparément), pour les manettes usées qui envoient un signal au repos. Demandé après un test avec une gâchette défectueuse.
-- Écran d'erreur clair si le navigateur ne supporte pas le rendu 3D (leçon de l'issue #13 : aujourd'hui le menu devient inerte sans message).
+- Écran d'erreur clair si le navigateur ne supporte pas le rendu 3D ou si le chargement plante (issue #13, fait le 2026-11-18 : filet dans index.html, message sur l'écran de démarrage et bouton Recharger).
 
 ---
 
