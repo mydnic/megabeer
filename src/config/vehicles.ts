@@ -72,5 +72,8 @@ export const VEHICLE_SPAWN = {
 
 /** Rendu : colonne de lumière au-dessus du véhicule garé (hauteur m), vitesse de rotation des roues (tours par m). */
 export const VEHICLE_LOOK = { beamHeight: 9, beamRadius: 1.1, wheelTurnsPerMeter: 0.5,
+  /** Inclinaison sur le relief : le sol est relu à cette part de la demi-longueur et de la demi-largeur, et suivi à ce
+   * rythme en conduite (par s : plus haut, plus sec). */
+  groundProbe: 0.8, tiltRate: 12,
   /** Tank : vitesse de la tourelle (rad/s), animation des chenilles (vitesse du clip pour 1 m/s), obus (rayon m, couleur). */
   turretRate: 5, tracksPerSpeed: 0.18, shell: { radius: 0.18, color: 0x3a3a30 } } as const;

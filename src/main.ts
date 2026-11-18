@@ -131,7 +131,7 @@ const loading = {
   pumpsView: boot(createPumpsView(scene)),
   chestsView: boot(createChestsView(scene)),
   binsView: boot(createBinsView(scene)),
-  vehiclesView: boot(createVehiclesView(scene)),
+  vehiclesView: boot(createVehiclesView(scene, (p, feetR) => game.player.supportAt(p, feetR))),
   lastCallView: boot(createLastCallView(scene)),
   sonneurView: boot(createBossView(scene, { kind: 'sonneur', url: sonneurUrl, height: FRERE_SONNEUR.height, walkSpeed: FRERE_SONNEUR.speed })),
   abbeView: boot(createBossView(scene, { kind: 'abbe', url: abbeUrl, height: ABBE.height, walkSpeed: ABBE.speed })),

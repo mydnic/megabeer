@@ -6,13 +6,16 @@ import type { Vehicles } from '../game/vehicles';
 import type { PlayerController } from '../player/controller';
 import { characterMaterial, LAYER_CHARACTER, LAYER_SKY } from '../render/materials';
 import { withNormals } from '../render/meshPrep';
+import { groundPose } from './groundPose';
 
 const urls = import.meta.glob('../assets/models/vehicules/*.glb', { query: '?url', import: 'default', eager: true }) as Record<string, string>;
 
 /** Tourelle (le tank) : le pivot qui la porte avec le canon, l'axe vertical dans le repère de son parent, sa pose de départ. */
 type Turret = { pivot: THREE.Object3D; axis: THREE.Vector3; base: THREE.Quaternion; yaw: number };
 /** Un véhicule prêt à poser : son groupe (capot vers +Z, roues à y = 0), ses roues qui tournent, ses animations et sa tourelle (tank). */
-type Model = { root: THREE.Group; wheels: THREE.Object3D[]; mixer: THREE.AnimationMixer | null; forward: THREE.AnimationAction | null; turret: Turret | null };
+type Model = { root: THREE.Group; wheels: THREE.Object3D[]; mixer: THREE.AnimationMixer | null; forward: THREE.AnimationAction | null; turret: Turret | null;
+  /** Où le sol est relu pour l'incliner : demi-longueur et demi-largeur (m). */
+  halfLength: number; halfWidth: number };
 
 /**
  * Charge un véhicule : tourné pour regarder vers l'avant, à sa longueur, centré, roues au sol, en cel-shading comme le
@@ -81,14 +84,14 @@ async function loadModel(kind: VehicleId): Promise<Model> {
     turret = { pivot, axis, base: pivot.quaternion.clone(), yaw: 0 };
   }
   root.visible = false;
-  return { root, wheels, mixer, forward, turret };
+  return { root, wheels, mixer, forward, turret, halfLength: D.length / 2 * L.groundProbe, halfWidth: (box.max.x - box.min.x) * k / 2 * L.groundProbe };
 }
 
 /**
  * Rendu des véhicules : celui qui est garé (une colonne de lumière de la couleur de sa rareté le signale de loin) ou
  * celui que le joueur conduit (à sa place, roues qui tournent selon le chemin parcouru).
  */
-export async function createVehiclesView(scene: THREE.Scene) {
+export async function createVehiclesView(scene: THREE.Scene, groundAt: (p: THREE.Vector3, feetR: number) => number) {
   const kinds = Object.keys(VEHICLES) as VehicleId[];
   const models = new Map<VehicleId, Model>();
   for (const k of kinds) {
@@ -115,12 +118,14 @@ export async function createVehiclesView(scene: THREE.Scene) {
   const local = new THREE.Vector3(), yawQ = new THREE.Quaternion();
 
   const up = new THREE.Vector3(), right = new THREE.Vector3(), basis = new THREE.Matrix4(), last = new THREE.Vector3();
-  let shown: Model | null = null, t = 0;
-  const place = (m: Model, pos: THREE.Vector3, facing: THREE.Vector3) => {
-    up.copy(pos).normalize();
-    right.crossVectors(up, facing).normalize();
-    m.root.position.copy(pos);
-    m.root.quaternion.setFromRotationMatrix(basis.makeBasis(right, up, facing));
+  let shown: Model | null = null, t = 0, wasDriving = false;
+  const poseP = new THREE.Vector3(), poseQ = new THREE.Quaternion();
+  /** Pose le véhicule sur le relief sous ses quatre coins ; `smooth` : en conduite, il suit le sol sans trembler. */
+  const place = (m: Model, pos: THREE.Vector3, facing: THREE.Vector3, smooth: number) => {
+    groundPose(pos, facing, m.halfLength, m.halfWidth, groundAt, poseP, poseQ);
+    if (smooth <= 0) { m.root.position.copy(poseP); m.root.quaternion.copy(poseQ); return; }
+    m.root.position.lerp(poseP, smooth);
+    m.root.quaternion.slerp(poseQ, smooth);
   };
 
   return {
@@ -140,13 +145,15 @@ export async function createVehiclesView(scene: THREE.Scene) {
       shellMesh.instanceMatrix.needsUpdate = true;
       const kind = !inRun ? null : vehicles.driving?.kind ?? vehicles.parked?.kind ?? null;
       const m = kind ? models.get(kind)! : null;
+      const snap = shown !== m || !!vehicles.driving !== wasDriving;
+      wasDriving = !!vehicles.driving;
       if (shown && shown !== m) shown.root.visible = false;
       shown = m;
       beam.visible = false;
       if (!m) return;
       m.root.visible = true;
       if (vehicles.driving) {
-        place(m, player.renderPos, player.renderFacing);
+        place(m, player.renderPos, player.renderFacing, snap ? 0 : 1 - Math.exp(-L.tiltRate * dt));
         // Roues : un tour par circonférence parcourue (en marche arrière, elles tournent à l'envers)
         const moved = last.distanceTo(player.renderPos) * Math.sign(player.carSpeed || 1);
         last.copy(player.renderPos);
@@ -164,11 +171,14 @@ export async function createVehiclesView(scene: THREE.Scene) {
         }
       } else {
         const p = vehicles.parked!;
-        place(m, p.pos, p.facing);
+        place(m, p.pos, p.facing, 0);
         last.copy(p.pos);
         beam.visible = true;
         beam.position.copy(p.pos);
-        beam.quaternion.copy(m.root.quaternion);
+        // La colonne de lumière reste droite (vers le ciel), même si le véhicule penche
+        up.copy(p.pos).normalize();
+        right.crossVectors(up, p.facing).normalize();
+        beam.quaternion.setFromRotationMatrix(basis.makeBasis(right, up, p.facing));
         beamMat.color.set(RARITIES[VEHICLES[p.kind].rarity].color);
         beamMat.opacity = 0.25 + 0.1 * Math.sin(t * 3);
       }
