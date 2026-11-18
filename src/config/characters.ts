@@ -18,6 +18,8 @@ export type CharacterDef = {
   knockImmune?: boolean;
   /** Un coffre gratuit (un petit fût cadeau) apparaît près de lui toutes les `freeChestEvery` s. */
   freeChestEvery?: number;
+  /** Contrôle d'alcoolémie : un ennemi qui le touche au contact est figé `duration` s, au plus une fois toutes les `cooldown` s (pas les boss). */
+  contactStun?: { duration: number; cooldown: number };
 };
 
 export const CHARACTERS = {
@@ -33,6 +35,11 @@ export const CHARACTERS = {
     name: 'Le Père Noël', pitch: 'Un cadeau près de lui toutes les 2 min. Costaud mais lent. Bière de Noël.', weapon: 'biereNoel', model: 'pere_noel',
     stats: [{ stat: 'maxHp', value: 25 }, { stat: 'moveSpeed', value: -0.08 }],
     freeChestEvery: 120,
+  },
+  cop: {
+    name: 'Le Cop', pitch: "Contrôle d'alcoolémie : qui le touche reste figé un instant. Très costaud, lent. Rot sonique.", weapon: 'rot', model: 'cop',
+    stats: [{ stat: 'maxHp', value: 40 }, { stat: 'moveSpeed', value: -0.12 }],
+    contactStun: { duration: 0.5, cooldown: 3 },
   },
 } as const satisfies Record<string, CharacterDef>;
 

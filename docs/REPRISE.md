@@ -173,8 +173,13 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    `--stats` par arme, `--dump ID`), avec CLOUDFLARE_ACCOUNT_ID et CLOUDFLARE_API_TOKEN en variables d'environnement.
    **Le Père Noël fait le 2026-11-15, à valider en jeu** (2e nouveau perso) : modèle « Surprised Santa » (fourni par
    l'utilisateur) monté sur le squelette du Buveur par `tools/blender/pere_noel.py`, 300 TUNAS. Prochains persos :
-   Le Crado, Le Barman, Le Moine brasseur, Le Supporter, La Serveuse, Le Cop (GDD section 5) ; l'utilisateur cherche
+   Le Crado, Le Barman, Le Moine brasseur, Le Supporter, La Serveuse (GDD section 5) ; l'utilisateur cherche
    les modèles en ligne, la même méthode les monte sur le squelette du Buveur.
+   **Le Cop fait le 2026-11-18, à valider en jeu** : modèle « Mall Cop » Mixamo (fourni, textures gardées : le
+   matériau cel-shading reprend `map`) monté par `tools/blender/cop.py` (bras abaissés, poids Mixamo reportés sur les os
+   du Buveur). Rot sonique, +40 PV, -12 % vitesse, passif `contactStun` (fige 0,5 s l'ennemi qui le frappe au contact,
+   une fois toutes les 3 s par ennemi, pas les boss), 300 TUNAS. Uniforme très sombre : à éclaircir si on le perd de
+   vue la nuit. La raie du GDD n'est pas sur ce modèle.
    Checkpoint 1, notes : base D1 `megabeer` (WEUR, id dans
    `wrangler.jsonc`, schéma appliqué), application Discord de l'utilisateur (Client ID dans `wrangler.jsonc`, secret
    posé par `wrangler secret put`, en local dans `.dev.vars`). Commandes Cloudflare : variables d'environnement

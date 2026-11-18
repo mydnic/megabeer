@@ -27,5 +27,8 @@
 - `pere_noel.glb` : « Surprised Santa » par Matt Connors (fichier fourni par l'utilisateur, nom d'origine
   `Surprised Santa by Matt Connors - 3Q7goR4wcNE.glb`, Poly Pizza / Poly by Google). Licence à confirmer sur la page
   source (probablement CC-BY, crédit obligatoire). Monté sur le squelette du Buveur par `tools/blender/pere_noel.py`.
+- `cop.glb` : « Mall Cop » animé (personnage Mixamo, archive `mall-cop-animated.zip` fournie par l'utilisateur, format
+  de téléchargement Sketchfab ; source `source/mall_cop_sf.glb`). Auteur et licence à confirmer sur la page source.
+  Monté sur le squelette du Buveur par `tools/blender/cop.py` (bras abaissés, poids de peau Mixamo reportés).
 
 Les autres GLB de ce dossier sont générés par les scripts de `tools/blender/` (voir CLAUDE.md).

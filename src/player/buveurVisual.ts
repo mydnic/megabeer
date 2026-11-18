@@ -74,6 +74,8 @@ export class BuveurVisual {
 
   private rigs = new Map<string, Rig>();
   private using = '';
+  /** Le perso demandé (affiché dès que son modèle a fini de charger, si on l'a choisi avant). */
+  private wanted = '';
   /** Le perso joué tient une pinte (le Buveur) : éclaboussures de bière, pinte lancée à la mort. */
   hasPint = true;
 
@@ -94,7 +96,8 @@ export class BuveurVisual {
       if (!mesh.isMesh) return;
       const src = mesh.material as THREE.MeshStandardMaterial;
       let m = mats.get(src.name);
-      if (!m) { m = characterMaterial({ color: src.color }); m.name = src.name; mats.set(src.name, m); materials.push(m as THREE.MeshToonMaterial); }
+      // Couleur unie (Buveur, Videur), ou texture si le modèle en a une (le Cop)
+      if (!m) { m = characterMaterial({ color: src.color, map: src.map ?? null }); m.name = src.name; mats.set(src.name, m); materials.push(m as THREE.MeshToonMaterial); }
       mesh.material = m;
       mesh.castShadow = true;
       // Pas d'ombre reçue : la carte d'ombre est trop grossière pour un perso de 1,9 m (taches au dos)
@@ -142,11 +145,12 @@ export class BuveurVisual {
       pintBone: gltf.scene.getObjectByName('pint'), handL: gltf.scene.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('hand.L')),
       hasPint: materials.some((m) => m.name === 'verre'),
     });
-    if (!this.using) this.use(id);
+    if (!this.using || id === this.wanted) this.use(id);
   }
 
   /** Affiche le perso `id` (déjà chargé) à la place du précédent. */
   use(id: string) {
+    this.wanted = id;
     const r = this.rigs.get(id);
     if (!r || id === this.using) return;
     const prev = this.rigs.get(this.using);

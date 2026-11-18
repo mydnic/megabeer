@@ -93,6 +93,41 @@ describe('Les persos jouables', () => {
     expect(owned(bought, 'character:pereNoel')).toBe(true);
   });
 
+  it('le Cop fige le zombie qui le frappe au contact, puis plus pendant le délai ; pas le Buveur', () => {
+    const S = CHARACTERS.cop.contactStun;
+    const firstHit = (id: CharacterId) => {
+      const t = runWith(id);
+      t.game.loadout.weapons[0].mods.damage = -1e6; // ne tue pas l'attaquant
+      t.game.cheats.god = true;
+      const z = t.game.spawnZombie('zombie', t.inFront(1.2), t.game.player.facing.clone().negate())!;
+      z.hp = 1e6;
+      let hits = 0;
+      t.game.events.on('playerHurt', () => { hits++; });
+      expect(t.playUntil(() => hits > 0, 10)).toBe(true);
+      return { t, z, frozen: z.frozen };
+    };
+    expect(firstHit('buveur').frozen).toBe(0);
+    const { t, z, frozen } = firstHit('cop');
+    expect(frozen).toBeCloseTo(S.duration, 1);
+    // Figé, il ne frappe plus ; le coup suivant ne le refige pas avant la fin du délai
+    const at = t.game.runTime;
+    let again = -1;
+    t.game.events.on('playerHurt', () => { if (again < 0) again = t.game.runTime; });
+    expect(t.playUntil(() => again >= 0, 10)).toBe(true);
+    expect(again - at).toBeGreaterThanOrEqual(S.duration - 0.05);
+    expect(again - at).toBeLessThan(S.cooldown);
+    expect(z.frozen).toBe(0);
+  });
+
+  it('le Cop est très costaud et lent, et s achète en boutique', () => {
+    const b = runWith('buveur'), c = runWith('cop');
+    expect(c.game.health.max - b.game.health.max).toBeCloseTo(statOf('cop', 'maxHp'));
+    expect(c.game.stats.moveSpeed).toBeLessThan(b.game.stats.moveSpeed);
+    const p = { ...emptyProfile(), tunas: 1e6 };
+    expect(owned(p, 'character:cop')).toBe(false);
+    expect(owned(buy(p, 'character:cop', 0)!, 'character:cop')).toBe(true);
+  });
+
   it('le Videur se débloque avec le succès Sonné, pas en boutique', () => {
     const a = ACHIEVEMENTS.find((x) => x.unlocks?.includes('character:videur'))!;
     expect(a).toBeDefined();

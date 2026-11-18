@@ -364,7 +364,7 @@ export class Game {
       onSpawn: (reaper) => this.events.emit('reaperSpawned', { reaper }),
       onSwing: (reaper) => this.events.emit('reaperSwing', { reaper }),
     });
-    this.horde.onHit = (z, dir) => this.hurtPlayer(z, dir, this.damageOf(z, z.def.damage));
+    this.horde.onHit = (z, dir) => { this.contactStun(z); this.hurtPlayer(z, dir, this.damageOf(z, z.def.damage)); };
     this.horde.onThrow = (z) => this.throwFrom(z);
     this.horde.onArm = (z) => {
       const K = z.def.kamikaze!;
@@ -1142,6 +1142,16 @@ export class Game {
   xpGathered = 0;
   /** Temps avant le prochain cadeau du Père Noël (s). */
   private giftIn = 0;
+  /** Contrôle d'alcoolémie (le Cop) : quand chaque ennemi peut de nouveau être figé (temps de run). */
+  private stunReady = new WeakMap<Zombie, number>();
+
+  /** Le Cop fige l'ennemi qui le touche (pas les boss), au plus une fois toutes les `cooldown` s par ennemi. */
+  private contactStun(z: Zombie) {
+    const S = (CHARACTERS[this.character] as { contactStun?: { duration: number; cooldown: number } }).contactStun;
+    if (!S || z.dead || z.def.boss || (this.stunReady.get(z) ?? -1) > this.runTime) return;
+    this.stunReady.set(z, this.runTime + S.cooldown);
+    z.frozen = Math.max(z.frozen, S.duration);
+  }
 
   private collectXp(amount: number) {
     this.xpGathered += amount;
@@ -1287,6 +1297,7 @@ export class Game {
 
   private resetRun() {
     this.xpGathered = 0;
+    this.stunReady = new WeakMap();
     this.giftIn = (CHARACTERS[this.character] as { freeChestEvery?: number }).freeChestEvery ?? 0;
     this.deadTime = -1;
     this.arriving = false;
