@@ -22,7 +22,7 @@ export function createTireuse(ctx: WeaponContext): Weapon {
   let burnTick = 0;
   const still = new THREE.Vector3();
 
-  const range = () => T.range * mods.size;
+  const range = () => T.range * mods.size * ctx.stats.size;
 
   /** Direction du zombie le plus proche à portée (dans le plan du sol), ou faux s'il n'y en a pas. */
   function aim(p: THREE.Vector3) {
@@ -51,7 +51,7 @@ export function createTireuse(ctx: WeaponContext): Weapon {
       const p = ctx.playerPos();
       up.copy(p).normalize();
       if (!aim(p)) return;
-      spray.emit(p, dir, T.drops, T.halfAngle * 0.8, T.dropSpeed * mods.size, T.dropLife);
+      spray.emit(p, dir, T.drops, T.halfAngle * 0.8, T.dropSpeed * mods.size * ctx.stats.size, T.dropLife);
       const cos = Math.cos(T.halfAngle), r = range();
       for (const z of ctx.zombiesNear(p, r, around)) {
         if (!z.targetable) continue;

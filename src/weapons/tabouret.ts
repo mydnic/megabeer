@@ -28,7 +28,7 @@ export function createTabouret(ctx: WeaponContext): Weapon {
   const around: Zombie[] = [];
 
   /** Rayon du coup (m) : la Taille l'allonge. */
-  const reach = () => T.radius * mods.size;
+  const reach = () => T.radius * mods.size * ctx.stats.size;
   /** Angle de chaque tabouret sur le cercle au temps `t` du tour (rad). */
   const angleAt = (t: number, offset: number) => offset + (Math.min(t, T.swingTime) / T.swingTime) * Math.PI * 2;
 
@@ -72,7 +72,7 @@ export function createTabouret(ctx: WeaponContext): Weapon {
       s.offset = (k / n) * Math.PI * 2;
       s.hits.length = 0;
       s.age = 0;
-      s.size = mods.size;
+      s.size = (mods.size * ctx.stats.size);
       s.active = true;
       // Penché vers l'extérieur, au départ de son tour ; il tournera ensuite avec le tour
       d.copy(radial0).multiplyScalar(Math.cos(s.offset)).addScaledVector(side0, Math.sin(s.offset));

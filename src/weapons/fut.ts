@@ -50,7 +50,7 @@ export function createFut(ctx: WeaponContext): Weapon {
       projectiles.push(b);
     }
     const p = ctx.playerPos();
-    b.size = mods.size;
+    b.size = (mods.size * ctx.stats.size);
     b.dir.copy(p).normalize();
     b.fwd.copy(fwd);
     // Départ un peu devant le joueur, sur le grand cercle de la route

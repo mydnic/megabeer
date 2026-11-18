@@ -98,6 +98,21 @@ describe('Les armes de zone du roster', () => {
     expect(hitsOn(t.t, t.w, z).length).toBeGreaterThan(0);
   });
 
+  it('la Taille (Pinte XXL) grossit aussi les projectiles (la Canette)', () => {
+    const sizeOf = (xxl: boolean) => {
+      const t = createTestGame();
+      t.startRunAndLand();
+      t.noSpawns();
+      if (xxl) t.game.gainItem('pinteXXL');
+      const z = t.game.spawnZombie('zombie', t.inFront(4), t.game.player.facing.clone().negate())!;
+      z.hp = 1e6; z.frozen = 1e6;
+      const w = t.game.loadout.weapons[0];
+      t.playUntil(() => w.projectiles.some((b) => b.active), 5);
+      return w.projectiles.find((b) => b.active)!.size;
+    };
+    expect(sizeOf(true)).toBeCloseTo(sizeOf(false) * (1 + ITEMS.pinteXXL.stats.size), 3);
+  });
+
   it('Odeur d alcool : un zombie dans l aura est confus et prend des dégâts', () => {
     const { t, w } = arena('odeur');
     const z = dummy(t, ODEUR.radius * 0.6);

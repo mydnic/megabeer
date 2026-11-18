@@ -17,7 +17,7 @@ export function createCorne(ctx: WeaponContext): Weapon {
   let timer: number = C.firstDelay;
   const up = new THREE.Vector3(), dir = new THREE.Vector3(), d = new THREE.Vector3(), vel = new THREE.Vector3();
   const around: Zombie[] = [];
-  const range = () => C.range * mods.size;
+  const range = () => C.range * mods.size * ctx.stats.size;
 
   const weapon: Weapon = {
     id: 'corne',
@@ -44,7 +44,7 @@ export function createCorne(ctx: WeaponContext): Weapon {
       }
       if (!inCone.length) return;
       timer = C.cooldown / (ctx.stats.fireRate * mods.rate);
-      spray.emit(p, dir, C.drops, C.halfAngle, C.dropSpeed * mods.size, C.dropLife, 0.6);
+      spray.emit(p, dir, C.drops, C.halfAngle, C.dropSpeed * mods.size * ctx.stats.size, C.dropLife, 0.6);
       if (mods.evolved) ctx.explode(weapon, p, r);
       else ctx.explode(weapon, p.clone().addScaledVector(dir, r * 0.35), r * 0.45);
       for (const z of inCone) {

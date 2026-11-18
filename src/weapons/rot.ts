@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { SYNERGY_FX, ROT as RT, ROT_UPGRADES, ROT_ZONE } from '../config/arsenal';
+import { SYNERGY_FX, ROT as RT, ROT_UPGRADES, ROT_RING } from '../config/arsenal';
 import { WEAPON_INFO } from '../config/weapons';
 import type { Zombie } from '../enemies/zombie';
 import type { StatLine } from '../game/playerStats';
@@ -40,7 +40,7 @@ export function createRot(ctx: WeaponContext): Weapon {
       zone.active = true;
       zone.pos.copy(p);
       zone.radius = radius();
-      zone.strength = timer > 0 ? ROT_ZONE.dim + (1 - ROT_ZONE.dim) * (1 - Math.min(1, timer / cd)) : 1;
+      zone.strength = timer > 0 ? ROT_RING.dim + (1 - ROT_RING.dim) * (1 - Math.min(1, timer / cd)) : 1;
       if (timer > 0) return;
       // Rot de corne (avec la Corne de brume) : le rot sort en cône devant le joueur, bien plus loin
       const cone = ctx.synergy('rotDeCorne');

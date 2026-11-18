@@ -45,6 +45,11 @@ for side in ('Left', 'Right'):
         MAP[f'{side}HandIndex{i}'] = f'hand.{side[0]}'
 
 
+ARM_BONES = ('upperarm', 'forearm', 'hand')
+# Clips où le bras droit reprend le gauche en miroir : True = clip en boucle, joué à contretemps (le balancier de la course)
+ANIM_MIRROR = {'idle': False, 'run': True, 'jump': False, 'fall': False, 'land': False, 'death': False, 'throw': False}
+
+
 def target(mixamo_name):
     short = mixamo_name.split(':')[-1]
     return MAP.get(short)
@@ -86,8 +91,12 @@ SEGMENTS = (('Arm', 'upperarm'), ('ForeArm', 'forearm'), ('Hand', 'hand'))
 for side, s in (('Left', 'L'), ('Right', 'R')):
     for mx_name, bv_name in SEGMENTS:
         pb = mix.pose.bones[f'mixamorig:{side}{mx_name}']
-        h0, t0 = old[f'{bv_name}.{s}']
+        # Le bras droit du Buveur tient sa pinte (avant-bras à l'horizontale) : le Cop prend des deux côtés le bras
+        # gauche, détendu (en miroir à droite)
+        h0, t0 = old[f'{bv_name}.L']
         want = (t0 - h0).normalized()
+        if s == 'R':
+            want.x = -want.x
         # Directions dans l'espace de l'armature (le monde est tourné et mis à l'échelle par l'objet)
         want_arm = (inv.to_3x3() @ want).normalized()
         cur = (pb.tail - pb.head).normalized()
@@ -149,8 +158,47 @@ for s, side in (('L', 'Left'), ('R', 'Right')):
     place(f'thigh.{s}', J(f'{side}UpLeg'), tail=J(f'{side}Leg'))
     place(f'shin.{s}', J(f'{side}Leg'), tail=J(f'{side}Foot'))
     place(f'foot.{s}', J(f'{side}Foot'), tail=J(f'{side}Toe_End'))
+# Bras droit : le reflet exact du gauche (direction et roulis), pour que ses animations soient le reflet de celles du bras gauche
+eb = rig.data.edit_bones
+for b in ARM_BONES:
+    l, r = eb[f'{b}.L'], eb[f'{b}.R']
+    d = l.tail - l.head
+    r.tail = r.head + Vector((-d.x, d.y, d.z))
+    r.roll = -l.roll
 place('pint', rig.data.edit_bones['hand.R'].tail.copy(), length=0.15)
 bpy.ops.object.mode_set(mode='OBJECT')
+
+# --- Animations : le bras droit refait les gestes du bras gauche en miroir (à contretemps dans les clips en boucle) ;
+# dans le lancer (de la main gauche, ajouté par-dessus le reste), il ne bouge pas
+def fcurves_of(action):
+    try:
+        return action.fcurves, action.fcurves
+    except AttributeError:
+        bag = action.layers[0].strips[0].channelbags[0]
+        return bag.fcurves, bag.fcurves
+
+for action in bpy.data.actions:
+    if action.name not in ANIM_MIRROR:
+        continue
+    curves, coll = fcurves_of(action)
+    for fc in [fc for fc in curves if any(f'"{b}.R"' in fc.data_path for b in ARM_BONES)]:
+        coll.remove(fc)
+    if action.name == 'throw':
+        continue
+    start, end = action.frame_range
+    length = end - start
+    shift = length / 2 if ANIM_MIRROR[action.name] else 0
+    for fc in [fc for fc in curves if any(f'"{b}.L"' in fc.data_path for b in ARM_BONES)]:
+        path = fc.data_path.replace('.L"', '.R"')
+        prop = path.rsplit('.', 1)[1]
+        sign = -1 if (prop == 'rotation_quaternion' and fc.array_index in (2, 3)) or (prop == 'location' and fc.array_index == 0)             or (prop == 'rotation_euler' and fc.array_index in (1, 2)) else 1
+        nf = coll.new(path, index=fc.array_index)
+        f = start
+        while f <= end + 1e-6:
+            src = start + ((f - start - shift) % length) if length > 0 else f
+            nf.keyframe_points.insert(f, sign * fc.evaluate(src), options={'FAST'})
+            f += 1
+        nf.update()
 
 # --- Poids de peau : groupes Mixamo fusionnés dans les groupes du Buveur
 for o in meshes:

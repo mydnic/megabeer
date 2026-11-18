@@ -22,7 +22,7 @@ export function createBiereNoel(ctx: WeaponContext): Weapon {
   const tmp = new THREE.Vector3(), vel = new THREE.Vector3();
   const around: Zombie[] = [];
 
-  const radius = () => B.radius * mods.size;
+  const radius = () => B.radius * mods.size * ctx.stats.size;
   /** Noël au comptoir (synergie avec le 421) : temps restant de la couronne doublée (s). */
   let boost = 0;
   const count = () => (B.count + mods.projectiles + ctx.stats.extraProjectiles) * (boost > 0 ? SYNERGY_FX.noel.mult : 1);
@@ -79,13 +79,13 @@ export function createBiereNoel(ctx: WeaponContext): Weapon {
         o.spinAxis.copy(d);
         o.spinRate = 2;
         o.age = clock;
-        o.size = mods.size;
+        o.size = (mods.size * ctx.stats.size);
         // Coups : zombies traversés par la bouteille
         for (const z of ctx.zombiesNear(o.pos, B.hitRadius + B.zombieRadius + 1, around)) {
           if (!z.targetable) continue;
           tmp.subVectors(z.pos, o.pos);
           tmp.addScaledVector(up, -tmp.dot(up));
-          if (tmp.length() > B.hitRadius * mods.size + B.zombieRadius) continue;
+          if (tmp.length() > B.hitRadius * mods.size * ctx.stats.size + B.zombieRadius) continue;
           const last = o.hit.get(z);
           if (last !== undefined && clock - last < B.rehit) continue;
           o.hit.set(z, clock);

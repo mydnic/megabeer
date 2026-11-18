@@ -119,7 +119,7 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
     b.gravity = W.gravity;
     b.spinRate = W.spinRate * (0.85 + Math.random() * 0.3);
     b.age = 0;
-    b.size = mods.size;
+    b.size = (mods.size * ctx.stats.size);
     b.active = true;
     b.pierce = W.pierce + mods.pierce;
     b.bounces = (W.bounces ?? 0) + (mods.bounces ?? 0)
@@ -203,7 +203,7 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
     let z = zones.find((x) => !x.active);
     if (!z) { z = { pos: new THREE.Vector3(), radius: 1, age: 0, life: 1, active: false }; zones.push(z); }
     z.pos.copy(at);
-    z.radius = P.radius * mods.size;
+    z.radius = P.radius * mods.size * ctx.stats.size;
     z.life = P.life * mods.duration * ctx.stats.duration;
     z.age = 0;
     z.active = true;
@@ -297,7 +297,7 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
   function fly(b: Bottle) {
     for (const z of ctx.zombiesNear(b.pos, 3, around)) {
       if (!z.targetable || b.hits.includes(z) || z.pos.distanceToSquared(b.pos) > 9) continue;
-      if (segToZombie(prev, b.pos, z) < W.radius * mods.size + W.zombieRadius) {
+      if (segToZombie(prev, b.pos, z) < W.radius * mods.size * ctx.stats.size + W.zombieRadius) {
         const crit = Math.random() < W.critChance + mods.critChance + ctx.stats.critChance + diceCrit;
         const gain = ((W.bounceGain ?? 1) + mods.gain) ** Math.max(0, b.hits.length) * (b.face ? b.face / 3.5 : 1);
         const carreau = id === 'petanque' && ctx.synergy('carreauFut') ? SYNERGY_FX.carreau.damage : 1;

@@ -16,6 +16,11 @@ export const BUVEUR_VISUAL = {
     landMax: 0.32,
     stiffness: 260,
     damping: 14,
+    /** Pas de calcul du ressort (s) et nombre de pas au plus par image : stable même quand une image dure longtemps. */
+    substep: 1 / 120,
+    maxSubsteps: 30,
+    /** Écrasement ou étirement maximal (fraction de la taille). */
+    limit: 0.5,
   },
   /** Inclinaison dans la direction de l'accélération et dans les virages (radians). */
   lean: { forwardPerAccel: 0.012, sidePerTurn: 0.09, max: 0.3, sharpness: 10 },

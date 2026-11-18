@@ -36,7 +36,7 @@ export function createDecapsuleur(ctx: WeaponContext): Weapon {
     o.spinAxis.copy(up);
     o.spinRate = D.spinRate;
     o.age = 0;
-    o.size = mods.size;
+    o.size = (mods.size * ctx.stats.size);
     o.back = false;
     o.hits.length = 0;
     o.active = true;
@@ -48,7 +48,7 @@ export function createDecapsuleur(ctx: WeaponContext): Weapon {
       // Distance au corps du zombie, dans le plan du sol
       tmp.subVectors(z.pos, o.pos);
       tmp.addScaledVector(up, -tmp.dot(up));
-      if (tmp.length() > D.hitRadius * mods.size + D.zombieRadius) continue;
+      if (tmp.length() > D.hitRadius * mods.size * ctx.stats.size + D.zombieRadius) continue;
       o.hits.push(z);
       const crit = Math.random() < D.critChance + mods.critChance + ctx.stats.critChance;
       const dmg = D.damage * mods.damage * (crit ? D.critMult + mods.critMult : 1);

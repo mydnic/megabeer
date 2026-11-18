@@ -148,6 +148,23 @@ export class BuveurVisual {
     if (!this.using || id === this.wanted) this.use(id);
   }
 
+  /**
+   * Ressort d'écrasement, à petits pas : en un seul grand pas (image lente, à-coup, onglet en arrière-plan) il
+   * divergeait et le perso s'étirait sur des centaines de mètres avant de disparaître.
+   */
+  private stepSquash(dt: number) {
+    const S = V.squash;
+    const n = Math.min(S.maxSubsteps, Math.ceil(dt / S.substep));
+    const h = dt / Math.max(1, n);
+    for (let i = 0; i < n; i++) {
+      this.squashVel += (-S.stiffness * this.squash - S.damping * this.squashVel) * h;
+      this.squash += this.squashVel * h;
+    }
+    this.squash = THREE.MathUtils.clamp(this.squash, -S.limit, S.limit);
+    const sy = 1 + this.squash, sxz = 1 / Math.sqrt(Math.max(0.3, sy));
+    this.squashGroup.scale.set(sxz, sy, sxz);
+  }
+
   /** Affiche le perso `id` (déjà chargé) à la place du précédent. */
   use(id: string) {
     this.wanted = id;
@@ -236,11 +253,7 @@ export class BuveurVisual {
     if (this.dead) {
       this.mixer.update(dt);
       this.pintBone?.scale.setScalar(0);
-      const S = V.squash;
-      this.squashVel += (-S.stiffness * this.squash - S.damping * this.squashVel) * dt;
-      this.squash += this.squashVel * dt;
-      const sy = 1 + this.squash, sxz = 1 / Math.sqrt(Math.max(0.3, sy));
-      this.squashGroup.scale.set(sxz, sy, sxz);
+      this.stepSquash(dt);
       this.lean.rotation.set(0, 0, 0);
       this.splash.update(dt);
       return;
@@ -269,11 +282,7 @@ export class BuveurVisual {
     this.mixer.update(dt);
 
     // --- Écrasement / étirement (ressort amorti, volume conservé)
-    const S = V.squash;
-    this.squashVel += (-S.stiffness * this.squash - S.damping * this.squashVel) * dt;
-    this.squash += this.squashVel * dt;
-    const sy = 1 + this.squash, sxz = 1 / Math.sqrt(Math.max(0.3, sy));
-    this.squashGroup.scale.set(sxz, sy, sxz);
+    this.stepSquash(dt);
 
     // --- Inclinaison : vers l'avant quand il accélère, sur le côté quand il tourne
     const L = V.lean;

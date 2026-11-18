@@ -13,6 +13,7 @@ import { createCoinDropsView } from './pickups/coinDropsView';
 import { createTunaDropsView } from './pickups/tunaDropsView';
 import { createBottleView } from './weapons/bottleView';
 import { createZoneView } from './fx/zoneView';
+import { createRangeRingView } from './fx/rangeRingView';
 import { createEnemyShotsView } from './enemies/enemyShotsView';
 import { createShards } from './fx/shards';
 import { createFoamShieldView } from './fx/foamShieldView';
@@ -154,6 +155,9 @@ const coinView = await loading.coinView;
 // Une vue de zones au sol par arme à flaques
 const zoneViews = (Object.keys(WEAPON_FX) as WeaponId[]).filter((id) => WEAPON_FX[id].zone)
   .map((id) => [id, createZoneView(scene, WEAPON_FX[id].zone!, (p) => game.player.supportAt(p, p.length()))] as const);
+// Un anneau de portée par arme qui en affiche une (Rot sonique)
+const ringViews = (Object.keys(WEAPON_FX) as WeaponId[]).filter((id) => WEAPON_FX[id].ring)
+  .map((id) => [id, createRangeRingView(scene, WEAPON_FX[id].ring!, (p, feetR) => game.player.supportAt(p, feetR))] as const);
 // Une vue de projectiles par arme qui en a
 const bottleViews = Object.fromEntries(await loading.weaponViews) as Partial<Record<WeaponId, Awaited<ReturnType<typeof createBottleView>>>>;
 const enemyShotsView = await loading.enemyShotsView;
@@ -270,6 +274,7 @@ function frame(now: number) {
   tunaView.sync(game.tunaDrops.drops);
   for (const id of Object.keys(bottleViews) as WeaponId[]) bottleViews[id]!.sync(projectiles(id));
   for (const [id, view] of zoneViews) view.sync(game.loadout.weapons.find((w) => w.id === id)?.zones ?? []);
+  for (const [id, view] of ringViews) view.sync(game.phase === 'run' ? game.loadout.weapons.find((w) => w.id === id)?.zones?.[0] : undefined, game.player.pos.length(), dt);
   enemyShotsView.sync(game.shots.shots);
   kamikazeView.sync(game.horde.zombies);
   protectorView.sync(game.horde.zombies);

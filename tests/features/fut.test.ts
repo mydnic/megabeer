@@ -1,9 +1,17 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FUT } from '../../src/config/weapons';
 import { PLANET_RADIUS } from '../../src/config/world';
 import type { Zombie } from '../../src/enemies/zombie';
 import { heightAt } from '../../src/world/terrain';
 import { createTestGame } from '../support/testGame';
+
+/** Hasard à graine fixe (le point d'arrivée changeait d'une fois à l'autre : le test du roulement échouait parfois). */
+function seeded(seed: number) {
+  let s = seed >>> 0;
+  return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 2 ** 32; };
+}
+beforeEach(() => { vi.spyOn(Math, 'random').mockImplementation(seeded(5)); });
+afterEach(() => { vi.restoreAllMocks(); });
 
 /** Une run au sol sans zombies, le Fût équipé et la Canette désarmée ; aucun critique. */
 function arena() {

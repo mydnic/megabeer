@@ -27,7 +27,7 @@ export function createWeizen(ctx: WeaponContext): Weapon {
     let z = zones.find((x) => !x.active);
     if (!z) { z = { pos: new THREE.Vector3(), radius: 1, age: 0, life: 1, active: false }; zones.push(z); }
     z.pos.copy(at);
-    z.radius = W.radius * mods.size;
+    z.radius = W.radius * mods.size * ctx.stats.size;
     z.life = W.life * mods.duration * ctx.stats.duration;
     z.age = 0;
     z.active = true;
@@ -61,7 +61,7 @@ export function createWeizen(ctx: WeaponContext): Weapon {
       if (mods.evolved) {
         follow.active = true;
         follow.pos.copy(ctx.playerPos());
-        follow.radius = W.radius * mods.size;
+        follow.radius = W.radius * mods.size * ctx.stats.size;
         if (!zones.includes(follow)) zones.push(follow);
       }
       tick += dt;
