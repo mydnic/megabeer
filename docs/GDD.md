@@ -1119,6 +1119,14 @@ L'ordre après l'étape 7 est indicatif : il se rediscute à chaque feature vali
   coup (contact, bouteille, piège), un par plateau, puis se recharge 7 s ; Weizen en nuage posé à hauteur de tête.
 - Restent à faire : équilibrage des chiffres.
 
+### Tranché le 2026-11-18 (véhicules, issue #8)
+
+- **Conduite de vraie voiture** (choix de l'utilisateur, contre une conduite comme à pied) : avancer accélère, reculer
+  freine puis passe en marche arrière, gauche/droite braque d'autant plus que la voiture roule vite, l'arrière glisse un
+  peu. La caméra se replace derrière la voiture.
+- **La citadine devient la DeLorean** (modèle fourni par l'utilisateur). Bus scolaire et tank : modèles fournis aussi.
+- Checkpoint 1 : la DeLorean seule, tout le cycle (apparition, montée, écrasement, PV, sortie invulnérable).
+
 ### Tranché le 2026-11-18 (persos)
 
 - **Roster V1 arrêté à 8 persos** (décision de l'utilisateur) : Buveur, Videur, Père Noël, Cop, Futur Marié, Barman,

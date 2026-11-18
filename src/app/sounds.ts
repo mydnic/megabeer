@@ -176,6 +176,16 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
   game.events.on('whistleBlown', () => audio.play(I.whistle.sample, I.whistle.volume, I.whistle.rate));
   game.events.on('shockwave', () => audio.play(I.shockwave.sample, I.shockwave.volume, I.shockwave.rate * jitter(0.05)));
   game.events.on('playerDodged', () => audio.whoosh(I.dodge.volume));
+  game.events.on('vehicleEntered', () => audio.play(I.vehicleIn.sample, I.vehicleIn.volume, I.vehicleIn.rate));
+  let lastCrush = 0;
+  game.events.on('vehicleCrushed', () => {
+    const now = performance.now() / 1000;
+    if (now - lastCrush < I.vehicleCrush.minGap) return;
+    lastCrush = now;
+    audio.play(I.vehicleCrush.sample, I.vehicleCrush.volume, I.vehicleCrush.rate * jitter(0.1));
+  });
+  game.events.on('vehicleHit', () => audio.play(I.vehicleHit.sample, I.vehicleHit.volume, I.vehicleHit.rate * jitter(0.08)));
+  game.events.on('vehicleExited', () => audio.play(I.vehicleOut.sample, I.vehicleOut.volume, I.vehicleOut.rate));
   game.events.on('enemyShotBlocked', () => audio.play(I.shotBlocked.sample, I.shotBlocked.volume, I.shotBlocked.rate * jitter(0.06)));
   game.events.on('revived', () => audio.play(I.revive.sample, I.revive.volume, I.revive.rate, 0, 'ui'));
   game.events.on('freeChestSpawned', () => audio.play(I.freeChest.sample, I.freeChest.volume, I.freeChest.rate));

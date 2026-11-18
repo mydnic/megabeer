@@ -14,6 +14,7 @@ import { createTunaDropsView } from './pickups/tunaDropsView';
 import { createBottleView } from './weapons/bottleView';
 import { createZoneView } from './fx/zoneView';
 import { createRangeRingView } from './fx/rangeRingView';
+import { createVehiclesView } from './world/vehiclesView';
 import { createEnemyShotsView } from './enemies/enemyShotsView';
 import { createShards } from './fx/shards';
 import { createFoamShieldView } from './fx/foamShieldView';
@@ -130,6 +131,7 @@ const loading = {
   pumpsView: boot(createPumpsView(scene)),
   chestsView: boot(createChestsView(scene)),
   binsView: boot(createBinsView(scene)),
+  vehiclesView: boot(createVehiclesView(scene)),
   lastCallView: boot(createLastCallView(scene)),
   sonneurView: boot(createBossView(scene, { kind: 'sonneur', url: sonneurUrl, height: FRERE_SONNEUR.height, walkSpeed: FRERE_SONNEUR.speed })),
   abbeView: boot(createBossView(scene, { kind: 'abbe', url: abbeUrl, height: ABBE.height, walkSpeed: ABBE.speed })),
@@ -176,6 +178,7 @@ const anchorZone = { pos: new THREE.Vector3(), radius: ANCHOR_RING.radius, age: 
 // Une vue de projectiles par arme qui en a
 const bottleViews = Object.fromEntries(await loading.weaponViews) as Partial<Record<WeaponId, Awaited<ReturnType<typeof createBottleView>>>>;
 const enemyShotsView = await loading.enemyShotsView;
+const vehiclesView = await loading.vehiclesView;
 const groundAt = (p: THREE.Vector3) => game.player.supportAt(p, p.length());
 const shards = createShards(scene, groundAt);
 const wine = createShards(scene, groundAt, WINE_BURST);
@@ -283,6 +286,9 @@ function frame(now: number) {
 
   const player = game.player;
   buveur.update(dt, player);
+  // Au volant, le perso disparaît dans le véhicule
+  buveur.root.visible = !game.vehicles.driving;
+  vehiclesView.sync(game.vehicles, player, dt, game.phase === 'run');
   hordeView.sync(game.horde.zombies, camera);
   xpView.sync(game.xp.drops);
   coinView.sync(game.coinDrops.drops);

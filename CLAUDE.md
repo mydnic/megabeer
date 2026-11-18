@@ -97,7 +97,10 @@ recopie son état à chaque image. Ne jamais remettre de logique de jeu dans `ma
   équipées, 4 max), `levelUpCards.ts` (tirage sur les armes équipées), `pumps.ts`, `chests.ts` (coffres, dont les
   piégés), `bins.ts` (poubelles cassées au contact ou par les armes, grille pour les projectiles), `lastCall.ts` (Dernier
   service : cloches qui ramènent toute l'XP et les capsules), `boss.ts` (interface commune des boss), `frereSonneur.ts` et
-  `abbe.ts` (contrôleurs des boss : leur corps est un zombie de la horde, `def.boss`), `patronDoor.ts` (Porte du patron), `closing.ts` (fermeture à 10:00 : les Morts, intouchables, qui tuent d'un coup de faux), `tournees.ts` (Tournées du bar : bonus de quelques
+  `abbe.ts` (contrôleurs des boss : leur corps est un zombie de la horde, `def.boss`), `patronDoor.ts` (Porte du patron), `closing.ts` (fermeture à 10:00 : les Morts, intouchables, qui tuent d'un coup de faux), `vehicles.ts` (véhicules
+  écrase-zombies, issue #8 : un garé à la fois, montée au contact ; la conduite de voiture est dans `player/controller.ts`
+  (`drive`, `carSpeed`), l'écrasement, les PV du véhicule et la sortie dans `game.ts` ; réglages `config/vehicles.ts`, rendu
+  `world/vehiclesView.ts`, jauges `ui/vehicleHud.ts`, modèles fournis dans `assets/models/vehicules/`), `tournees.ts` (Tournées du bar : bonus de quelques
   secondes lâchés par les ennemis, minuteries et multiplicateurs), `spawnDirector.ts` (arrivée des zombies et
   montée en difficulté, courbe dans `config/spawn.ts`), `mechanics/` (mécanique propre à chaque map, interface
   `MapMechanic` et registre : Abbaye = les cloches), `emitter.ts`.

@@ -96,6 +96,10 @@ export const AUDIO = {
     dodge: { volume: 0.35 },
     /** Une bouteille ennemie arrêtée en vol par le Plateau. */
     shotBlocked: { sample: 'impactPlate_light', volume: 0.5, rate: 1.1 },
+    vehicleIn: { sample: 'impactMetal_heavy', volume: 0.6, rate: 0.8 },
+    vehicleCrush: { sample: 'impactPunch_heavy', volume: 0.55, rate: 0.85, minGap: 0.05 },
+    vehicleHit: { sample: 'impactMetal_medium', volume: 0.5, rate: 1.0 },
+    vehicleOut: { sample: 'impactPlate_heavy', volume: 0.6, rate: 0.7 },
     revive: { sample: 'impactBell_heavy', volume: 0.7, rate: 0.8 },
     freeChest: { sample: 'impactWood_heavy', volume: 0.5, rate: 1.2 },
   },

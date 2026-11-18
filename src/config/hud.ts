@@ -13,6 +13,9 @@ export const TOURNEE_HUD = { top: 132, size: 46, gap: 12, lowAt: 3 } as const;
 /** Barre de vie du boss, sous le chrono (px) ; quand elle est là, les tournées en cours descendent de `pushDown`. */
 export const BOSS_HUD = { top: 92, width: 520, pushDown: 52 } as const;
 
+/** Jauges du véhicule conduit : hauteur au-dessus du bas de l'écran (px), largeur (px). */
+export const VEHICLE_HUD = { bottom: 120, width: 360 } as const;
+
 /**
  * Rappel près d'un coffre fermé : hauteur au-dessus du bas de l'écran (px), durée du tremblement
  * quand il manque des capsules (s).
@@ -60,7 +63,7 @@ export const MINIMAP = {
   chestSize: 12,
   /** Coffre gratuit : largeur (px) de son icône (le coffre ouvert, la lumière de la couleur de sa rareté, sinon `freeChest`), affichée dans la zone seulement. */
   freeChestSize: 20,
-  colors: { low: 0x3d6b2e, high: 0x9ccc5a, rock: 0x8a8478, player: 0xfff4dc, chest: 0xb07038, freeChest: 0xffc93a, bell: 0xffd45a, elite: 0xff3b2a, door: 0xff3a2a, reaper: 0x2a0f3a },
+  colors: { low: 0x3d6b2e, high: 0x9ccc5a, rock: 0x8a8478, player: 0xfff4dc, chest: 0xb07038, freeChest: 0xffc93a, bell: 0xffd45a, elite: 0xff3b2a, door: 0xff3a2a, reaper: 0x2a0f3a, vehicle: 0x5fd1ff },
   /** Élites : rayon du point (px). */
   eliteDot: 6,
   /** Cloches du Dernier service : rayon du point (px), affichées dans la zone seulement. */
@@ -70,6 +73,8 @@ export const MINIMAP = {
   doorArrow: 7,
   /** Morts de la fermeture : rayon du point (px), toujours affichées (au bord quand elles sont loin). */
   reaperDot: 7,
+  /** Véhicule garé : côté de son icône (px), toujours affiché ; loin, posé au bord avec une flèche vers lui. */
+  vehicleSize: 13,
 } as const;
 
 /** Bandeau « Synergie : ... ! » quand une synergie s'active : durée d'affichage (s). */

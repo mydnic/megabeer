@@ -105,7 +105,7 @@ export function createMinimap() {
   return {
     setVisible(v: boolean) { canvas.classList.toggle('on', v); },
     /** Chaque image : position du joueur, sa direction, l'avant de la caméra, les pompes. */
-    update(dt: number, playerPos: THREE.Vector3, facing: THREE.Vector3, camFwd: THREE.Vector3, pumps: readonly Pump[], chests: readonly Chest[], bells: readonly CallBell[] = [], zombies: readonly Zombie[] = [], door: THREE.Vector3 | null = null, reapers: readonly { pos: THREE.Vector3 }[] = []) {
+    update(dt: number, playerPos: THREE.Vector3, facing: THREE.Vector3, camFwd: THREE.Vector3, pumps: readonly Pump[], chests: readonly Chest[], bells: readonly CallBell[] = [], zombies: readonly Zombie[] = [], door: THREE.Vector3 | null = null, reapers: readonly { pos: THREE.Vector3 }[] = [], vehicle: THREE.Vector3 | null = null) {
       if (!canvas.classList.contains('on')) return;
       up.copy(playerPos).normalize();
       fwd.copy(camFwd).addScaledVector(up, -camFwd.dot(up)).normalize();
@@ -190,6 +190,26 @@ export function createMinimap() {
         ctx.lineWidth = 2 * dpr; ctx.strokeStyle = '#1a120c'; ctx.stroke();
         ctx.fillStyle = '#1a120c';
         ctx.fillRect(x - s / 6, y, s / 3, s / 2);
+      }
+
+      // Véhicule garé : toujours là tant qu'il attend ; loin, posé au bord avec une flèche vers lui
+      if (vehicle) {
+        const m = toMap(vehicle);
+        const edge = M.range * 0.78;
+        const far = m.dist > edge;
+        const k = far ? edge / m.dist : 1;
+        const x = R + m.x * k * scale, y = R - m.y * k * scale, s = M.vehicleSize * dpr;
+        if (far) {
+          const a = Math.atan2(m.x, m.y);
+          arrow(R + Math.sin(a) * R * 0.9, R - Math.cos(a) * R * 0.9, a, M.doorArrow * dpr, hex(M.colors.vehicle));
+        }
+        // Petite voiture : caisse, toit, deux roues
+        ctx.fillStyle = hex(M.colors.vehicle);
+        ctx.lineWidth = 2 * dpr; ctx.strokeStyle = '#1a120c';
+        ctx.beginPath(); ctx.roundRect(x - s / 2, y - s / 5, s, s * 0.45, 3 * dpr); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.roundRect(x - s / 4, y - s / 2, s / 2, s * 0.32, 2 * dpr); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#1a120c';
+        for (const wx of [-s / 3, s / 3]) { ctx.beginPath(); ctx.arc(x + wx, y + s * 0.27, s * 0.14, 0, Math.PI * 2); ctx.fill(); }
       }
 
       // Morts de la fermeture : toujours affichées, posées au bord du disque quand elles sont loin

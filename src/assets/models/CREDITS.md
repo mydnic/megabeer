@@ -44,4 +44,8 @@
   sculpt nu sans squelette ; auteur et licence à confirmer), retouché, habillé et monté par `tools/blender/pilier.py` sur
   le squelette de la Universal Animation Library de Quaternius (CC0), clips en partie faits main.
 
+- `vehicules/delorean.glb` : « DeLorean DMC-12 » par David Sirera, `vehicules/bus.glb` : « School Bus » par Kyle Li,
+  `vehicules/tank.glb` : « Tank » par Quaternius ; fournis par l'utilisateur (fichiers Poly Pizza), non modifiés
+  (orientation et taille réglées dans `src/config/vehicles.ts`).
+
 Les autres GLB de ce dossier sont générés par les scripts de `tools/blender/` (voir CLAUDE.md).

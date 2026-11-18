@@ -1,4 +1,5 @@
 import { ITEMS, type ItemId } from '../config/items';
+import { VEHICLES, type VehicleId } from '../config/vehicles';
 import * as THREE from 'three';
 import { DIFFICULTIES, type DifficultyId } from '../config/spawn';
 import { WEAPON_FACTORIES } from '../weapons/registry';
@@ -110,6 +111,11 @@ export async function wireDevTools(game: Game, d: {
       if (!inRun() || !d.pos) return;
       game.player.reset(d.pos.clone().addScaledVector(d.facing, 6).normalize(), d.facing.clone().negate());
       runLog.event('dev', 'door');
+    },
+    vehicles: Object.keys(VEHICLES),
+    placeVehicle(id) {
+      if (!inRun() || game.vehicles.driving) return;
+      if (game.vehicles.spawnNear(game.player.pos, id as VehicleId, 5, 7)) runLog.event('dev', 'vehicle', id);
     },
     dropBell() {
       if (!inRun()) return;

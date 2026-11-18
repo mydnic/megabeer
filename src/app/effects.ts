@@ -299,6 +299,10 @@ export function wireEffects(game: Game, d: Deps) {
   game.events.on('happyHourStarted', () => vfx.beam(game.player.pos, VC.happy, 1.4, 10, 1.3));
   game.events.on('foamShieldUp', () => vfx.sparkle(game.player.pos, VC.foam, 8, 1, 2));
   game.events.on('playerDodged', () => vfx.pop(chest(1.1), 0xffffff, 1.4));
+  // Véhicule : chaque écrasé gicle, la caméra encaisse un peu ; à la sortie, un nuage de poussière
+  game.events.on('vehicleCrushed', ({ pos }) => { vfx.hit(pos); rig.shake(HIT_FEEDBACK.shake * 0.25, HIT_FEEDBACK.shakeAmplitude, HIT_FEEDBACK.shakeDecay); });
+  game.events.on('vehicleHit', () => rig.shake(HIT_FEEDBACK.shake * 0.4, HIT_FEEDBACK.shakeAmplitude, HIT_FEEDBACK.shakeDecay));
+  game.events.on('vehicleExited', ({ pos }) => vfx.pop(pos.clone().addScaledVector(pos.clone().normalize(), 0.8), 0xd8c8a8, 2.2));
   game.events.on('enemyShotBlocked', ({ pos }) => { vfx.hit(pos); vfx.sparkle(pos, 0xe8ecf2, 6, 0.4, 2); });
   // XP et capsules ramassées : de petites étoiles montent du Buveur (pas plus d'une toutes les `pickupGap` s)
   let lastPickup = 0;

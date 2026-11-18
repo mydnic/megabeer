@@ -7,6 +7,7 @@ const MAX_SLOPE = Math.tan(THREE.MathUtils.degToRad(PLANET.maxSlopeDeg));
 const JUMP_BUFFER = 0.12; // un appui un peu trop tôt avant l'atterrissage compte quand même
 const COYOTE = 0.1;       // on peut encore sauter juste après avoir quitté un rebord
 import type { DecorCollider } from '../world/decor/collider';
+import type { CarDef } from '../config/vehicles';
 
 /**
  * Déplacement sur la planète : gravité vers le centre, mouvement dans le plan tangent
@@ -41,6 +42,12 @@ export class PlayerController {
   /** Hauteur de saut (x1 au départ, objets) et sauts en l'air autorisés (Ressort de canapé). */
   jumpMul = 1;
   airJumps = 0;
+  /**
+   * Au volant (un véhicule) : conduite de voiture au lieu de la marche. Avancer accélère, reculer freine puis recule,
+   * gauche/droite braque. `carSpeed` : vitesse le long du capot (m/s, négative en marche arrière).
+   */
+  car: CarDef | null = null;
+  carSpeed = 0;
   private airJumpsLeft = 0;
   private jumpBuffer = 0;
   private airTime = 0;
@@ -120,10 +127,19 @@ export class PlayerController {
     if (input.jumpPressed) this.jumpBuffer = JUMP_BUFFER;
   }
 
+  /** Monte dans un véhicule (`car`) ou en descend (null) ; la voiture part de l'arrêt. */
+  drive(car: CarDef | null) {
+    this.car = car;
+    this.carSpeed = 0;
+    this.velocity.set(0, 0, 0);
+    this.knockVel.set(0, 0, 0);
+  }
+
   step(dt: number, input: InputState) {
     this.prevPos.copy(this.pos);
     this.prevFacing.copy(this.facing);
     const up = this.upDir;
+    if (this.car) { this.stepCar(dt, input, up); return; }
 
     // Transport parallèle des directions sur le nouveau plan tangent
     this.camFwd.addScaledVector(up, -this.camFwd.dot(up)).normalize();
@@ -198,5 +214,40 @@ export class PlayerController {
       rad = ground; this.vr = 0; this.onGround = true;
     } else this.onGround = false;
     this.pos.copy(dir).multiplyScalar(rad);
+  }
+
+  /** Un pas de conduite : vitesse le long du capot, braquage selon la vitesse, arrière qui glisse, choc contre le décor. */
+  private stepCar(dt: number, input: InputState, up: THREE.Vector3) {
+    const C = this.car!;
+    this.camFwd.addScaledVector(up, -this.camFwd.dot(up)).normalize();
+    this.facing.addScaledVector(up, -this.facing.dot(up)).normalize();
+    this.velocity.addScaledVector(up, -this.velocity.dot(up));
+    // Gaz, frein, marche arrière
+    let s = this.carSpeed;
+    const t = input.moveY;
+    if (t > 0.05) s = Math.min(C.maxSpeed, s + (s < 0 ? C.brake : C.accel) * t * dt);
+    else if (t < -0.05) s = Math.max(-C.reverseSpeed, s - (s > 0 ? C.brake : C.accel) * -t * dt);
+    else s *= Math.exp(-C.drag * dt);
+    // Braquage : nul à l'arrêt, plein dès `steerFullAt`, inversé en marche arrière (comme une vraie voiture)
+    const grip = Math.min(1, Math.abs(s) / C.steerFullAt) * Math.sign(s);
+    this.facing.applyAxisAngle(up, -input.moveX * C.steerRate * grip * dt).normalize();
+    // La caméra se replace derrière la voiture
+    this.camFwd.lerp(this.facing, 1 - Math.exp(-dt * 2.5)).normalize();
+    // Vitesse : l'adhérence ramène le mouvement dans l'axe du capot (en dessous, l'arrière glisse)
+    this.wish.copy(this.facing).multiplyScalar(s);
+    this.velocity.lerp(this.wish, 1 - Math.exp(-C.grip * dt));
+    const r = this.pos.length();
+    this.tmp.copy(this.pos);
+    this.pos.addScaledVector(this.velocity, dt).setLength(r);
+    const want = this.velocity.length() * dt;
+    this.decor?.resolve(this.pos, C.radius);
+    // Choc contre le décor : la voiture perd l'essentiel de sa vitesse
+    if (want > 1e-4 && this.tmp.distanceTo(this.pos) < want * 0.5) { s *= 0.3; this.velocity.multiplyScalar(0.3); }
+    this.carSpeed = s;
+    // Au sol, toujours (pas de saut en voiture)
+    const ground = this.supportAt(this.pos, this.pos.length() + 0.6);
+    this.vr = 0;
+    this.onGround = true;
+    this.pos.setLength(ground);
   }
 }

@@ -52,6 +52,8 @@ import { PLAYER_STATS } from '../config/player';
 import { Loadout } from './loadout';
 import { PlayerStats } from './playerStats';
 import { SpawnDirector, spawnCurveAt } from './spawnDirector';
+import { Vehicles, type ParkedVehicle } from './vehicles';
+import { VEHICLE_SPAWN, VEHICLES, type VehicleId } from '../config/vehicles';
 import { MAP_MECHANICS, type MapId, type MapMechanic } from './mechanics/mechanic';
 
 export type Phase = 'home' | 'run' | 'dead';
@@ -167,6 +169,16 @@ export type GameEvents = {
   zombieFrozen: { zombie: Zombie; time: number };
   /** Démarche de pochtron : le joueur esquive le coup de `zombie` (null : un piège). */
   playerDodged: { zombie: Zombie | null };
+  /** Un véhicule vient d'être garé sur la planète (il attend le joueur). */
+  vehicleSpawned: { vehicle: ParkedVehicle };
+  /** Le joueur monte dans un véhicule. */
+  vehicleEntered: { kind: VehicleId; pos: THREE.Vector3 };
+  /** Le véhicule conduit écrase un ennemi (à `speed` m/s). */
+  vehicleCrushed: { zombie: Zombie; pos: THREE.Vector3; killed: boolean; speed: number };
+  /** Le véhicule encaisse un coup à la place du joueur. */
+  vehicleHit: { damage: number; hp: number; maxHp: number };
+  /** Le joueur descend du véhicule : temps écoulé, véhicule détruit, ou fin de run. */
+  vehicleExited: { kind: VehicleId; reason: 'timeout' | 'destroyed' | 'end'; pos: THREE.Vector3 };
   /** Un projectile ennemi est arrêté en vol par une arme (le Plateau), à `pos`. */
   enemyShotBlocked: { pos: THREE.Vector3 };
   /** Sifflet d'arbitre : les ennemis à moins de `radius` m de `at` sont étourdis. */
@@ -246,6 +258,10 @@ export class Game {
   /** Pompes à bière de la run (exploration). */
   readonly pumps: Pumps;
   readonly chests: Chests;
+  /** Véhicules écrase-zombies (un garé à la fois, ou celui qu'on conduit). */
+  readonly vehicles: Vehicles;
+  /** Écrasement : quand chaque ennemi peut de nouveau être écrasé (temps de run). */
+  private crushReady = new WeakMap<Zombie, number>();
   /** Poubelles de la run (exploration). */
   readonly bins = new Bins();
   /** Grandes cloches du Dernier service, et clochettes au sol. */
@@ -357,6 +373,7 @@ export class Game {
     this.horde = createHorde(kinds, player, deps.collider);
     this.pumps = new Pumps(deps.collider);
     this.chests = new Chests(deps.collider);
+    this.vehicles = new Vehicles(deps.collider, () => this.random());
     this.door = new PatronDoor(deps.collider);
     this.closing = new Closing({
       playerPos: () => this.player.pos,
@@ -623,9 +640,16 @@ export class Game {
         // Poubelles : le Buveur qui passe dessus la casse
         const bin = this.bins.touching(p.pos);
         if (bin) this.breakBin(bin, 'player');
+        // Véhicules : apparition à leur heure, on monte dedans au contact, puis conduite
+        const parked = this.vehicles.parked;
+        const touched = this.vehicles.update(dt, this.runTime, p.pos);
+        if (this.vehicles.parked && this.vehicles.parked !== parked) this.events.emit('vehicleSpawned', { vehicle: this.vehicles.parked });
+        if (touched) this.enterVehicle(touched);
+        if (this.vehicles.driving) this.driveVehicle(dt);
       }
       if (!frozen) this.updateItemEffects(dt);
-      this.loadout.update(dt);
+      // Au volant, plus aucune arme ne tire (les projectiles déjà partis finissent leur course)
+      if (!this.vehicles.driving) this.loadout.update(dt);
       this.events.emit('tick', { dt });
     }
     this.loadout.updateProjectiles(dt);
@@ -1185,6 +1209,8 @@ export class Game {
   /** Le joueur encaisse un coup de `z` (au contact ou à distance ; null : un piège), venant de la direction `dir`. */
   private hurtPlayer(z: Zombie | null, dir: THREE.Vector3, baseDamage: number) {
     let damage = baseDamage * this.mods.damage;
+    // Au volant, c'est le véhicule qui encaisse
+    if (this.vehicles.driving) { this.hitVehicle(damage); return; }
     // Casque à bière : rien ne passe, l'ennemi au contact rebondit
     if (this.tournees.helmet && !this.health.dead) {
       if (z && !z.dead) {
@@ -1296,6 +1322,59 @@ export class Game {
   }
 
   /** Atterrissage : la première horde sort de terre autour du joueur. */
+  /** Le joueur monte dans le véhicule garé : il prend sa place, capot devant, et passe en conduite. */
+  private enterVehicle(v: ParkedVehicle) {
+    const driven = this.vehicles.enter(v);
+    this.player.reset(v.pos, v.facing);
+    this.player.drive(VEHICLES[driven.kind].car);
+    this.events.emit('vehicleEntered', { kind: driven.kind, pos: v.pos.clone() });
+  }
+
+  /** Un pas au volant : le temps qui file, et les ennemis écrasés sur le passage. */
+  private driveVehicle(dt: number) {
+    const v = this.vehicles.driving!;
+    v.left -= dt;
+    v.hitCooldown = Math.max(0, v.hitCooldown - dt);
+    if (v.left <= 0) { this.exitVehicle('timeout'); return; }
+    const C = VEHICLES[v.kind].crush;
+    const p = this.player;
+    const speed = Math.abs(p.carSpeed);
+    if (speed < C.minSpeed) return;
+    const up = this.tmp.copy(p.pos).normalize();
+    const base = (C.damage + C.perSpeed * speed) * spawnCurveAt(this.runTime).hpMul * this.mods.hp;
+    for (const o of this.horde.near(p.pos, C.radius, this.around)) {
+      if (!o.targetable || o.dead || o.pos.distanceTo(p.pos) > C.radius) continue;
+      if ((this.crushReady.get(o) ?? 0) > this.runTime) continue;
+      this.crushReady.set(o, this.runTime + C.again);
+      // Projeté vers l'avant et sur le côté où il se trouve
+      const away = o.pos.clone().sub(p.pos);
+      away.addScaledVector(up, -away.dot(up));
+      const push = p.velocity.clone().normalize().add(away.normalize()).multiplyScalar(speed);
+      const killed = this.hitZombie(o, base * (o.def.boss ? C.bossMul : 1), false, o.pos, push, null, C.knock);
+      this.events.emit('vehicleCrushed', { zombie: o, pos: o.pos.clone(), killed, speed });
+    }
+  }
+
+  /** Le véhicule encaisse un coup (un court délai entre deux) ; à 0 PV, il est détruit et le joueur descend. */
+  private hitVehicle(damage: number) {
+    const v = this.vehicles.driving!;
+    if (v.hitCooldown > 0 || this.cheats.god) return;
+    v.hp = Math.max(0, v.hp - damage);
+    v.hitCooldown = VEHICLE_SPAWN.hitAgain;
+    this.events.emit('vehicleHit', { damage, hp: v.hp, maxHp: v.maxHp });
+    if (v.hp <= 0) this.exitVehicle('destroyed');
+  }
+
+  /** Le joueur descend du véhicule, invulnérable un instant. */
+  private exitVehicle(reason: 'timeout' | 'destroyed' | 'end') {
+    const v = this.vehicles.driving;
+    if (!v) return;
+    this.vehicles.exit(this.runTime);
+    this.player.drive(null);
+    if (reason !== 'end') this.health.invuln = Math.max(this.health.invuln, VEHICLE_SPAWN.exitInvuln);
+    this.events.emit('vehicleExited', { kind: v.kind, reason, pos: this.player.pos.clone() });
+  }
+
   private land() {
     this.arriving = false;
     this.director.start(this.mods.count);
@@ -1303,6 +1382,7 @@ export class Game {
   }
 
   private die() {
+    this.exitVehicle('end');
     this.phase = 'dead';
     this.deadTime = 0;
     this.horde.setPassive(true);
@@ -1322,6 +1402,9 @@ export class Game {
   }
 
   private resetRun() {
+    this.exitVehicle('end');
+    this.vehicles.clear();
+    this.crushReady = new WeakMap();
     this.xpGathered = 0;
     this.stunReady = new WeakMap();
     this.sprintIn = 0;
