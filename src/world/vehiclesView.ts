@@ -5,6 +5,7 @@ import { RARITIES } from '../config/upgrades';
 import type { Vehicles } from '../game/vehicles';
 import type { PlayerController } from '../player/controller';
 import { characterMaterial, LAYER_CHARACTER, LAYER_SKY } from '../render/materials';
+import { withNormals } from '../render/meshPrep';
 
 const urls = import.meta.glob('../assets/models/vehicules/*.glb', { query: '?url', import: 'default', eager: true }) as Record<string, string>;
 
@@ -43,6 +44,7 @@ async function loadModel(kind: VehicleId): Promise<Model> {
   model.traverse((o) => {
     const m = o as THREE.Mesh;
     if (m.isMesh) {
+      m.geometry = withNormals(m.geometry);
       const src = (Array.isArray(m.material) ? m.material : [m.material]) as THREE.MeshStandardMaterial[];
       const toon = src.map((s) => characterMaterial({ color: s.color ?? new THREE.Color(0x888888) }));
       m.material = Array.isArray(m.material) ? toon : toon[0];
