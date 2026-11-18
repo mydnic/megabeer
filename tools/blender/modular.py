@@ -172,23 +172,6 @@ for frames in baked.values():
         for s in ('L', 'R'):
             fr.pop(f'PT.{s}', None)
 
-# --- 3. Couleurs propres au perso (copies des matériaux du pack)
-for o in meshes:
-    for i, m in enumerate(o.data.materials):
-        if m is None:
-            continue
-        c = V['colors'].get(m.name)
-        if c is None:
-            continue
-        nm = m.copy()
-        nm.name = m.name
-        b = next((n for n in nm.node_tree.nodes if n.type == 'BSDF_PRINCIPLED'), None) if nm.use_nodes else None
-        if b:
-            b.inputs['Base Color'].default_value = (*c, 1)
-        nm.diffuse_color = (*c, 1)
-        o.data.materials[i] = nm
-
-
 def new_mat(name, color):
     m = bpy.data.materials.new(name)
     m.use_nodes = True
@@ -197,6 +180,20 @@ def new_mat(name, color):
     b.inputs['Roughness'].default_value = 0.8
     m.diffuse_color = (*color, 1)
     return m
+
+
+# --- 3. Couleurs propres au perso. Les matériaux du pack sont remplacés par des neufs : leur sortie active passe par
+# un « Diffuse BSDF » que l'export glTF ignore (le jeu les recevait sans couleur : tout blanc). Couleur du perso, ou à
+# défaut celle du pack (couleur d'affichage du matériau).
+fresh = {}
+for o in meshes:
+    for i, m in enumerate(o.data.materials):
+        if m is None:
+            continue
+        key = m.name.split('.')[0]
+        if key not in fresh:
+            fresh[key] = new_mat(key, V['colors'].get(key, tuple(m.diffuse_color[:3])))
+        o.data.materials[i] = fresh[key]
 
 
 # Mains nues : les faces d'un matériau portées surtout par les poignets et les doigts prennent la peau
@@ -352,7 +349,7 @@ if 'sash' in V:
     chest = Vector((0, -0.04, 1.22))
     tilt = Matrix.Rotation(math.radians(-38), 4, 'Y')
     bm = bmesh.new()
-    seg, rx, ry, h = 48, 0.24, 0.17, 0.10
+    seg, rx, ry, h = 48, 0.24, 0.17, 0.14
     rings = []
     for k in range(seg):
         a = k / seg * math.tau
@@ -379,7 +376,7 @@ if 'sash' in V:
     # Le texte, posé sur le devant de l'écharpe, dans son sens
     cu = bpy.data.curves.new('SashText', 'FONT')
     cu.body = S['text']
-    cu.size = 0.062
+    cu.size = 0.085
     cu.align_x = 'CENTER'; cu.align_y = 'CENTER'
     cu.extrude = 0.002
     txt = bpy.data.objects.new('SashText', cu)
