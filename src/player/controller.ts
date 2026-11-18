@@ -229,7 +229,7 @@ export class PlayerController {
     else if (t < -0.05) s = Math.max(-C.reverseSpeed, s - (s > 0 ? C.brake : C.accel) * -t * dt);
     else s *= Math.exp(-C.drag * dt);
     // Braquage : nul à l'arrêt, plein dès `steerFullAt`, inversé en marche arrière (comme une vraie voiture)
-    const grip = Math.min(1, Math.abs(s) / C.steerFullAt) * Math.sign(s);
+    const grip = C.pivot ? (s < -0.5 ? -1 : 1) : Math.min(1, Math.abs(s) / C.steerFullAt) * Math.sign(s);
     this.facing.applyAxisAngle(up, -input.moveX * C.steerRate * grip * dt).normalize();
     // La caméra se replace derrière la voiture
     this.camFwd.lerp(this.facing, 1 - Math.exp(-dt * 2.5)).normalize();

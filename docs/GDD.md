@@ -531,9 +531,9 @@ Assets disponibles : pack food Quaternius déjà dans le repo, Kenney Food Kit c
 
 | Véhicule | Rareté | Durée | Vitesse | PV du véhicule | Particularité |
 |---|---|---|---|---|---|
-| Citadine | Peu commun | 15 s | x1,6 | faible | Agile |
-| Bus scolaire | Rare | 20 s | x1,3 | élevé | Large, écrase en masse |
-| Tank | Légendaire | 25 s | x1,1 | très élevé | Tire aussi des obus |
+| DeLorean (fait) | Peu commun | 15 s | 22 m/s | 80 | Agile |
+| Bus scolaire (fait) | Rare | 20 s | 16 m/s | 180 | Large, écrase en masse |
+| Tank (fait) | Légendaire | 25 s | 10 m/s | 400 | Tourne sur place, tire des obus explosifs |
 
 [DÉCIDÉ] À la sortie (fin du timer ou destruction) : **2 s d'invulnérabilité**, **visible par un effet sur le perso** (clignotement / halo).
 

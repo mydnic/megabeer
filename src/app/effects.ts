@@ -301,6 +301,16 @@ export function wireEffects(game: Game, d: Deps) {
   game.events.on('playerDodged', () => vfx.pop(chest(1.1), 0xffffff, 1.4));
   // Véhicule : chaque écrasé gicle, la caméra encaisse un peu ; à la sortie, un nuage de poussière
   game.events.on('vehicleCrushed', ({ pos }) => { vfx.hit(pos); rig.shake(HIT_FEEDBACK.shake * 0.25, HIT_FEEDBACK.shakeAmplitude, HIT_FEEDBACK.shakeDecay); });
+  // Tank : éclair à la bouche du canon, explosion à l'arrivée de l'obus (la caméra tremble si c'est près)
+  game.events.on('tankFired', ({ from }) => vfx.pop(from, 0xfff0c0, 1.6));
+  game.events.on('tankShellExploded', ({ pos, radius }) => {
+    up.copy(pos).normalize();
+    numPos.copy(pos).addScaledVector(up, 0.4);
+    vfx.explosion(numPos, radius * 0.6, VFX.shell);
+    d.rings.spawn(pos, radius, VFX.shell.ember);
+    const k = 1 - pos.distanceTo(game.player.pos) / 30;
+    if (k > 0) rig.shake(HIT_FEEDBACK.shake * 0.6 * k, HIT_FEEDBACK.shakeAmplitude, HIT_FEEDBACK.shakeDecay);
+  });
   game.events.on('vehicleHit', () => rig.shake(HIT_FEEDBACK.shake * 0.4, HIT_FEEDBACK.shakeAmplitude, HIT_FEEDBACK.shakeDecay));
   game.events.on('vehicleExited', ({ pos }) => vfx.pop(pos.clone().addScaledVector(pos.clone().normalize(), 0.8), 0xd8c8a8, 2.2));
   game.events.on('enemyShotBlocked', ({ pos }) => { vfx.hit(pos); vfx.sparkle(pos, 0xe8ecf2, 6, 0.4, 2); });

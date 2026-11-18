@@ -11,7 +11,11 @@ const X = new THREE.Vector3(1, 0, 0), Y = new THREE.Vector3(0, 1, 0);
 /** Un véhicule garé sur la planète, qui attend qu'on monte dedans : sa sorte, ses roues au sol, son capot, son âge (s). */
 export type ParkedVehicle = { kind: VehicleId; pos: THREE.Vector3; facing: THREE.Vector3; age: number };
 /** Le véhicule conduit : sa sorte, ses PV, le temps qui reste (s), le prochain coup qu'il peut encaisser (s). */
-export type DrivenVehicle = { kind: VehicleId; hp: number; maxHp: number; left: number; duration: number; hitCooldown: number };
+export type DrivenVehicle = { kind: VehicleId; hp: number; maxHp: number; left: number; duration: number; hitCooldown: number;
+  /** Canon (le tank) : temps avant le prochain obus (s), et le point visé par le dernier (la tourelle s'y tourne). */
+  reload: number; aim: THREE.Vector3 | null };
+/** Un obus en vol : son point de départ, son point d'arrivée, le temps qui reste avant l'impact (s). */
+export type Shell = { from: THREE.Vector3; to: THREE.Vector3; left: number; flight: number };
 
 /**
  * Le véhicule d'une run (GDD section 9) : un seul, garé au hasard sur la planète dès le début ; il faut le trouver. Le
@@ -20,6 +24,8 @@ export type DrivenVehicle = { kind: VehicleId; hp: number; maxHp: number; left: 
 export class Vehicles {
   parked: ParkedVehicle | null = null;
   driving: DrivenVehicle | null = null;
+  /** Obus du tank en vol. */
+  readonly shells: Shell[] = [];
   private tmp = new THREE.Vector3();
 
   constructor(private collider: DecorCollider, private random: () => number = Math.random) {}
@@ -27,6 +33,7 @@ export class Vehicles {
   clear() {
     this.parked = null;
     this.driving = null;
+    this.shells.length = 0;
   }
 
   /**
@@ -94,7 +101,7 @@ export class Vehicles {
   enter(v: ParkedVehicle) {
     const D = VEHICLES[v.kind];
     this.parked = null;
-    this.driving = { kind: v.kind, hp: D.hp, maxHp: D.hp, left: D.duration, duration: D.duration, hitCooldown: 0 };
+    this.driving = { kind: v.kind, hp: D.hp, maxHp: D.hp, left: D.duration, duration: D.duration, hitCooldown: 0, reload: 0, aim: null };
     return this.driving;
   }
 

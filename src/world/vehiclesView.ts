@@ -8,8 +8,10 @@ import { characterMaterial, LAYER_CHARACTER, LAYER_SKY } from '../render/materia
 
 const urls = import.meta.glob('../assets/models/vehicules/*.glb', { query: '?url', import: 'default', eager: true }) as Record<string, string>;
 
-/** Un véhicule prêt à poser : son groupe (capot vers +Z, roues à y = 0), ses roues qui tournent, ses animations (tank). */
-type Model = { root: THREE.Group; wheels: THREE.Object3D[]; mixer: THREE.AnimationMixer | null; forward: THREE.AnimationAction | null };
+/** Tourelle (le tank) : le pivot qui la porte avec le canon, l'axe vertical dans le repère de son parent, sa pose de départ. */
+type Turret = { pivot: THREE.Object3D; axis: THREE.Vector3; base: THREE.Quaternion; yaw: number };
+/** Un véhicule prêt à poser : son groupe (capot vers +Z, roues à y = 0), ses roues qui tournent, ses animations et sa tourelle (tank). */
+type Model = { root: THREE.Group; wheels: THREE.Object3D[]; mixer: THREE.AnimationMixer | null; forward: THREE.AnimationAction | null; turret: Turret | null };
 
 /**
  * Charge un véhicule : tourné pour regarder vers l'avant, à sa longueur, centré, roues au sol, en cel-shading comme le
@@ -21,6 +23,10 @@ async function loadModel(kind: VehicleId): Promise<Model> {
   if (!url) throw new Error(`Modèle de véhicule introuvable : ${D.file}`);
   const gltf = await new GLTFLoader().loadAsync(url);
   const model = gltf.scene;
+  // Objets d'aide sans matière (le tank en a un), qui fausseraient la taille
+  const helpers: THREE.Object3D[] = [];
+  model.traverse((o) => { if (/^icosphere/i.test(o.name)) helpers.push(o); });
+  for (const o of helpers) o.removeFromParent();
   const turn = new THREE.Group();
   turn.rotation.set(...(D.rotation.map((d) => THREE.MathUtils.degToRad(d)) as [number, number, number]));
   turn.add(model);
@@ -56,8 +62,24 @@ async function loadModel(kind: VehicleId): Promise<Model> {
   let mixer: THREE.AnimationMixer | null = null, forward: THREE.AnimationAction | null = null;
   const clip = gltf.animations.find((a) => /forward/i.test(a.name));
   if (clip) { mixer = new THREE.AnimationMixer(model); forward = mixer.clipAction(clip); forward.play(); }
+  // Tourelle et canon (le tank) : portés ensemble par un pivot posé au centre de la tourelle
+  let turret: Turret | null = null;
+  const top = model.getObjectByName('Tank_Turret'), gun = model.getObjectByName('Tank_Gun');
+  if (top && top.parent) {
+    root.updateMatrixWorld(true);
+    const parent = top.parent;
+    const centre = new THREE.Box3().setFromObject(top).getCenter(new THREE.Vector3());
+    const pivot = new THREE.Object3D();
+    parent.add(pivot);
+    pivot.position.copy(parent.worldToLocal(centre));
+    pivot.updateMatrixWorld(true);
+    pivot.attach(top);
+    if (gun) pivot.attach(gun);
+    const axis = new THREE.Vector3(0, 1, 0).applyQuaternion(parent.getWorldQuaternion(new THREE.Quaternion()).invert()).normalize();
+    turret = { pivot, axis, base: pivot.quaternion.clone(), yaw: 0 };
+  }
   root.visible = false;
-  return { root, wheels, mixer, forward };
+  return { root, wheels, mixer, forward, turret };
 }
 
 /**
@@ -80,6 +102,16 @@ export async function createVehiclesView(scene: THREE.Scene) {
   beam.visible = false;
   scene.add(beam);
 
+  // Obus du tank : petites sphères sombres sur leur trajectoire en cloche
+  const SHELLS = 8;
+  const shellMesh = new THREE.InstancedMesh(new THREE.SphereGeometry(L.shell.radius, 10, 8), characterMaterial({ color: L.shell.color }), SHELLS);
+  shellMesh.layers.set(LAYER_CHARACTER);
+  shellMesh.frustumCulled = false;
+  shellMesh.count = 0;
+  scene.add(shellMesh);
+  const shellM = new THREE.Matrix4(), shellP = new THREE.Vector3(), shellUp = new THREE.Vector3();
+  const local = new THREE.Vector3(), yawQ = new THREE.Quaternion();
+
   const up = new THREE.Vector3(), right = new THREE.Vector3(), basis = new THREE.Matrix4(), last = new THREE.Vector3();
   let shown: Model | null = null, t = 0;
   const place = (m: Model, pos: THREE.Vector3, facing: THREE.Vector3) => {
@@ -93,6 +125,17 @@ export async function createVehiclesView(scene: THREE.Scene) {
     /** Chaque image : le véhicule garé ou celui qu'on conduit, à sa place. */
     sync(vehicles: Vehicles, player: PlayerController, dt: number, inRun: boolean) {
       t += dt;
+      // Obus en vol : du canon à la cible, en cloche
+      shellMesh.count = 0;
+      for (const s of vehicles.shells) {
+        if (shellMesh.count >= SHELLS) break;
+        const k = 1 - s.left / s.flight;
+        shellP.lerpVectors(s.from, s.to, k);
+        shellUp.copy(shellP).normalize();
+        shellP.addScaledVector(shellUp, Math.sin(k * Math.PI) * s.from.distanceTo(s.to) * 0.12);
+        shellMesh.setMatrixAt(shellMesh.count++, shellM.makeTranslation(shellP.x, shellP.y, shellP.z));
+      }
+      shellMesh.instanceMatrix.needsUpdate = true;
       const kind = !inRun ? null : vehicles.driving?.kind ?? vehicles.parked?.kind ?? null;
       const m = kind ? models.get(kind)! : null;
       if (shown && shown !== m) shown.root.visible = false;
@@ -106,7 +149,17 @@ export async function createVehiclesView(scene: THREE.Scene) {
         const moved = last.distanceTo(player.renderPos) * Math.sign(player.carSpeed || 1);
         last.copy(player.renderPos);
         if (Math.abs(moved) < 5) for (const w of m.wheels) w.rotateX(moved * L.wheelTurnsPerMeter * Math.PI * 2);
-        if (m.mixer) { m.forward!.timeScale = player.carSpeed / 6; m.mixer.update(dt); }
+        if (m.mixer) { m.forward!.timeScale = player.carSpeed * L.tracksPerSpeed; m.mixer.update(dt); }
+        // Tourelle : elle se tourne vers le dernier ennemi visé, puis revient dans l'axe
+        if (m.turret) {
+          const T = m.turret;
+          let want = 0;
+          if (vehicles.driving.aim) { m.root.updateMatrixWorld(true); local.copy(vehicles.driving.aim); m.root.worldToLocal(local); want = Math.atan2(local.x, local.z); }
+          let d = want - T.yaw;
+          d = Math.atan2(Math.sin(d), Math.cos(d));
+          T.yaw += Math.sign(d) * Math.min(Math.abs(d), L.turretRate * dt);
+          T.pivot.quaternion.copy(yawQ.setFromAxisAngle(T.axis, T.yaw)).multiply(T.base);
+        }
       } else {
         const p = vehicles.parked!;
         place(m, p.pos, p.facing);

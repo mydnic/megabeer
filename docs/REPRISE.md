@@ -206,8 +206,10 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    mini-carte seulement à portée ; on monte dedans au contact ; conduite de vraie voiture (choix de l'utilisateur : avancer accélère, reculer freine puis
    recule, braquage selon la vitesse, l'arrière glisse) ; plus d'armes au volant, écrasement (dégâts selon la vitesse),
    le véhicule encaisse les coups, sortie à la fin du temps ou à la destruction avec 2 s d'invulnérabilité ; jauges en
-   bas de l'écran ; DEV « Garer à côté ». Checkpoint 2 : le bus (Rare) et le tank (Légendaire, obus), modèles déjà dans
-   `assets/models/vehicules/`. Checkpoint 3 : succès « Permis à points », sons de moteur), #7 (Super Saiyan : touche d'action à trancher), #5 (Trilogie LOTR), #14 (braindump : radio,
+   bas de l'écran ; DEV « Garer à côté ». **Checkpoint 2 fait le 2026-11-18, à valider** : le bus scolaire (Rare, 20 s, 180
+   PV, lent, large : il écrase sur 3,2 m) et le tank (Légendaire, 25 s, 400 PV, très lent, tourne sur place, canon qui
+   tire un obus explosif toutes les 1,4 s sur l'ennemi le plus proche à 24 m ; tourelle qui vise, chenilles animées) ;
+   tirés au poids de leur rareté (DeLorean le plus souvent, tank rarement). Checkpoint 3 : succès « Permis à points », sons de moteur), #7 (Super Saiyan : touche d'action à trancher), #5 (Trilogie LOTR), #14 (braindump : radio,
    alliés, boss et objets de pop culture ; l'utilisateur veut ses références telles quelles, sans remarque de droits).
    **Roster des persos arrêté le 2026-11-18 (décision de l'utilisateur) : 8 persos** (Buveur, Videur, Père Noël, Cop,
    Futur Marié, Barman, Serveuse, Pilier de bar). Le Moine brasseur et le Supporter restent au GDD pour plus tard.

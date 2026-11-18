@@ -185,6 +185,8 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
     audio.play(I.vehicleCrush.sample, I.vehicleCrush.volume, I.vehicleCrush.rate * jitter(0.1));
   });
   game.events.on('vehicleHit', () => audio.play(I.vehicleHit.sample, I.vehicleHit.volume, I.vehicleHit.rate * jitter(0.08)));
+  game.events.on('tankFired', () => audio.play(I.tankFire.sample, I.tankFire.volume, I.tankFire.rate * jitter(0.06)));
+  game.events.on('tankShellExploded', () => audio.play(I.tankBoom.sample, I.tankBoom.volume, I.tankBoom.rate * jitter(0.08)));
   game.events.on('vehicleExited', () => audio.play(I.vehicleOut.sample, I.vehicleOut.volume, I.vehicleOut.rate));
   game.events.on('enemyShotBlocked', () => audio.play(I.shotBlocked.sample, I.shotBlocked.volume, I.shotBlocked.rate * jitter(0.06)));
   game.events.on('revived', () => audio.play(I.revive.sample, I.revive.volume, I.revive.rate, 0, 'ui'));

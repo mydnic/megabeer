@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { VEHICLE_SPAWN, VEHICLES } from '../../src/config/vehicles';
+import { VEHICLE_SPAWN, VEHICLES, type VehicleId } from '../../src/config/vehicles';
+import { spawnCurveAt } from '../../src/game/spawnDirector';
 import { PLANET_RADIUS } from '../../src/config/world';
 import { createTestGame } from '../support/testGame';
 
@@ -22,10 +23,13 @@ function calm() {
 }
 const dist = (a: { angleTo(b: unknown): number }, b: unknown) => a.angleTo(b) * PLANET_RADIUS;
 
-/** Une DeLorean garée juste à côté du joueur, qui monte dedans. */
-function driving() {
+/** Un véhicule (la DeLorean par défaut) garé juste à côté du joueur, qui monte dedans. */
+function driving(kind: VehicleId = 'delorean') {
   const t = calm();
-  expect(t.game.vehicles.spawnNear(t.game.player.pos, 'delorean', 0.4, 1.2)).not.toBeNull();
+  // Garé pas loin (là où il y a la place), le joueur posé à côté de la portière
+  const v = t.game.vehicles.spawnNear(t.game.player.pos, kind, 0.4, 15)!;
+  expect(v).not.toBeNull();
+  t.game.player.reset(v.pos.clone().normalize(), v.facing.clone());
   t.play(0.1);
   expect(t.game.vehicles.driving).not.toBeNull();
   return t;
@@ -131,5 +135,57 @@ describe('Les véhicules', () => {
     z.hp = 1e6; z.frozen = 1e6;
     t.playUntil(() => t.events('zombieHit').some((e) => e.weapon === w), 6);
     expect(t.events('zombieHit').some((e) => e.weapon === w)).toBe(true);
+  });
+
+  it('le bus, plus large, écrase aussi les zombies sur le côté que la DeLorean frôle sans les toucher', () => {
+    const side = VEHICLES.bus.crush.radius - 0.3;
+    const crushed = (kind: VehicleId) => {
+      const t = driving(kind);
+      const z = t.game.spawnZombie('zombie', t.inFront(14, side), t.game.player.facing.clone())!;
+      z.frozen = 1e6;
+      t.play(2.5, { moveY: 1 });
+      return t.events('vehicleCrushed').some((e) => e.zombie === z);
+    };
+    expect(crushed('delorean')).toBe(false);
+    expect(crushed('bus')).toBe(true);
+  });
+
+  it('le tank tourne sur place, même à l arrêt (la DeLorean, non)', () => {
+    const turned = (kind: VehicleId) => {
+      const t = driving(kind);
+      const f0 = t.game.player.facing.clone(), p0 = t.game.player.pos.clone();
+      t.play(1, { moveX: 1 });
+      return { angle: t.game.player.facing.angleTo(f0), moved: t.game.player.pos.distanceTo(p0) };
+    };
+    const tank = turned('tank'), car = turned('delorean');
+    expect(tank.angle).toBeGreaterThan(VEHICLES.tank.car.steerRate * 0.8);
+    expect(tank.moved).toBeLessThan(0.3);
+    expect(car.angle).toBeLessThan(0.05);
+  });
+
+  it('le canon du tank tire sur l ennemi à portée ; l obus explose sur lui et ses voisins', () => {
+    const K = VEHICLES.tank.cannon;
+    const t = driving('tank');
+    const a = t.game.spawnZombie('zombie', t.inFront(K.range * 0.6), t.game.player.facing.clone())!;
+    const b = t.game.spawnZombie('zombie', t.inFront(K.range * 0.6, K.radius * 0.5), t.game.player.facing.clone())!;
+    for (const z of [a, b]) { z.hp = 1e6; z.frozen = 1e6; }
+    t.playUntil(() => t.events('tankShellExploded').length > 0, 3);
+    expect(t.events('tankFired')).toHaveLength(1);
+    const hits = t.events('zombieHit').filter((e) => e.weapon === null && (e.zombie === a || e.zombie === b));
+    expect(new Set(hits.map((e) => e.zombie)).size).toBe(2);
+    expect(hits[0].damage).toBeCloseTo(K.damage * spawnCurveAt(t.game.runTime).hpMul * t.game.mods.hp, 3);
+    // Pas d'ennemi à portée : il ne tire pas
+    const quiet = driving('tank');
+    quiet.play(3);
+    expect(quiet.events('tankFired')).toHaveLength(0);
+  });
+
+  it('la DeLorean sort le plus souvent, le bus moins, le tank rarement', () => {
+    const t = calm();
+    const n = { delorean: 0, bus: 0, tank: 0 } as Record<VehicleId, number>;
+    for (let i = 0; i < 3000; i++) n[t.game.vehicles.pick()]++;
+    expect(n.delorean).toBeGreaterThan(n.bus);
+    expect(n.bus).toBeGreaterThan(n.tank);
+    expect(n.tank).toBeGreaterThan(0);
   });
 });

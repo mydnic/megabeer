@@ -100,6 +100,8 @@ export const AUDIO = {
     vehicleCrush: { sample: 'impactPunch_heavy', volume: 0.55, rate: 0.85, minGap: 0.05 },
     vehicleHit: { sample: 'impactMetal_medium', volume: 0.5, rate: 1.0 },
     vehicleOut: { sample: 'impactPlate_heavy', volume: 0.6, rate: 0.7 },
+    tankFire: { sample: 'impactPlate_heavy', volume: 0.6, rate: 0.55 },
+    tankBoom: { sample: 'impactSoft_heavy', volume: 0.75, rate: 0.55 },
     revive: { sample: 'impactBell_heavy', volume: 0.7, rate: 0.8 },
     freeChest: { sample: 'impactWood_heavy', volume: 0.5, rate: 1.2 },
   },

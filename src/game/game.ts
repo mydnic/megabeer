@@ -177,6 +177,10 @@ export type GameEvents = {
   vehicleCrushed: { zombie: Zombie; pos: THREE.Vector3; killed: boolean; speed: number };
   /** Le véhicule encaisse un coup à la place du joueur. */
   vehicleHit: { damage: number; hp: number; maxHp: number };
+  /** Le tank tire un obus de `from` vers `to` (il arrive en `flight` s). */
+  tankFired: { from: THREE.Vector3; to: THREE.Vector3; flight: number };
+  /** Un obus du tank explose à `pos` (rayon `radius`). */
+  tankShellExploded: { pos: THREE.Vector3; radius: number };
   /** Le joueur descend du véhicule : temps écoulé, véhicule détruit, ou fin de run. */
   vehicleExited: { kind: VehicleId; reason: 'timeout' | 'destroyed' | 'end'; pos: THREE.Vector3 };
   /** Un projectile ennemi est arrêté en vol par une arme (le Plateau), à `pos`. */
@@ -649,6 +653,7 @@ export class Game {
         if (this.vehicles.driving) this.driveVehicle(dt);
       }
       if (!frozen) this.updateItemEffects(dt);
+      if (!frozen) this.updateShells(dt);
       // Au volant, plus aucune arme ne tire (les projectiles déjà partis finissent leur course)
       if (!this.vehicles.driving) this.loadout.update(dt);
       this.events.emit('tick', { dt });
@@ -1339,6 +1344,7 @@ export class Game {
     if (v.left <= 0) { this.exitVehicle('timeout'); return; }
     const C = VEHICLES[v.kind].crush;
     const p = this.player;
+    this.tankCannon(dt, v);
     const speed = Math.abs(p.carSpeed);
     if (speed < C.minSpeed) return;
     const up = this.tmp.copy(p.pos).normalize();
@@ -1353,6 +1359,46 @@ export class Game {
       const push = p.velocity.clone().normalize().add(away.normalize()).multiplyScalar(speed);
       const killed = this.hitZombie(o, base * (o.def.boss ? C.bossMul : 1), false, o.pos, push, null, C.knock);
       this.events.emit('vehicleCrushed', { zombie: o, pos: o.pos.clone(), killed, speed });
+    }
+  }
+
+  /** Canon du tank : un obus sur l'ennemi le plus proche à portée, qui explose à l'arrivée. */
+  private tankCannon(dt: number, v: NonNullable<Vehicles['driving']>) {
+    const K = (VEHICLES[v.kind] as { cannon?: { every: number; range: number; speed: number; damage: number; radius: number; knock: number } }).cannon;
+    if (!K) return;
+    v.reload -= dt;
+    if (v.reload > 0) return;
+    let best: Zombie | null = null, bestD = K.range;
+    for (const o of this.horde.near(this.player.pos, K.range, this.around)) {
+      if (!o.targetable || o.dead) continue;
+      const d = o.pos.distanceTo(this.player.pos);
+      if (d < bestD) { bestD = d; best = o; }
+    }
+    if (!best) return;
+    v.reload = K.every;
+    const from = this.player.pos.clone().addScaledVector(this.player.upDir, 2.2);
+    const to = best.pos.clone();
+    v.aim = to.clone();
+    const flight = Math.max(0.05, from.distanceTo(to) / K.speed);
+    this.vehicles.shells.push({ from, to, left: flight, flight });
+    this.events.emit('tankFired', { from: from.clone(), to: to.clone(), flight });
+  }
+
+  /** Les obus en vol avancent ; à l'arrivée, ils explosent sur les ennemis autour. */
+  private updateShells(dt: number) {
+    const shells = this.vehicles.shells;
+    for (let i = shells.length - 1; i >= 0; i--) {
+      const s = shells[i];
+      if ((s.left -= dt) > 0) continue;
+      shells.splice(i, 1);
+      const K = VEHICLES.tank.cannon;
+      const r = K.radius * this.stats.size;
+      const damage = K.damage * spawnCurveAt(this.runTime).hpMul * this.mods.hp;
+      for (const o of this.horde.near(s.to, r, this.around)) {
+        if (!o.targetable || o.dead || o.pos.distanceTo(s.to) > r) continue;
+        this.hitZombie(o, damage * (o.def.boss ? VEHICLES.tank.crush.bossMul : 1), false, o.pos, o.pos.clone().sub(s.to), null, K.knock);
+      }
+      this.events.emit('tankShellExploded', { pos: s.to.clone(), radius: r });
     }
   }
 

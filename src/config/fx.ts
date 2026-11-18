@@ -201,6 +201,8 @@ export const VFX = {
   /** Explosions. */
   gueuze: { flash: 0xffc0d0, ember: 0xff5a7a, smoke: 0xf2a0b4, smokeDark: 0xa8405e, embers: 14, puffs: 9 } as ExplosionLook,
   wine: { flash: 0xffd0c0, ember: 0xd23b4a, smoke: 0x9a3a4e, smokeDark: 0x5a1e2e, embers: 16, puffs: 11 } as ExplosionLook,
+  /** Obus du tank : éclair blanc, braises orange, fumée grise de poudre. */
+  shell: { flash: 0xfff0c0, ember: 0xff8a2a, smoke: 0x8a8070, smokeDark: 0x3a342c, embers: 16, puffs: 12 } as ExplosionLook,
   ash: { flash: 0xffd28a, ember: 0xff7a2a, smoke: 0x8a8580, smokeDark: 0x4a4644, embers: 10, puffs: 5 } as ExplosionLook,
   glass: { flash: 0xe8fff0, ember: 0xbfe6c8, smoke: 0xd8dccc, smokeDark: 0xa8ac9c, embers: 6, puffs: 4 } as ExplosionLook,
   /** Coffre piégé : éclair rouge, braises, fumée sombre. */
