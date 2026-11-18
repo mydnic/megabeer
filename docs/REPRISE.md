@@ -192,8 +192,7 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    variante par perso : pièces mélangées, couleurs, ventre, accessoires ; clips du pack recalculés sans l'IK du pack, pieds
    rattachés aux tibias, tangage d'ivrogne ; saut, chute, atterrissage faits main). Passif `poisonStacks: 2`
    (`ctx.poisonStacksPerTick`), 300 TUNAS.
-   **Le Barman est un robot à tête de télé** (choix de l'utilisateur le 2026-11-18, la version du pack ne lui plaisait
-   pas) : `tools/blender/robot.py` (squelette provisoire posé sur les articulations relevées, poids presque rigides, pose
+   **Le Barman est un robot à tête de télé, validé le 2026-11-18** (la version du pack ne plaisait pas à l'utilisateur) : `tools/blender/robot.py` (squelette provisoire posé sur les articulations relevées, poids presque rigides, pose
    en T, puis squelette de la Universal Animation Library) ; clips : Idle_Talking_Loop (il râle), Sprint_Loop,
    Spell_Simple_Shoot (doigt pointé) pour le lancer, Sitting_Enter pour la mort (il s'éteint assis). Le saut reprend les
    clips du Cop (la bibliothèque n'en a qu'un jeu). Origine et licence du modèle à confirmer.
