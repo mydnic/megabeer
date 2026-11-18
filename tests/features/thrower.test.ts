@@ -1,9 +1,17 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ENEMIES } from '../../src/config/enemies';
 import { PLANET_RADIUS } from '../../src/config/world';
 import { createTestGame } from '../support/testGame';
 
 const T = ENEMIES.lanceur.thrower;
+
+/** Hasard à graine fixe (le point d'arrivée changeait d'une fois à l'autre : un test échouait parfois). */
+function seeded(seed: number) {
+  let s = seed >>> 0;
+  return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 2 ** 32; };
+}
+beforeEach(() => { vi.spyOn(Math, 'random').mockImplementation(seeded(3)); });
+afterEach(() => { vi.restoreAllMocks(); });
 
 /** Une arène calme, Canette désarmée, et un Moine lanceur face au joueur à `dist` m. */
 function duel(dist: number) {

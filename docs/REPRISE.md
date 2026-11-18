@@ -179,9 +179,11 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    matériau cel-shading reprend `map`) monté par `tools/blender/cop.py` (bras abaissés, poids Mixamo reportés sur les os
    du Buveur). Rot sonique, +40 PV, -12 % vitesse, passif `contactStun` (fige 0,5 s l'ennemi qui le frappe au contact,
    une fois toutes les 3 s par ennemi, pas les boss), 300 TUNAS. Uniforme très sombre : à éclaircir si on le perd de
-   vue la nuit. La raie du GDD n'est pas sur ce modèle. Bras du Cop : les deux reprennent le bras gauche du Buveur
-   (le droit du Buveur tient la pinte, avant-bras à l'horizontale), le droit en miroir dans les clips, à contretemps
-   dans la course, immobile dans le lancer (`tools/blender/cop.py`). Le Rot sonique affiche toujours sa portée : un
+   vue la nuit. La raie du GDD n'est pas sur ce modèle. Le Cop n'utilise plus les clips du Buveur (trop raides sur un
+   corps réaliste) : `tools/blender/cop.py` le monte sur le squelette de la Universal Animation Library (Quaternius, CC0,
+   `Desktop/MODELS/animations`) et prend ses clips (Idle_Loop, Jog_Fwd_Loop, Jump_Start/Loop/Land, Death01, Punch_Jab
+   pour le lancer), os renommés comme le jeu les cherche (thigh/shin/foot, hand.L/R). À valider en jeu. Même souci de
+   bras raide sur le Videur et le Père Noël (pose de pinte du Buveur) : même méthode possible. Le Rot sonique affiche toujours sa portée : un
    anneau fin posé point par point sur le sol (`fx/rangeRingView.ts`, `ROT_RING`, champ `ring` de `WEAPON_FX`) qui
    grandit avec la charge et s'allume pendant la recharge. La stat Taille agrandit toutes les armes (décision de
    l'utilisateur le 2026-11-18 : « la taille grandit tout »). Ressort d'écrasement du perso à petits pas : il divergeait
