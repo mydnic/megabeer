@@ -301,19 +301,54 @@ def E(x, y, z):
 
 
 idle = frames_of(bpy.data.actions['idle'])
-L = 36                                   # 1,2 s par cycle (deux poussées)
+rest = {pb.name: pb.bone.matrix_local.copy() for pb in rig.pose.bones}
+LEG = ('thigh', 'calf', 'foot', 'ball')
+
+
+def translated(fr, bone, v):
+    """Déplace `bone` et ses enfants de `v` (repère de l'armature, ici celui du monde)."""
+    T_ = Matrix.Translation(v)
+    for n in [bone] + [c.name for c in rig.data.bones[bone].children_recursive]:
+        fr[n] = T_ @ fr[n]
+
+
+def flat_foot(fr, side, base, yaw):
+    """Le patin reste à plat : le pied reprend son orientation de repos (tournée de `yaw` degrés autour de la verticale)."""
+    f, bl = f'foot_{side}', f'ball_{side}'
+    old = fr[f].copy()
+    loc, _, sca = old.decompose()
+    rot = E(0, 0, yaw) @ base[f].to_quaternion()
+    fr[f] = Matrix.LocRotScale(loc, rot, sca)
+    fr[bl] = fr[f] @ old.inverted() @ fr[bl]
+
+
+L = 40                                   # un cycle de deux poussées
 skate = []
 for i in range(L + 1):
     a = i / L * math.tau
     fr = {k_: m.copy() for k_, m in idle[i % len(idle)].items()}
+    # Jambes de la pose de repos, accrochées au bassin du clip (les pieds du repos sont décalés l'un devant l'autre)
+    P_ = fr['pelvis'] @ rest['pelvis'].inverted()
+    for side in ('l', 'r'):
+        for part in LEG:
+            n = f'{part}_{side}'
+            fr[n] = P_ @ rest[n]
+    base = {n: fr[n].copy() for n in fr}
     s_ = math.sin(a)
-    turned(fr, 'pelvis', E(10, 0, 8 * s_))                              # penchée en avant, le bassin balance
+    turned(fr, 'pelvis', E(11, 0, 6 * s_))                      # buste penché, le bassin suit la poussée
+    turned(fr, 'spine_02', E(-4, 0, -8 * s_))                   # les épaules contrent le bassin
     for side, sg, ph in (('l', 1, 0.0), ('r', -1, math.pi)):
-        push = max(0.0, math.sin(a + ph))                                # 0 : jambe d'appui ; 1 : poussée
-        turned(fr, f'thigh_{side}', E(-18 + 38 * push, -sg * 22 * push, 0))  # en arrière et vers l'extérieur
-        turned(fr, f'calf_{side}', E(-35 * (1 - push), 0, 0))           # appui fléchi, poussée tendue
-    turned(fr, 'spine_02', E(6, 0, -5 * s_))
-    turned(fr, 'upperarm_l', E(-18 * s_, 0, 0))                          # le bras libre accompagne
+        push = max(0.0, math.sin(a + ph)) ** 1.5                # 0 : jambe d'appui ; 1 : poussée tendue
+        # Appui : cuisse en avant, genou bien fléchi ; poussée : jambe tendue vers l'extérieur et un peu en arrière
+        turned(fr, f'thigh_{side}', E(-20 + 32 * push, -sg * 30 * push, 0))
+        turned(fr, f'calf_{side}', E(36 - 30 * push, 0, 0))
+        flat_foot(fr, side, base, -sg * 18 * push)
+    # Pieds au sol : le plus bas des deux patins reprend la hauteur du repos
+    low = min(fr['foot_l'].translation.z, fr['foot_r'].translation.z)
+    translated(fr, 'pelvis', Vector((0, 0, base['foot_l'].translation.z - low)))
+    # Le bras libre (droit) balance large pour l'équilibre ; la main gauche garde le plateau levé
+    turned(fr, 'upperarm_r', E(-30 * s_, 0, 25))
+    turned(fr, 'lowerarm_r', E(-25, 0, 0))
     skate.append(fr)
 
 act = bpy.data.actions.new('run')
