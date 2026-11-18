@@ -196,7 +196,9 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    en T, puis squelette de la Universal Animation Library) ; clips : Idle_Talking_Loop (il râle), Sprint_Loop,
    Spell_Simple_Shoot (doigt pointé) pour le lancer, Sitting_Enter pour la mort (il s'éteint assis). Le saut reprend les
    clips du Cop (la bibliothèque n'en a qu'un jeu). Origine et licence du modèle à confirmer.
-   **Le Pilier de bar fait le 2026-11-18, à valider en jeu** : passif Accoudé (`anchor` : immobile, l'ancrage monte en
+   **Roster des persos arrêté le 2026-11-18 (décision de l'utilisateur) : 8 persos** (Buveur, Videur, Père Noël, Cop,
+   Futur Marié, Barman, Serveuse, Pilier de bar). Le Moine brasseur et le Supporter restent au GDD pour plus tard.
+   **Le Pilier de bar fait et validé par l'utilisateur le 2026-11-18** : passif Accoudé (`anchor` : immobile, l'ancrage monte en
    6 s jusqu'à +30 % dégâts et +1,5 PV/s (d'abord 4 s, +60 %, +3 PV/s : trop fort), le 421 passe à deux dés au départ, retombe en 1,2 s quand il bouge ; `game.anchor`, rond doré `ANCHOR_RING` dans
    `main.ts`), Le 421, +30 PV, -15 % vitesse, 300 TUNAS. Modèle `tools/blender/pilier.py` (sculpt « free pack cartoon base
    mesh », licence à confirmer par l'utilisateur) : ventre gonflé, bras amincis, découpe nette par plans en pièces

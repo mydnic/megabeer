@@ -1121,6 +1121,10 @@ L'ordre après l'étape 7 est indicatif : il se rediscute à chaque feature vali
 
 ### Tranché le 2026-11-18 (persos)
 
+- **Roster V1 arrêté à 8 persos** (décision de l'utilisateur) : Buveur, Videur, Père Noël, Cop, Futur Marié, Barman,
+  Serveuse, Pilier de bar, tous faits et validés. Le Moine brasseur et le Supporter ne sont pas faits ; ils restent dans
+  le tableau pour une version suivante (leurs passifs sont à revoir : bonus chiffrés qui ne changent pas la façon de jouer).
+
 - **Le Pilier de bar** (nouveau perso, proposé à la place du Supporter dont le passif devenait un +30 % fixe : en fin de
   partie on est toujours entouré) : il joue à l'inverse de la Serveuse, on choisit où se planter puis quand fuir.
   Passif Accoudé (`anchor` dans `config/characters.ts`), rond doré sous ses pieds qui s'affirme avec l'ancrage. Le 421
