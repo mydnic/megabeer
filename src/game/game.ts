@@ -1089,7 +1089,10 @@ export class Game {
       this.effects.crowded = n >= C.count;
     }
     // Vitesse : stat du joueur, Écharpe entouré, Péket
-    this.player.speed = BASE_SPEED * this.stats.moveSpeed * (this.effects.crowded ? 1 + this.effects.power.crowdBoost : 1) * this.tournees.speedMul;
+    // Sprint de la Serveuse après une esquive
+    this.sprintIn = Math.max(0, this.sprintIn - dt);
+    const sprint = this.sprintIn > 0 ? (CHARACTERS[this.character] as { dodgeSprint?: { speedMul: number } }).dodgeSprint?.speedMul ?? 1 : 1;
+    this.player.speed = BASE_SPEED * this.stats.moveSpeed * (this.effects.crowded ? 1 + this.effects.power.crowdBoost : 1) * this.tournees.speedMul * sprint;
     // Sifflet d'arbitre : étourdit les ennemis proches
     if (fx.whistle) {
       const W = ITEM_EFFECTS.whistle, radius = W.radius * this.stats.size;
@@ -1143,6 +1146,8 @@ export class Game {
   xpGathered = 0;
   /** Temps avant le prochain cadeau du Père Noël (s). */
   private giftIn = 0;
+  /** Temps restant du sprint de la Serveuse (après une esquive). */
+  private sprintIn = 0;
   /** Contrôle d'alcoolémie (le Cop) : quand chaque ennemi peut de nouveau être figé (temps de run). */
   private stunReady = new WeakMap<Zombie, number>();
 
@@ -1191,6 +1196,8 @@ export class Game {
     if (!this.cheats.god && this.health.invuln <= 0 && !this.health.dead && this.stats.dodgeChance > 0 && this.random() < this.stats.dodgeChance) {
       this.health.invuln = PLAYER_STATS.invulnTime;
       this.events.emit('playerDodged', { zombie: z });
+      const sprint = (CHARACTERS[this.character] as { dodgeSprint?: { duration: number } }).dodgeSprint;
+      if (sprint) this.sprintIn = sprint.duration;
       return;
     }
     // Armure (Gueule de bois, Écharpe entouré) : PV retirés de chaque coup, jamais sous le minimum
@@ -1300,6 +1307,7 @@ export class Game {
   private resetRun() {
     this.xpGathered = 0;
     this.stunReady = new WeakMap();
+    this.sprintIn = 0;
     this.giftIn = (CHARACTERS[this.character] as { freeChestEvery?: number }).freeChestEvery ?? 0;
     this.deadTime = -1;
     this.arriving = false;

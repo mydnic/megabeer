@@ -18,6 +18,8 @@ export type CharacterDef = {
   knockImmune?: boolean;
   /** Un coffre gratuit (un petit fût cadeau) apparaît près de lui toutes les `freeChestEvery` s. */
   freeChestEvery?: number;
+  /** Chaque esquive donne un court sprint : vitesse multipliée par `speedMul` pendant `duration` s (la Serveuse). */
+  dodgeSprint?: { speedMul: number; duration: number };
   /** Cartes proposées à chaque level-up (le Barman : 4 ; sinon LEVEL_UP_SCREEN.cards). */
   levelUpCards?: number;
   /** Cumuls de poison gagnés à chaque battement dans une flaque (le Futur Marié : 2, le poison monte deux fois plus vite). */
@@ -54,6 +56,11 @@ export const CHARACTERS = {
     name: 'Le Barman', pitch: 'Robot barman misanthrope, il connaît la carte : 4 choix à chaque level-up au lieu de 3. Moins de dégâts. Tireuse à bière.', weapon: 'tireuse', model: 'barman',
     stats: [{ stat: 'damage', value: -0.1 }],
     levelUpCards: 4,
+  },
+  serveuse: {
+    name: 'La Serveuse', pitch: 'Sur patins : +10 % esquive, et chaque esquive lui donne un coup de vitesse. Fragile. Plateau de serveur.', weapon: 'plateau', model: 'serveuse',
+    stats: [{ stat: 'dodge', value: 0.1 }, { stat: 'maxHp', value: -10 }, { stat: 'attackSpeed', value: 0.1 }],
+    dodgeSprint: { speedMul: 1.5, duration: 1.2 },
   },
 } as const satisfies Record<string, CharacterDef>;
 

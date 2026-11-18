@@ -196,7 +196,14 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    en T, puis squelette de la Universal Animation Library) ; clips : Idle_Talking_Loop (il râle), Sprint_Loop,
    Spell_Simple_Shoot (doigt pointé) pour le lancer, Sitting_Enter pour la mort (il s'éteint assis). Le saut reprend les
    clips du Cop (la bibliothèque n'en a qu'un jeu). Origine et licence du modèle à confirmer.
-   Ancienne version (pack, abandonnée, la variante reste dans `modular.py`) : (`modular.py --variant barman`) : tête faite main (`build_head` :
+   **La Serveuse faite le 2026-11-18, à valider en jeu** : « Debbie the Roller Waitress » (SAB64, Sketchfab, CC-BY 4.0 :
+   crédit obligatoire, voir CREDITS.md ; le jeu n'a pas encore d'écran de crédits), serveuse de diner sur patins,
+   `tools/blender/serveuse.py` : squelette MikuMikuDance (os reconnus par leur numéro final), pose A remise en T, poids
+   reportés sur le squelette de la Universal Animation Library, jupe sur bassin et cuisses, allégée à 29 000 triangles.
+   Clips : repos Idle_Torch_Loop (une main levée), course faite main en patineuse, lancer Punch_Cross, mort Death01 (la
+   même que le Cop : la bibliothèque n'en a qu'une). Passif `dodgeSprint` (x1,5 pendant 1,2 s après une esquive),
+   +10 % esquive, -10 PV, +10 % vitesse d'attaque, 300 TUNAS. Idée : un plateau dans sa main levée.
+   Ancienne version du Barman (pack, abandonnée, la variante reste dans `modular.py`) : (`modular.py --variant barman`) : tête faite main (`build_head` :
    côtés rasés, cheveux plaqués, chignon, moustache en guidon, sourcils épais ; celle du pack faisait trop générique), chemise
    blanche (corps du fermier recoloré, gants devenus mains nues), tablier de cuir long (porté surtout par le bassin),
    torchon bleu sur l'épaule, nœud papillon rouge. Animations à lui : repos `Idle_Neutral` où il essuie le comptoir,

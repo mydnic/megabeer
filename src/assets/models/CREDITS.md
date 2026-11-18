@@ -36,5 +36,9 @@
 - `barman.glb` : le Barman robot à tête de télé, modèle fourni par l'utilisateur (fichier
   `6047602-20260925122643977-um84.glb`, sans squelette ; origine et licence à confirmer), monté par `tools/blender/robot.py`
   sur le squelette de la Universal Animation Library de Quaternius (CC0), dont il prend les clips.
+- `serveuse.glb` : « Debbie the Roller Waitress » par SAB64 (https://sketchfab.com/shayebouffard5), source
+  https://sketchfab.com/3d-models/debbie-the-roller-waitress-b12d84e31b86423fb7b447649ced51c7, licence CC-BY 4.0
+  (crédit obligatoire). Modifié : plateau de nourriture et pièces cachées retirés, maillage allégé, monté par
+  `tools/blender/serveuse.py` sur le squelette de la Universal Animation Library de Quaternius (CC0), clips ajoutés.
 
 Les autres GLB de ce dossier sont générés par les scripts de `tools/blender/` (voir CLAUDE.md).

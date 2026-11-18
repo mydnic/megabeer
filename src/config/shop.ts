@@ -14,6 +14,7 @@ export const SHOP_CHARACTERS: readonly { id: string; name: string; pitch: string
   { id: 'pereNoel', name: 'Le Père Noël', pitch: 'Un cadeau toutes les 2 min, Bière de Noël', price: 300 },
   { id: 'futurMarie', name: 'Le Futur Marié', pitch: 'Poison deux fois plus rapide, Flaque de vomi', price: 300 },
   { id: 'barman', name: 'Le Barman', pitch: 'Robot misanthrope, 4 cartes au level-up, Tireuse à bière', price: 300 },
+  { id: 'serveuse', name: 'La Serveuse', pitch: 'Esquive et coups de vitesse sur patins, Plateau de serveur', price: 300 },
   { id: 'cop', name: 'Le Cop', pitch: "Qui le touche reste figé, Rot sonique", price: 300 },
 ];
 

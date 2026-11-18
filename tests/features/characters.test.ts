@@ -181,6 +181,32 @@ describe('Les persos jouables', () => {
     expect(owned(buy(p, 'character:barman', 0)!, 'character:barman')).toBe(true);
   });
 
+  it('la Serveuse esquive plus et file plus vite juste après une esquive', () => {
+    const b = runWith('buveur'), w = runWith('serveuse');
+    expect(w.game.stats.dodgeChance - b.game.stats.dodgeChance).toBeCloseTo(statOf('serveuse', 'dodge'));
+    expect(w.game.health.max - b.game.health.max).toBeCloseTo(statOf('serveuse', 'maxHp'));
+    w.game.loadout.weapons[0].mods.damage = -1e6;
+    const z = w.game.spawnZombie('zombie', w.inFront(1.2), w.game.player.facing.clone().negate())!;
+    z.hp = 1e6;
+    w.play(0.2);
+    const before = w.game.player.speed;
+    // Le prochain coup est esquivé à coup sûr
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    expect(w.playUntil(() => w.events('playerDodged').length > 0, 10)).toBe(true);
+    w.play(1 / 30);
+    expect(w.game.player.speed).toBeCloseTo(before * CHARACTERS.serveuse.dodgeSprint.speedMul, 1);
+    // Le coup de vitesse retombe
+    z.hp = 0; z.frozen = 1e6;
+    w.play(CHARACTERS.serveuse.dodgeSprint.duration + 0.3);
+    expect(w.game.player.speed).toBeCloseTo(before, 1);
+  });
+
+  it('la Serveuse s achète en boutique', () => {
+    const p = { ...emptyProfile(), tunas: 1e6 };
+    expect(owned(p, 'character:serveuse')).toBe(false);
+    expect(owned(buy(p, 'character:serveuse', 0)!, 'character:serveuse')).toBe(true);
+  });
+
   it('le Videur se débloque avec le succès Sonné, pas en boutique', () => {
     const a = ACHIEVEMENTS.find((x) => x.unlocks?.includes('character:videur'))!;
     expect(a).toBeDefined();

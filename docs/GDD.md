@@ -1127,6 +1127,8 @@ L'ordre après l'étape 7 est indicatif : il se rediscute à chaque feature vali
 - **Chaque perso a ses propres animations**, choisies pour lui (Universal Animation Library, clips du pack Modular Men,
   ou faits main) : jamais les mêmes pour tous. Les modèles du pack Modular Men se ressemblent : on mélange leurs pièces,
   on change les couleurs et la silhouette et on ajoute des accessoires.
+- **Le Barman est un robot à tête de télé** (modèle fourni par l'utilisateur), **la Serveuse est Debbie, serveuse de
+  diner sur patins** (SAB64, CC-BY 4.0) : elle patine au lieu de courir.
 - **Le Cop** prend les clips de la Universal Animation Library (repos, trot, saut, mort, coup de poing).
 
 ### Tranché le 2026-11-15 (évolutions, synergies, arme n° 10)
