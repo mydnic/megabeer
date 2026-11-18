@@ -27,6 +27,8 @@ def arg(name, default=None):
     return argv[argv.index(name) + 1] if name in argv else default
 OUT = arg('--out', 'buveur.glb')
 VARIANT = arg('--variant', 'buveur')
+# Le Videur n'a pas de pinte : son bras droit pend comme le gauche (en miroir), au repos et dans les clips
+FREE_RIGHT = VARIANT == 'videur'
 RENDER_DIR = arg('--render')
 FPS = 30
 
@@ -354,6 +356,12 @@ def build_body_videur():
         'lunettes': (0.03, 0.03, 0.05), 'reflet': (0.50, 0.62, 0.80), 'jaune': (0.98, 0.80, 0.15),
         'barbe_v': (0.22, 0.16, 0.13), 'levre': (0.62, 0.38, 0.32), 'metal': (0.72, 0.74, 0.78),
     })
+    # Pas de pinte : le bras droit est le reflet du gauche (l'os de la pinte suit la main, sans rien à porter)
+    for b in ('upperarm', 'forearm', 'hand'):
+        (hx, hy, hz), (tx, ty, tz), parent = B[f'{b}.L']
+        B[f'{b}.R'] = ((-hx, hy, hz), (-tx, ty, tz), parent.replace('.L', '.R'))
+    hand_tail = B['hand.R'][1]
+    B['pint'] = (hand_tail, (hand_tail[0], hand_tail[1], hand_tail[2] + 0.2), 'hand.R')
     # Carrure de frigo : mêmes os que le Buveur, mais épaules et hanches plus écartées au repos (les animations, faites de
     # rotations, s'appliquent telles quelles)
     for name, (h, t, parent) in list(B.items()):
@@ -768,6 +776,9 @@ def build_clips(arm):
             'upperarm.R': {'r': (pint, 4, 0)},
             'forearm.R': {'r': (-pint, 0, 0)},
         }
+        if FREE_RIGHT:  # balancier opposé au bras gauche
+            p['upperarm.R'] = {'r': (swingL, 6, -4)}
+            p['forearm.R'] = {'r': (-12 - max(0, -swingL) * 0.6, 0, 0)}
         if extra:
             for k, v in extra.items():
                 p.setdefault(k, {}).update(v)
@@ -825,6 +836,10 @@ def build_clips(arm):
         })
         p['upperarm.L']['r'] = (-38 * s, -10, 4)
         p['forearm.L']['r'] = (-45 - 15 * s, 0, 0)
+        if FREE_RIGHT:
+            p['upperarm.R'] = {'r': (38 * s, 10, -4)}
+            p['forearm.R'] = {'r': (-45 + 15 * s, 0, 0)}
+            p['hand.R'] = {'r': (0, 0, 0)}
         return p
     for i in range(0, 9):
         run[i * L // 8] = run_pose(i / 8)
@@ -841,6 +856,8 @@ def build_clips(arm):
         'thigh.R': {'r': (10, 0, 0)}, 'shin.R': {'r': (30, 0, 0)}, 'foot.R': {'r': (20, 0, 0)},
         'belly': {'l': (0, 0, -0.04)},
     })
+    if FREE_RIGHT:
+        jump_pose.update({'upperarm.R': {'r': (-30, 70, 0)}, 'forearm.R': {'r': (-30, 0, 0)}})
     make_clip(arm, 'jump', 8, {0: run_pose(0.1), 8: jump_pose}, loop=False)
 
     # ---- FALL : il mouline du bras libre et pédale (0,5 s)
@@ -857,6 +874,8 @@ def build_clips(arm):
             'belly': {'l': (0, 0, 0.03), 's': (0.97, 0.97, 1.05)},
             'head': {'r': (-14, 0, 6 * math.sin(a))},
         })
+        if FREE_RIGHT:  # il mouline des deux bras, à contretemps
+            fall[f].update({'upperarm.R': {'r': (60 * math.sin(a) - 20, 80, 30 * math.cos(a))}, 'forearm.R': {'r': (-40, 0, 0)}})
     make_clip(arm, 'fall', L, fall, loop=True)
 
     # ---- LAND : il s'écrase sur ses genoux, le bide continue sa course, puis se redresse (0,4 s)
@@ -869,6 +888,8 @@ def build_clips(arm):
         'belly': {'l': (0, 0, -0.05), 's': (1.08, 1.08, 0.9)},
         'upperarm.L': {'r': (-10, -40, 0)},
     })
+    if FREE_RIGHT:
+        crouch['upperarm.R'] = {'r': (-10, 40, 0)}
     rest = idle[0]
     make_clip(arm, 'land', 12, {0: crouch, 3: crouch, 12: rest}, loop=False)
 
@@ -898,6 +919,8 @@ def build_clips(arm):
         'shin.L': {'r': (15, 0, 0)}, 'shin.R': {'r': (15, 0, 0)},
         'belly': {'s': (1.04, 1.04, 0.97)},
     })
+    if FREE_RIGHT:
+        recoil.update({'upperarm.R': {'r': (-40, 60, 0)}, 'forearm.R': {'r': (-30, 0, 0)}})
     buckle = merge(recoil, {
         'hips': {'r': (-22, 0, 0), 'l': (0, 0.05, -0.2)},
         'spine': {'r': (-18, 0, 0)},

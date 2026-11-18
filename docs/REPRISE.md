@@ -182,8 +182,11 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    vue la nuit. La raie du GDD n'est pas sur ce modèle. Le Cop n'utilise plus les clips du Buveur (trop raides sur un
    corps réaliste) : `tools/blender/cop.py` le monte sur le squelette de la Universal Animation Library (Quaternius, CC0,
    `Desktop/MODELS/animations`) et prend ses clips (Idle_Loop, Jog_Fwd_Loop, Jump_Start/Loop/Land, Death01, Punch_Jab
-   pour le lancer), os renommés comme le jeu les cherche (thigh/shin/foot, hand.L/R). À valider en jeu. Même souci de
-   bras raide sur le Videur et le Père Noël (pose de pinte du Buveur) : même méthode possible. Le Rot sonique affiche toujours sa portée : un
+   pour le lancer), os renommés comme le jeu les cherche (thigh/shin/foot, hand.L/R). À valider en jeu. Validé par l'utilisateur le
+   2026-11-18. Videur : son bras droit est le reflet du gauche (`FREE_RIGHT` dans `buveur.py`), il ne tient plus une
+   pinte invisible ; ses clips restent ceux du Buveur. Père Noël : validé tel quel. **Règle (utilisateur, 2026-11-18)** :
+   chaque perso a des animations un peu différentes des autres et qui lui vont (clips de la Universal Animation
+   Library ou faits à la main), jamais les mêmes pour tous. Le Rot sonique affiche toujours sa portée : un
    anneau fin posé point par point sur le sol (`fx/rangeRingView.ts`, `ROT_RING`, champ `ring` de `WEAPON_FX`) qui
    grandit avec la charge et s'allume pendant la recharge. La stat Taille agrandit toutes les armes (décision de
    l'utilisateur le 2026-11-18 : « la taille grandit tout »). Ressort d'écrasement du perso à petits pas : il divergeait
