@@ -186,7 +186,13 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    2026-11-18. Videur : son bras droit est le reflet du gauche (`FREE_RIGHT` dans `buveur.py`), il ne tient plus une
    pinte invisible ; ses clips restent ceux du Buveur. Père Noël : validé tel quel. **Règle (utilisateur, 2026-11-18)** :
    chaque perso a des animations un peu différentes des autres et qui lui vont (clips de la Universal Animation
-   Library ou faits à la main), jamais les mêmes pour tous. Le Rot sonique affiche toujours sa portée : un
+   Library ou faits à la main), jamais les mêmes pour tous.
+   **Le Futur Marié fait le 2026-11-18, à valider en jeu** (remplace le Crado, trop proche du Buveur) : modèle tiré du pack
+   Ultimate Modular Men de Quaternius (`personnages/quaternius_modular_men`) par `tools/blender/modular.py` (une
+   variante par perso : pièces mélangées, couleurs, ventre, accessoires ; clips du pack recalculés sans l'IK du pack, pieds
+   rattachés aux tibias, tangage d'ivrogne ; saut, chute, atterrissage faits main). Passif `poisonStacks: 2`
+   (`ctx.poisonStacksPerTick`), 300 TUNAS. Prochains avec le même outil : le Barman (pièces Suit) et le Supporter.
+   La Serveuse : aucun modèle féminin sur le disque. Le Rot sonique affiche toujours sa portée : un
    anneau fin posé point par point sur le sol (`fx/rangeRingView.ts`, `ROT_RING`, champ `ring` de `WEAPON_FX`) qui
    grandit avec la charge et s'allume pendant la recharge. La stat Taille agrandit toutes les armes (décision de
    l'utilisateur le 2026-11-18 : « la taille grandit tout »). Ressort d'écrasement du perso à petits pas : il divergeait

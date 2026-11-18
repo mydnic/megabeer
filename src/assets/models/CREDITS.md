@@ -31,5 +31,7 @@
   de téléchargement Sketchfab ; source `source/mall_cop_sf.glb`). Auteur et licence à confirmer sur la page source.
   Monté par `tools/blender/cop.py` sur le squelette de la Universal Animation Library de Quaternius (CC0), dont il prend
   les animations (repos, trot, saut, mort, coup de poing).
+- `marie.glb` : le Futur Marié, assemblé par `tools/blender/modular.py` à partir du pack « Ultimate Modular Men »
+  de Quaternius (CC0) : pièces, squelette et clips du pack, couleurs, ventre et écharpe modifiés.
 
 Les autres GLB de ce dossier sont générés par les scripts de `tools/blender/` (voir CLAUDE.md).

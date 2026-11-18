@@ -421,6 +421,7 @@ export class Game {
       playerPos: () => player.pos,
       playerFacing: () => player.facing,
       xpGathered: () => this.xpGathered,
+      poisonStacksPerTick: () => (CHARACTERS[this.character] as { poisonStacks?: number }).poisonStacks ?? 1,
       synergy: (id) => this.hasSynergy(id),
       zonesOf: (id) => this.loadout.weapons.find((w) => w.id === id)?.zones ?? [],
       trigger: (id) => { this.loadout.weapons.find((w) => w.id === id)?.trigger?.(); },

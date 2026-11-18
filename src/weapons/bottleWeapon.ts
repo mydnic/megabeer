@@ -414,7 +414,7 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
           if (!tick) continue;
           for (const z of ctx.zombiesNear(zone.pos, zone.radius, side)) {
             if (!z.targetable || z.pos.distanceTo(zone.pos) > zone.radius) continue;
-            const stacks = Math.min(W.pool.maxStacks, (poison.get(z) ?? 0) + 1);
+            const stacks = Math.min(W.pool.maxStacks, (poison.get(z) ?? 0) + ctx.poisonStacksPerTick());
             poison.set(z, stacks);
             ctx.hitZombie(weapon, z, W.damage * mods.damage * W.pool.dps * stacks * poisonTick, false, z.pos, tmp.set(0, 0, 0), 0);
           }

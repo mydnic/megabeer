@@ -156,7 +156,7 @@ PV à 0 : fin de run (défaite), bilan, TUNAS gagnés conservés [EXISTE].
 |---|---|---|---|---|
 | Le Buveur | Canette | +1% dégâts par niveau de joueur | Équilibré (référence) | Dès le départ |
 | Père Noël | Bière de Noël | Un petit fût apparaît près de lui toutes les 2 min | +PV, -vitesse | TUNAS |
-| Le Crado | Flaque de vomi | Le poison s'empile 2 fois plus vite | -PV, +vitesse, +ramassage | TUNAS |
+| Le Futur Marié (ex-Crado) | Flaque de vomi | Le poison s'empile 2 fois plus vite | -PV, +vitesse, +ramassage | TUNAS |
 | Le Barman | Tireuse | Le level-up propose 4 cartes au lieu de 3 | -dégâts | TUNAS |
 | Le Moine brasseur | Triple | +1 PV/s de régénération, soins des snacks doublés | +PV, -dégâts | Succès : finir une run sur la map Abbaye |
 | Le Supporter | Corne de brume | +2% dégâts par ennemi proche, plafonné à +30% | +vitesse, -armure | TUNAS |
@@ -1117,6 +1117,17 @@ L'ordre après l'étape 7 est indicatif : il se rediscute à chaque feature vali
   qui part dès qu'un zombie est à portée, chargé par l'XP ramassée depuis le dernier rot ; Plateau qui bloque tout
   coup (contact, bouteille, piège), un par plateau, puis se recharge 7 s ; Weizen en nuage posé à hauteur de tête.
 - Restent à faire : équilibrage des chiffres.
+
+### Tranché le 2026-11-18 (persos)
+
+- **Le Crado devient le Futur Marié** (enterrement de vie de garçon) : le Crado ressemblait trop au Buveur. Même fiche
+  (Flaque de vomi, poison deux fois plus rapide, -15 PV, +10 % vitesse, +1 m de ramassage). Modèle tiré du pack Ultimate
+  Modular Men de Quaternius (`tools/blender/modular.py`) : masque de cheval, tee-shirt rose, short, tongs, petit ventre,
+  écharpe « FUTUR MARIÉ ».
+- **Chaque perso a ses propres animations**, choisies pour lui (Universal Animation Library, clips du pack Modular Men,
+  ou faits main) : jamais les mêmes pour tous. Les modèles du pack Modular Men se ressemblent : on mélange leurs pièces,
+  on change les couleurs et la silhouette et on ajoute des accessoires.
+- **Le Cop** prend les clips de la Universal Animation Library (repos, trot, saut, mort, coup de poing).
 
 ### Tranché le 2026-11-15 (évolutions, synergies, arme n° 10)
 

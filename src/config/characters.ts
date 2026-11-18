@@ -18,6 +18,8 @@ export type CharacterDef = {
   knockImmune?: boolean;
   /** Un coffre gratuit (un petit fût cadeau) apparaît près de lui toutes les `freeChestEvery` s. */
   freeChestEvery?: number;
+  /** Cumuls de poison gagnés à chaque battement dans une flaque (le Futur Marié : 2, le poison monte deux fois plus vite). */
+  poisonStacks?: number;
   /** Contrôle d'alcoolémie : un ennemi qui le touche au contact est figé `duration` s, au plus une fois toutes les `cooldown` s (pas les boss). */
   contactStun?: { duration: number; cooldown: number };
 };
@@ -40,6 +42,11 @@ export const CHARACTERS = {
     name: 'Le Cop', pitch: "Contrôle d'alcoolémie : qui le touche reste figé un instant. Très costaud, lent. Rot sonique.", weapon: 'rot', model: 'cop',
     stats: [{ stat: 'maxHp', value: 40 }, { stat: 'moveSpeed', value: -0.12 }],
     contactStun: { duration: 0.5, cooldown: 3 },
+  },
+  futurMarie: {
+    name: 'Le Futur Marié', pitch: "Enterrement de vie de garçon : son poison monte deux fois plus vite. Rapide mais fragile. Flaque de vomi.", weapon: 'vomi', model: 'marie',
+    stats: [{ stat: 'maxHp', value: -15 }, { stat: 'moveSpeed', value: 0.1 }, { stat: 'pickupRange', value: 1 }],
+    poisonStacks: 2,
   },
 } as const satisfies Record<string, CharacterDef>;
 

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CHARACTERS, type CharacterId } from '../../src/config/characters';
 import { ACHIEVEMENTS } from '../../src/config/achievements';
+import { VOMI } from '../../src/config/arsenal';
 import { emptyProfile } from '../../src/meta/profile';
 import { buy, owned } from '../../src/meta/shop';
 import { createTestGame } from '../support/testGame';
@@ -126,6 +127,38 @@ describe('Les persos jouables', () => {
     const p = { ...emptyProfile(), tunas: 1e6 };
     expect(owned(p, 'character:cop')).toBe(false);
     expect(owned(buy(p, 'character:cop', 0)!, 'character:cop')).toBe(true);
+  });
+
+  it('le Futur Marié : son poison monte deux fois plus vite qu avec le même Vomi chez le Buveur', () => {
+    // Deuxième battement de poison sur un zombie posé dans la flaque (un battement = un cumul, deux pour lui)
+    const secondTick = (id: CharacterId) => {
+      const t = runWith(id);
+      const w = id === 'futurMarie' ? t.game.loadout.weapons[0] : t.game.loadout.add('vomi')!;
+      if (id !== 'futurMarie') t.game.loadout.weapons[0].mods.range = 0;
+      w.mods.rate = 0.01;
+      if ('critChance' in w.mods) w.mods.critChance = -1;
+      const z = t.game.spawnZombie('zombie', t.inFront(7), t.game.player.facing.clone().negate())!;
+      z.hp = 1e6; z.frozen = 1e6;
+      t.playUntil(() => (w.zones ?? []).some((zone) => zone.active), 4);
+      t.play(1.6);
+      const ticks = t.events('zombieHit').filter((e) => e.weapon === w && e.zombie === z && e.damage < VOMI.damage * 3).map((e) => e.damage);
+      return ticks;
+    };
+    const b = secondTick('buveur'), m = secondTick('futurMarie');
+    expect(b.length).toBeGreaterThan(2);
+    expect(m.length).toBeGreaterThan(2);
+    // Au deuxième battement : 2 cumuls pour le Buveur, 4 pour lui
+    expect(m[1] / b[1]).toBeCloseTo(2, 1);
+  });
+
+  it('le Futur Marié est rapide et fragile, et s achète en boutique', () => {
+    const b = runWith('buveur'), m = runWith('futurMarie');
+    expect(m.game.health.max - b.game.health.max).toBeCloseTo(statOf('futurMarie', 'maxHp'));
+    expect(m.game.stats.moveSpeed).toBeGreaterThan(b.game.stats.moveSpeed);
+    expect(m.game.stats.pickupRange - b.game.stats.pickupRange).toBeCloseTo(statOf('futurMarie', 'pickupRange'));
+    const p = { ...emptyProfile(), tunas: 1e6 };
+    expect(owned(p, 'character:futurMarie')).toBe(false);
+    expect(owned(buy(p, 'character:futurMarie', 0)!, 'character:futurMarie')).toBe(true);
   });
 
   it('le Videur se débloque avec le succès Sonné, pas en boutique', () => {
