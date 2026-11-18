@@ -84,6 +84,15 @@ export const AUDIO = {
    * Objets à effet : explosion du Cendrier (souffle sourd, entendu jusqu'à `hearDist` m), bouclier de
    * mousse qui revient et qui éclate (bulles), début de la Happy hour (cloche).
    */
+  /**
+   * Moteur du véhicule conduit (synthétisé) : volume, désaccord entre les deux oscillateurs (x), ronflement (Hz),
+   * montée du régime à pleine vitesse (x en plus), lissage (s), fondu à l'arrêt (s) ; par véhicule, la note de base (Hz)
+   * et la coupure du filtre (Hz).
+   */
+  engine: {
+    volume: 0.07, detune: 1.012, rumble: 7, rev: 1.4, smooth: 0.12, fade: 0.5,
+    vehicles: { delorean: { base: 62, cutoff: 900 }, bus: { base: 44, cutoff: 600 }, tank: { base: 31, cutoff: 420 } },
+  },
   items: {
     ash: { sample: 'impactSoft_heavy', volume: 0.55, rate: 0.7, hearDist: 30 },
     foamUp: { sample: 'bubble', volume: 0.45, rate: 1.1 },

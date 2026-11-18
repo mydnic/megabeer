@@ -14,7 +14,8 @@ export type AchievementRule =
   | { kind: 'elites'; n: number }
   | { kind: 'items'; n: number }
   | { kind: 'bins'; n: number }
-  | { kind: 'tunas'; n: number };
+  | { kind: 'tunas'; n: number }
+  | { kind: 'crushes'; n: number };
 
 /** `unlocks` : articles de la boutique que seul ce succès débloque (ils ne s'achètent pas, GDD section 14). */
 export type AchievementDef = { id: string; name: string; text: string; tunas: number; rule: AchievementRule; unlocks?: readonly string[] };
@@ -35,6 +36,7 @@ export const ACHIEVEMENTS: readonly AchievementDef[] = [
   { id: 'chasseurElites', name: "Chasseur d'élites", text: '5 élites dans une run', tunas: 30, rule: { kind: 'elites', n: 5 } },
   { id: 'collectionneur', name: 'Collectionneur', text: '10 objets dans une run', tunas: 30, rule: { kind: 'items', n: 10 } },
   { id: 'eboueur', name: 'Éboueur', text: 'Casser 50 poubelles dans une run', tunas: 20, rule: { kind: 'bins', n: 50 } },
+  { id: 'permisAPoints', name: 'Permis à points', text: 'Écraser 100 zombies en véhicule dans une run', tunas: 30, rule: { kind: 'crushes', n: 100 } },
   { id: 'pleinAuxAs', name: 'Plein aux as', text: '100 TUNAS ramassés dans une run', tunas: 30, rule: { kind: 'tunas', n: 100 } },
 ];
 

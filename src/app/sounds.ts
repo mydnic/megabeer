@@ -1,4 +1,6 @@
 import { CANETTE_IMPACT, FUT_SOUND, GUEUZE_BLAST } from '../config/weapons';
+import { createVehicleEngine } from '../audio/vehicleEngine';
+import { VEHICLES } from '../config/vehicles';
 import { WEAPON_FX } from '../config/weaponFx';
 import type * as THREE from 'three';
 import { BELL_SOUND } from '../config/abbey';
@@ -19,6 +21,14 @@ export const jitter = (j: number) => 1 + (Math.random() * 2 - 1) * j;
  * réception, ramassage d'XP, level-up, choix de carte, cloches.
  */
 export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual) {
+  // Moteur du véhicule conduit : il démarre en montant, suit la vitesse, se coupe en descendant
+  const motor = createVehicleEngine(audio);
+  game.events.on('vehicleEntered', ({ kind }) => motor.start(kind));
+  game.events.on('vehicleExited', () => motor.stop());
+  game.events.on('tick', () => {
+    const v = game.vehicles.driving;
+    if (v) motor.update(Math.abs(game.player.carSpeed) / VEHICLES[v.kind].car.maxSpeed);
+  });
   // Pas, saut, réception : déclenchés par l'animation (le pied touche le sol)
   buveur.onSound = (e) => {
     const F = AUDIO.footsteps;

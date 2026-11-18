@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { VEHICLE_SPAWN, VEHICLES, type VehicleId } from '../../src/config/vehicles';
 import { spawnCurveAt } from '../../src/game/spawnDirector';
 import { PLANET_RADIUS } from '../../src/config/world';
+import { ACHIEVEMENTS } from '../../src/config/achievements';
 import { createTestGame } from '../support/testGame';
 
 const D = VEHICLES.delorean;
@@ -187,5 +188,26 @@ describe('Les véhicules', () => {
     expect(n.delorean).toBeGreaterThan(n.bus);
     expect(n.bus).toBeGreaterThan(n.tank);
     expect(n.tank).toBeGreaterThan(0);
+  });
+
+  it('écraser assez de zombies en véhicule dans une run donne le succès Permis à points', () => {
+    const A = ACHIEVEMENTS.find((a) => a.id === 'permisAPoints')!;
+    const n = (A.rule as { n: number }).n;
+    const t = driving('bus');
+    t.game.vehicles.driving!.left = 1e6;
+    t.game.vehicles.driving!.hp = 1e6;
+    t.play(1, { moveY: 1 });
+    const kills = () => t.events('vehicleCrushed').filter((e) => e.killed).length;
+    const gained = () => t.events('achievementUnlocked').some((e) => e.id === A.id);
+    for (let i = 0; i < n * 2 && kills() < n; i++) {
+      // Pas encore assez d'écrasés : pas encore de succès
+      expect(gained()).toBe(false);
+      const z = t.game.spawnZombie('zombie', t.inFront(5), t.game.player.facing.clone())!;
+      z.frozen = 1e6;
+      // Les level-up qui tombent en route sont pris aussitôt (sinon le jeu reste figé sur les cartes)
+      t.playUntil(() => { if (t.game.offer) t.game.pickCard(t.game.offer[0]); return t.events('vehicleCrushed').some((e) => e.zombie === z && e.killed); }, 2, { moveY: 1 });
+    }
+    expect(t.events('vehicleCrushed').filter((e) => e.killed).length).toBeGreaterThanOrEqual(n);
+    expect(t.events('achievementUnlocked').some((e) => e.id === A.id)).toBe(true);
   });
 });

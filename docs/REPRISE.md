@@ -209,7 +209,7 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    bas de l'écran ; DEV « Garer à côté ». **Checkpoint 2 fait le 2026-11-18, à valider** : le bus scolaire (Rare, 20 s, 180
    PV, lent, large : il écrase sur 3,2 m) et le tank (Légendaire, 25 s, 400 PV, très lent, tourne sur place, canon qui
    tire un obus explosif toutes les 1,4 s sur l'ennemi le plus proche à 24 m ; tourelle qui vise, chenilles animées) ;
-   tirés au poids de leur rareté (DeLorean le plus souvent, tank rarement). Checkpoint 3 : succès « Permis à points », sons de moteur), #7 (Super Saiyan : touche d'action à trancher), #5 (Trilogie LOTR), #14 (braindump : radio,
+   tirés au poids de leur rareté (DeLorean le plus souvent, tank rarement). **Checkpoint 3 fait le 2026-11-18, à valider** : succès « Permis à points » (100 zombies tués écrasés dans une run, 30 TUNAS) et moteur synthétisé (`audio/vehicleEngine.ts`, deux dents de scie filtrées, régime qui suit la vitesse, réglages `AUDIO.engine`)), #7 (Super Saiyan : touche d'action à trancher), #5 (Trilogie LOTR), #14 (braindump : radio,
    alliés, boss et objets de pop culture ; l'utilisateur veut ses références telles quelles, sans remarque de droits).
    **Roster des persos arrêté le 2026-11-18 (décision de l'utilisateur) : 8 persos** (Buveur, Videur, Père Noël, Cop,
    Futur Marié, Barman, Serveuse, Pilier de bar). Le Moine brasseur et le Supporter restent au GDD pour plus tard.

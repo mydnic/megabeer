@@ -915,7 +915,7 @@ Les coûts sont exprimés **en runs** : "2 R" = les TUNAS d'une run moyenne x2. 
 | Collectionneur | Débloquer toutes les armes |
 | Kamehameha | Atteindre SSJ4 |
 | Ultra sobre | Atteindre Ultra Instinct |
-| Permis à points | Écraser 100 zombies en véhicule |
+| Permis à points | Écraser 100 zombies en véhicule dans une run (fait, 30 TUNAS) |
 | Gros bras | Avoir 4 armes évoluées en même temps |
 | Chaque perso | Gagner une run avec chaque personnage |
 

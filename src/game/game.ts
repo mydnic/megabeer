@@ -420,6 +420,7 @@ export class Game {
     this.events.on('eliteKilled', () => this.achievements.elite());
     this.events.on('itemGained', () => this.achievements.item());
     this.events.on('binBroken', () => this.achievements.bin());
+    this.events.on('vehicleCrushed', ({ killed }) => { if (killed) this.achievements.crush(); });
     this.events.on('synergyActivated', () => this.achievements.synergy());
     this.events.on('bossKilled', ({ boss }) => this.achievements.boss(boss.kind));
     this.random = deps.random ?? Math.random;

@@ -22,20 +22,22 @@ export class AchievementTracker {
   lifetimeKills = 0;
   /** Gagnés pendant cette run, dans l'ordre. */
   readonly gained: string[] = [];
-  private counts = { elites: 0, items: 0, bins: 0, synergy: 0 };
+  private counts = { elites: 0, items: 0, bins: 0, synergy: 0, crushes: 0 };
   private bosses: { kind: string; difficulty: DifficultyId }[] = [];
 
   constructor(private src: AchievementSource, private onUnlock: (a: AchievementDef) => void) {}
 
   reset() {
     this.gained.length = 0;
-    this.counts = { elites: 0, items: 0, bins: 0, synergy: 0 };
+    this.counts = { elites: 0, items: 0, bins: 0, synergy: 0, crushes: 0 };
     this.bosses = [];
   }
 
   elite() { this.counts.elites++; this.check(); }
   item() { this.counts.items++; this.check(); }
   bin() { this.counts.bins++; this.check(); }
+  /** Un ennemi tué écrasé par le véhicule. */
+  crush() { this.counts.crushes++; this.check(); }
   synergy() { this.counts.synergy++; this.check(); }
   boss(kind: string) { this.bosses.push({ kind, difficulty: this.src.difficulty() }); this.check(); }
 
@@ -62,6 +64,7 @@ export class AchievementTracker {
       case 'items': return this.counts.items >= r.n;
       case 'bins': return this.counts.bins >= r.n;
       case 'tunas': return s.tunas() >= r.n;
+      case 'crushes': return this.counts.crushes >= r.n;
     }
   }
 }
