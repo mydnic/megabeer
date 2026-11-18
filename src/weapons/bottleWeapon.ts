@@ -175,7 +175,7 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
     const J = W.dice!;
     // Noël au comptoir (avec la Bière de Noël) : le 421 double la couronne quelques secondes
     if (ctx.synergy('noelAuComptoir')) ctx.trigger('biereNoel');
-    const r = J.jackpotRadius * mods.size;
+    const r = J.jackpotRadius * mods.size * ctx.stats.size;
     ctx.explode(weapon, at, r);
     for (const o of ctx.zombiesNear(at, r, side)) {
       if (!o.targetable || o.pos.distanceTo(at) > r) continue;
@@ -235,7 +235,7 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
 
   /** Éclaboussure (Kriek) : dégâts réduits et ralentissement autour du point d'impact. */
   function splash(at: THREE.Vector3, dmg: number, except: Zombie | null) {
-    const r = ((W.splashRadius ?? 0) + mods.splash) * mods.size;
+    const r = ((W.splashRadius ?? 0) + mods.splash) * mods.size * ctx.stats.size;
     if (r <= 0) return;
     if (W.splashRadius === undefined) ctx.explode(weapon, at, r); // onde de l'évolution (Imperial Stout, Double IPA)
     for (const o of ctx.zombiesNear(at, r, side)) {

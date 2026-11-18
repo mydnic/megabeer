@@ -30,7 +30,6 @@ ap.add_argument('--render', default='')
 args = ap.parse_args(sys.argv[sys.argv.index('--') + 1:])
 
 HEIGHT = 1.85          # taille du Cop (m)
-ARM_DOWN = Vector((0.2, 0.02, -1)).normalized()  # direction du bras abaissé (côté gauche ; x opposé à droite)
 
 # Os Mixamo -> os du Buveur (les doigts et les orteils suivent la main et le pied)
 MAP = {
@@ -74,7 +73,8 @@ for a in set(bpy.data.actions) - keep_actions:
 if mix.animation_data:
     mix.animation_data.action = None
 
-# --- Bras abaissés (pose), puis cette pose devient la forme du maillage
+# --- Bras posés comme ceux du Buveur au repos (bras, avant-bras, main dans la direction de ses os), puis cette pose
+# devient la forme du maillage : les animations du Buveur font alors les mêmes gestes (sinon ses bras restent écartés)
 bpy.context.view_layer.objects.active = mix
 bpy.ops.object.mode_set(mode='POSE')
 for pb in mix.pose.bones:
@@ -82,18 +82,21 @@ for pb in mix.pose.bones:
     pb.rotation_quaternion = (1, 0, 0, 0)
 bpy.context.view_layer.update()
 inv = mix.matrix_world.inverted()
-for side, sx in (('Left', 1), ('Right', -1)):
-    pb = mix.pose.bones[f'mixamorig:{side}Arm']
-    want = Vector((ARM_DOWN.x * sx, ARM_DOWN.y, ARM_DOWN.z))
-    # Directions dans l'espace de l'armature (le monde est tourné et mis à l'échelle par l'objet)
-    want_arm = (inv.to_3x3() @ want).normalized()
-    cur = (pb.tail - pb.head).normalized()
-    q = cur.rotation_difference(want_arm)
-    m = pb.matrix.copy()
-    head = m.translation.copy()
-    rot = q.to_matrix().to_4x4() @ Matrix.Translation(-head) @ m
-    pb.matrix = Matrix.Translation(head) @ rot
-    bpy.context.view_layer.update()
+SEGMENTS = (('Arm', 'upperarm'), ('ForeArm', 'forearm'), ('Hand', 'hand'))
+for side, s in (('Left', 'L'), ('Right', 'R')):
+    for mx_name, bv_name in SEGMENTS:
+        pb = mix.pose.bones[f'mixamorig:{side}{mx_name}']
+        h0, t0 = old[f'{bv_name}.{s}']
+        want = (t0 - h0).normalized()
+        # Directions dans l'espace de l'armature (le monde est tourné et mis à l'échelle par l'objet)
+        want_arm = (inv.to_3x3() @ want).normalized()
+        cur = (pb.tail - pb.head).normalized()
+        q = cur.rotation_difference(want_arm)
+        m = pb.matrix.copy()
+        head = m.translation.copy()
+        rot = q.to_matrix().to_4x4() @ Matrix.Translation(-head) @ m
+        pb.matrix = Matrix.Translation(head) @ rot
+        bpy.context.view_layer.update()
 bpy.ops.object.mode_set(mode='OBJECT')
 # Le maillage prend la pose (modificateur appliqué), en coordonnées du monde
 for o in meshes:

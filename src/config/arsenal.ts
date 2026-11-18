@@ -222,6 +222,8 @@ export const CORNE_UPGRADES: readonly UpgradeDef[] = [RATEU, { id: 'size', label
  */
 /** `stun` : Rot du siècle (évolution), zombies étourdis (s). */
 export const ROT = { cooldown: 5, firstDelay: 2, damage: 10, perXp: 0.5, maxDamage: 260, radius: 3.4, radiusPerXp: 0.025, maxRadius: 8, knock: 1.5, stun: 1.2 } as const;
+/** La zone du prochain rot, toujours affichée autour du joueur : un anneau qui s'allume à mesure qu'il se recharge (`dim` : intensité juste après un rot). */
+export const ROT_ZONE = { color: 0xb8f070, rim: 0xd8ff8a, opacity: 0.42, lift: 0.08, fadeIn: 0.01, fadeOut: 0.01, core: 0.12, dim: 0.35 } as const;
 export const ROT_UPGRADES: readonly UpgradeDef[] = [DMG, RATEU, { id: 'size', label: "taille de l'onde", value: 0.10, kind: 'percent' }, { id: 'charge', label: 'charge par capsule', value: 0.20, kind: 'percent' }];
 
 /** Odeur d'alcool (n° 24) : une aura permanente autour du joueur ; dégâts faibles et continus, les zombies titubent. */

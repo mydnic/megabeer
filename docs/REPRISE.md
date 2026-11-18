@@ -179,7 +179,10 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    matériau cel-shading reprend `map`) monté par `tools/blender/cop.py` (bras abaissés, poids Mixamo reportés sur les os
    du Buveur). Rot sonique, +40 PV, -12 % vitesse, passif `contactStun` (fige 0,5 s l'ennemi qui le frappe au contact,
    une fois toutes les 3 s par ennemi, pas les boss), 300 TUNAS. Uniforme très sombre : à éclaircir si on le perd de
-   vue la nuit. La raie du GDD n'est pas sur ce modèle.
+   vue la nuit. La raie du GDD n'est pas sur ce modèle. Bras du Cop posés comme ceux du Buveur au repos (sinon ses
+   animations les laissaient écartés et raides). Le Rot sonique affiche toujours sa portée (anneau `ROT_ZONE` qui
+   grandit avec la charge et s'allume pendant la recharge) ; la stat Taille (Pinte XXL) agrandit désormais le Rot,
+   l'Odeur et les explosions des bouteilles (avant : la Gueuze seulement).
    Checkpoint 1, notes : base D1 `megabeer` (WEUR, id dans
    `wrangler.jsonc`, schéma appliqué), application Discord de l'utilisateur (Client ID dans `wrangler.jsonc`, secret
    posé par `wrangler secret put`, en local dans `.dev.vars`). Commandes Cloudflare : variables d'environnement

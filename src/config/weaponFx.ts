@@ -4,7 +4,7 @@
 
 import type { WeaponId } from '../weapons/weapon';
 import type { ZoneLook } from '../fx/zoneView';
-import { BIERE_NOEL, BIERE_NOEL_LOOK, BIERE_NOEL_SOUND, DECAPSULEUR, DECAPSULEUR_LOOK, DECAPSULEUR_SOUND, FLAQUE_BIERE, FLAQUE_BIERE_ZONE, FLAQUE_BIERE_SOUND, KRIEK, KRIEK_LOOK, BOTTLE_SOUNDS, TRIPLE, TRIPLE_LOOK, IPA, IPA_LOOK, SOUS_BOCK, SOUS_BOCK_LOOK, FLECHETTES, FLECHETTES_LOOK, BOUCHONS, BOUCHONS_LOOK, MORE_SOUNDS, PETANQUE, PETANQUE_LOOK, BAC, BAC_LOOK, VOMI, VOMI_LOOK, VOMI_ZONE, WEIZEN, WEIZEN_ZONE, ZONE_SOUNDS, TIREUSE, CORNE, ROT, ODEUR, ODEUR_ZONE, PLATEAU, PLATEAU_LOOK, DES_421, DES_421_LOOK } from './arsenal';
+import { BIERE_NOEL, BIERE_NOEL_LOOK, BIERE_NOEL_SOUND, DECAPSULEUR, DECAPSULEUR_LOOK, DECAPSULEUR_SOUND, FLAQUE_BIERE, FLAQUE_BIERE_ZONE, FLAQUE_BIERE_SOUND, KRIEK, KRIEK_LOOK, BOTTLE_SOUNDS, TRIPLE, TRIPLE_LOOK, IPA, IPA_LOOK, SOUS_BOCK, SOUS_BOCK_LOOK, FLECHETTES, FLECHETTES_LOOK, BOUCHONS, BOUCHONS_LOOK, MORE_SOUNDS, PETANQUE, PETANQUE_LOOK, BAC, BAC_LOOK, VOMI, VOMI_LOOK, VOMI_ZONE, WEIZEN, WEIZEN_ZONE, ZONE_SOUNDS, TIREUSE, CORNE, ROT, ROT_ZONE, ODEUR, ODEUR_ZONE, PLATEAU, PLATEAU_LOOK, DES_421, DES_421_LOOK } from './arsenal';
 import { CANETTE_LOOK, FUT, FUT_LOOK, FUT_SOUND, GUEUZE, GUEUZE_LOOK, STOUT_IMPACT, STOUT_LOOK, TABOURET, TABOURET_LOOK, TABOURET_SOUND, WEAPONS } from './weapons';
 
 /** Modèle d'un projectile en vol : fichier, longueur en jeu (m), couleur par nom de matériau du modèle. */
@@ -53,7 +53,7 @@ export const WEAPON_FX: Record<WeaponId, WeaponFx> = {
   weizen: { zone: WEIZEN_ZONE, impact: {}, hitSound: ZONE_SOUNDS.weizen, settings: WEIZEN },
   tireuse: { impact: { splash: 4 }, hitSound: ZONE_SOUNDS.tireuse, settings: TIREUSE },
   corne: { impact: {}, blast: { style: 'ring', color: 0xd8f0ff, sound: { sample: 'impactSoft_heavy', volume: 0.6, pitch: 0.45 } }, hitSound: ZONE_SOUNDS.corne, settings: CORNE },
-  rot: { impact: {}, blast: { style: 'ring', color: 0xb8f070, sound: { sample: 'impactPunch_heavy', volume: 0.7, pitch: 0.5 } }, hitSound: ZONE_SOUNDS.rot, settings: ROT },
+  rot: { zone: ROT_ZONE, impact: {}, blast: { style: 'ring', color: 0xb8f070, sound: { sample: 'impactPunch_heavy', volume: 0.7, pitch: 0.5 } }, hitSound: ZONE_SOUNDS.rot, settings: ROT },
   odeur: { zone: ODEUR_ZONE, impact: {}, hitSound: ZONE_SOUNDS.odeur, settings: ODEUR },
   plateau: { look: PLATEAU_LOOK, impact: {}, blast: { style: 'ring', color: 0xe8ecf2, sound: { sample: 'impactPlate_heavy', volume: 0.6, pitch: 1.0 } }, settings: PLATEAU },
   des421: { look: DES_421_LOOK, impact: {}, ground: {}, blast: { style: 'gueuze', sound: { sample: 'impactBell_heavy', volume: 0.6, pitch: 1.2 } }, hitSound: { sample: 'impactWood_light', volume: 0.4, pitch: 1.6, gap: 0.03 }, settings: DES_421 },

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CORNE, ODEUR, PLATEAU, ROT, TIREUSE, WEIZEN } from '../../src/config/arsenal';
+import { ITEMS } from '../../src/config/items';
 import { catalog } from '../../src/meta/shop';
 import type { Zombie } from '../../src/enemies/zombie';
 import type { WeaponId } from '../../src/weapons/weapon';
@@ -69,6 +70,32 @@ describe('Les armes de zone du roster', () => {
     b.t.game.xpGathered = 100;
     b.t.playUntil(() => hitsOn(b.t, b.w, zb).length > 0, ROT.firstDelay + 1);
     expect(hitsOn(b.t, b.w, zb)[0].damage).toBeGreaterThan(plain * 2);
+  });
+
+  it('Rot sonique : sa portée est toujours affichée autour du joueur, et s allume à mesure qu il se recharge', () => {
+    const { t, w } = arena('rot');
+    t.play(0.2);
+    const zone = w.zones![0];
+    expect(zone.active).toBe(true);
+    expect(zone.pos.distanceTo(t.game.player.pos)).toBeLessThan(0.05);
+    expect(zone.radius).toBeCloseTo(ROT.radius, 1);
+    const early = zone.strength!;
+    t.play(ROT.firstDelay * 0.7);
+    expect(zone.strength!).toBeGreaterThan(early);
+  });
+
+  it('Rot sonique et Odeur : la Taille (Pinte XXL) agrandit l onde et l aura', () => {
+    for (const id of ['rot', 'odeur'] as const) {
+      const a = arena(id); a.t.play(0.2);
+      const b = arena(id); b.t.game.gainItem('pinteXXL'); b.t.play(0.2);
+      expect(b.w.zones![0].radius).toBeCloseTo(a.w.zones![0].radius * (1 + ITEMS.pinteXXL.stats.size), 3);
+    }
+    // Un zombie juste hors de la portée normale est touché avec la Pinte XXL
+    const t = arena('rot');
+    for (let i = 0; i < 4; i++) t.t.game.gainItem('pinteXXL');
+    const z = dummy(t.t, ROT.radius * 1.15);
+    t.t.playUntil(() => hitsOn(t.t, t.w, z).length > 0, ROT.firstDelay + 1);
+    expect(hitsOn(t.t, t.w, z).length).toBeGreaterThan(0);
   });
 
   it('Odeur d alcool : un zombie dans l aura est confus et prend des dégâts', () => {

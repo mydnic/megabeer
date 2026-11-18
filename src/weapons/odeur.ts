@@ -30,7 +30,7 @@ export function createOdeur(ctx: WeaponContext): Weapon {
     updateProjectiles(dt: number) {
       aura.active = true;
       aura.pos.copy(ctx.playerPos());
-      aura.radius = O.radius * mods.size;
+      aura.radius = O.radius * mods.size * ctx.stats.size;
       tick += dt;
       if (tick < O.tick / (ctx.stats.fireRate * mods.rate)) return;
       tick = 0;

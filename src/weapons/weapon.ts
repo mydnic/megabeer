@@ -75,7 +75,8 @@ export type Projectile = {
 };
 
 /** Une zone posée au sol par une arme (flaque...) : centre, rayon (m), âge et durée de vie (s). */
-export type Zone = { pos: THREE.Vector3; radius: number; age: number; life: number; active: boolean };
+/** `strength` (0 à 1, 1 par défaut) : intensité affichée (le Rot s'allume à mesure qu'il se recharge). */
+export type Zone = { pos: THREE.Vector3; radius: number; age: number; life: number; active: boolean; strength?: number };
 
 /**
  * Une arme équipée. Ajouter une arme = un fichier qui implémente cette interface + une entrée dans
