@@ -33,6 +33,8 @@
   les animations (repos, trot, saut, mort, coup de poing).
 - `marie.glb` : le Futur Marié, assemblé par `tools/blender/modular.py` à partir du pack « Ultimate Modular Men »
   de Quaternius (CC0) : pièces, squelette et clips du pack, couleurs, ventre et écharpe modifiés.
-- `barman.glb` : le Barman, assemblé de la même façon (`modular.py --variant barman`) à partir du même pack.
+- `barman.glb` : le Barman robot à tête de télé, modèle fourni par l'utilisateur (fichier
+  `6047602-20260925122643977-um84.glb`, sans squelette ; origine et licence à confirmer), monté par `tools/blender/robot.py`
+  sur le squelette de la Universal Animation Library de Quaternius (CC0), dont il prend les clips.
 
 Les autres GLB de ce dossier sont générés par les scripts de `tools/blender/` (voir CLAUDE.md).

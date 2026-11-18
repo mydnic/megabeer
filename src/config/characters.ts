@@ -51,7 +51,7 @@ export const CHARACTERS = {
     poisonStacks: 2,
   },
   barman: {
-    name: 'Le Barman', pitch: 'Il connaît la carte : 4 choix à chaque level-up au lieu de 3. Moins de dégâts. Tireuse à bière.', weapon: 'tireuse', model: 'barman',
+    name: 'Le Barman', pitch: 'Robot barman misanthrope, il connaît la carte : 4 choix à chaque level-up au lieu de 3. Moins de dégâts. Tireuse à bière.', weapon: 'tireuse', model: 'barman',
     stats: [{ stat: 'damage', value: -0.1 }],
     levelUpCards: 4,
   },
