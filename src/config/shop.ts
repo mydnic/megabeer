@@ -13,6 +13,7 @@ export const SHOP_CHARACTERS: readonly { id: string; name: string; pitch: string
   { id: 'videur', name: 'Le Videur', pitch: '+3 armure, insensible au recul, Tabouret de bar', price: 0 },
   { id: 'pereNoel', name: 'Le Père Noël', pitch: 'Un cadeau toutes les 2 min, Bière de Noël', price: 300 },
   { id: 'futurMarie', name: 'Le Futur Marié', pitch: 'Poison deux fois plus rapide, Flaque de vomi', price: 300 },
+  { id: 'barman', name: 'Le Barman', pitch: '4 cartes au level-up, Tireuse à bière', price: 300 },
   { id: 'cop', name: 'Le Cop', pitch: "Qui le touche reste figé, Rot sonique", price: 300 },
 ];
 

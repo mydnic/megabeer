@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CHARACTERS, type CharacterId } from '../../src/config/characters';
 import { ACHIEVEMENTS } from '../../src/config/achievements';
 import { VOMI } from '../../src/config/arsenal';
+import { LEVEL_UP_SCREEN } from '../../src/config/upgrades';
 import { emptyProfile } from '../../src/meta/profile';
 import { buy, owned } from '../../src/meta/shop';
 import { createTestGame } from '../support/testGame';
@@ -159,6 +160,25 @@ describe('Les persos jouables', () => {
     const p = { ...emptyProfile(), tunas: 1e6 };
     expect(owned(p, 'character:futurMarie')).toBe(false);
     expect(owned(buy(p, 'character:futurMarie', 0)!, 'character:futurMarie')).toBe(true);
+  });
+
+  it('le Barman voit 4 cartes à chaque level-up, les autres 3', () => {
+    const offered = (id: CharacterId) => {
+      const t = runWith(id);
+      t.game.addXp(1e3);
+      t.playUntil(() => t.events('levelUpOffered').length > 0, 5);
+      return t.events('levelUpOffered')[0].cards.length;
+    };
+    expect(offered('barman')).toBe(CHARACTERS.barman.levelUpCards);
+    expect(offered('buveur')).toBe(LEVEL_UP_SCREEN.cards);
+  });
+
+  it('le Barman fait moins de dégâts et s achète en boutique', () => {
+    const b = runWith('buveur'), m = runWith('barman');
+    expect(m.game.stats.damage - b.game.stats.damage).toBeCloseTo(statOf('barman', 'damage'));
+    const p = { ...emptyProfile(), tunas: 1e6 };
+    expect(owned(p, 'character:barman')).toBe(false);
+    expect(owned(buy(p, 'character:barman', 0)!, 'character:barman')).toBe(true);
   });
 
   it('le Videur se débloque avec le succès Sonné, pas en boutique', () => {

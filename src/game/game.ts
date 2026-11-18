@@ -522,7 +522,7 @@ export class Game {
     if (this.progression.pending > 0) this.offerCards(false);
   }
 
-  /** Relancer (level-up seulement) : 3 nouvelles cartes à la place des proposées. */
+  /** Relancer (level-up seulement) : de nouvelles cartes à la place des proposées. */
   rerollCards() {
     if (this.offerKind !== 'level' || this.cardOptions.reroll <= 0) return false;
     this.cardOptions.reroll--;
@@ -1260,7 +1260,8 @@ export class Game {
     // Armes débloquées en boutique pas encore équipées
     const available = this.loadout.full ? [] : (Object.keys(WEAPON_FACTORIES) as WeaponId[]).filter((id) => !this.loadout.has(id) && (!this.unlocks || this.unlocks.weapons.has(id)));
     const ready = readyToEvolve(this.loadout.weapons, (item) => this.items.some((i) => i.item === item));
-    const cards = rollCards(LEVEL_UP_SCREEN.cards, this.stats.luck, this.loadout.weapons, available, LEVEL_UP_SCREEN.newWeaponBelow, (k) => this.banned.has(k), ready);
+    const count = (CHARACTERS[this.character] as { levelUpCards?: number }).levelUpCards ?? LEVEL_UP_SCREEN.cards;
+    const cards = rollCards(count, this.stats.luck, this.loadout.weapons, available, LEVEL_UP_SCREEN.newWeaponBelow, (k) => this.banned.has(k), ready);
     if (!cards.length) { this.progression.pending = 0; this.offer = null; this.offerKind = null; return; }
     // Une nouvelle arme annonce les synergies qu'elle activerait
     for (const c of cards) if (c.kind === 'weapon') c.synergies = synergiesCompletedBy(c.weaponId, (x) => this.loadout.has(x));

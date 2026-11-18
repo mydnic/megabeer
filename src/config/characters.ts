@@ -18,6 +18,8 @@ export type CharacterDef = {
   knockImmune?: boolean;
   /** Un coffre gratuit (un petit fût cadeau) apparaît près de lui toutes les `freeChestEvery` s. */
   freeChestEvery?: number;
+  /** Cartes proposées à chaque level-up (le Barman : 4 ; sinon LEVEL_UP_SCREEN.cards). */
+  levelUpCards?: number;
   /** Cumuls de poison gagnés à chaque battement dans une flaque (le Futur Marié : 2, le poison monte deux fois plus vite). */
   poisonStacks?: number;
   /** Contrôle d'alcoolémie : un ennemi qui le touche au contact est figé `duration` s, au plus une fois toutes les `cooldown` s (pas les boss). */
@@ -47,6 +49,11 @@ export const CHARACTERS = {
     name: 'Le Futur Marié', pitch: "Enterrement de vie de garçon : son poison monte deux fois plus vite. Rapide mais fragile. Flaque de vomi.", weapon: 'vomi', model: 'marie',
     stats: [{ stat: 'maxHp', value: -15 }, { stat: 'moveSpeed', value: 0.1 }, { stat: 'pickupRange', value: 1 }],
     poisonStacks: 2,
+  },
+  barman: {
+    name: 'Le Barman', pitch: 'Il connaît la carte : 4 choix à chaque level-up au lieu de 3. Moins de dégâts. Tireuse à bière.', weapon: 'tireuse', model: 'barman',
+    stats: [{ stat: 'damage', value: -0.1 }],
+    levelUpCards: 4,
   },
 } as const satisfies Record<string, CharacterDef>;
 

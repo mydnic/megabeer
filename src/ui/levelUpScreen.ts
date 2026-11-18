@@ -27,6 +27,9 @@ const CSS = `
 @keyframes lu-title { from { transform: rotate(-9deg) scale(.3); opacity: 0; } }
 @keyframes lu-title-idle { 50% { transform: rotate(-1deg) scale(1.035); } }
 .lu-cards { display: flex; gap: clamp(12px, 2.5vw, 34px); flex-wrap: wrap; justify-content: center; padding: 0 16px; }
+/* 4 cartes (le Barman) : une seule ligne, cartes plus étroites sur petit écran */
+.lu-cards.lu-four { flex-wrap: nowrap; gap: clamp(8px, 1.6vw, 28px); }
+.lu-cards.lu-four .lu-card { width: clamp(128px, 21vw, 240px); }
 .lu-card { --c: #fff; position: relative; width: clamp(170px, 19vw, 240px); padding: 18px 16px 22px; border-radius: 20px; cursor: pointer;
   background: linear-gradient(#573620, #2c1a10 72%); border: 4px solid var(--c);
   box-shadow: 0 7px 0 #1a120c, 0 0 0 3px #1a120c, inset 0 2px 0 rgba(255,255,255,.2), inset 0 -22px 34px rgba(0,0,0,.28);
@@ -150,7 +153,7 @@ export function createLevelUpScreen(onPick: (card: Card) => void, onHover: () =>
   document.head.appendChild(style);
   const el = document.createElement('div');
   el.className = 'lu';
-  el.innerHTML = `<div class="lu-title"></div><div class="lu-cards"></div><div class="lu-opts"></div><div class="lu-chest"></div><div class="lu-hint">Clic, 1 2 3, ou flèches et Espace ; manette : croix et X</div>`;
+  el.innerHTML = `<div class="lu-title"></div><div class="lu-cards"></div><div class="lu-opts"></div><div class="lu-chest"></div><div class="lu-hint">Clic, 1 2 3 (4), ou flèches et Espace ; manette : croix et X</div>`;
   document.body.appendChild(el);
   const title = el.querySelector<HTMLElement>('.lu-title')!;
   const row = el.querySelector<HTMLElement>('.lu-cards')!;
@@ -216,6 +219,7 @@ export function createLevelUpScreen(onPick: (card: Card) => void, onHover: () =>
     if (e.code === 'Digit1' || e.code === 'Numpad1') pick(0);
     else if (e.code === 'Digit2' || e.code === 'Numpad2') pick(1);
     else if (e.code === 'Digit3' || e.code === 'Numpad3') pick(2);
+    else if (e.code === 'Digit4' || e.code === 'Numpad4') pick(3);
     else if (e.code === 'ArrowLeft' || e.code === 'KeyA') select(sel - 1);
     else if (e.code === 'ArrowRight' || e.code === 'KeyD') select(sel + 1);
     else if (e.code === 'Enter') { if (inOpts) useOption(opts[optSel]); else pick(sel); }
@@ -237,6 +241,7 @@ export function createLevelUpScreen(onPick: (card: Card) => void, onHover: () =>
       title.textContent = heading;
       renderOpts(options);
       row.innerHTML = '';
+      row.classList.toggle('lu-four', list.length > 3);
       list.forEach((c, i) => {
         const d = document.createElement('div');
         const key = `<div class="lu-shine"></div><div class="lu-key">${i + 1}</div>`;

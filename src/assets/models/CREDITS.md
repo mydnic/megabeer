@@ -33,5 +33,6 @@
   les animations (repos, trot, saut, mort, coup de poing).
 - `marie.glb` : le Futur Marié, assemblé par `tools/blender/modular.py` à partir du pack « Ultimate Modular Men »
   de Quaternius (CC0) : pièces, squelette et clips du pack, couleurs, ventre et écharpe modifiés.
+- `barman.glb` : le Barman, assemblé de la même façon (`modular.py --variant barman`) à partir du même pack.
 
 Les autres GLB de ce dossier sont générés par les scripts de `tools/blender/` (voir CLAUDE.md).

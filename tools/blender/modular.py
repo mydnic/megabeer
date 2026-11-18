@@ -9,6 +9,8 @@ Le squelette du pack pilote les jambes par IK (pieds rattachés à la racine) : 
 que le jeu cherche sont renommés (thigh/shin/foot, hand.L d'où partent les bouteilles, hand.R).
 
 Variantes (--variant) :
+- barman : le Barman : tête barbue, chemise blanche, tablier de cuir long, torchon sur l épaule, nœud papillon ; il essuie
+  le comptoir au repos et court coudes serrés.
 - marie : le Futur Marié (enterrement de vie de garçon) : masque de cheval, tee-shirt rose, short, tongs, petit ventre
   de bière, écharpe « FUTUR MARIÉ » ; il tangue en marchant.
 
@@ -54,6 +56,28 @@ VARIANTS = {
         'clips': {'Idle': 'idle', 'Run': 'run', 'Death': 'death', 'Punch_Left': 'throw'},
         # Tangage d'ivrogne ajouté aux clips (degrés : bassin, buste, tête), un aller-retour par boucle
         'sway': {'idle': (4, 6, 8), 'run': (3, 7, 6)},
+    },
+    'barman': {
+        'parts': ['Adventurer_Head', 'Farmer_Body', 'Suit_Legs', 'Suit_Feet'],
+        'height': 1.84,
+        'colors': {'Skin': (0.84, 0.60, 0.46), 'Beige': (0.84, 0.60, 0.46), 'LightBlue': (0.20, 0.12, 0.07),
+                   'Brown': (0.93, 0.93, 0.90), 'Suit': (0.05, 0.05, 0.06), 'Black': (0.03, 0.03, 0.03),
+                   'Hair': (0.16, 0.09, 0.05), 'Eyebrows': (0.14, 0.08, 0.04), 'Eye': (0.03, 0.02, 0.02)},
+        # Long tablier de cuir (taille -> genoux), torchon sur l'épaule gauche, nœud papillon
+        'apron': {'top': 0.98, 'bottom': 0.48, 'radius': (0.20, 0.235), 'span': 75, 'color': (0.20, 0.12, 0.07)},
+        'towel': {'path': [(0.11, -0.17, 1.27), (0.15, -0.09, 1.43), (0.16, 0.0, 1.48), (0.15, 0.09, 1.42), (0.11, 0.15, 1.26)],
+                  'width': 0.075, 'color': (0.30, 0.47, 0.72)},
+        # Les gants du fermier (même matériau que sa chemise) deviennent des mains nues
+        'bare_hands': 'Brown',
+        'bowtie': {'at': (0, -0.168, 1.462), 'size': 0.05, 'color': (0.55, 0.05, 0.08)},
+        'clips': {'Idle_Neutral': 'idle', 'Run': 'run', 'Death': 'death', 'Interact': 'throw'},
+        # Retouches de pose par clip (degrés, dans le repère du perso) : (x, y, z) fixes, ou (x, y, z, ax, ay, az) qui
+        # oscillent une fois par boucle. Au repos, il essuie le comptoir de la main droite ; il court coudes serrés.
+        'pose': {
+            'idle': {'UpperArm.R': (-22, 0, -8, 0, 0, 6), 'LowerArm.R': (-48, 0, 0, 0, 0, 14), 'Wrist.R': (0, 0, 0, 0, 0, 20),
+                     'Torso': (4, 0, 0, 0, 0, 0)},
+            'run': {'LowerArm.L': (-30, 0, 0), 'LowerArm.R': (-30, 0, 0), 'Torso': (-4, 0, 0)},
+        },
     },
 }
 V = VARIANTS[args.variant]
@@ -149,6 +173,20 @@ def new_mat(name, color):
     m.diffuse_color = (*color, 1)
     return m
 
+
+# Mains nues : les faces d'un matériau portées surtout par les poignets et les doigts prennent la peau
+if 'bare_hands' in V:
+    for o in meshes:
+        names = [m.name.split('.')[0] if m else '' for m in o.data.materials]
+        if V['bare_hands'] not in names or 'Skin' not in names:
+            continue
+        src, skin = names.index(V['bare_hands']), names.index('Skin')
+        hand_groups = {g.index for g in o.vertex_groups if g.name.startswith(('Wrist', 'Index', 'Middle', 'Ring', 'Pinky', 'Thumb'))}
+        def hand_w(vi):
+            return sum(g.weight for g in o.data.vertices[vi].groups if g.group in hand_groups)
+        for poly in o.data.polygons:
+            if poly.material_index == src and sum(hand_w(vi) for vi in poly.vertices) / len(poly.vertices) > 0.5:
+                poly.material_index = skin
 
 # --- 4. Silhouette : petit ventre de bière (le torse est poussé vers l'avant, en douceur)
 body = next(o for o in meshes if o.name.endswith('_Body'))
@@ -246,6 +284,100 @@ if 'sash' in V:
     bind_like(txt, body)
     meshes.append(txt)
 
+
+
+def ribbon(points, width):
+    """Bande plate qui suit une suite de points (largeur `width` le long de l'axe X), en un nouvel objet."""
+    bm = bmesh.new()
+    side = Vector((1, 0, 0))
+    rows = [(bm.verts.new(Vector(p) - side * width / 2), bm.verts.new(Vector(p) + side * width / 2)) for p in points]
+    for a, b in zip(rows, rows[1:]):
+        bm.faces.new((a[0], b[0], b[1], a[1]))
+    me = bpy.data.meshes.new('Ruban'); bm.to_mesh(me); bm.free()
+    o = bpy.data.objects.new('Ruban', me); scene.collection.objects.link(o)
+    return o
+
+
+def finish(obj, target, offset, thickness, color, name, subdiv=1):
+    """Lissage, placage sur `target`, épaisseur, matériau."""
+    bpy.context.view_layer.objects.active = obj
+    if subdiv:
+        sub = obj.modifiers.new('fin', 'SUBSURF'); sub.levels = subdiv
+        bpy.ops.object.modifier_apply(modifier=sub.name)
+    if target is not None:
+        wrap(obj, target, offset)
+    sol = obj.modifiers.new('epaisseur', 'SOLIDIFY'); sol.thickness = thickness
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_apply(modifier=sol.name)
+    obj.name = name
+    obj.data.materials.clear()
+    obj.data.materials.append(new_mat(name, color))
+
+
+legs = next((o for o in meshes if o.name.endswith('_Legs') or o.name.endswith('_Pants')), None)
+if 'apron' in V:
+    A = V['apron']
+    bm = bmesh.new()
+    cols, rows_n = 14, 6
+    grid = []
+    for j in range(rows_n + 1):
+        t = j / rows_n
+        z = A['top'] + (A['bottom'] - A['top']) * t
+        r = A['radius'][0] + (A['radius'][1] - A['radius'][0]) * t
+        row = []
+        for i in range(cols + 1):
+            a = math.radians(-A['span'] + 2 * A['span'] * i / cols) - math.pi / 2
+            row.append(bm.verts.new((r * math.cos(a), -0.02 + r * math.sin(a), z)))
+        grid.append(row)
+    for j in range(rows_n):
+        for i in range(cols):
+            bm.faces.new((grid[j][i], grid[j][i + 1], grid[j + 1][i + 1], grid[j + 1][i]))
+    me = bpy.data.meshes.new('Tablier'); bm.to_mesh(me); bm.free()
+    apron = bpy.data.objects.new('Tablier', me); scene.collection.objects.link(apron)
+    finish(apron, None, 0, 0.008, A['color'], 'Tablier', subdiv=0)
+    bind_like(apron, legs)
+    hips = apron.vertex_groups.get('Hips') or apron.vertex_groups.new(name='Hips')
+    for v in apron.data.vertices:
+        t = max(0.0, min(1.0, (A['top'] - v.co.z) / (A['top'] - A['bottom'])))
+        follow = 0.8 * t
+        ws = {apron.vertex_groups[g.group].name: g.weight for g in v.groups}
+        tot = sum(ws.values()) or 1.0
+        for name, w in ws.items():
+            g = apron.vertex_groups[name]
+            target = name.replace('LowerLeg', 'UpperLeg') if name.startswith('LowerLeg') else name
+            if target != name:
+                g.remove([v.index])
+                apron.vertex_groups.get(target, apron.vertex_groups.new(name=target)).add([v.index], w / tot * follow, 'ADD')
+            elif name != 'Hips':
+                g.add([v.index], w / tot * follow, 'REPLACE')
+        hips.add([v.index], 1.0 - follow, 'REPLACE')
+    meshes.append(apron)
+if 'towel' in V:
+    T = V['towel']
+    towel = ribbon(T['path'], T['width'])
+    finish(towel, body, 0.014, 0.008, T['color'], 'Torchon')
+    bind_like(towel, body)
+    meshes.append(towel)
+if 'bowtie' in V:
+    W = V['bowtie']
+    c = Vector(W['at']); sz = W['size']
+    bm = bmesh.new()
+    for sd in (-1, 1):
+        # Une aile : un coin plat, pointe vers le centre
+        a = bm.verts.new(c + Vector((sd * sz, -0.004, -sz * 0.45)))
+        b = bm.verts.new(c + Vector((sd * sz, -0.004, sz * 0.45)))
+        m = bm.verts.new(c + Vector((0, -0.012, 0)))
+        bm.faces.new((a, b, m) if sd > 0 else (b, a, m))
+    bmesh.ops.create_cube(bm, size=sz * 0.3, matrix=Matrix.Translation(c + Vector((0, -0.008, 0))))
+    me = bpy.data.meshes.new('Noeud'); bm.to_mesh(me); bm.free()
+    bow = bpy.data.objects.new('Noeud', me); scene.collection.objects.link(bow)
+    sol = bow.modifiers.new('epaisseur', 'SOLIDIFY'); sol.thickness = 0.01
+    bpy.context.view_layer.objects.active = bow
+    bpy.ops.object.modifier_apply(modifier=sol.name)
+    bow.data.materials.append(new_mat('Noeud', W['color']))
+    bind_like(bow, body)
+    meshes.append(bow)
+
 # --- 6. Os renommés ; clips réécrits (avec les retouches du perso) et clips faits main
 
 
@@ -290,10 +422,6 @@ for old, new in RENAME.items():
         if g:
             g.name = new
 
-for name, frames in baked.items():
-    key_pose(name, frames, V.get('sway', {}).get(name))
-
-
 def pose_from(base, extra):
     """Pose = `base` (matrices d'un clip recalculé) + rotations dans le repère du perso (degrés, autour de la tête de l'os)."""
     out = {}
@@ -312,6 +440,23 @@ def pose_from(base, extra):
                 out[src] = rot @ out[src]
     return out
 
+
+def retouch(name, frames):
+    """Retouches de pose du perso pour le clip `name` (voir 'pose' dans VARIANTS)."""
+    P = V.get('pose', {}).get(name)
+    if not P:
+        return frames
+    out = []
+    n = len(frames)
+    for i, fr in enumerate(frames):
+        ph = math.sin(i / max(1, n - 1) * math.tau)
+        out.append(pose_from(fr, {b: tuple(v[k] + (v[k + 3] * ph if len(v) > 3 else 0) for k in range(3)) for b, v in P.items()}))
+    return out
+
+
+for name in list(baked):
+    baked[name] = retouch(name, baked[name])
+    key_pose(name, baked[name], V.get('sway', {}).get(name))
 
 idle0 = baked['idle'][0]
 crouch = pose_from(idle0, {'Hips': (12, 0, 0), 'UpperLeg.L': (-40, 0, 0), 'UpperLeg.R': (-40, 0, 0), 'LowerLeg.L': (75, 0, 0), 'LowerLeg.R': (75, 0, 0)})
@@ -365,11 +510,12 @@ if args.render:
     co = bpy.data.objects.new('c', cam); sc.collection.objects.link(co); sc.camera = co
     for name, act, frame, loc in (('face', 'idle', 0, (0.6, -4, 1.0)), ('trois_quarts', 'idle', 10, (3, -3, 1.0)), ('profil', 'idle', 0, (4, 0, 1.0)),
                                   ('course', 'run', 4, (3, -3, 1.0)), ('saut', 'jump', 6, (3, -3, 1.0)), ('chute', 'fall', 3, (3, -3, 1.0)),
-                                  ('mort', 'death', 40, (3, -3, 1.0))):
+                                  ('mort', 'death', 40, (3, -3, 1.0)), ('buste', 'idle', 0, (0.8, -3, 1.4))):
         for t in arm.animation_data.nla_tracks:
             t.mute = t.name != act
         sc.frame_set(frame)
         co.location = loc
-        co.rotation_euler = (Vector((0, 0, 0.95)) - Vector(loc)).to_track_quat('-Z', 'Y').to_euler()
+        cam.ortho_scale = 1.0 if name == 'buste' else 2.4
+        co.rotation_euler = (Vector((0, 0, 1.35 if name == 'buste' else 0.95)) - Vector(loc)).to_track_quat('-Z', 'Y').to_euler()
         sc.render.filepath = os.path.join(args.render, f'{name}.png')
         bpy.ops.render.render(write_still=True)
