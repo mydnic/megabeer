@@ -196,7 +196,7 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    en T, puis squelette de la Universal Animation Library) ; clips : Idle_Talking_Loop (il râle), Sprint_Loop,
    Spell_Simple_Shoot (doigt pointé) pour le lancer, Sitting_Enter pour la mort (il s'éteint assis). Le saut reprend les
    clips du Cop (la bibliothèque n'en a qu'un jeu). Origine et licence du modèle à confirmer.
-   **La Serveuse faite le 2026-11-18, à valider en jeu** : « Debbie the Roller Waitress » (SAB64, Sketchfab, CC-BY 4.0 :
+   **La Serveuse faite et validée par l'utilisateur le 2026-11-18** (modèle, patinage, plateau en main, nouveau Plateau) : « Debbie the Roller Waitress » (SAB64, Sketchfab, CC-BY 4.0 :
    crédit obligatoire, voir CREDITS.md ; le jeu n'a pas encore d'écran de crédits), serveuse de diner sur patins,
    `tools/blender/serveuse.py` : squelette MikuMikuDance (os reconnus par leur numéro final), pose A remise en T, poids
    reportés sur le squelette de la Universal Animation Library, jupe sur bassin et cuisses, allégée à 29 000 triangles.
