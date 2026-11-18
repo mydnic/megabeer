@@ -237,7 +237,7 @@ Les armes de départ des persos font partie du roster (déblocage pour les autre
 | 13 | Flaque de bière | Traînée au sol derrière le joueur + glissade | Contrôle : les ennemis glissent et tombent | **Inondation** : traînée large, les ennemis tombés restent étourdis plus longtemps (+ Seau à glace) |
 | 14 | Décapsuleur | Boomerang | Aller-retour, 2 coups | **Ouvre-tout** : 3 boomerangs en éventail (+ Deux mains) |
 | 15 | Tireuse | Cône continu | Mêlée à moyenne portée | **Tireuse pression max** : jet long qui repousse (+ Pression du fût) |
-| 16 | Plateau de serveur | Orbite bloquante | Bloque les coups | **Service en salle** : les blocages renvoient les dégâts (+ Gueule de bois) |
+| 16 | Plateau de serveur | Lancé à plat, ricochets | Ricoche de zombie en zombie (4), arrête les bouteilles ennemies | **Service en salle** : 4 ricochets de plus, chacun plus fort (+ Gueule de bois) |
 | 17 | Bouchons de champagne | Éventail de projectiles | Rafale large | **Magnum** : rafale à 360 degrés (+ Ticket de tournée) |
 | 18 | Tabouret de bar | Mêlée circulaire | Nettoie autour du joueur | **Bagarre générale** : coup tournant permanent (+ Gants de videur) |
 | 19 | Fléchettes | Projectile ciblé + critique | Vise l'ennemi le plus fort | **Triple 20** : 3 fléchettes, critiques garantis sur les élites (+ Lunettes de comptoir) |
@@ -273,7 +273,7 @@ Les armes de départ des persos font partie du roster (déblocage pour les autre
 | Kriek + Triple | Chaque rebond éclabousse |
 | Bouchons de champagne + Gueuze | Les bouchons explosent à l'impact |
 | Tireuse + IPA | Jet brûlant |
-| Plateau + Tabouret | Chaque coup bloqué déclenche un coup de tabouret |
+| Plateau + Tabouret | Chaque ricochet du plateau déclenche un coup de tabouret |
 | Dessous de verre + Décapsuleur | Tous les projectiles reviennent vers le joueur |
 | Bière de Noël + Le 421 | « Noël au comptoir » (2026-11-15) : chaque jackpot du 421 double les bouteilles de la couronne pendant 6 s |
 | Vomi + Weizen | Nuage toxique (le poison cumulable s'applique en l'air) |
@@ -1129,6 +1129,10 @@ L'ordre après l'étape 7 est indicatif : il se rediscute à chaque feature vali
   on change les couleurs et la silhouette et on ajoute des accessoires.
 - **Le Barman est un robot à tête de télé** (modèle fourni par l'utilisateur), **la Serveuse est Debbie, serveuse de
   diner sur patins** (SAB64, CC-BY 4.0) : elle patine au lieu de courir.
+- **Le Plateau de serveur est refait** : l'orbite qui bloquait les coups sans frapper ne tuait rien, alors que c'est
+  l'arme de départ de la Serveuse. Il est lancé à plat, ricoche de zombie en zombie (4 rebonds) et arrête les bouteilles
+  ennemies qu'il frôle ; synergie avec le Tabouret et évolution revues en conséquence. La Serveuse tient un plateau dans
+  sa main levée.
 - **Le Cop** prend les clips de la Universal Animation Library (repos, trot, saut, mort, coup de poing).
 
 ### Tranché le 2026-11-15 (évolutions, synergies, arme n° 10)

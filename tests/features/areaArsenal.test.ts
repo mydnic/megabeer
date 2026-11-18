@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CORNE, ODEUR, PLATEAU, ROT, TIREUSE, WEIZEN } from '../../src/config/arsenal';
 import { ITEMS } from '../../src/config/items';
+import { ENEMIES } from '../../src/config/enemies';
 import { catalog } from '../../src/meta/shop';
 import type { Zombie } from '../../src/enemies/zombie';
 import type { WeaponId } from '../../src/weapons/weapon';
@@ -121,16 +122,24 @@ describe('Les armes de zone du roster', () => {
     expect(hitsOn(t, w, z).length).toBeGreaterThan(0);
   });
 
-  it('Plateau de serveur : il bloque un coup puis se recharge', () => {
+  it('Plateau de serveur : lancé, il ricoche sur plusieurs zombies à la suite', () => {
     const { t, w } = arena('plateau');
-    t.play(0.1);
-    const hp = t.game.health.hp;
-    const z = dummy(t, 0.9, 0, false);
-    z.frozen = 0;
-    t.playUntil(() => t.events('playerHurt').length > 0, 5);
-    expect(t.events('playerHurt')[0].blocked).toBe(true);
-    expect(t.game.health.hp).toBe(hp);
-    expect(w.projectiles.filter((p) => p.active).length).toBe(PLATEAU.count - 1);
+    const pack = [dummy(t, 5), dummy(t, 7, 1.5), dummy(t, 9, -1), dummy(t, 11, 0.5)];
+    t.play(PLATEAU.cooldown + PLATEAU.life!);
+    const touched = pack.filter((z) => hitsOn(t, w, z).length > 0);
+    expect(touched.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('Plateau de serveur : il arrête une bouteille ennemie sur son passage', () => {
+    const { t, w } = arena('plateau');
+    const monk = dummy(t, 8);
+    t.playUntil(() => w.projectiles.some((p) => p.active), PLATEAU.cooldown + 1);
+    const tray = w.projectiles.find((p) => p.active)!;
+    // Une bouteille ennemie lancée juste devant le plateau, vers le joueur
+    t.game.shots.launch(monk, tray.pos.clone().addScaledVector(tray.vel.clone().normalize(), 0.3), t.game.player.pos.clone(), ENEMIES.lanceur.thrower!, 10);
+    t.play(0.2);
+    expect(t.events('enemyShotBlocked').length).toBeGreaterThan(0);
+    expect(t.game.shots.shots).toHaveLength(0);
   });
 
   it('toutes se débloquent en boutique', () => {

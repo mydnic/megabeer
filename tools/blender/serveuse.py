@@ -366,6 +366,40 @@ rig.animation_data.action = None
 for pb in rig.pose.bones:
     pb.matrix_basis = Matrix()
 
+# --- Son plateau, porté par la main levée (la gauche) : posé à plat au-dessus de la paume dans la pose de repos du clip,
+# puis ramené dans la pose de repos du squelette et attaché à l'os de la main (il suit tous ses gestes)
+import bmesh
+TRAY = {'radius': 0.17, 'thick': 0.012, 'rim': 0.018, 'lift': 0.05, 'reach': -0.03, 'frame': 10, 'color': (0.80, 0.82, 0.86)}
+posed_hand = idle[TRAY['frame'] % len(idle)]['hand_l']
+hand_dir = (posed_hand.to_3x3() @ Vector((0, 1, 0))).normalized()
+center = posed_hand.translation + hand_dir * TRAY['reach'] + Vector((0, 0, TRAY['lift']))
+bm = bmesh.new()
+bmesh.ops.create_cone(bm, segments=24, radius1=TRAY['radius'], radius2=TRAY['radius'], depth=TRAY['thick'], cap_ends=True)
+rim = bmesh.ops.create_cone(bm, segments=24, radius1=TRAY['radius'] + 0.004, radius2=TRAY['radius'] + 0.01, depth=TRAY['rim'], cap_ends=False)
+bmesh.ops.translate(bm, vec=(0, 0, TRAY['rim'] / 2), verts=rim['verts'])
+bmesh.ops.translate(bm, vec=center, verts=bm.verts)
+to_rest = rig.data.bones['hand_l'].matrix_local @ posed_hand.inverted()
+bmesh.ops.transform(bm, matrix=to_rest, verts=bm.verts)
+me = bpy.data.meshes.new('Plateau')
+bm.to_mesh(me); bm.free()
+for poly in me.polygons:
+    poly.use_smooth = False
+tray = bpy.data.objects.new('Plateau', me)
+bpy.context.scene.collection.objects.link(tray)
+tm = bpy.data.materials.new('Plateau')
+tm.use_nodes = True
+bsdf = next(n for n in tm.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
+bsdf.inputs['Base Color'].default_value = (*TRAY['color'], 1)
+bsdf.inputs['Metallic'].default_value = 0.6
+bsdf.inputs['Roughness'].default_value = 0.35
+tm.diffuse_color = (*TRAY['color'], 1)
+tray.data.materials.append(tm)
+tray.vertex_groups.new(name='hand_l').add(list(range(len(me.vertices))), 1.0, 'REPLACE')
+bpy.ops.object.select_all(action='DESELECT')
+tray.select_set(True); body.select_set(True)
+bpy.context.view_layer.objects.active = body
+bpy.ops.object.join()
+
 # --- Os renommés comme le jeu les attend
 for old, new_name in RENAME.items():
     rig.data.bones[old].name = new_name

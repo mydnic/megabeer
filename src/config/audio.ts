@@ -94,6 +94,8 @@ export const AUDIO = {
     whistle: { sample: 'impactMetal_light', volume: 0.5, rate: 2.2 },
     shockwave: { sample: 'impactSoft_heavy', volume: 0.5, rate: 0.6 },
     dodge: { volume: 0.35 },
+    /** Une bouteille ennemie arrêtée en vol par le Plateau. */
+    shotBlocked: { sample: 'impactPlate_light', volume: 0.5, rate: 1.1 },
     revive: { sample: 'impactBell_heavy', volume: 0.7, rate: 0.8 },
     freeChest: { sample: 'impactWood_heavy', volume: 0.5, rate: 1.2 },
   },

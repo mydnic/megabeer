@@ -31,7 +31,7 @@ export const EVOLUTIONS: Record<WeaponId, EvolutionDef> = {
   flaqueBiere: { item: 'seauAGlace', name: 'Inondation', text: 'Traînée large, les zombies restent sonnés longtemps', mods: { size: 0.7, stun: 0.8 } },
   decapsuleur: { item: 'deuxMains', name: 'Ouvre-tout', text: 'Trois décapsuleurs en éventail', mods: { projectiles: 2, damage: 0.3 } },
   tireuse: { item: 'pression', name: 'Tireuse pression max', text: 'Un jet long qui repousse fort', mods: { size: 0.7, knock: 1.5, damage: 0.3 } },
-  plateau: { item: 'gueuleDeBois', name: 'Service en salle', text: 'Chaque coup bloqué est renvoyé aux zombies autour', mods: { projectiles: 1 } },
+  plateau: { item: 'gueuleDeBois', name: 'Service en salle', text: '4 ricochets de plus, et chaque ricochet frappe plus fort', mods: { bounces: 4, gain: 0.12 } },
   bouchons: { item: 'ticketTournee', name: 'Magnum', text: 'La rafale part à 360 degrés', mods: { projectiles: 5, ring: 1 } },
   tabouret: { item: 'gantsVideur', name: 'Bagarre générale', text: "Le tabouret ne s'arrête presque plus de tourner", mods: { rate: 3, damage: 0.3 } },
   flechettes: { item: 'lunettes', name: 'Triple 20', text: 'Trois fléchettes, critiques presque garantis', mods: { projectiles: 2, critChance: 0.4 } },

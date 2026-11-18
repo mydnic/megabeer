@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BIERE_NOEL, CORNE, PLATEAU } from '../../src/config/arsenal';
 import { EVOLUTION, EVOLUTIONS, weaponTitle } from '../../src/config/evolutions';
 import { LEVELS } from '../../src/config/xp';
+import { applyEvolution } from '../../src/game/levelUpCards';
 import { WEAPON_FACTORIES } from '../../src/weapons/registry';
 import type { Zombie } from '../../src/enemies/zombie';
 import type { Weapon, WeaponId } from '../../src/weapons/weapon';
@@ -95,14 +96,15 @@ describe('Les évolutions des armes', () => {
     expect(back.frozen).toBeGreaterThan(0);
   });
 
-  it('Service en salle : le coup bloqué est renvoyé aux zombies autour', () => {
-    const { t, w } = arena('plateau');
-    w.mods.evolved = 1;
-    t.play(0.1);
-    const z = dummy(t, 0.9, 0, false);
-    z.frozen = 0;
-    t.playUntil(() => t.events('playerHurt').length > 0, 5);
-    expect(t.events('zombieHit').some((e) => e.weapon === w && e.zombie === z && e.damage === PLATEAU.reflectDamage)).toBe(true);
+  it('Service en salle : le plateau évolué ricoche sur plus de zombies', () => {
+    const touched = (evolve: boolean) => {
+      const { t, w } = arena('plateau');
+      if (evolve) applyEvolution(w);
+      const pack = Array.from({ length: 10 }, (_, i) => dummy(t, 4 + i * 1.6, (i % 3) - 1));
+      t.play(PLATEAU.cooldown + PLATEAU.life! + 1);
+      return pack.filter((z) => t.events('zombieHit').some((e) => e.weapon === w && e.zombie === z)).length;
+    };
+    expect(touched(true)).toBeGreaterThan(touched(false));
   });
 
   it('Dés pipés : plus jamais de 1', () => {

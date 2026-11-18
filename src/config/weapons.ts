@@ -221,8 +221,8 @@ export const SYNERGIES = {
     details: 'Chaque zombie arrosé par la Tireuse brûle quelques secondes.',
   },
   serviceMuscle: {
-    name: 'Service musclé', weapons: ['plateau', 'tabouret'], pitch: 'Chaque coup bloqué déclenche un coup de tabouret', color: '#c8ccd4',
-    details: 'Quand un plateau bloque un coup, le tabouret fait aussitôt un tour complet.',
+    name: 'Service musclé', weapons: ['plateau', 'tabouret'], pitch: 'Chaque ricochet du plateau déclenche un coup de tabouret', color: '#c8ccd4',
+    details: 'Quand le plateau ricoche sur un zombie, le tabouret fait aussitôt un tour complet.',
   },
   retourAuBar: {
     name: 'Retour au bar', weapons: ['sousBock', 'decapsuleur'], pitch: 'Les sous-bocks reviennent vers toi', color: '#f3ead6',
@@ -349,7 +349,7 @@ export const WEAPON_INFO = {
   corne: { name: "Corne de brume", pitch: "Un coup de corne devant toi : peu de dégâts, mais la horde vole et le couloir s'ouvre" },
   rot: { name: "Rot sonique", pitch: "Une onde autour de toi qui se charge avec les capsules ramassées : fonce, puis rote" },
   odeur: { name: "Odeur d'alcool", pitch: "Une aura autour de toi : les zombies trop près titubent et prennent des petits dégâts" },
-  plateau: { name: "Plateau de serveur", pitch: "Des plateaux tournent autour de toi et bloquent chacun un coup, puis se rechargent" },
+  plateau: { name: "Plateau de serveur", pitch: "Lancé à plat, il ricoche de zombie en zombie et arrête les bouteilles ennemies" },
   des421: { name: "Le 421", pitch: "Trois dés de comptoir : chaque 6 aiguise tes critiques, et 4-2-1 fait tout sauter" },
 } as const satisfies Record<string, { name: string; pitch: string }>;
 

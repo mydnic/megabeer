@@ -16,8 +16,10 @@ type Bottle = Projectile & { pierce: number; hits: Zombie[]; target: Zombie | nu
 
 /** Réglages d'une arme à bouteilles : ceux de la Canette (config/weapons.ts), plus les briques facultatives. */
 export type BottleConfig = { [K in keyof typeof WEAPONS.canette]: number } & {
-  /** Rebonds d'ennemi en ennemi (Triple) et portée d'un rebond (m) ; dégâts x `bounceGain` à chaque rebond. */
+  /** Rebonds d'ennemi en ennemi (Triple, Plateau) et portée d'un rebond (m) ; dégâts x `bounceGain` à chaque rebond. */
   bounces?: number; bounceRange?: number; bounceGain?: number;
+  /** Arrête les bouteilles ennemies à moins de ce rayon (m) sur son trajet (Plateau). */
+  blockShots?: number;
   /** Éclaboussure à l'impact (Kriek) : rayon (m), part des dégâts, ralentissement (part de vitesse) et durée (s). */
   splashRadius?: number; splashDamage?: number; slow?: number; slowTime?: number;
   /** Brûlure (IPA) : dégâts par seconde (part des dégâts du coup) et durée (s). */
@@ -269,6 +271,8 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
       ctx.explode(weapon, from.pos, C.radius);
     }
     b.bounces--;
+    // Service musclé (Plateau avec le Tabouret) : chaque ricochet fait tourner le tabouret
+    if (id === 'plateau' && ctx.synergy('serviceMuscle')) ctx.trigger('tabouret');
     settle(b);
     b.target = next;
     b.expected *= W.bounceGain ?? 1;
@@ -439,6 +443,7 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
           b.vel.subVectors(ctx.playerPos(), b.pos).addScaledVector(up, -tmp.subVectors(ctx.playerPos(), b.pos).dot(up)).normalize().multiplyScalar(W.speed * mods.speed);
           b.age = W.life * 0.5; // le retour dure autant que l'aller
         }
+        if (W.blockShots) ctx.blockShots(b.pos, W.blockShots * mods.size * ctx.stats.size);
         if (b.age > W.life || !fly(b)) { b.active = false; settle(b); }
       }
     },

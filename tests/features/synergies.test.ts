@@ -38,16 +38,16 @@ describe('Les synergies entre armes', () => {
     expect(Object.keys(SYNERGIES).length).toBeGreaterThanOrEqual(16);
   });
 
-  it('Service musclé : un coup bloqué par le plateau lance un tour de tabouret', () => {
+  it('Service musclé : un ricochet du plateau lance un tour de tabouret', () => {
     const { t, ws } = arena('plateau', 'tabouret');
-    const [, stool] = ws;
-    t.play(0.1);
-    const z = dummy(t, 0.9, 0, false);
-    z.frozen = 0;
-    t.playUntil(() => t.events('playerHurt').length > 0, 5);
-    expect(t.events('playerHurt')[0].blocked).toBe(true);
-    expect(stool.projectiles.some((p) => p.active)).toBe(true);
-    expect(PLATEAU.count).toBeGreaterThan(0);
+    const [tray, stool] = ws;
+    stool.mods.range = 0;
+    // Deux zombies loin du tabouret : seul le ricochet du plateau peut le faire tourner
+    dummy(t, 6); dummy(t, 8, 1);
+    let spun = false;
+    t.playUntil(() => { spun = spun || stool.projectiles.some((p) => p.active); return spun; }, PLATEAU.cooldown + 2);
+    expect(t.events('zombieHit').some((e) => e.weapon === tray)).toBe(true);
+    expect(spun).toBe(true);
   });
 
   it('Noël au comptoir : un 421 double les bouteilles de la couronne', () => {

@@ -231,11 +231,15 @@ export const ODEUR = { damage: 3, tick: 0.5, radius: 2.6, confuse: 1.6 } as cons
 export const ODEUR_ZONE = { color: 0xd6e07a, rim: 0xa8b83a, opacity: 0.32, lift: 0.08, fadeIn: 0.01, fadeOut: 0.01 } as const;
 export const ODEUR_UPGRADES: readonly UpgradeDef[] = [DMG, { id: 'size', label: "rayon de l'aura", value: 0.10, kind: 'percent' }, { id: 'confuse', label: 'durée de la confusion', value: 0.15, kind: 'percent' }, { id: 'rate', label: "cadence de l'aura", value: 0.10, kind: 'percent' }];
 
-/** Plateau de serveur (n° 16) : des plateaux tournent autour du joueur et bloquent chacun un coup, puis se rechargent. */
-/** `reflectDamage`, `reflectRadius` : Service en salle (évolution), le coup bloqué renvoyé aux zombies autour. */
-export const PLATEAU = { count: 1, radius: 1.35, height: 1.1, turnsPerSecond: 0.35, recharge: 7, reflectDamage: 45, reflectRadius: 3.5 } as const;
+/**
+ * Plateau de serveur (n° 16, refait le 2026-11-18 : l'ancien, des plateaux qui bloquaient les coups sans frapper, ne
+ * tuait rien) : lancé à plat comme un frisbee, il ricoche de zombie en zombie et arrête au passage les bouteilles
+ * ennemies qu'il frôle (`blockShots` : rayon, m).
+ */
+export const PLATEAU: BottleConfig = { ...THROWN, cooldown: 1.8, damage: 12, speed: 17, gravity: 1.2, spin: 'flat', spinRate: 9, radius: 0.3,
+  life: 2.2, bounces: 4, bounceRange: 7, bounceGain: 1, blockShots: 0.9 };
 export const PLATEAU_LOOK = { file: 'plateau.glb', length: 0.62, fit: 'max', colors: { Plateau: 0xc8ccd4, Rebord: 0x8a8e98 } as Record<string, number> } as const;
-export const PLATEAU_UPGRADES: readonly UpgradeDef[] = [{ id: 'projectiles', label: 'plateau en plus', value: 1, kind: 'flat', whole: true }, { id: 'rate', label: 'recharge plus rapide', value: 0.12, kind: 'percent' }];
+export const PLATEAU_UPGRADES: readonly UpgradeDef[] = [DMG, RATEU, { id: 'bounces', label: 'ricochet en plus', value: 1, kind: 'flat', whole: true }, { id: 'projectiles', label: 'plateau en plus', value: 1, kind: 'flat', whole: true }, RANGE, CRIT];
 
 export const ZONE_SOUNDS = {
   weizen: { sample: 'impactSoft_medium', volume: 0.25, pitch: 1.4, gap: 0.12 },

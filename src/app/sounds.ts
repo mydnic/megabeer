@@ -176,6 +176,7 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
   game.events.on('whistleBlown', () => audio.play(I.whistle.sample, I.whistle.volume, I.whistle.rate));
   game.events.on('shockwave', () => audio.play(I.shockwave.sample, I.shockwave.volume, I.shockwave.rate * jitter(0.05)));
   game.events.on('playerDodged', () => audio.whoosh(I.dodge.volume));
+  game.events.on('enemyShotBlocked', () => audio.play(I.shotBlocked.sample, I.shotBlocked.volume, I.shotBlocked.rate * jitter(0.06)));
   game.events.on('revived', () => audio.play(I.revive.sample, I.revive.volume, I.revive.rate, 0, 'ui'));
   game.events.on('freeChestSpawned', () => audio.play(I.freeChest.sample, I.freeChest.volume, I.freeChest.rate));
   // La Gueuze explose : verre qui éclate et souffle sourd

@@ -167,6 +167,8 @@ export type GameEvents = {
   zombieFrozen: { zombie: Zombie; time: number };
   /** Démarche de pochtron : le joueur esquive le coup de `zombie` (null : un piège). */
   playerDodged: { zombie: Zombie | null };
+  /** Un projectile ennemi est arrêté en vol par une arme (le Plateau), à `pos`. */
+  enemyShotBlocked: { pos: THREE.Vector3 };
   /** Sifflet d'arbitre : les ennemis à moins de `radius` m de `at` sont étourdis. */
   whistleBlown: { at: THREE.Vector3; radius: number };
   /** Juke-box (niveau gagné) ou Seconde tournée : une onde repousse les ennemis autour de `at`. */
@@ -421,6 +423,7 @@ export class Game {
       playerPos: () => player.pos,
       playerFacing: () => player.facing,
       xpGathered: () => this.xpGathered,
+      blockShots: (p, r) => this.shots.shots.length ? this.shots.removeNear(p, r, (s) => this.events.emit('enemyShotBlocked', { pos: s.pos.clone() })) : 0,
       poisonStacksPerTick: () => (CHARACTERS[this.character] as { poisonStacks?: number }).poisonStacks ?? 1,
       synergy: (id) => this.hasSynergy(id),
       zonesOf: (id) => this.loadout.weapons.find((w) => w.id === id)?.zones ?? [],
@@ -1180,7 +1183,7 @@ export class Game {
       this.events.emit('playerHurt', { zombie: z, dir, damage: 0, hp: this.health.hp, blocked: true });
       return;
     }
-    // Plateau de serveur : un plateau bloque le coup (puis courte invulnérabilité, comme un coup)
+    // Une arme qui bloque le coup (absorbHit), puis courte invulnérabilité, comme un coup
     if (!this.cheats.god && this.health.invuln <= 0 && !this.health.dead && this.loadout.weapons.some((w) => w.absorbHit?.(z))) {
       this.health.invuln = PLAYER_STATS.invulnTime;
       this.events.emit('playerHurt', { zombie: z, dir, damage: 0, hp: this.health.hp, blocked: true });

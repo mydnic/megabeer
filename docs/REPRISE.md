@@ -202,7 +202,10 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    reportés sur le squelette de la Universal Animation Library, jupe sur bassin et cuisses, allégée à 29 000 triangles.
    Clips : repos Idle_Torch_Loop (une main levée), course faite main en patineuse, lancer Punch_Cross, mort Death01 (la
    même que le Cop : la bibliothèque n'en a qu'une). Passif `dodgeSprint` (x1,5 pendant 1,2 s après une esquive),
-   +10 % esquive, -10 PV, +10 % vitesse d'attaque, 300 TUNAS. Idée : un plateau dans sa main levée.
+   +10 % esquive, -10 PV, +10 % vitesse d'attaque, 300 TUNAS. Elle tient un plateau dans sa main levée
+   (`TRAY` dans `serveuse.py`). Course de patineuse refaite (patins à plat, poussées latérales). Le Plateau de serveur est
+   refait (lancé à plat, 4 ricochets, `blockShots` arrête les bouteilles ennemies, `ctx.blockShots`, événement
+   `enemyShotBlocked`) : l'ancien ne frappait pas.
    Ancienne version du Barman (pack, abandonnée, la variante reste dans `modular.py`) : (`modular.py --variant barman`) : tête faite main (`build_head` :
    côtés rasés, cheveux plaqués, chignon, moustache en guidon, sourcils épais ; celle du pack faisait trop générique), chemise
    blanche (corps du fermier recoloré, gants devenus mains nues), tablier de cuir long (porté surtout par le bassin),

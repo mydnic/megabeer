@@ -299,6 +299,7 @@ export function wireEffects(game: Game, d: Deps) {
   game.events.on('happyHourStarted', () => vfx.beam(game.player.pos, VC.happy, 1.4, 10, 1.3));
   game.events.on('foamShieldUp', () => vfx.sparkle(game.player.pos, VC.foam, 8, 1, 2));
   game.events.on('playerDodged', () => vfx.pop(chest(1.1), 0xffffff, 1.4));
+  game.events.on('enemyShotBlocked', ({ pos }) => { vfx.hit(pos); vfx.sparkle(pos, 0xe8ecf2, 6, 0.4, 2); });
   // XP et capsules ramassées : de petites étoiles montent du Buveur (pas plus d'une toutes les `pickupGap` s)
   let lastPickup = 0;
   const pickup = (color: number) => {

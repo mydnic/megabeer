@@ -66,6 +66,19 @@ export function createEnemyShots() {
         }
       }
     },
+    /** Retire les projectiles à moins de `r` m de `p` (arrêtés par une arme), appelle `onRemoved` pour chacun. */
+    removeNear(p: THREE.Vector3, r: number, onRemoved: (s: EnemyShot) => void) {
+      let n = 0;
+      for (let i = shots.length - 1; i >= 0; i--) {
+        const s = shots[i];
+        if (s.pos.distanceToSquared(p) > r * r) continue;
+        s.active = false;
+        shots.splice(i, 1);
+        onRemoved(s);
+        n++;
+      }
+      return n;
+    },
     clear() { shots.length = 0; },
   };
 }

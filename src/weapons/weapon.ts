@@ -33,6 +33,8 @@ export interface WeaponContext {
   playerFacing(): THREE.Vector3;
   /** XP ramassée depuis le début de la run (le Rot sonique se charge avec). */
   xpGathered(): number;
+  /** Détruit les projectiles ennemis à moins de `r` m de `p` (le Plateau les arrête) ; renvoie leur nombre. */
+  blockShots(p: THREE.Vector3, r: number): number;
   /** Cumuls de poison gagnés par battement dans une flaque (passif du Futur Marié : 2 ; sinon 1). */
   poisonStacksPerTick(): number;
   /** La synergie `id` est-elle active (toutes ses armes équipées) ? */
