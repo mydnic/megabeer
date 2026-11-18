@@ -192,17 +192,10 @@ export function createMinimap() {
         ctx.fillRect(x - s / 6, y, s / 3, s / 2);
       }
 
-      // Véhicule garé : toujours là tant qu'il attend ; loin, posé au bord avec une flèche vers lui
-      if (vehicle) {
-        const m = toMap(vehicle);
-        const edge = M.range * 0.78;
-        const far = m.dist > edge;
-        const k = far ? edge / m.dist : 1;
-        const x = R + m.x * k * scale, y = R - m.y * k * scale, s = M.vehicleSize * dpr;
-        if (far) {
-          const a = Math.atan2(m.x, m.y);
-          arrow(R + Math.sin(a) * R * 0.9, R - Math.cos(a) * R * 0.9, a, M.doorArrow * dpr, hex(M.colors.vehicle));
-        }
+      // Véhicule garé : seulement dans la zone de la carte (il faut le trouver)
+      const vm = vehicle ? toMap(vehicle) : null;
+      if (vm && vm.dist < M.range * 0.9) {
+        const x = R + vm.x * scale, y = R - vm.y * scale, s = M.vehicleSize * dpr;
         // Petite voiture : caisse, toit, deux roues
         ctx.fillStyle = hex(M.colors.vehicle);
         ctx.lineWidth = 2 * dpr; ctx.strokeStyle = '#1a120c';

@@ -169,7 +169,7 @@ export type GameEvents = {
   zombieFrozen: { zombie: Zombie; time: number };
   /** Démarche de pochtron : le joueur esquive le coup de `zombie` (null : un piège). */
   playerDodged: { zombie: Zombie | null };
-  /** Un véhicule vient d'être garé sur la planète (il attend le joueur). */
+  /** Le véhicule de la run est garé sur la planète (au début de la run, ou par le panneau DEV). */
   vehicleSpawned: { vehicle: ParkedVehicle };
   /** Le joueur monte dans un véhicule. */
   vehicleEntered: { kind: VehicleId; pos: THREE.Vector3 };
@@ -490,6 +490,9 @@ export class Game {
     this.chests.place(spawn.dir, this.pumps.list.map((p) => p.pos), this.trapChance);
     this.lastCall.place(spawn.dir, this.chests.list.map((c) => c.pos), this.pumps.list.map((p) => p.pos));
     this.door.place(spawn.dir, [...this.chests.list.map((c) => c.pos), ...this.lastCall.list.map((b) => b.pos)], this.pumps.list.map((p) => p.pos));
+    // Le véhicule de la run : garé au hasard, loin de l'arrivée, il faut le trouver
+    const parked = this.vehicles.place(spawn.dir, [...this.chests.list.map((c) => c.pos), ...this.pumps.list.map((q) => q.pos), ...this.lastCall.list.map((b) => b.pos), ...(this.door.pos ? [this.door.pos] : [])]);
+    if (parked) this.events.emit('vehicleSpawned', { vehicle: parked });
     this.bins.place(spawn.dir, [...this.chests.list.map((c) => c.pos), ...this.lastCall.list.map((b) => b.pos)], this.pumps.list.map((p) => p.pos), this.binCount);
     const landing = this.player.pos.clone();
     this.player.drop(ARRIVAL.height, ARRIVAL.speed);
@@ -641,9 +644,7 @@ export class Game {
         const bin = this.bins.touching(p.pos);
         if (bin) this.breakBin(bin, 'player');
         // Véhicules : apparition à leur heure, on monte dedans au contact, puis conduite
-        const parked = this.vehicles.parked;
-        const touched = this.vehicles.update(dt, this.runTime, p.pos);
-        if (this.vehicles.parked && this.vehicles.parked !== parked) this.events.emit('vehicleSpawned', { vehicle: this.vehicles.parked });
+        const touched = this.vehicles.update(dt, p.pos);
         if (touched) this.enterVehicle(touched);
         if (this.vehicles.driving) this.driveVehicle(dt);
       }
@@ -1369,7 +1370,7 @@ export class Game {
   private exitVehicle(reason: 'timeout' | 'destroyed' | 'end') {
     const v = this.vehicles.driving;
     if (!v) return;
-    this.vehicles.exit(this.runTime);
+    this.vehicles.exit();
     this.player.drive(null);
     if (reason !== 'end') this.health.invuln = Math.max(this.health.invuln, VEHICLE_SPAWN.exitInvuln);
     this.events.emit('vehicleExited', { kind: v.kind, reason, pos: this.player.pos.clone() });

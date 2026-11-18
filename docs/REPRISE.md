@@ -200,9 +200,10 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    #3, #4, #6, #9, #10, #11 fermées (déjà faites dans le jeu refait). Restent, dans l'ordre : #13 (écran d'erreur au
    démarrage : **fait, à valider** : filet en script classique dans `index.html`, qui attrape aussi les erreurs des imports,
    message sur l'écran de démarrage, détail de l'erreur et bouton Recharger ; test de WebGL2 avant le rendu dans
-   `main.ts`), #8 (véhicules : **checkpoint 1 fait le 2026-11-18, à valider** : la DeLorean (rareté Peu commun, 15 s, 80 PV)
-   apparaît à 45 s puis toutes les 75 s à 18-34 m du joueur (colonne de lumière, icône sur la mini-carte, bandeau), on
-   monte dedans au contact ; conduite de vraie voiture (choix de l'utilisateur : avancer accélère, reculer freine puis
+   `main.ts`), #8 (véhicules : **checkpoint 1 fait le 2026-11-18, à valider** : la DeLorean (rareté Peu commun, 15 s, 80 PV) ;
+   **un seul véhicule par run, garé au hasard dès le début** à plus de 60 m de l'arrivée, il attend toute la run et il
+   faut le trouver (retour de l'utilisateur : d'abord il apparaissait à côté du joueur) : colonne de lumière, icône sur la
+   mini-carte seulement à portée ; on monte dedans au contact ; conduite de vraie voiture (choix de l'utilisateur : avancer accélère, reculer freine puis
    recule, braquage selon la vitesse, l'arrière glisse) ; plus d'armes au volant, écrasement (dégâts selon la vitesse),
    le véhicule encaisse les coups, sortie à la fin du temps ou à la destruction avec 2 s d'invulnérabilité ; jauges en
    bas de l'écran ; DEV « Garer à côté ». Checkpoint 2 : le bus (Rare) et le tank (Légendaire, obus), modèles déjà dans

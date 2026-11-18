@@ -36,15 +36,17 @@ export const VEHICLES = {
 export type VehicleId = keyof typeof VEHICLES;
 
 /**
- * Apparition : le premier à `firstAt` s de run, puis un toutes les `every` s s'il n'y en a pas déjà un ; posé entre
- * `minDist` et `maxDist` m du joueur, sur un sol libre et assez plat (`flatRadius` m, écart de hauteur `maxBump` m).
- * Il repart s'il n'est pas pris en `lifetime` s. On monte dedans à moins de `enterRange` m. En sortant : `exitInvuln` s
- * d'invulnérabilité. `hitAgain` : délai entre deux coups encaissés par le véhicule (s).
+ * Placement (choix de l'utilisateur le 2026-11-18 : pas à côté du joueur, il faut le trouver) : un seul véhicule par run,
+ * garé au hasard dès le début, à plus de `minFromSpawn` m du point d'arrivée et `minFromOthers` m des coffres et des
+ * pompes, sur un sol libre et assez plat (`flatRadius` m, écart de hauteur `maxBump` m) ; il attend toute la run. Une
+ * fois utilisé, il n'y en a plus. On monte dedans à moins de `enterRange` m. En sortant : `exitInvuln` s
+ * d'invulnérabilité. `hitAgain` : délai entre deux coups encaissés par le véhicule (s). `minDist`/`maxDist` : distance au
+ * joueur d'un véhicule garé à côté (panneau DEV).
  */
 export const VEHICLE_SPAWN = {
-  firstAt: 45, every: 75, minDist: 18, maxDist: 34, flatRadius: 2.4, maxBump: 0.7, tries: 40,
-  lifetime: 70, enterRange: 2.6, exitInvuln: 2, hitAgain: 0.35,
-  /** Véhicules qui peuvent apparaître (le bus et le tank arrivent au checkpoint suivant). */
+  minFromSpawn: 60, minFromOthers: 6, minDist: 5, maxDist: 7, flatRadius: 2.4, maxBump: 0.7, tries: 400,
+  enterRange: 2.6, exitInvuln: 2, hitAgain: 0.35,
+  /** Véhicules qui peuvent être tirés (le bus et le tank arrivent au checkpoint suivant). */
   pool: ['delorean'] as readonly VehicleId[],
 } as const;
 

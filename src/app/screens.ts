@@ -265,7 +265,6 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   game.events.on('closingStarted', () => { banner.show(CLOSING.banner.title, CLOSING.banner.sub); banner.pulse(); banner.hideAfter(4); });
   game.events.on('doorBusy', () => { banner.show('Pas maintenant', PATRON_DOOR.busy); banner.hideAfter(1.8); });
   game.events.on('doorOpened', () => { banner.show('Le patron arrive...', 'La porte s\'ouvre'); banner.pulse(); banner.hideAfter(2); });
-  game.events.on('vehicleSpawned', ({ vehicle }) => { banner.show(`${VEHICLES[vehicle.kind].name} garée pas loin !`, 'Monte dedans et écrase tout'); banner.hideAfter(2.5); });
   game.events.on('vehicleEntered', ({ kind }) => vehicleHud.show(VEHICLES[kind].name));
   game.events.on('vehicleExited', ({ reason }) => {
     vehicleHud.hide();

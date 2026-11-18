@@ -32,25 +32,34 @@ function driving() {
 }
 
 describe('Les véhicules', () => {
-  it('le premier apparaît à son heure, ni trop près ni trop loin du joueur', () => {
-    const t = calm();
-    t.play(VEHICLE_SPAWN.firstAt - 1);
-    expect(t.game.vehicles.parked).toBeNull();
-    t.play(2);
-    const v = t.game.vehicles.parked!;
-    expect(v).not.toBeNull();
-    expect(t.events('vehicleSpawned')).toHaveLength(1);
-    const d = dist(v.pos, t.game.player.pos);
-    expect(d).toBeGreaterThanOrEqual(VEHICLE_SPAWN.minDist - 0.5);
-    expect(d).toBeLessThanOrEqual(VEHICLE_SPAWN.maxDist + 0.5);
+  it('un seul véhicule par run, garé au hasard dès le début, loin du point d arrivée', () => {
+    const seen = new Set<string>();
+    for (let i = 0; i < 3; i++) {
+      const t = createTestGame();
+      const spawn = t.startRunAndLand();
+      const v = t.game.vehicles.parked!;
+      expect(v).not.toBeNull();
+      expect(t.events('vehicleSpawned')).toHaveLength(1);
+      expect(dist(v.pos, spawn.dir)).toBeGreaterThanOrEqual(VEHICLE_SPAWN.minFromSpawn);
+      seen.add(v.pos.toArray().map((x) => x.toFixed(1)).join());
+    }
+    // Pas toujours au même endroit
+    expect(seen.size).toBeGreaterThan(1);
   });
 
-  it('un véhicule que personne ne prend repart', () => {
+  it('il attend toute la run, et une fois utilisé il n y en a plus', () => {
     const t = calm();
-    expect(t.game.vehicles.spawnNear(t.game.player.pos, 'delorean')).not.toBeNull();
-    t.play(VEHICLE_SPAWN.lifetime + 1);
+    const v = t.game.vehicles.parked!;
+    t.play(120);
+    expect(t.game.vehicles.parked).toBe(v);
+    // Le joueur le trouve et le prend, jusqu'au bout de sa durée
+    t.game.vehicles.spawnNear(t.game.player.pos, v.kind, 0.4, 1.2);
+    t.play(0.1);
+    expect(t.game.vehicles.driving).not.toBeNull();
+    t.play(D.duration + 1);
+    expect(t.game.vehicles.driving).toBeNull();
+    t.play(200);
     expect(t.game.vehicles.parked).toBeNull();
-    expect(t.events('vehicleEntered')).toHaveLength(0);
   });
 
   it('on monte dedans au contact ; au volant, les armes ne tirent plus', () => {

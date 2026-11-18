@@ -1126,6 +1126,8 @@ L'ordre après l'étape 7 est indicatif : il se rediscute à chaque feature vali
   peu. La caméra se replace derrière la voiture.
 - **La citadine devient la DeLorean** (modèle fourni par l'utilisateur). Bus scolaire et tank : modèles fournis aussi.
 - Checkpoint 1 : la DeLorean seule, tout le cycle (apparition, montée, écrasement, PV, sortie invulnérable).
+- **Un seul véhicule par run, garé au hasard dès le début, il faut le trouver** (retour de l'utilisateur : il ne doit pas
+  apparaître à côté du joueur). Une fois utilisé, il n'y en a plus. Sur la mini-carte seulement quand il est à portée.
 
 ### Tranché le 2026-11-18 (persos)
 

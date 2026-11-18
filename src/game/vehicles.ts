@@ -4,6 +4,7 @@ import { VEHICLE_SPAWN as S, VEHICLES, type VehicleId } from '../config/vehicles
 import { RARITIES } from '../config/upgrades';
 import type { DecorCollider } from '../world/decor/collider';
 import { heightAt } from '../world/terrain';
+import { randomDir } from './pumps';
 
 const X = new THREE.Vector3(1, 0, 0), Y = new THREE.Vector3(0, 1, 0);
 
@@ -13,15 +14,12 @@ export type ParkedVehicle = { kind: VehicleId; pos: THREE.Vector3; facing: THREE
 export type DrivenVehicle = { kind: VehicleId; hp: number; maxHp: number; left: number; duration: number; hitCooldown: number };
 
 /**
- * Les véhicules d'une run (GDD section 9) : un seul garé à la fois, qui apparaît à son heure à quelques dizaines de
- * mètres du joueur et repart s'il n'est pas pris ; le joueur monte dedans au contact. Le reste (conduite, écrasement,
- * sortie) est mené par le jeu.
+ * Le véhicule d'une run (GDD section 9) : un seul, garé au hasard sur la planète dès le début ; il faut le trouver. Le
+ * joueur monte dedans au contact. Le reste (conduite, écrasement, sortie) est mené par le jeu.
  */
 export class Vehicles {
   parked: ParkedVehicle | null = null;
   driving: DrivenVehicle | null = null;
-  /** Prochaine apparition (temps de run, s). */
-  private nextAt: number = S.firstAt;
   private tmp = new THREE.Vector3();
 
   constructor(private collider: DecorCollider, private random: () => number = Math.random) {}
@@ -29,7 +27,34 @@ export class Vehicles {
   clear() {
     this.parked = null;
     this.driving = null;
-    this.nextAt = S.firstAt;
+  }
+
+  /**
+   * Nouvelle run : gare un véhicule tiré au hasard loin de `spawnDir`, à l'écart des points `avoid` (coffres, pompes...).
+   * Renvoie null s'il n'y a pas de place.
+   */
+  place(spawnDir: THREE.Vector3, avoid: readonly THREE.Vector3[], kind: VehicleId = this.pick()) {
+    this.clear();
+    const dir = new THREE.Vector3();
+    const far = (a: THREE.Vector3, b: THREE.Vector3, d: number) => a.angleTo(b) * PLANET_RADIUS >= d;
+    for (let i = 0; i < S.tries; i++) {
+      randomDir(dir);
+      if (!far(dir, spawnDir, S.minFromSpawn) || !avoid.every((p) => far(dir, p, S.minFromOthers))) continue;
+      if (this.park(dir, kind)) return this.parked;
+    }
+    return null;
+  }
+
+  /** Gare un véhicule `kind` à la direction `dir` si le sol y est libre et plat. */
+  private park(dir: THREE.Vector3, kind: VehicleId) {
+    if (!this.flat(dir)) return false;
+    const pos = dir.clone().multiplyScalar(PLANET_RADIUS + heightAt(dir));
+    if (this.collider.occupied(this.tmp.copy(dir).multiplyScalar(pos.length() + 0.8), VEHICLES[kind].car.radius + 0.6)) return false;
+    // Capot tourné au hasard dans le plan du sol
+    const ref = Math.abs(dir.y) < 0.9 ? Y : X;
+    const facing = new THREE.Vector3().crossVectors(dir, ref).normalize().applyAxisAngle(dir, this.random() * Math.PI * 2);
+    this.parked = { kind, pos, facing, age: 0 };
+    return true;
   }
 
   /** Tire une sorte de véhicule : les plus rares sortent moins souvent (poids des raretés). */
@@ -42,8 +67,8 @@ export class Vehicles {
   }
 
   /**
-   * Pose un véhicule `kind` entre `minDist` et `maxDist` m de `playerPos`, sur un sol libre et plat. Renvoie null s'il
-   * n'y a pas de place.
+   * Gare un véhicule `kind` entre `minDist` et `maxDist` m de `playerPos` (panneau DEV, tests), sur un sol libre et plat.
+   * Renvoie null s'il n'y a pas de place.
    */
   spawnNear(playerPos: THREE.Vector3, kind: VehicleId = this.pick(), minDist: number = S.minDist, maxDist: number = S.maxDist) {
     const up = playerPos.clone().normalize();
@@ -53,35 +78,16 @@ export class Vehicles {
       const dist = minDist + this.random() * (maxDist - minDist);
       const axis = side.clone().applyAxisAngle(up, this.random() * Math.PI * 2);
       dir.copy(up).applyAxisAngle(axis, dist / PLANET_RADIUS);
-      if (!this.flat(dir)) continue;
-      const pos = dir.clone().multiplyScalar(PLANET_RADIUS + heightAt(dir));
-      if (this.collider.occupied(this.tmp.copy(dir).multiplyScalar(pos.length() + 0.8), VEHICLES[kind].car.radius + 0.6)) continue;
-      // Capot tourné au hasard dans le plan du sol
-      const facing = side.clone().applyAxisAngle(up, this.random() * Math.PI * 2);
-      facing.addScaledVector(dir, -facing.dot(dir)).normalize();
-      this.parked = { kind, pos, facing, age: 0 };
-      return this.parked;
+      if (this.park(dir, kind)) return this.parked;
     }
     return null;
   }
 
-  /**
-   * Avance d'un pas : apparition à son heure (s'il n'y en a ni garé ni conduit), départ du véhicule garé trop vieux.
-   * Renvoie le véhicule garé que le joueur touche (il monte dedans), sinon null.
-   */
-  update(dt: number, runTime: number, playerPos: THREE.Vector3): ParkedVehicle | null {
-    if (this.driving) return null;
-    if (this.parked) {
-      this.parked.age += dt;
-      if (this.parked.age > S.lifetime) { this.parked = null; this.nextAt = runTime + S.every; return null; }
-      if (this.parked.pos.angleTo(playerPos) * PLANET_RADIUS < S.enterRange) return this.parked;
-      return null;
-    }
-    if (runTime >= this.nextAt) {
-      this.nextAt = runTime + S.every;
-      this.spawnNear(playerPos);
-    }
-    return null;
+  /** Avance d'un pas ; renvoie le véhicule garé que le joueur touche (il monte dedans), sinon null. */
+  update(dt: number, playerPos: THREE.Vector3): ParkedVehicle | null {
+    if (this.driving || !this.parked) return null;
+    this.parked.age += dt;
+    return this.parked.pos.angleTo(playerPos) * PLANET_RADIUS < S.enterRange ? this.parked : null;
   }
 
   /** Le joueur monte dans le véhicule garé : il devient le véhicule conduit. */
@@ -92,10 +98,9 @@ export class Vehicles {
     return this.driving;
   }
 
-  /** Le joueur en descend (fin du temps ou véhicule détruit) ; le suivant apparaîtra `every` s plus tard. */
-  exit(runTime: number) {
+  /** Le joueur en descend (fin du temps ou véhicule détruit) : il n'y en a plus pour cette run. */
+  exit() {
     this.driving = null;
-    this.nextAt = runTime + S.every;
   }
 
   /** Le sol est-il assez plat autour de `dir` pour y garer un véhicule ? */

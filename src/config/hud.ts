@@ -73,7 +73,7 @@ export const MINIMAP = {
   doorArrow: 7,
   /** Morts de la fermeture : rayon du point (px), toujours affichées (au bord quand elles sont loin). */
   reaperDot: 7,
-  /** Véhicule garé : côté de son icône (px), toujours affiché ; loin, posé au bord avec une flèche vers lui. */
+  /** Véhicule garé : côté de son icône (px), affiché seulement dans la zone de la carte (il faut le trouver). */
   vehicleSize: 13,
 } as const;
 
