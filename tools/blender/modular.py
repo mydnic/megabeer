@@ -102,6 +102,28 @@ for o in meshes:
             bpy.ops.object.modifier_apply(modifier=mod.name)
 
 
+def smooth(o):
+    """Ombrage lissé : sommets en double soudés (bords de matière, couture du miroir), plus d'arêtes vives ni de
+    normales imposées. Sous le cel-shading du jeu, les facettes du pack faisaient un patchwork de triangles."""
+    bm = bmesh.new()
+    bm.from_mesh(o.data)
+    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-4)
+    for e in bm.edges:
+        e.smooth = True
+    for f in bm.faces:
+        f.smooth = True
+    bm.to_mesh(o.data)
+    bm.free()
+    if o.data.has_custom_normals:
+        bpy.context.view_layer.objects.active = o
+        bpy.ops.mesh.customdata_custom_splitnormals_clear()
+    o.data.update()
+
+
+for o in meshes:
+    smooth(o)
+
+
 def frame_range(a):
     s, e = a.frame_range
     return int(round(s)), int(round(e))
@@ -216,6 +238,7 @@ def build_head(H):
     blob((0, -0.07, 1.605), (0.086, 0.088, 0.068), skin, seg=10, rings=6)
     g = bmesh.ops.create_cone(bm, segments=8, radius1=0.054, radius2=0.05, depth=0.17)
     bmesh.ops.transform(bm, matrix=Matrix.Translation((0, -0.035, 1.545)), verts=g['verts'])
+    neck = set(g['verts'])
     for f in {f for v in g['verts'] for f in v.link_faces}:
         f.material_index = skin
     # Côtés rasés : les faces du crâne au-dessus des oreilles, sauf le visage, prennent la couleur de la barbe de trois jours
@@ -250,10 +273,12 @@ def build_head(H):
                     f.material_index = tache
             prev = ring
         bm.faces.new(prev).material_index = tache
+    bm.verts.index_update()
+    neck_ids = {v.index for v in neck}
     me = bpy.data.meshes.new('Tete')
     bm.to_mesh(me); bm.free()
     for p_ in me.polygons:
-        p_.use_smooth = False
+        p_.use_smooth = True
     head = bpy.data.objects.new('Tete', me)
     scene.collection.objects.link(head)
     for key in mats:
@@ -261,7 +286,8 @@ def build_head(H):
     # Poids : la tête suit l'os de la tête, le bas du cou glisse vers l'os du cou
     gh = head.vertex_groups.new(name='Head'); gn = head.vertex_groups.new(name='Neck')
     for v in head.data.vertices:
-        t = max(0.0, min(1.0, (v.co.z - 1.50) / 0.09))
+        # Bas du cou dans le col : os du cou ; haut du cou : os de la tête (le visage, lui, ne suit que la tête)
+        t = max(0.0, min(1.0, (v.co.z - 1.47) / 0.10)) if v.index in neck_ids else 1.0
         gh.add([v.index], t, 'REPLACE')
         if t < 1:
             gn.add([v.index], 1 - t, 'REPLACE')
@@ -272,6 +298,7 @@ def build_head(H):
 
 if 'head' in V:
     meshes.append(build_head(V['head']))
+    smooth(meshes[-1])
 
 # --- 4. Silhouette : petit ventre de bière (le torse est poussé vers l'avant, en douceur)
 body = next(o for o in meshes if o.name.endswith('_Body'))
@@ -347,6 +374,7 @@ if 'sash' in V:
     bpy.ops.object.modifier_apply(modifier=sol.name)
     sash.data.materials.append(new_mat('Echarpe', S['color']))
     bind_like(sash, body)
+    smooth(sash)
     meshes.append(sash)
     # Le texte, posé sur le devant de l'écharpe, dans son sens
     cu = bpy.data.curves.new('SashText', 'FONT')
@@ -397,6 +425,7 @@ def finish(obj, target, offset, thickness, color, name, subdiv=1):
     obj.name = name
     obj.data.materials.clear()
     obj.data.materials.append(new_mat(name, color))
+    smooth(obj)
 
 
 legs = next((o for o in meshes if o.name.endswith('_Legs') or o.name.endswith('_Pants')), None)

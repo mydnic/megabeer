@@ -197,7 +197,9 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    blanche (corps du fermier recoloré, gants devenus mains nues), tablier de cuir long (porté surtout par le bassin),
    torchon bleu sur l'épaule, nœud papillon rouge. Animations à lui : repos `Idle_Neutral` où il essuie le comptoir,
    course coudes serrés, lancer = geste `Interact`. Passif `levelUpCards: 4` (l'écran de level-up passe sur une ligne
-   resserrée et accepte la touche 4), -10 % dégâts, 300 TUNAS. Prochain avec le même outil : le Supporter.
+   resserrée et accepte la touche 4), -10 % dégâts, 300 TUNAS. Ombrage lissé sur toutes les pièces du pack et la tête (les facettes
+   faisaient un patchwork sous le cel-shading) ; le visage fait main suit seulement l'os de la tête (avec une part de
+   l'os du cou, la mâchoire restait en arrière : tête coupée à la bouche). Prochain avec le même outil : le Supporter.
    La Serveuse : aucun modèle féminin sur le disque. Le Rot sonique affiche toujours sa portée : un
    anneau fin posé point par point sur le sol (`fx/rangeRingView.ts`, `ROT_RING`, champ `ring` de `WEAPON_FX`) qui
    grandit avec la charge et s'allume pendant la recharge. La stat Taille agrandit toutes les armes (décision de
