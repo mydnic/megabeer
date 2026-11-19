@@ -1123,6 +1123,9 @@ export class Game {
     if (this.effects.senzus > 0 && !this.health.dead && this.health.hp < this.health.max * ITEM_EFFECTS.senzu.below) {
       this.effects.senzus--;
       this.health.hp = this.health.max;
+      // Mangée : elle quitte les objets du joueur
+      const i = this.items.findIndex((it) => it.item === 'senzu');
+      if (i >= 0) this.items.splice(i, 1);
       this.events.emit('senzuEaten', { left: this.effects.senzus });
     }
     // Tournées du bar : celles qui finissent rendent ce qu'elles avaient prêté

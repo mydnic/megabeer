@@ -24,9 +24,11 @@ describe('La Senzu', () => {
     t.game.health.hp = t.game.health.max * (B + 0.05);
     t.play(0.2);
     expect(t.events('senzuEaten')).toHaveLength(0);
+    expect(t.game.items.filter((i) => i.item === 'senzu')).toHaveLength(1);
     hurtBelow(t);
     expect(t.events('senzuEaten')).toHaveLength(1);
     expect(t.game.health.hp).toBe(t.game.health.max);
+    expect(t.game.items.filter((i) => i.item === 'senzu')).toHaveLength(0);
     // Plus de Senzu : la fois suivante, rien
     hurtBelow(t);
     expect(t.events('senzuEaten')).toHaveLength(1);
@@ -38,6 +40,8 @@ describe('La Senzu', () => {
     hurtBelow(t);
     hurtBelow(t);
     expect(t.events('senzuEaten').map((e) => e.left)).toEqual([1, 0]);
+    // Mangées, elles quittent les objets du joueur
+    expect(t.game.items.filter((i) => i.item === 'senzu')).toHaveLength(0);
     expect(t.game.health.hp).toBe(t.game.health.max);
   });
 
