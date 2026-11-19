@@ -16,6 +16,7 @@ import { createZoneView } from './fx/zoneView';
 import { createRangeRingView } from './fx/rangeRingView';
 import { createVehiclesView } from './world/vehiclesView';
 import { createAuraView } from './fx/auraView';
+import { createRadioView } from './world/radioView';
 import { createHairView } from './fx/hairView';
 import { createAfterimageView } from './fx/afterimageView';
 import { createEnemyShotsView } from './enemies/enemyShotsView';
@@ -178,6 +179,7 @@ const ringViews = (Object.keys(WEAPON_FX) as WeaponId[]).filter((id) => WEAPON_F
   .map((id) => [id, createRangeRingView(scene, WEAPON_FX[id].ring!, (p, feetR) => game.player.supportAt(p, feetR))] as const);
 // Aura du Super Saiyan, de la couleur du palier ; images rémanentes de l'Ultra Instinct à chaque esquive
 const auraView = createAuraView(scene);
+const radioView = createRadioView(scene);
 const afterimages = createAfterimageView(scene);
 const shakeOff = new THREE.Vector3();
 game.events.on('playerDodged', ({ instinct }) => {
@@ -304,6 +306,7 @@ function frame(now: number) {
   // Au volant, le perso disparaît dans le véhicule
   buveur.root.visible = !game.vehicles.driving;
   vehiclesView.sync(game.vehicles, player, dt, game.phase === 'run');
+  radioView.sync(game.radio, game.phase === 'run', dt);
   auraView.sync(game.phase === 'run' ? game.saiyan.current?.aura ?? null : null, player.renderPos, camera, dt);
   hairView.sync(game.phase === 'run' ? game.saiyan.current : null, buveur.head, buveur.root.visible, dt);
   afterimages.update(dt, player.renderPos, player.renderFacing);

@@ -99,6 +99,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   const chestPrompt = createChestPrompt(capsuleIcon());
   const bellPrompt = createChestPrompt(null, LAST_CALL_TEXT.prompt);
   const doorPrompt = createChestPrompt(null, PATRON_DOOR.prompt);
+  const radioPrompt = createChestPrompt(null, 'Allumer la radio');
   const chestReveal = createChestReveal();
   const runHud = createRunHud();
   const banner = createEventBanner();
@@ -269,6 +270,8 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   game.events.on('doorBusy', () => { banner.show('Pas maintenant', PATRON_DOOR.busy); banner.hideAfter(1.8); });
   game.events.on('doorOpened', () => { banner.show('Le patron arrive...', 'La porte s\'ouvre'); banner.pulse(); banner.hideAfter(2); });
   game.events.on('vehicleEntered', ({ kind }) => vehicleHud.show(VEHICLES[kind].name));
+  game.events.on('radioOn', () => { banner.show('Radio mydnic !', 'Toute la horde rapplique sur la radio'); banner.pulse(); banner.hideAfter(2.5); });
+  game.events.on('radioBroken', () => { banner.show('La radio est cassée', 'La horde revient vers toi'); banner.hideAfter(2); });
   game.events.on('saiyanTierReached', ({ name }) => { banner.show(`${name} prêt !`, touchScreen() ? 'Bouton Saiyan pour te transformer' : 'F (Y à la manette) pour te transformer'); banner.hideAfter(2.2); });
   game.events.on('saiyanTransformed', ({ name }) => { banner.show(`${name} !`, ''); banner.pulse(); banner.hideAfter(1.8); });
   game.events.on('vehicleExited', ({ reason }) => {
@@ -348,6 +351,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
       chestPrompt.update(chest ? game.chests.priceOf(chest) : null, game.coins);
       bellPrompt.update(!chest && game.phase === 'run' && !game.frozen && game.lastCall.focus ? 0 : null, game.coins);
       doorPrompt.update(!chest && !game.lastCall.focus && game.phase === 'run' && !game.frozen && game.door.focus ? 0 : null, game.coins);
+      radioPrompt.update(!chest && game.phase === 'run' && !game.frozen && game.radio.focus ? 0 : null, game.coins);
       runHud.update(game.runTime, game.kills, game.coins, Math.floor(game.tunas + 1e-9));
       weaponHud.update(slots());
       itemHud.update(game.items);

@@ -271,7 +271,12 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
   }
 
   let passive = false;
+  /** Leurre (la radio allumée) : les ennemis (pas les boss) vont vers lui et le frappent à moins de `decoyReach` m. */
+  let decoy: THREE.Vector3 | null = null, decoyReach = 1.5;
   const api = {
+    /** Pose ou retire le leurre. */
+    setDecoy(pos: THREE.Vector3 | null, reach = 1.5) { decoy = pos; decoyReach = reach; },
+    get decoy() { return decoy; },
     zombies,
     spawn,
     /** Joueur mort : plus de coups, ils se rassemblent autour du corps. */
@@ -279,7 +284,8 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
     /** Retire tous les zombies (nouvelle run). */
     clear() { zombies.length = 0; reindex(); },
     update(dt: number) {
-      for (const z of zombies) if (!z.def.boss) step(z, dt, player.pos);
+      // Un leurre (la radio) attire tout le monde sauf les boss
+      for (const z of zombies) if (!z.def.boss) step(z, dt, decoy ?? player.pos);
       separate();
       tick++;
       for (let i = 0; i < zombies.length; i++) {
@@ -303,6 +309,8 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
         }
         // Lancer : la bouteille part au moment du geste où le bras se détend
         if (z.throwing && z.hitNow && !z.dead && !passive) { api.onThrow?.(z); continue; }
+        // Leurre : le coup porte sur lui s'il est à portée
+        if (decoy && !passive && !z.dead && z.hitNow && !z.def.boss && z.pos.distanceTo(decoy) < decoyReach * z.size) { api.onHitDecoy?.(z); continue; }
         // Le coup porte si le joueur est encore à portée au moment où le bras arrive
         if (!passive && !z.dead && z.hitNow && z.pos.distanceTo(player.pos) < ZOMBIE_ATTACK.reach * z.size) {
           up.copy(player.pos).normalize();
@@ -346,6 +354,8 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
     },
     /** Zombies encore debout (cibles des armes). */
     alive() { return zombies.filter((z) => !z.dead); },
+    /** Appelé quand un zombie frappe le leurre. */
+    onHitDecoy: undefined as ((z: Zombie) => void) | undefined,
     /** Appelé quand un zombie touche le joueur, avec la direction du coup (du zombie vers le joueur). */
     onHit: undefined as ((z: Zombie, dir: THREE.Vector3) => void) | undefined,
     /** Appelé quand un tireur lâche son projectile. */

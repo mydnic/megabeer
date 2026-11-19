@@ -21,6 +21,8 @@ export function createMusic(audio: AudioEngine) {
   let runTrack: string | undefined; // url du morceau de la run en cours
   let bossTrack: string | undefined; // url du morceau du boss en cours
   let current: { el: HTMLAudioElement; gain: GainNode } | undefined;
+  /** La radio planquée joue : la musique du jeu se tait. */
+  let muted = false;
 
   function play(url: string | undefined) {
     const ctx = audio.ctx!;
@@ -32,7 +34,7 @@ export function createMusic(audio: AudioEngine) {
     ctx.createMediaElementSource(el).connect(gain).connect(audio.music!);
     void el.play();
     const t = ctx.currentTime;
-    gain.gain.linearRampToValueAtTime(1, t + M.fade);
+    gain.gain.linearRampToValueAtTime(muted ? 0 : 1, t + M.fade);
     if (current) {
       const old = current;
       old.gain.gain.cancelScheduledValues(t);
@@ -51,6 +53,17 @@ export function createMusic(audio: AudioEngine) {
   audio.onStart(() => refresh());
 
   return {
+    /** La radio planquée joue (true) ou s'est tue : la musique du jeu se coupe, puis revient, en fondu. */
+    setMuted(v: boolean) {
+      if (muted === v) return;
+      muted = v;
+      const ctx = audio.ctx;
+      if (!ctx || !current) return;
+      const g = current.gain.gain, t = ctx.currentTime;
+      g.cancelScheduledValues(t);
+      g.setValueAtTime(g.value, t);
+      g.linearRampToValueAtTime(v ? 0 : 1, t + M.fade);
+    },
     /** Un boss est-il en cours (musique de boss) ? */
     get boss() { return bossTrack !== undefined; },
     /** Début de run : tire un morceau du dossier de la map (sinon garde la musique du menu). */

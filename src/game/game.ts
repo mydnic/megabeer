@@ -54,6 +54,8 @@ import { PlayerStats } from './playerStats';
 import { SpawnDirector, spawnCurveAt } from './spawnDirector';
 import { Vehicles, type ParkedVehicle } from './vehicles';
 import { Saiyan } from './saiyan';
+import { Radio } from './radio';
+import { RADIO } from '../config/radio';
 import { SAIYAN } from '../config/saiyan';
 import { VEHICLE_SPAWN, VEHICLES, type VehicleId } from '../config/vehicles';
 import { MAP_MECHANICS, type MapId, type MapMechanic } from './mechanics/mechanic';
@@ -179,6 +181,12 @@ export type GameEvents = {
   vehicleCrushed: { zombie: Zombie; pos: THREE.Vector3; killed: boolean; speed: number };
   /** Le véhicule encaisse un coup à la place du joueur. */
   vehicleHit: { damage: number; hp: number; maxHp: number };
+  /** La radio est allumée : elle joue et attire la horde. */
+  radioOn: { pos: THREE.Vector3 };
+  /** Un ennemi frappe la radio ; `hp` : ce qui lui reste. */
+  radioHit: { hp: number; maxHp: number };
+  /** La radio est détruite : la horde revient vers le joueur. */
+  radioBroken: { pos: THREE.Vector3 };
   /** Senzu : le joueur en mange une (sous le seuil de PV), il retrouve tous ses PV ; `left` : celles qui restent. */
   senzuEaten: { left: number };
   /** Jauge de colère : un nouveau palier de transformation est atteint (le joueur peut s'y transformer). */
@@ -274,6 +282,8 @@ export class Game {
   /** Pompes à bière de la run (exploration). */
   readonly pumps: Pumps;
   readonly chests: Chests;
+  /** La radio planquée (issue #16). */
+  readonly radio: Radio;
   /** Jauge de colère et transformation Super Saiyan (objet Sang Saiyan). */
   readonly saiyan = new Saiyan();
   /** Véhicules écrase-zombies (un garé à la fois, ou celui qu'on conduit). */
@@ -392,6 +402,7 @@ export class Game {
     this.pumps = new Pumps(deps.collider);
     this.chests = new Chests(deps.collider);
     this.vehicles = new Vehicles(deps.collider, () => this.random());
+    this.radio = new Radio(deps.collider, () => this.random());
     this.door = new PatronDoor(deps.collider);
     this.closing = new Closing({
       playerPos: () => this.player.pos,
@@ -401,6 +412,7 @@ export class Game {
       onSpawn: (reaper) => this.events.emit('reaperSpawned', { reaper }),
       onSwing: (reaper) => this.events.emit('reaperSwing', { reaper }),
     });
+    this.horde.onHitDecoy = (z) => this.hitRadio(this.damageOf(z, z.def.damage));
     this.horde.onHit = (z, dir) => { this.contactStun(z); this.hurtPlayer(z, dir, this.damageOf(z, z.def.damage)); };
     this.horde.onThrow = (z) => this.throwFrom(z);
     this.horde.onArm = (z) => {
@@ -512,6 +524,8 @@ export class Game {
     // Le véhicule de la run : garé au hasard, loin de l'arrivée, il faut le trouver
     const parked = this.vehicles.place(spawn.dir, [...this.chests.list.map((c) => c.pos), ...this.pumps.list.map((q) => q.pos), ...this.lastCall.list.map((b) => b.pos), ...(this.door.pos ? [this.door.pos] : [])]);
     if (parked) this.events.emit('vehicleSpawned', { vehicle: parked });
+    // La radio planquée : loin de l'arrivée, à l'écart du reste
+    this.radio.place(spawn.dir, [...this.chests.list.map((c) => c.pos), ...this.pumps.list.map((q) => q.pos), ...this.lastCall.list.map((b) => b.pos), ...(parked ? [parked.pos] : [])]);
     this.bins.place(spawn.dir, [...this.chests.list.map((c) => c.pos), ...this.lastCall.list.map((b) => b.pos)], this.pumps.list.map((p) => p.pos), this.binCount);
     const landing = this.player.pos.clone();
     this.player.drop(ARRIVAL.height, ARRIVAL.speed);
@@ -658,6 +672,9 @@ export class Game {
         // Super Saiyan : à la touche, il se transforme au plus haut palier atteint
         if (input.transformPressed && !this.offer) this.transformSaiyan();
         this.updateSaiyan(dt);
+        // Radio planquée : à portée, la touche d'action l'allume
+        this.radio.update(p.pos);
+        if (input.actionPressed && this.radio.focus && !this.chests.focus && !this.offer) this.turnRadioOn();
         if (input.actionPressed && this.chests.focus && !this.offer) this.openChest(this.chests.focus);
         else if (input.actionPressed && this.lastCall.focus && !this.offer) this.ringBell(this.lastCall.focus);
         this.door.update(p.pos);
@@ -1334,7 +1351,8 @@ export class Game {
     const T = z.def.thrower!;
     const up = this.tmp.copy(z.pos).normalize();
     const from = z.pos.clone().addScaledVector(up, 1.7).addScaledVector(z.facing, 0.3);
-    const to = this.player.pos.clone().normalize();
+    // Vers la radio si elle joue (leurre), sinon vers le joueur
+    const to = (this.horde.decoy ?? this.player.pos).clone().normalize();
     to.multiplyScalar(this.groundAt(to.clone().multiplyScalar(PLANET_RADIUS + 60)));
     const shot = this.shots.launch(z, from, to, T, this.damageOf(z, T.damage));
     this.events.emit('enemyThrow', { shot });
@@ -1351,6 +1369,9 @@ export class Game {
       if (dir.lengthSq() < 1e-6) dir.copy(this.player.facing).negate();
       this.hurtPlayer(s.source, dir.normalize(), s.damage);
     }
+    // La radio qui joue encaisse aussi les bouteilles qui tombent sur elle
+    const r = this.radio.pos;
+    if (this.radio.state === 'playing' && r && r.angleTo(s.to) * PLANET_RADIUS < s.radius + RADIO.reach * 0.5) this.hitRadio(s.damage);
     this.events.emit('enemyShotLanded', { shot: s, hit });
   }
 
@@ -1370,6 +1391,24 @@ export class Game {
   }
 
   /** Atterrissage : la première horde sort de terre autour du joueur. */
+  /** La radio s'allume : elle devient le leurre de la horde. */
+  private turnRadioOn() {
+    if (!this.radio.turnOn() || !this.radio.pos) return;
+    this.horde.setDecoy(this.radio.pos, RADIO.reach);
+    this.events.emit('radioOn', { pos: this.radio.pos.clone() });
+  }
+
+  /** Un ennemi frappe la radio ; cassée, la horde revient vers le joueur. */
+  private hitRadio(damage: number) {
+    if (this.radio.state !== 'playing') return;
+    const broke = this.radio.hit(damage);
+    this.events.emit('radioHit', { hp: this.radio.hp, maxHp: RADIO.hp });
+    if (broke) {
+      this.horde.setDecoy(null);
+      this.events.emit('radioBroken', { pos: this.radio.pos!.clone() });
+    }
+  }
+
   /** Remplit la jauge de colère ; annonce le palier tout juste atteint. */
   private saiyanGain(points: number) {
     const tier = this.saiyan.gain(points);
@@ -1536,6 +1575,8 @@ export class Game {
 
   private resetRun() {
     this.exitVehicle('end');
+    this.radio.clear();
+    this.horde.setDecoy(null);
     this.saiyan.reset();
     this.vehicles.clear();
     this.crushReady = new WeakMap();

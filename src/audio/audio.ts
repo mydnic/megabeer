@@ -33,6 +33,9 @@ export class AudioEngine {
     addEventListener('keydown', start);
   }
 
+  /** Volume réglé par le joueur pour un canal (Options), 0 à 1. */
+  userVolume(ch: VolumeChannel) { return this.user[ch]; }
+
   /** Appelé une fois le contexte audio démarré (ambiances). */
   onStart(cb: (a: AudioEngine) => void) {
     if (this.ctx) cb(this);

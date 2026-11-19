@@ -100,7 +100,9 @@ recopie son état à chaque image. Ne jamais remettre de logique de jeu dans `ma
   `abbe.ts` (contrôleurs des boss : leur corps est un zombie de la horde, `def.boss`), `patronDoor.ts` (Porte du patron), `closing.ts` (fermeture à 10:00 : les Morts, intouchables, qui tuent d'un coup de faux), `vehicles.ts` (véhicules
   écrase-zombies, issue #8 : un garé à la fois, montée au contact ; la conduite de voiture est dans `player/controller.ts`
   (`drive`, `carSpeed`), l'écrasement, les PV du véhicule et la sortie dans `game.ts` ; réglages `config/vehicles.ts`, rendu
-  `world/vehiclesView.ts`, jauges `ui/vehicleHud.ts`, modèles fournis dans `assets/models/vehicules/`), `saiyan.ts` (jauge de colère et transformation Super Saiyan, issue #7 : objet Sang Saiyan, touche F ou Y, paliers et
+  `world/vehiclesView.ts`, jauges `ui/vehicleHud.ts`, modèles fournis dans `assets/models/vehicules/`), `radio.ts` (radio planquée, issue #16 : allumée à la touche d'action, elle devient le leurre de la horde, `horde.setDecoy`,
+  et encaisse ses coups ; flux `RADIO.stream` joué par `app/sounds.ts`, musique du jeu coupée ; rendu `world/radioView.ts`),
+  `saiyan.ts` (jauge de colère et transformation Super Saiyan, issue #7 : objet Sang Saiyan, touche F ou Y, paliers et
   bonus dans `config/saiyan.ts`, jauge `ui/saiyanHud.ts`), `tournees.ts` (Tournées du bar : bonus de quelques
   secondes lâchés par les ennemis, minuteries et multiplicateurs), `spawnDirector.ts` (arrivée des zombies et
   montée en difficulté, courbe dans `config/spawn.ts`), `mechanics/` (mécanique propre à chaque map, interface

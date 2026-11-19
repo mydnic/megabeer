@@ -118,6 +118,11 @@ export async function wireDevTools(game: Game, d: {
       if (!inRun() || game.vehicles.driving) return;
       if (game.vehicles.spawnNear(game.player.pos, id as VehicleId, 5, 7)) runLog.event('dev', 'vehicle', id);
     },
+    placeRadio() {
+      if (!inRun()) return;
+      const p = game.player, up = p.pos.clone().normalize(), right = new THREE.Vector3().crossVectors(p.facing, up).normalize();
+      for (const d of [2, 3, 4, 5]) if (game.radio.placeAt(up.clone().multiplyScalar(p.pos.length()).addScaledVector(p.facing, d).addScaledVector(right, 1))) { runLog.event('dev', 'radio'); return; }
+    },
     fillSaiyan(tier) {
       if (!inRun() || game.saiyan.active) return;
       if (!game.saiyan.enabled) game.gainItem('sangSaiyan');

@@ -1,4 +1,5 @@
 import { CANETTE_IMPACT, FUT_SOUND, GUEUZE_BLAST } from '../config/weapons';
+import { RADIO, RADIO_LOOK } from '../config/radio';
 import { createVehicleEngine } from '../audio/vehicleEngine';
 import { VEHICLES } from '../config/vehicles';
 import { WEAPON_FX } from '../config/weaponFx';
@@ -272,6 +273,37 @@ export function wireMusic(game: Game, audio: AudioEngine, music: ReturnType<type
   const volume = (k: number, tc: number) => {
     if (audio.ctx && audio.music) audio.music.gain.setTargetAtTime(AUDIO.music.volume * k, audio.ctx.currentTime, tc);
   };
+  // Radio planquée : le flux radio.mydnic.be, plus fort près du poste ; la musique du jeu se tait pendant ce temps.
+  // Simple lecteur audio, hors Web Audio : un flux d'un autre site sans en-têtes CORS y serait muet.
+  let radioEl: HTMLAudioElement | null = null;
+  const stopRadio = () => {
+    if (!radioEl) return;
+    radioEl.pause();
+    radioEl.src = '';
+    radioEl = null;
+    music.setMuted(false);
+  };
+  game.events.on('radioOn', () => {
+    stopRadio();
+    radioEl = new Audio(RADIO.stream);
+    radioEl.volume = 0;
+    void radioEl.play().catch(() => {});
+    music.setMuted(true);
+  });
+  game.events.on('radioBroken', stopRadio);
+  game.events.on('died', stopRadio);
+  game.events.on('home', stopRadio);
+  game.events.on('runEnded', stopRadio);
+  game.events.on('tick', () => {
+    const r = game.radio.pos;
+    if (!radioEl || !r) return;
+    const d = r.distanceTo(game.player.pos), Lk = RADIO_LOOK;
+    const k = 1 - Math.min(1, Math.max(0, (d - Lk.fullAt) / (Lk.silentAt - Lk.fullAt)));
+    radioEl.volume = Math.min(1, Lk.volume * k * audio.userVolume('music'));
+  });
+  const I = AUDIO.items;
+  game.events.on('radioHit', () => audio.play(I.radioHit.sample, I.radioHit.volume, I.radioHit.rate * jitter(0.1)));
+  game.events.on('radioBroken', () => audio.play(I.radioBroken.sample, I.radioBroken.volume, I.radioBroken.rate));
   game.events.on('runStarted', () => music.startRun(map));
   game.events.on('died', () => volume(DEATH_BANNER.musicDuck, 0.6));
   game.events.on('home', () => { volume(1, 0.4); music.endRun(); });

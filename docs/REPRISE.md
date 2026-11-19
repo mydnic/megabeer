@@ -225,9 +225,13 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    des copies figées plus loin ne se voyaient pas). Reste : des effets propres aux autres paliers), #5 (Trilogie du Seigneur des Anneaux : **faite et validée le 2026-11-19** : deux objets uniques, version cinéma
    Rare +250 % et version longue Légendaire +350 % de la stat Durée (choix de l'utilisateur : la stat de base, même si
    les gels et étourdissements figent la horde, plutôt qu'une stat à part) ; débloquées par Collectionneur et Jusqu'à la fermeture), #14 découpé le 2026-11-19 en #15 Senzu, #16 Radio planquée, #17 Sabre laser, #18 Alliés, #19 Nouveaux boss, #20 Montagne
-   du Destin, #21 Relief (l'utilisateur veut ses références telles quelles, sans remarque de droits). Ordre : la Senzu d'abord (**#15 faite le 2026-11-19, à valider** : objet de coffre Dingue, choix de
+   du Destin, #21 Relief (l'utilisateur veut ses références telles quelles, sans remarque de droits). Ordre : la Senzu d'abord (**#15 faite et validée le 2026-11-19** : objet de coffre Dingue, choix de
    l'utilisateur ; une fois par exemplaire, tous les PV rendus dès qu'ils passent sous 25 %, `ITEM_EFFECTS.senzu` ; achetable
-   en boutique comme les autres objets)).
+   en boutique comme les autres objets) ; **#16 radio planquée faite le 2026-11-19, à valider** : une radio
+   (ghetto-blaster) cachée au hasard à plus de 45 m de l'arrivée (son propre tirage, qui ne décale pas le hasard du jeu),
+   allumée avec E, elle joue radio.mydnic.be (simple lecteur audio, plus fort près du poste, musique du jeu coupée) et
+   attire tous les ennemis sauf les boss (leurre de la horde, lanceurs compris) ; 400 PV, cassée la horde revient ; DEV
+   « Radio à côté »).
    **Roster des persos arrêté le 2026-11-18 (décision de l'utilisateur) : 8 persos** (Buveur, Videur, Père Noël, Cop,
    Futur Marié, Barman, Serveuse, Pilier de bar). Le Moine brasseur et le Supporter restent au GDD pour plus tard.
    **Le Pilier de bar fait et validé par l'utilisateur le 2026-11-18** : passif Accoudé (`anchor` : immobile, l'ancrage monte en
