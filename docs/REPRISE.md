@@ -237,7 +237,7 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    ennemis à 6 m pétrifiés 3 s, pas les boss), Krilin (soin +3 PV/s tant qu'il suit, Kienzan toutes les 5 s vers le plus
    proche : disque qui tranche en ligne droite), Yoda (toutes les 5 s, poussée de Force : recul et 1,5 s sonnés), Steve
    (toutes les 6 s, bloc de TNT qui explose 2 s plus tard). Modèles : `tools/blender/allies.py` (Steve refait en blocs,
-   le fichier fourni avait ses pièces éparpillées) ; DEV « Allié à côté » ; reste : validation, puis fermer #18 ; **#17 sabre laser fait et validé le 2026-11-19** : arme 25 (`weapons/sabre.ts`, réglages `SABRE`), coups en arc de
+   le fichier fourni avait ses pièces éparpillées) ; DEV « Allié à côté » (déplace l'allié de son abbaye, jamais deux) ; retours du 2026-11-19 : ils suivent comme un mob (vers le joueur, arrêt à 2,6 m, écart entre eux) au lieu d'une place fixe derrière lui, Gandalf a un repos qui respire et une course (`tools/blender/gandalf.py`) ; reste : validation, puis fermer #18 ; **#17 sabre laser fait et validé le 2026-11-19** : arme 25 (`weapons/sabre.ts`, réglages `SABRE`), coups en arc de
    140° vers l'ennemi le plus proche, en alternant le sens, frappe chaque zombie traversé et coupe les bouteilles ennemies
    sur la lame ; évolution Sabre double (Mousse épaisse) ; lame lumineuse (matière sans éclairage, hors contour) ; **skill tree : 3 lignes en plus le 2026-11-19, validées** (demande de l'utilisateur) :
    Radio (+40 % PV par palier), Super Saiyan (jauge plus rapide, transformation +10 s), Véhicules (durée, PV,

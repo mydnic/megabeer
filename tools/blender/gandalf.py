@@ -3,7 +3,8 @@ Gandalf (allié, issue #18) : le modèle « Wizard » fourni par l'utilisateur (
 squelette et un coup de bâton), préparé pour le jeu :
 1. sa texture recollée (le .blend cherche « GandalfDone lightned2.png », l'archive la livre en `lightned2.bmp`) ;
 2. le décor de la scène retiré (herbe, sapin, plans), seuls restent le squelette et les pièces du magicien ;
-3. le coup de bâton renommé `staff` (le jeu le joue à chaque pétrification) ;
+3. le coup de bâton renommé `staff` (le jeu le joue à chaque pétrification) ; un repos qui respire (`idle`) et une course
+   (`run`) faits ici, sur sa pose de repos (bâton planté) ;
 4. mis à la taille (`HEIGHT`), pieds au sol, export en GLB (texture réduite en JPEG).
 
 Usage (Blender 5.2) :
@@ -70,16 +71,72 @@ rig.animation_data.action = staff
 if hasattr(rig.animation_data, 'action_slot') and staff.slots:
     rig.animation_data.action_slot = staff.slots[0]
 bpy.context.scene.frame_set(IDLE_FRAME)
-idle = bpy.data.actions.new('idle')
-rig.animation_data.action = idle
-if hasattr(rig.animation_data, 'action_slot') and idle.slots:
-    rig.animation_data.action_slot = idle.slots[0]
-for f in (0, 1):
-    for pb in rig.pose.bones:
-        pb.keyframe_insert('location', frame=f)
-        pb.keyframe_insert('rotation_quaternion' if pb.rotation_mode == 'QUATERNION' else 'rotation_euler', frame=f)
-        pb.keyframe_insert('scale', frame=f)
+base = {pb.name: pb.matrix_basis.copy() for pb in rig.pose.bones}
 rig.animation_data.action = None
+FPS = bpy.context.scene.render.fps
+
+
+def rot(name, axis, deg):
+    """Tourne l'os `name` de `deg` degrés autour d'un axe du squelette, autour de sa tête (ses enfants suivent)."""
+    pb = rig.pose.bones[name]
+    h = pb.head.copy()
+    pb.matrix = Matrix.Translation(h) @ Matrix.Rotation(math.radians(deg), 4, axis) @ Matrix.Translation(-h) @ pb.matrix
+    bpy.context.view_layer.update()
+
+
+def lift(name, dz):
+    pb = rig.pose.bones[name]
+    pb.matrix = Matrix.Translation((0, 0, dz)) @ pb.matrix
+    bpy.context.view_layer.update()
+
+
+def bake(name, frames, pose):
+    """Un clip `name` en boucle sur `frames` images : `pose(phase)` pose le squelette (phase de 0 à 2 pi) sur la pose de
+    repos. Les mains tiennent le bâton et l'épée : le haut du corps bouge d'un bloc, les bras ne balancent pas."""
+    act = bpy.data.actions.new(name)
+    for f in range(frames + 1):
+        rig.animation_data.action = None
+        for pb in rig.pose.bones:
+            pb.matrix_basis = base[pb.name]
+        bpy.context.view_layer.update()
+        pose(2 * math.pi * f / frames)
+        rig.animation_data.action = act
+        if hasattr(rig.animation_data, 'action_slot') and act.slots:
+            rig.animation_data.action_slot = act.slots[0]
+        for pb in rig.pose.bones:
+            pb.keyframe_insert('location', frame=f)
+            pb.keyframe_insert('rotation_quaternion' if pb.rotation_mode == 'QUATERNION' else 'rotation_euler', frame=f)
+            pb.keyframe_insert('scale', frame=f)
+    rig.animation_data.action = None
+
+
+X, Z = Vector((1, 0, 0)), Vector((0, 0, 1))
+
+
+def idle_pose(ph):
+    # Il respire : le buste se lève et se penche à peine, la tête suit en retard
+    rot('spine', X, 1.5 * math.sin(ph))
+    rot('head', X, -2.5 * math.sin(ph - 0.8))
+    lift('hips', 0.006 * math.sin(ph))
+
+
+def run_pose(ph):
+    # Il presse le pas, penché sur son bâton : grandes enjambées sous la robe, le bassin tourne et rebondit
+    s, c = math.sin(ph), math.cos(ph)
+    lift('hips', 0.035 * math.cos(2 * ph) - 0.03)
+    rot('hips', X, 7)
+    rot('hips', Z, 6 * s)
+    rot('spine', Z, -4 * s)
+    rot('head', X, -6)
+    for side, k in (('L', 1), ('R', -1)):
+        sw = k * s  # > 0 : la jambe passe devant
+        rot('thigh.' + side, X, -7 - 24 * sw)
+        rot('shin.' + side, X, 8 + 30 * max(0.0, k * c))
+        rot('foot.' + side, X, -10 * sw)
+
+
+bake('idle', FPS * 3, idle_pose)
+bake('run', round(FPS * 0.7), run_pose)
 for pb in rig.pose.bones:
     pb.matrix_basis = Matrix()
 bpy.context.view_layer.update()
@@ -111,7 +168,8 @@ if args.render:
     cam.data.type = 'ORTHO'
     cam.data.ortho_scale = 2.6
     rig.animation_data_create()
-    for name, act, frame, loc in (('face', 'idle', 0, (0, -6, 1)), ('cote', 'idle', 0, (6, 0, 1)), ('baton', 'staff', 15, (3, -5, 1))):
+    for name, act, frame, loc in (('face', 'idle', 0, (0, -6, 1)), ('cote', 'idle', 0, (6, 0, 1)), ('baton', 'staff', 15, (3, -5, 1)),
+                                     ('course1', 'run', 4, (6, 0, 1)), ('course2', 'run', 12, (6, 0, 1)), ('course3', 'run', 8, (3, -5, 1))):
         rig.animation_data.action = bpy.data.actions.get(act) if act else None
         if act and hasattr(rig.animation_data, 'action_slot') and rig.animation_data.action.slots:
             rig.animation_data.action_slot = rig.animation_data.action.slots[0]

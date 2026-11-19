@@ -40,12 +40,13 @@ export const ALLIES = {
 export type AllyId = keyof typeof ALLIES;
 
 /**
- * Règles : durée de compagnie (s), portée pour le rejoindre (m) ; il suit à `followDistance` m derrière le joueur, à
- * `followSide` m sur le côté (plusieurs : un de chaque côté, puis un rang `rowGap` m plus loin), à `speed` x la vitesse du joueur au plus (et jamais moins de `minSpeed` m/s) ; trop loin
+ * Règles : durée de compagnie (s), portée pour le rejoindre (m) ; il marche vers le joueur et s'arrête à `followDistance` m
+ * de lui (vitesse : `gain` x l'écart en trop, au plus `speed` x la vitesse du joueur et jamais moins de `minSpeed` m/s),
+ * à `spacing` m au moins des autres alliés (force d'écart `push`) ; trop loin
  * (`catchUp` m), il réapparaît à côté. Placement dans l'abbaye : un point libre à moins de `searchRadius` m de son centre.
  */
 export const ALLY_RULES = {
-  followTime: 60, joinRange: 2.6, followDistance: 2.4, followSide: 1.3, rowGap: 1.6, speed: 1.25, minSpeed: 6, catchUp: 30, searchRadius: 14,
+  followTime: 60, joinRange: 2.6, followDistance: 2.6, gain: 6, spacing: 1.6, push: 4, speed: 1.25, minSpeed: 6, catchUp: 30, searchRadius: 14,
 } as const;
 
 /**

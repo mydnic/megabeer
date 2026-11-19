@@ -45,8 +45,11 @@ export class Allies {
     });
   }
 
-  /** Pose un allié `kind` qui attend à la direction `dir` (panneau DEV, tests). */
+  /** Pose un allié `kind` qui attend à la direction `dir` (panneau DEV, tests) ; un seul de chaque sorte : celui de son
+   * abbaye est remplacé. */
   placeAt(kind: AllyId, dir: THREE.Vector3) {
+    const i = this.list.findIndex((x) => x.kind === kind);
+    if (i >= 0) this.list.splice(i, 1);
     const d = dir.clone().normalize();
     const pos = d.clone().multiplyScalar(PLANET_RADIUS + heightAt(d));
     const facing = new THREE.Vector3().crossVectors(d, Math.abs(d.y) < 0.9 ? Y : X).normalize();
@@ -61,7 +64,6 @@ export class Allies {
    */
   update(dt: number, playerPos: THREE.Vector3, playerFacing: THREE.Vector3, playerSpeed: number,
     on: { join(a: Ally): void; power(a: Ally): void; leave(a: Ally): void }) {
-    let slot = 0;
     for (const a of this.list) {
       if (a.state === 'waiting') {
         a.speed = 0;
@@ -76,37 +78,54 @@ export class Allies {
       if (a.state !== 'following') continue;
       a.left -= dt;
       if (a.left <= 0) { a.state = 'gone'; a.speed = 0; on.leave(a); continue; }
-      this.follow(a, slot++, dt, playerPos, playerFacing, playerSpeed);
+      this.follow(a, dt, playerPos, playerFacing, playerSpeed);
       a.cooldown -= dt;
       if (a.cooldown <= 0) { a.cooldown = ALLIES[a.kind].power.every; on.power(a); }
     }
   }
 
   /**
-   * Marche vers sa place derrière le joueur ; chacun la sienne (`slot`) : un côté puis l'autre, un rang plus loin tous
-   * les deux. Trop loin, il réapparaît à côté de lui.
+   * Suit le joueur comme un compagnon : il marche vers lui et s'arrête à `followDistance` m (sans le contourner quand il
+   * tourne), en s'écartant des autres alliés. Trop loin, il réapparaît derrière lui.
    */
-  private follow(a: Ally, slot: number, dt: number, playerPos: THREE.Vector3, playerFacing: THREE.Vector3, playerSpeed: number) {
-    const up = this.tmp.copy(playerPos).normalize();
-    const side = new THREE.Vector3().crossVectors(playerFacing, up).normalize();
-    const row = Math.floor(slot / 2), sign = slot % 2 ? 1 : -1;
-    const target = playerPos.clone().addScaledVector(playerFacing, -R.followDistance - row * R.rowGap).addScaledVector(side, sign * R.followSide * (1 + row * 0.5));
-    const gap = target.distanceTo(a.pos);
-    if (gap > R.catchUp) { a.pos.copy(target); this.ground(a.pos); a.speed = 0; return; }
-    this.want.subVectors(target, a.pos);
+  private follow(a: Ally, dt: number, playerPos: THREE.Vector3, playerFacing: THREE.Vector3, playerSpeed: number) {
     const aUp = a.pos.clone().normalize();
-    this.want.addScaledVector(aUp, -this.want.dot(aUp));
-    const d = this.want.length();
-    const speed = Math.max(R.minSpeed, playerSpeed * R.speed);
-    const step = Math.min(d, speed * dt);
-    if (d > 0.05) {
-      this.want.divideScalar(d);
-      a.pos.addScaledVector(this.want, step);
-      a.facing.lerp(this.want, 1 - Math.exp(-dt * 8)).normalize();
+    const tangent = (v: THREE.Vector3) => v.addScaledVector(aUp, -v.dot(aUp));
+    this.want.subVectors(playerPos, a.pos);
+    tangent(this.want);
+    const dist = this.want.length();
+    if (dist > R.catchUp) {
+      a.pos.copy(playerPos).addScaledVector(playerFacing, -R.followDistance);
+      this.ground(a.pos);
+      a.speed = 0;
+      return;
     }
-    a.speed = dt > 0 ? step / dt : 0;
+    const toPlayer = dist > 1e-4 ? this.want.clone().divideScalar(dist) : a.facing.clone();
+    // Vers le joueur, de plus en plus vite quand il s'éloigne ; arrêté à sa distance
+    const max = Math.max(R.minSpeed, playerSpeed * R.speed);
+    const move = this.want.copy(toPlayer).multiplyScalar(THREE.MathUtils.clamp((dist - R.followDistance) * R.gain, 0, max));
+    // Écart aux autres alliés (et au joueur, s'il arrive dessus)
+    for (const o of this.list) {
+      if (o === a || o.state !== 'following') continue;
+      const away = tangent(this.tmp.subVectors(a.pos, o.pos));
+      const d = away.length();
+      if (d < R.spacing && d > 1e-4) move.addScaledVector(away, (R.spacing - d) / d * R.push);
+    }
+    if (dist < R.followDistance * 0.6) move.addScaledVector(toPlayer, -(R.followDistance * 0.6 - dist) * R.push);
+    tangent(move);
+    const v = Math.min(move.length(), max);
+    a.speed = v;
+    if (v > 0.05) {
+      move.setLength(v);
+      a.pos.addScaledVector(move, dt);
+      a.facing.lerp(move.divideScalar(v), 1 - Math.exp(-dt * 8));
+    } else {
+      // Arrêté : il se tourne vers le joueur
+      a.facing.lerp(toPlayer, 1 - Math.exp(-dt * 4));
+    }
     this.ground(a.pos);
-    a.facing.addScaledVector(aUp, -a.facing.dot(aUp)).normalize();
+    const up = a.pos.clone().normalize();
+    a.facing.addScaledVector(up, -a.facing.dot(up)).normalize();
   }
 
   /** Pose le point sur le sol (relief). */

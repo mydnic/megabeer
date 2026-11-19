@@ -57,13 +57,35 @@ describe('Les alliés', () => {
     }
   });
 
+  it('un allié appelé à côté (panneau DEV) est celui de son abbaye : il n y en a jamais deux', () => {
+    const t = createTestGame();
+    t.startRunAndLand();
+    const n = t.game.allies.list.length;
+    t.game.allies.placeAt('gandalf', t.inFront(3));
+    expect(t.game.allies.list).toHaveLength(n);
+    expect(t.game.allies.list.filter((a) => a.kind === 'gandalf')).toHaveLength(1);
+  });
+
   it('touché, il rejoint le joueur et le suit quand il marche', () => {
     const t = withGandalf();
     expect(t.events('allyJoined').map((e) => e.kind)).toEqual(['gandalf']);
     const g = t.game.allies.list[0];
     expect(g.state).toBe('following');
     t.play(5, { moveY: 1 });
-    expect(dist(g.pos, t.game.player.pos)).toBeLessThan(ALLY_RULES.followDistance + ALLY_RULES.followSide + 2);
+    expect(dist(g.pos, t.game.player.pos)).toBeLessThan(ALLY_RULES.followDistance + 2);
+  });
+
+  it('quand le joueur se retourne sur place, l allié ne lui tourne pas autour', () => {
+    const t = withGandalf();
+    t.play(3, { moveY: 1 });
+    t.play(2);
+    const g = t.game.allies.list[0];
+    const before = g.pos.clone();
+    const p = t.game.player;
+    p.facing.negate();
+    t.play(2);
+    expect(g.pos.distanceTo(before)).toBeLessThan(0.3);
+    expect(dist(g.pos, p.pos)).toBeGreaterThan(ALLY_RULES.followDistance * 0.6);
   });
 
   it('plusieurs alliés suivent le joueur chacun à sa place, sans se marcher dessus', () => {
