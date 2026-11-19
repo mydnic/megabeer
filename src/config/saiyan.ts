@@ -50,4 +50,9 @@ export const SAIYAN_LOOK = {
   lightning: { color: 0xbfe8ff, points: 10 },
   /** Cheveux : taille (x la hauteur de la tête du perso), remontée au-dessus du centre de la tête (même unité), pousse (s). */
   hair: { scale: 1.15, lift: 0.18, growTime: 0.35 },
+  /**
+   * Images rémanentes (Ultra Instinct, à chaque esquive) : copies de part et d'autre du perso, écart sur le côté et recul
+   * (m), glissement vers l'extérieur (m/s), opacité au départ, durée (s), part de leur teinte (`color`, bleu argenté de l'Ultra Instinct) dans leurs couleurs.
+   */
+  afterimage: { count: 2, offset: 1.4, back: 0.2, drift: 1.4, opacity: 0.7, life: 0.55, tint: 0.5, color: 0x7fa6ff },
 } as const;

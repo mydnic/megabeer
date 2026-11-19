@@ -126,6 +126,8 @@ describe('Le Super Saiyan', () => {
     t.playUntil(() => t.events('playerDodged').length >= 2, 10);
     expect(t.events('playerDodged').length).toBeGreaterThanOrEqual(2);
     expect(t.game.health.hp).toBe(hp);
+    // Esquives de l'Ultra Instinct (le rendu y pose ses images rémanentes)
+    expect(t.events('playerDodged').every((e) => e.instinct)).toBe(true);
   });
 
   it('le Sang Saiyan est unique (il ne ressort plus des coffres une fois pris) et Légendaire', () => {

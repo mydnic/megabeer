@@ -202,6 +202,9 @@ export class BuveurVisual {
     this.squashGroup.scale.set(sxz, sy, sxz);
   }
 
+  /** Le modèle du perso affiché (null : pas encore chargé). */
+  get model(): THREE.Object3D | null { return this.rigs.get(this.using)?.scene ?? null; }
+
   /** La tête du perso affiché (null : pas encore chargé, ou modèle sans os de tête). */
   get head(): HeadAnchor | null { return this.rigs.get(this.using)?.head ?? null; }
 

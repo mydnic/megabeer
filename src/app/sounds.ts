@@ -196,9 +196,19 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
   });
   game.events.on('vehicleHit', () => audio.play(I.vehicleHit.sample, I.vehicleHit.volume, I.vehicleHit.rate * jitter(0.08)));
   game.events.on('saiyanTierReached', () => audio.play(I.saiyanReady.sample, I.saiyanReady.volume, I.saiyanReady.rate));
-  game.events.on('saiyanTransformed', () => { audio.play(I.saiyanTransform.sample, I.saiyanTransform.volume, I.saiyanTransform.rate); audio.whoosh(0.8); });
+  // Aura du Super Saiyan : le son tourne en boucle jusqu'à la fin de la transformation (ou de la run)
+  let auraSound: ((fade?: number) => void) | null = null;
+  const stopAura = () => { auraSound?.(I.saiyanTransform.fade); auraSound = null; };
+  game.events.on('saiyanTransformed', () => {
+    stopAura();
+    auraSound = audio.play(I.saiyanTransform.sample, I.saiyanTransform.volume, I.saiyanTransform.rate, 0, 'fx', 0, true);
+    audio.whoosh(0.8);
+  });
+  game.events.on('died', stopAura);
+  game.events.on('home', stopAura);
+  game.events.on('runEnded', stopAura);
   game.events.on('saiyanLightning', () => audio.play(I.saiyanLightning.sample, I.saiyanLightning.volume, I.saiyanLightning.rate * jitter(0.1)));
-  game.events.on('saiyanEnded', () => audio.play(I.saiyanEnd.sample, I.saiyanEnd.volume, I.saiyanEnd.rate));
+  game.events.on('saiyanEnded', () => { stopAura(); audio.play(I.saiyanEnd.sample, I.saiyanEnd.volume, I.saiyanEnd.rate); });
   game.events.on('tankFired', () => audio.play(I.tankFire.sample, I.tankFire.volume, I.tankFire.rate * jitter(0.06)));
   game.events.on('tankShellExploded', () => audio.play(I.tankBoom.sample, I.tankBoom.volume, I.tankBoom.rate * jitter(0.08)));
   game.events.on('vehicleExited', () => audio.play(I.vehicleOut.sample, I.vehicleOut.volume, I.vehicleOut.rate));

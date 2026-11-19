@@ -17,6 +17,7 @@ import { createRangeRingView } from './fx/rangeRingView';
 import { createVehiclesView } from './world/vehiclesView';
 import { createAuraView } from './fx/auraView';
 import { createHairView } from './fx/hairView';
+import { createAfterimageView } from './fx/afterimageView';
 import { createEnemyShotsView } from './enemies/enemyShotsView';
 import { createShards } from './fx/shards';
 import { createFoamShieldView } from './fx/foamShieldView';
@@ -175,8 +176,13 @@ const zoneViews = (Object.keys(WEAPON_FX) as WeaponId[]).filter((id) => WEAPON_F
 // Un anneau de portée par arme qui en affiche une (Rot sonique)
 const ringViews = (Object.keys(WEAPON_FX) as WeaponId[]).filter((id) => WEAPON_FX[id].ring)
   .map((id) => [id, createRangeRingView(scene, WEAPON_FX[id].ring!, (p, feetR) => game.player.supportAt(p, feetR))] as const);
-// Aura du Super Saiyan, de la couleur du palier
+// Aura du Super Saiyan, de la couleur du palier ; images rémanentes de l'Ultra Instinct à chaque esquive
 const auraView = createAuraView(scene);
+const afterimages = createAfterimageView(scene);
+game.events.on('playerDodged', ({ instinct }) => {
+  const T = game.saiyan.current, model = buveur.model;
+  if (instinct && T && model) afterimages.spawn(model, game.player.renderPos, game.player.renderFacing, T.aura);
+});
 // Ancrage du Pilier de bar : un rond doré sous ses pieds, d'autant plus net qu'il est accoudé depuis longtemps
 const anchorRing = createRangeRingView(scene, ANCHOR_RING, (p, feetR) => game.player.supportAt(p, feetR));
 const anchorZone = { pos: new THREE.Vector3(), radius: ANCHOR_RING.radius, age: 0, life: Infinity, active: false, strength: 0 };
@@ -297,6 +303,7 @@ function frame(now: number) {
   vehiclesView.sync(game.vehicles, player, dt, game.phase === 'run');
   auraView.sync(game.phase === 'run' ? game.saiyan.current?.aura ?? null : null, player.renderPos, camera, dt);
   hairView.sync(game.phase === 'run' ? game.saiyan.current : null, buveur.head, buveur.root.visible, dt);
+  afterimages.update(dt);
   hordeView.sync(game.horde.zombies, camera);
   xpView.sync(game.xp.drops);
   coinView.sync(game.coinDrops.drops);

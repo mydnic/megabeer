@@ -170,7 +170,7 @@ export type GameEvents = {
   /** Glaçons ou Sifflet : un ennemi gèle (ou est étourdi) `time` s. */
   zombieFrozen: { zombie: Zombie; time: number };
   /** Démarche de pochtron : le joueur esquive le coup de `zombie` (null : un piège). */
-  playerDodged: { zombie: Zombie | null };
+  playerDodged: { zombie: Zombie | null; instinct: boolean };
   /** Le véhicule de la run est garé sur la planète (au début de la run, ou par le panneau DEV). */
   vehicleSpawned: { vehicle: ParkedVehicle };
   /** Le joueur monte dans un véhicule. */
@@ -1263,13 +1263,13 @@ export class Game {
     // Ultra Instinct : rien ne le touche, sauf un boss
     if (!this.cheats.god && this.health.invuln <= 0 && !this.health.dead && this.saiyan.current?.dodgeAll && !z?.def.boss) {
       this.health.invuln = PLAYER_STATS.invulnTime;
-      this.events.emit('playerDodged', { zombie: z });
+      this.events.emit('playerDodged', { zombie: z, instinct: true });
       return;
     }
     // Démarche de pochtron : il titube, le coup passe à côté
     if (!this.cheats.god && this.health.invuln <= 0 && !this.health.dead && this.stats.dodgeChance > 0 && this.random() < this.stats.dodgeChance) {
       this.health.invuln = PLAYER_STATS.invulnTime;
-      this.events.emit('playerDodged', { zombie: z });
+      this.events.emit('playerDodged', { zombie: z, instinct: false });
       const sprint = (CHARACTERS[this.character] as { dodgeSprint?: { duration: number } }).dodgeSprint;
       if (sprint) this.sprintIn = sprint.duration;
       return;

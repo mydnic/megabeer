@@ -97,9 +97,9 @@ export class AudioEngine {
 
   /**
    * Joue une variante au hasard du groupe (sans répéter la précédente), sur le bus effets ou interface,
-   * à partir de `offset` s. Renvoie de quoi l'arrêter avant la fin, en fondu de `fade` s.
+   * à partir de `offset` s, en boucle si `loop`. Renvoie de quoi l'arrêter avant la fin, en fondu de `fade` s.
    */
-  play(group: string, volume: number, rate = 1, pan = 0, bus: 'fx' | 'ui' = 'fx', offset = 0): (fade?: number) => void {
+  play(group: string, volume: number, rate = 1, pan = 0, bus: 'fx' | 'ui' = 'fx', offset = 0, loop = false): (fade?: number) => void {
     const ctx = this.ctx, list = this.buffers.get(group);
     const out = bus === 'ui' ? this.ui : this.sfx;
     if (!ctx || !list?.length || !out) return () => {};
@@ -108,6 +108,7 @@ export class AudioEngine {
     this.lastVariant.set(group, i);
     const src = ctx.createBufferSource();
     src.buffer = list[i];
+    src.loop = loop;
     src.playbackRate.value = rate;
     const g = ctx.createGain();
     g.gain.value = volume;
