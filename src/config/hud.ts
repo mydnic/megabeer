@@ -16,6 +16,9 @@ export const BOSS_HUD = { top: 92, width: 520, pushDown: 52 } as const;
 /** Jauges du véhicule conduit : hauteur au-dessus du bas de l'écran (px), largeur (px). */
 export const VEHICLE_HUD = { bottom: 120, width: 360 } as const;
 
+/** Jauge de colère (Super Saiyan) : position depuis le bas à gauche (px) et largeur (px). */
+export const SAIYAN_HUD = { left: 26, bottom: 84, width: 270 } as const;
+
 /**
  * Rappel près d'un coffre fermé : hauteur au-dessus du bas de l'écran (px), durée du tremblement
  * quand il manque des capsules (s).

@@ -53,6 +53,8 @@ import { Loadout } from './loadout';
 import { PlayerStats } from './playerStats';
 import { SpawnDirector, spawnCurveAt } from './spawnDirector';
 import { Vehicles, type ParkedVehicle } from './vehicles';
+import { Saiyan } from './saiyan';
+import { SAIYAN } from '../config/saiyan';
 import { VEHICLE_SPAWN, VEHICLES, type VehicleId } from '../config/vehicles';
 import { MAP_MECHANICS, type MapId, type MapMechanic } from './mechanics/mechanic';
 
@@ -177,6 +179,14 @@ export type GameEvents = {
   vehicleCrushed: { zombie: Zombie; pos: THREE.Vector3; killed: boolean; speed: number };
   /** Le véhicule encaisse un coup à la place du joueur. */
   vehicleHit: { damage: number; hp: number; maxHp: number };
+  /** Jauge de colère : un nouveau palier de transformation est atteint (le joueur peut s'y transformer). */
+  saiyanTierReached: { tier: number; name: string };
+  /** Le joueur se transforme (palier `tier`, pour `duration` s). */
+  saiyanTransformed: { tier: number; name: string; duration: number };
+  /** La transformation est finie : la jauge retombe à 0. */
+  saiyanEnded: { tier: number };
+  /** Super Saiyan 2 : un éclair frappe un ennemi. */
+  saiyanLightning: { from: THREE.Vector3; to: THREE.Vector3 };
   /** Le tank tire un obus de `from` vers `to` (il arrive en `flight` s). */
   tankFired: { from: THREE.Vector3; to: THREE.Vector3; flight: number };
   /** Un obus du tank explose à `pos` (rayon `radius`). */
@@ -242,7 +252,7 @@ export type GameDeps = {
 };
 
 /** Aucune entrée : joueur immobile (accueil, mort, pause, chute d'arrivée). */
-export const NO_INPUT: InputState = { moveX: 0, moveY: 0, lookX: 0, lookY: 0, mouseDX: 0, mouseDY: 0, zoom: 0, jump: false, jumpPressed: false, action: false, actionPressed: false, pausePressed: false, backPressed: false };
+export const NO_INPUT: InputState = { moveX: 0, moveY: 0, lookX: 0, lookY: 0, mouseDX: 0, mouseDY: 0, zoom: 0, jump: false, jumpPressed: false, action: false, actionPressed: false, transform: false, transformPressed: false, pausePressed: false, backPressed: false };
 
 /** Pas de la physique du joueur (s). */
 const STEP = 1 / 120;
@@ -262,6 +272,8 @@ export class Game {
   /** Pompes à bière de la run (exploration). */
   readonly pumps: Pumps;
   readonly chests: Chests;
+  /** Jauge de colère et transformation Super Saiyan (objet Sang Saiyan). */
+  readonly saiyan = new Saiyan();
   /** Véhicules écrase-zombies (un garé à la fois, ou celui qu'on conduit). */
   readonly vehicles: Vehicles;
   /** Écrasement : quand chaque ennemi peut de nouveau être écrasé (temps de run). */
@@ -641,6 +653,9 @@ export class Game {
         // Coffres : celui à portée s'ouvre à la touche d'action, s'il y a de quoi payer
         this.chests.update(p.pos);
         this.lastCall.update(p.pos);
+        // Super Saiyan : à la touche, il se transforme au plus haut palier atteint
+        if (input.transformPressed && !this.offer) this.transformSaiyan();
+        this.updateSaiyan(dt);
         if (input.actionPressed && this.chests.focus && !this.offer) this.openChest(this.chests.focus);
         else if (input.actionPressed && this.lastCall.focus && !this.offer) this.ringBell(this.lastCall.focus);
         this.door.update(p.pos);
@@ -734,6 +749,7 @@ export class Game {
     for (const [stat, v] of Object.entries(def.stats ?? {}) as [ItemStatId, number][]) this.applyStatBonus(stat, v);
     if (def.effect) this.effects.add(def.effect, def.value ?? 0);
     if (def.effect === 'doubleJump') this.player.airJumps = Math.round(this.effects.power.doubleJump);
+    if (def.effect === 'saiyan') this.saiyan.enabled = true;
     this.events.emit('itemGained', { item, rarity });
   }
 
@@ -748,7 +764,7 @@ export class Game {
     if (!chest.free) this.chests.opened++;
     if (chest.trapped) { this.springTrap(chest, price); return; }
     const rarity = chest.rarity ?? rollTier(this.stats.luck);
-    const cards = rollItemCards(rarity, CHESTS.choices, this.unlocks?.items);
+    const cards = rollItemCards(rarity, CHESTS.choices, this.unlocks?.items, new Set(this.items.map((i) => i.item)));
     const duration = CHESTS.revealTime + CHESTS.revealPerRarity * rarity;
     this.reveal = { chest, price, rarity, cards, left: duration };
     this.events.emit('chestRevealing', { chest, rarity, duration });
@@ -986,6 +1002,8 @@ export class Game {
     const killed = z.damage(damage, dir, knock);
     if (killed) {
       this.kills++;
+      // Jauge de colère : chaque ennemi tué la remplit (bien plus pour un élite ou un boss)
+      this.saiyanGain(z.def.boss ? SAIYAN.points.boss : z.elite ? SAIYAN.points.elite : SAIYAN.points.kill);
       // Parfois une capsule (Pièces) à la place de la goutte d'XP
       if (this.rollCoin()) this.coinDrops.drop(z.pos, COINS.value);
       else this.xp.drop(z.pos, z.def.xp);
@@ -1242,6 +1260,12 @@ export class Game {
       this.events.emit('foamShieldPopped', { zombie: z });
       return;
     }
+    // Ultra Instinct : rien ne le touche, sauf un boss
+    if (!this.cheats.god && this.health.invuln <= 0 && !this.health.dead && this.saiyan.current?.dodgeAll && !z?.def.boss) {
+      this.health.invuln = PLAYER_STATS.invulnTime;
+      this.events.emit('playerDodged', { zombie: z });
+      return;
+    }
     // Démarche de pochtron : il titube, le coup passe à côté
     if (!this.cheats.god && this.health.invuln <= 0 && !this.health.dead && this.stats.dodgeChance > 0 && this.random() < this.stats.dodgeChance) {
       this.health.invuln = PLAYER_STATS.invulnTime;
@@ -1263,6 +1287,7 @@ export class Game {
     }
     // Invulnérable juste après un coup : ni dégâts ni recul (pas d'enchaînement de coups)
     const took = !this.cheats.god && this.health.damage(damage);
+    if (took) this.saiyanGain(damage * SAIYAN.points.perHpLost);
     this.events.emit('playerHurt', { zombie: z, dir, damage, hp: this.health.hp, blocked: !took });
     if (!took) return;
     if (!this.knockImmune) this.player.knock(dir, ZOMBIE_ATTACK.knockSpeed, ZOMBIE_ATTACK.knockLift, ZOMBIE_ATTACK.knockDecay);
@@ -1329,6 +1354,50 @@ export class Game {
   }
 
   /** Atterrissage : la première horde sort de terre autour du joueur. */
+  /** Remplit la jauge de colère ; annonce le palier tout juste atteint. */
+  private saiyanGain(points: number) {
+    const tier = this.saiyan.gain(points);
+    if (tier) this.events.emit('saiyanTierReached', { tier, name: SAIYAN.tiers[tier - 1].name });
+  }
+
+  /** Transformation au plus haut palier atteint : ses bonus de stat s'appliquent pour la durée. */
+  private transformSaiyan() {
+    const tier = this.saiyan.transform();
+    if (!tier) return;
+    const T = SAIYAN.tiers[tier - 1];
+    for (const [stat, v] of Object.entries(T.stats) as [ItemStatId, number][]) this.applyStatBonus(stat, v, true);
+    this.events.emit('saiyanTransformed', { tier, name: T.name, duration: SAIYAN.duration });
+  }
+
+  /** Pendant la transformation : coût du Kaioken, éclairs du SSJ2 ; à la fin, les bonus sont retirés. */
+  private updateSaiyan(dt: number) {
+    const T = this.saiyan.current;
+    if (!T) return;
+    // Kaioken : il brûle ses PV, sans jamais tomber sous 1
+    if (T.hpDrain && !this.cheats.god) this.health.hp = Math.max(Math.min(this.health.hp, 1), this.health.hp - T.hpDrain * dt);
+    // SSJ2 : un éclair sur l'ennemi le plus proche
+    if (T.lightning && (this.saiyan.lightningIn -= dt) <= 0) {
+      const L = T.lightning;
+      let best: Zombie | null = null, bestD = L.range;
+      for (const o of this.horde.near(this.player.pos, L.range, this.around)) {
+        if (!o.targetable || o.dead) continue;
+        const d = o.pos.distanceTo(this.player.pos);
+        if (d < bestD) { bestD = d; best = o; }
+      }
+      if (best) {
+        this.saiyan.lightningIn = L.every;
+        const from = this.player.pos.clone().addScaledVector(this.player.upDir, 1.4);
+        this.events.emit('saiyanLightning', { from, to: best.pos.clone() });
+        this.hitZombie(best, L.damage * spawnCurveAt(this.runTime).hpMul * this.mods.hp, false, best.pos, best.pos.clone().sub(this.player.pos), null, 0.5);
+      }
+    }
+    const tier = this.saiyan.tier;
+    if (this.saiyan.update(dt)) {
+      for (const [stat, v] of Object.entries(T.stats) as [ItemStatId, number][]) this.applyStatBonus(stat, -v, true);
+      this.events.emit('saiyanEnded', { tier });
+    }
+  }
+
   /** Le joueur monte dans le véhicule garé : il prend sa place, capot devant, et passe en conduite. */
   private enterVehicle(v: ParkedVehicle) {
     const driven = this.vehicles.enter(v);
@@ -1451,6 +1520,7 @@ export class Game {
 
   private resetRun() {
     this.exitVehicle('end');
+    this.saiyan.reset();
     this.vehicles.clear();
     this.crushReady = new WeakMap();
     this.xpGathered = 0;

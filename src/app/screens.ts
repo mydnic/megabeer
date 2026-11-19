@@ -30,6 +30,8 @@ import { createItemHud } from '../ui/itemHud';
 import { createTourneeHud } from '../ui/tourneeHud';
 import { createBossBar } from '../ui/bossBar';
 import { createVehicleHud } from '../ui/vehicleHud';
+import { createSaiyanHud } from '../ui/saiyanHud';
+import { isTouchDevice as touchScreen } from '../core/input';
 import { VEHICLES } from '../config/vehicles';
 import { BOSS_HUD } from '../config/hud';
 import { PATRON_DOOR } from '../config/bosses';
@@ -105,6 +107,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   const tourneeHud = createTourneeHud();
   const bossBar = createBossBar();
   const vehicleHud = createVehicleHud();
+  const saiyanHud = createSaiyanHud(() => (touchScreen() ? 'Bouton Saiyan' : 'F (Y à la manette)'));
   // Téléphone ou tablette : joystick et boutons à l'écran pendant la run
   const touchUi = isTouchDevice() ? createTouchControls() : null;
   if (touchUi) document.documentElement.classList.add('is-touch');
@@ -266,6 +269,8 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   game.events.on('doorBusy', () => { banner.show('Pas maintenant', PATRON_DOOR.busy); banner.hideAfter(1.8); });
   game.events.on('doorOpened', () => { banner.show('Le patron arrive...', 'La porte s\'ouvre'); banner.pulse(); banner.hideAfter(2); });
   game.events.on('vehicleEntered', ({ kind }) => vehicleHud.show(VEHICLES[kind].name));
+  game.events.on('saiyanTierReached', ({ name }) => { banner.show(`${name} prêt !`, touchScreen() ? 'Bouton Saiyan pour te transformer' : 'F (Y à la manette) pour te transformer'); banner.hideAfter(2.2); });
+  game.events.on('saiyanTransformed', ({ name }) => { banner.show(`${name} !`, ''); banner.pulse(); banner.hideAfter(1.8); });
   game.events.on('vehicleExited', ({ reason }) => {
     vehicleHud.hide();
     if (reason === 'destroyed') { banner.show('Épave !', 'Le véhicule a lâché'); banner.hideAfter(1.8); }
@@ -347,6 +352,8 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
       weaponHud.update(slots());
       itemHud.update(game.items);
       tourneeHud.update((id) => game.tournees.left(id));
+      const sj = game.saiyan;
+      saiyanHud.update(game.phase === 'run' && sj.enabled, sj.points, sj.reached, sj.tier, sj.left);
       const car = game.vehicles.driving;
       if (car) vehicleHud.update(car.hp / car.maxHp, car.left / car.duration, car.left);
       const boss = game.boss;

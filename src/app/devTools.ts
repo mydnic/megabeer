@@ -1,4 +1,5 @@
 import { ITEMS, type ItemId } from '../config/items';
+import { SAIYAN } from '../config/saiyan';
 import { VEHICLES, type VehicleId } from '../config/vehicles';
 import * as THREE from 'three';
 import { DIFFICULTIES, type DifficultyId } from '../config/spawn';
@@ -116,6 +117,12 @@ export async function wireDevTools(game: Game, d: {
     placeVehicle(id) {
       if (!inRun() || game.vehicles.driving) return;
       if (game.vehicles.spawnNear(game.player.pos, id as VehicleId, 5, 7)) runLog.event('dev', 'vehicle', id);
+    },
+    fillSaiyan(tier) {
+      if (!inRun() || game.saiyan.active) return;
+      if (!game.saiyan.enabled) game.gainItem('sangSaiyan');
+      game.saiyan.points = SAIYAN.thresholds[Math.max(1, Math.min(6, tier)) - 1];
+      runLog.event('dev', 'saiyan', tier);
     },
     dropBell() {
       if (!inRun()) return;

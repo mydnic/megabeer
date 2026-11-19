@@ -29,6 +29,8 @@ export interface DevApi {
   /** Véhicules qu'on peut faire apparaître, et en garer un à quelques mètres du joueur. */
   vehicles: readonly string[];
   placeVehicle(id: string): void;
+  /** Super Saiyan : donne le Sang Saiyan si besoin, et remplit la jauge jusqu'au palier choisi (1 à 6). */
+  fillSaiyan(tier: number): void;
   /** Fait venir le boss tout de suite. */
   spawnBoss(): void;
   /** Fait venir le boss final (l'Abbé) devant le joueur. */
@@ -84,6 +86,7 @@ export function createDevPanel(api: DevApi) {
       <br><button data-a="bin">Poubelle devant</button> <button data-a="trap">Coffre piégé devant</button>
       <br><button data-a="bell">Clochette devant</button> <button data-a="boss">Boss maintenant</button> <button data-a="abbe">Abbé maintenant</button> <button data-a="door">Aller à la porte</button> <button data-a="closing">Fermeture maintenant</button> <button data-a="elite">Élite devant (modèle ci-dessus)</button>
       <br>véhicule <select data-k="vehicle">${api.vehicles.map((v) => `<option>${v}</option>`).join('')}</select> <button data-a="vehicle">Garer à côté</button>
+      <br>colère palier <select data-k="ssj"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option selected>6</option></select> <button data-a="ssj">Remplir la jauge</button>
       <br><select data-k="tournee">${api.tournees.map((w) => `<option>${w}</option>`).join('')}</select> <button data-a="tournee">Tournée devant</button>
       <br><button data-a="heal">Soigner</button> <button data-a="die">Mourir</button>
     </fieldset>
@@ -109,6 +112,7 @@ export function createDevPanel(api: DevApi) {
     trap: () => api.placeTrap(),
     bell: () => api.dropBell(),
     vehicle: () => api.placeVehicle(q<HTMLSelectElement>('vehicle').value),
+    ssj: () => api.fillSaiyan(num('ssj')),
     boss: () => api.spawnBoss(),
     abbe: () => api.spawnAbbe(),
     door: () => api.goToDoor(),

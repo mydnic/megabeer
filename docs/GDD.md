@@ -90,7 +90,7 @@ Sur la planète, la caméra est calculée dans le repère local du joueur (le "h
 
 ### Touche de transformation [DÉCIDÉ]
 
-Une touche dédiée déclenche la transformation Super Saiyan (section 10). Touche exacte à définir (proposition : E / bouton Y).
+Une touche dédiée déclenche la transformation Super Saiyan (section 10) : **F, bouton Y de la manette**, bouton Saiyan sur l'écran tactile (choix de l'utilisateur le 2026-11-18).
 
 ---
 
@@ -1118,6 +1118,13 @@ L'ordre après l'étape 7 est indicatif : il se rediscute à chaque feature vali
   qui part dès qu'un zombie est à portée, chargé par l'XP ramassée depuis le dernier rot ; Plateau qui bloque tout
   coup (contact, bouteille, piège), un par plateau, puis se recharge 7 s ; Weizen en nuage posé à hauteur de tête.
 - Restent à faire : équilibrage des chiffres.
+
+### Tranché le 2026-11-18 (Super Saiyan, issue #7)
+
+- Touche de transformation : F, Y à la manette (E et X servent déjà aux coffres, cloches et porte).
+- Le Sang Saiyan ne s'achète pas : le succès « Tenir l'alcool » (survivre 5 min) le débloque, puis il peut sortir des
+  coffres légendaires (un seul par run).
+- Checkpoint 1 : jauge, paliers, transformation et bonus, aura de la couleur du palier. Les cheveux viennent ensuite.
 
 ### Tranché le 2026-11-18 (véhicules, issue #8)
 

@@ -14,7 +14,7 @@ export type ItemStatId =
 export type EffectId =
   | 'explodeOnKill' | 'foamShield' | 'happyHour' | 'healOnXp' | 'slowOnHit' | 'freezeChance' | 'closeDamage'
   | 'eliteDamage' | 'crowdBoost' | 'extraShotChance' | 'lowHpDamage' | 'damageSpread' | 'musicWave'
-  | 'standRegen' | 'whistle' | 'revive' | 'freeChest' | 'freeChestChance' | 'doubleJump';
+  | 'standRegen' | 'whistle' | 'revive' | 'freeChest' | 'freeChestChance' | 'doubleJump' | 'saiyan';
 
 export type ItemDef = {
   name: string;
@@ -27,6 +27,8 @@ export type ItemDef = {
   /** Effet spécial et sa valeur (sens dans ITEM_EFFECTS). */
   effect?: EffectId;
   value?: number;
+  /** Un seul exemplaire par run : une fois pris, il ne sort plus des coffres (Sang Saiyan). */
+  unique?: boolean;
 };
 
 /**
@@ -56,6 +58,7 @@ export type ItemDef = {
  *   à `dist` m du joueur.
  * - freeChestChance (Bon de réduction) : chance qu'un coffre soit gratuit (plafond `max`).
  * - doubleJump (Ressort de canapé) : sauts en l'air en plus.
+ * - saiyan (Sang Saiyan) : active la jauge de colère et la transformation (réglages dans config/saiyan.ts).
  */
 export const ITEM_EFFECTS = {
   explodeOnKill: { radius: 3.5, damage: 30, maxChance: 0.5 },
@@ -112,6 +115,7 @@ export const ITEMS = {
   demarche: { name: 'Démarche de pochtron', rarity: 1, stats: { dodge: 0.06 }, text: '+{dodge%} esquive' },
   // --- Autres objets
   ressort: { name: 'Ressort de canapé', rarity: 2, effect: 'doubleJump', value: 1, text: 'Double saut' },
+  sangSaiyan: { name: 'Sang Saiyan', rarity: 4, effect: 'saiyan', value: 1, unique: true, text: 'Jauge de colère : tue et encaisse, puis transforme-toi (F, Y à la manette)' },
   secondeTournee: { name: 'Seconde tournée', rarity: 4, effect: 'revive', value: 0.5, text: 'Revivre une fois avec {v%} des PV' },
   carteFidelite: { name: 'Carte de fidélité', rarity: 2, stats: { chestDiscount: 0.16 }, text: 'Coffres {chestDiscount%} moins chers' },
   happyHour: { name: 'Happy hour', rarity: 4, effect: 'happyHour', value: 16, text: `Toutes les ${E.happyHour.every} s : attaque x${E.happyHour.rate} pendant {v} s` },

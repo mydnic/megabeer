@@ -3,7 +3,7 @@ import { ITEM_EFFECTS as E, type EffectId } from '../config/items';
 const NONE = (): Record<EffectId, number> => ({
   explodeOnKill: 0, foamShield: 0, happyHour: 0, healOnXp: 0, slowOnHit: 0, freezeChance: 0, closeDamage: 0,
   eliteDamage: 0, crowdBoost: 0, extraShotChance: 0, lowHpDamage: 0, damageSpread: 0, musicWave: 0,
-  standRegen: 0, whistle: 0, revive: 0, freeChest: 0, freeChestChance: 0, doubleJump: 0,
+  standRegen: 0, whistle: 0, revive: 0, freeChest: 0, freeChestChance: 0, doubleJump: 0, saiyan: 0,
 });
 
 /**

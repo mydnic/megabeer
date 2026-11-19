@@ -16,6 +16,8 @@ const CSS = `
   background: linear-gradient(#ffd45a, #f5a623 60%, #e08a12); }
 .touch-act { right: calc(122px + env(safe-area-inset-right)); bottom: 22px; width: 60px; height: 60px; font-size: 14px;
   background: linear-gradient(#bff0a8, #8fe07a 60%, #5fb44a); }
+.touch-ssj { right: calc(122px + env(safe-area-inset-right)); bottom: 96px; width: 56px; height: 56px; font-size: 12px;
+  background: linear-gradient(#ffe36a, #ffc93a 60%, #e0a012); }
 .touch-pause { right: calc(12px + env(safe-area-inset-right)); top: 50%; translate: 0 -50%; width: 44px; height: 44px; font-size: 18px; color: #f3e6cf;
   background: rgba(42,22,8,.8); }
 .touch-pause.down { translate: 0 calc(-50% + 3px); }
@@ -42,7 +44,7 @@ export function createTouchControls() {
   const el = document.createElement('div');
   el.className = 'touch off';
   el.innerHTML = `<div class="touch-stick" style="--r:${TOUCH.stickRadius}px"><div class="touch-knob"></div></div>
-    <div class="touch-btn touch-act">Action</div><div class="touch-btn touch-jump">Saut</div><div class="touch-btn touch-pause">II</div>`;
+    <div class="touch-btn touch-act">Action</div><div class="touch-btn touch-ssj">Saiyan</div><div class="touch-btn touch-jump">Saut</div><div class="touch-btn touch-pause">II</div>`;
   document.body.appendChild(el);
   const rotate = document.createElement('div');
   rotate.className = 'touch-rotate';
@@ -56,7 +58,7 @@ export function createTouchControls() {
   function reset() {
     stickId = lookId = -1;
     touch.moveX = touch.moveY = 0;
-    touch.jump = touch.action = false;
+    touch.jump = touch.action = touch.transform = false;
     stick.classList.remove('on');
     for (const b of el.querySelectorAll('.touch-btn')) b.classList.remove('down');
   }
@@ -109,6 +111,7 @@ export function createTouchControls() {
   };
   hold('.touch-jump', (v) => { touch.jump = v; });
   hold('.touch-act', (v) => { touch.action = v; });
+  hold('.touch-ssj', (v) => { touch.transform = v; });
   hold('.touch-pause', (v) => { if (v) touch.pause = true; });
 
   // Premier toucher : plein écran et paysage verrouillé, là où le navigateur le permet (pas sur iPhone)

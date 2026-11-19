@@ -195,6 +195,10 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
     audio.play(I.vehicleCrush.sample, I.vehicleCrush.volume, I.vehicleCrush.rate * jitter(0.1));
   });
   game.events.on('vehicleHit', () => audio.play(I.vehicleHit.sample, I.vehicleHit.volume, I.vehicleHit.rate * jitter(0.08)));
+  game.events.on('saiyanTierReached', () => audio.play(I.saiyanReady.sample, I.saiyanReady.volume, I.saiyanReady.rate));
+  game.events.on('saiyanTransformed', () => { audio.play(I.saiyanTransform.sample, I.saiyanTransform.volume, I.saiyanTransform.rate); audio.whoosh(0.8); });
+  game.events.on('saiyanLightning', () => audio.play(I.saiyanLightning.sample, I.saiyanLightning.volume, I.saiyanLightning.rate * jitter(0.1)));
+  game.events.on('saiyanEnded', () => audio.play(I.saiyanEnd.sample, I.saiyanEnd.volume, I.saiyanEnd.rate));
   game.events.on('tankFired', () => audio.play(I.tankFire.sample, I.tankFire.volume, I.tankFire.rate * jitter(0.06)));
   game.events.on('tankShellExploded', () => audio.play(I.tankBoom.sample, I.tankBoom.volume, I.tankBoom.rate * jitter(0.08)));
   game.events.on('vehicleExited', () => audio.play(I.vehicleOut.sample, I.vehicleOut.volume, I.vehicleOut.rate));

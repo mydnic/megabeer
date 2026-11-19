@@ -22,7 +22,7 @@ export type AchievementDef = { id: string; name: string; text: string; tunas: nu
 
 export const ACHIEVEMENTS: readonly AchievementDef[] = [
   { id: 'premierVerre', name: 'Premier verre', text: 'Terminer une run', tunas: 10, rule: { kind: 'runEnded' } },
-  { id: 'tenirAlcool', name: "Tenir l'alcool", text: 'Survivre 5 min', tunas: 20, rule: { kind: 'survive', seconds: 300 } },
+  { id: 'tenirAlcool', name: "Tenir l'alcool", text: 'Survivre 5 min', tunas: 20, rule: { kind: 'survive', seconds: 300 }, unlocks: ['item:sangSaiyan'] },
   { id: 'fermeture', name: "Jusqu'à la fermeture", text: "Survivre jusqu'à 10:00", tunas: 40, rule: { kind: 'survive', seconds: CLOSING.at } },
   { id: 'defierMort', name: 'Défier la Mort', text: 'Tenir 1 min après la fermeture', tunas: 60, rule: { kind: 'survive', seconds: CLOSING.at + 60 } },
   { id: 'sonne', name: 'Sonné', text: 'Tuer le Frère Sonneur', tunas: 30, rule: { kind: 'boss', boss: 'sonneur' }, unlocks: ['character:videur'] },

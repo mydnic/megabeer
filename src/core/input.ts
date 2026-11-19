@@ -15,6 +15,8 @@ export type InputState = {
   jump: boolean; jumpPressed: boolean;
   /** Touche d'action (E, bouton X de la manette) : ouvrir un coffre. */
   action: boolean; actionPressed: boolean;
+  /** Transformation Super Saiyan (F, bouton Y de la manette), à l'appui. */
+  transform: boolean; transformPressed: boolean;
   /** Bouton Start de la manette, à l'appui : pause (Échap au clavier, géré à part). */
   pausePressed: boolean;
   /** Bouton B de la manette, à l'appui : retour dans les menus. */
@@ -25,12 +27,12 @@ export type InputState = {
 export const isTouchDevice = () => matchMedia('(pointer: coarse)').matches && !matchMedia('(pointer: fine)').matches;
 
 /** Commandes tactiles (ui/touchControls.ts) : joystick virtuel, boutons, glisser pour la caméra. */
-export const touch = { moveX: 0, moveY: 0, jump: false, action: false, pause: false };
+export const touch = { moveX: 0, moveY: 0, jump: false, action: false, pause: false, transform: false };
 /** Glisser du doigt pour tourner la caméra (pixels, comme la souris). */
 export function addTouchLook(dx: number, dy: number) { mouseDX += dx; mouseDY += dy; }
 
 const keys = new Set<string>();
-let mouseDX = 0, mouseDY = 0, wheel = 0, prevJump = false, prevAction = false, prevStart = false, prevBack = false;
+let mouseDX = 0, mouseDY = 0, wheel = 0, prevJump = false, prevAction = false, prevTransform = false, prevStart = false, prevBack = false;
 let canvas: HTMLElement | null = null;
 
 export function initInput(el: HTMLElement) {
@@ -55,16 +57,18 @@ function deadzone(a: number, dz: number) {
 }
 
 export function readInput(): InputState {
-  let mx = 0, my = 0, lx = 0, ly = 0, jump = false, action = false, start = false, back = false;
+  let mx = 0, my = 0, lx = 0, ly = 0, jump = false, action = false, transform = false, start = false, back = false;
   if (keys.has('KeyW') || keys.has('ArrowUp')) my += 1;
   if (keys.has('KeyS') || keys.has('ArrowDown')) my -= 1;
   if (keys.has('KeyD') || keys.has('ArrowRight')) mx += 1;
   if (keys.has('KeyA') || keys.has('ArrowLeft')) mx -= 1;
   if (keys.has('Space')) jump = true;
   if (keys.has('KeyE')) action = true;
+  if (keys.has('KeyF')) transform = true;
   mx += touch.moveX; my += touch.moveY;
   if (touch.jump) jump = true;
   if (touch.action) action = true;
+  if (touch.transform) transform = true;
   if (touch.pause) { start = true; touch.pause = false; }
 
   // Manette ignorée quand la fenêtre n'a pas le focus (le navigateur la lit quand même en arrière-plan)
@@ -85,6 +89,7 @@ export function readInput(): InputState {
     if (gp.buttons[15]?.pressed) mx += 1;
     if (gp.buttons[0]?.pressed) jump = true;
     if (gp.buttons[2]?.pressed) action = true;
+    if (gp.buttons[3]?.pressed) transform = true;
     if (gp.buttons[9]?.pressed) start = true;
     if (gp.buttons[1]?.pressed) back = true;
     break; // une seule manette (jeu solo)
@@ -97,6 +102,7 @@ export function readInput(): InputState {
     mouseDX, mouseDY, zoom: wheel,
     jump, jumpPressed: jump && !prevJump,
     action, actionPressed: action && !prevAction,
+    transform, transformPressed: transform && !prevTransform,
     pausePressed: start && !prevStart,
     backPressed: back && !prevBack,
   };
@@ -104,6 +110,7 @@ export function readInput(): InputState {
   prevBack = back;
   prevJump = jump;
   prevAction = action;
+  prevTransform = transform;
   mouseDX = mouseDY = wheel = 0;
   return state;
 }
