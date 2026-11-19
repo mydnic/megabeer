@@ -48,6 +48,8 @@
   `vehicules/tank.glb` : « Tank » par Quaternius ; fournis par l'utilisateur (fichiers Poly Pizza), non modifiés
   (orientation et taille réglées dans `src/config/vehicles.ts`).
 
+- `gandalf.glb` : « Wizard » (archive Wizard.zip fournie par l'utilisateur, auteur à confirmer), préparé par
+  `tools/blender/gandalf.py`.
 - `sabre.glb` : « Light saber » par April Lewer (fichier Poly Pizza fourni par l'utilisateur), redressé par
   `tools/blender/sabre.py`.
 - `cheveux_ssj.glb` et `cheveux_ssj3.glb` : les coiffures de Goku tirées de « dbxv2_goku_damaged2_ssj.glb » et

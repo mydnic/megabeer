@@ -372,6 +372,15 @@ export function wireEffects(game: Game, d: Deps) {
     pipeline.fade.amount = 0;
   });
 
+  // Allié : Gandalf frappe le sol de son bâton, une onde grise part, la poussière de pierre retombe sur les pétrifiés
+  game.events.on('allyPower', ({ pos, radius }) => {
+    d.rings.spawn(pos, radius, 0xc8c2b4);
+    vfx.dust(pos, 10, 0.8, radius * 0.6);
+    up.copy(pos).normalize();
+    vfx.pop(numPos.copy(pos).addScaledVector(up, 1.8), 0xffffff, 2);
+    const k = 1 - pos.distanceTo(game.player.pos) / 25;
+    if (k > 0) rig.shake(HIT_FEEDBACK.shake * 0.5 * k, HIT_FEEDBACK.shakeAmplitude, HIT_FEEDBACK.shakeDecay);
+  });
   // Senzu : éclat vert et onde au sol, le perso est guéri d'un coup
   game.events.on('senzuEaten', () => {
     up.copy(game.player.pos).normalize();

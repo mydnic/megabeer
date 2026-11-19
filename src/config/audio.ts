@@ -112,6 +112,8 @@ export const AUDIO = {
     tankFire: { sample: 'impactPlate_heavy', volume: 0.6, rate: 0.55 },
     radioHit: { sample: 'impactPlate_light', volume: 0.35, rate: 1.2 },
     radioBroken: { sample: 'impactGlass_heavy', volume: 0.7, rate: 0.8 },
+    allyJoin: { sample: 'impactBell_heavy', volume: 0.5, rate: 1.3 },
+    allyStaff: { sample: 'impactMining', volume: 0.7, rate: 0.6 },
     senzu: { sample: 'impactBell_heavy', volume: 0.55, rate: 1.9 },
     saiyanReady: { sample: 'impactBell_heavy', volume: 0.45, rate: 1.6 },
     /** Son d'aura, en boucle pendant toute la transformation ; `fade` : fondu à la fin (s). */

@@ -55,6 +55,8 @@ import { SpawnDirector, spawnCurveAt } from './spawnDirector';
 import { Vehicles, type ParkedVehicle } from './vehicles';
 import { Saiyan } from './saiyan';
 import { Radio } from './radio';
+import { Allies, type Ally } from './allies';
+import { ALLIES, type AllyId } from '../config/allies';
 import { RADIO } from '../config/radio';
 import type { PerkId } from '../config/skills';
 import { SAIYAN } from '../config/saiyan';
@@ -182,6 +184,12 @@ export type GameEvents = {
   vehicleCrushed: { zombie: Zombie; pos: THREE.Vector3; killed: boolean; speed: number };
   /** Le véhicule encaisse un coup à la place du joueur. */
   vehicleHit: { damage: number; hp: number; maxHp: number };
+  /** Un allié rejoint le joueur (il le suivra `time` s). */
+  allyJoined: { kind: AllyId; time: number };
+  /** Un allié use de son pouvoir, autour de `pos` (rayon `radius`) ; `targets` : les ennemis touchés. */
+  allyPower: { kind: AllyId; pos: THREE.Vector3; radius: number; targets: number };
+  /** Un allié s'en va (fin de sa compagnie). */
+  allyLeft: { kind: AllyId };
   /** La radio est allumée : elle joue et attire la horde. */
   radioOn: { pos: THREE.Vector3 };
   /** Un ennemi frappe la radio ; `hp` : ce qui lui reste. */
@@ -283,6 +291,8 @@ export class Game {
   /** Pompes à bière de la run (exploration). */
   readonly pumps: Pumps;
   readonly chests: Chests;
+  /** Les alliés des abbayes (issue #18). */
+  readonly allies: Allies;
   /** La radio planquée (issue #16). */
   readonly radio: Radio;
   /** Jauge de colère et transformation Super Saiyan (objet Sang Saiyan). */
@@ -404,6 +414,7 @@ export class Game {
     this.chests = new Chests(deps.collider);
     this.vehicles = new Vehicles(deps.collider, () => this.random());
     this.radio = new Radio(deps.collider, () => this.random());
+    this.allies = new Allies(deps.collider);
     this.door = new PatronDoor(deps.collider);
     this.closing = new Closing({
       playerPos: () => this.player.pos,
@@ -531,6 +542,8 @@ export class Game {
     if (parked) this.events.emit('vehicleSpawned', { vehicle: parked });
     // La radio planquée : loin de l'arrivée, à l'écart du reste
     this.radio.place(spawn.dir, [...this.chests.list.map((c) => c.pos), ...this.pumps.list.map((q) => q.pos), ...this.lastCall.list.map((b) => b.pos), ...(parked ? [parked.pos] : [])]);
+    // Les alliés : un par abbaye, sauf celle de l'arrivée
+    this.allies.place(spawn.dir);
     this.bins.place(spawn.dir, [...this.chests.list.map((c) => c.pos), ...this.lastCall.list.map((b) => b.pos)], this.pumps.list.map((p) => p.pos), this.binCount);
     const landing = this.player.pos.clone();
     this.player.drop(ARRIVAL.height, ARRIVAL.speed);
@@ -677,6 +690,12 @@ export class Game {
         // Super Saiyan : à la touche, il se transforme au plus haut palier atteint
         if (input.transformPressed && !this.offer) this.transformSaiyan();
         this.updateSaiyan(dt);
+        // Alliés : ceux qu'on touche rejoignent le joueur, le suivent et usent de leur pouvoir
+        this.allies.update(dt, p.pos, p.facing, p.speed, {
+          join: (a) => this.events.emit('allyJoined', { kind: a.kind, time: a.left }),
+          power: (a) => this.allyPower(a),
+          leave: (a) => this.events.emit('allyLeft', { kind: a.kind }),
+        });
         // Radio planquée : à portée, la touche d'action l'allume
         this.radio.update(p.pos);
         if (input.actionPressed && this.radio.focus && !this.chests.focus && !this.offer) this.turnRadioOn();
@@ -1396,6 +1415,20 @@ export class Game {
   }
 
   /** Atterrissage : la première horde sort de terre autour du joueur. */
+  /** Le pouvoir d'un allié. Gandalf : il pétrifie les ennemis autour de lui (pas les boss). */
+  private allyPower(a: Ally) {
+    const P = ALLIES[a.kind].power;
+    let n = 0;
+    if (P.kind === 'petrify') {
+      for (const o of this.horde.near(a.pos, P.radius, this.around)) {
+        if (!o.targetable || o.dead || o.def.boss || o.pos.distanceTo(a.pos) > P.radius) continue;
+        o.frozen = Math.max(o.frozen, P.duration);
+        n++;
+      }
+    }
+    this.events.emit('allyPower', { kind: a.kind, pos: a.pos.clone(), radius: P.radius, targets: n });
+  }
+
   /** La radio s'allume : elle devient le leurre de la horde. */
   private turnRadioOn() {
     if (!this.radio.turnOn() || !this.radio.pos) return;
@@ -1584,6 +1617,7 @@ export class Game {
   private resetRun() {
     this.exitVehicle('end');
     this.radio.clear();
+    this.allies.clear();
     this.horde.setDecoy(null);
     this.saiyan.reset();
     this.vehicles.clear();

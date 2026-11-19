@@ -33,6 +33,9 @@ export interface DevApi {
   fillSaiyan(tier: number): void;
   /** Pose la radio planquée à côté du joueur. */
   placeRadio(): void;
+  /** Alliés qu'on peut poser, et en poser un à côté du joueur (il attend qu'on le touche). */
+  allies: readonly string[];
+  placeAlly(id: string): void;
   /** Fait venir le boss tout de suite. */
   spawnBoss(): void;
   /** Fait venir le boss final (l'Abbé) devant le joueur. */
@@ -89,6 +92,7 @@ export function createDevPanel(api: DevApi) {
       <br><button data-a="bell">Clochette devant</button> <button data-a="boss">Boss maintenant</button> <button data-a="abbe">Abbé maintenant</button> <button data-a="door">Aller à la porte</button> <button data-a="closing">Fermeture maintenant</button> <button data-a="elite">Élite devant (modèle ci-dessus)</button>
       <br>véhicule <select data-k="vehicle">${api.vehicles.map((v) => `<option>${v}</option>`).join('')}</select> <button data-a="vehicle">Garer à côté</button>
       <br>colère palier <select data-k="ssj"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option selected>6</option></select> <button data-a="ssj">Remplir la jauge</button> <button data-a="radio">Radio à côté</button>
+      <br>allié <select data-k="ally">${api.allies.map((a) => `<option>${a}</option>`).join('')}</select> <button data-a="ally">Allié à côté</button>
       <br><select data-k="tournee">${api.tournees.map((w) => `<option>${w}</option>`).join('')}</select> <button data-a="tournee">Tournée devant</button>
       <br><button data-a="heal">Soigner</button> <button data-a="die">Mourir</button>
     </fieldset>
@@ -116,6 +120,7 @@ export function createDevPanel(api: DevApi) {
     vehicle: () => api.placeVehicle(q<HTMLSelectElement>('vehicle').value),
     ssj: () => api.fillSaiyan(num('ssj')),
     radio: () => api.placeRadio(),
+    ally: () => api.placeAlly(q<HTMLSelectElement>('ally').value),
     boss: () => api.spawnBoss(),
     abbe: () => api.spawnAbbe(),
     door: () => api.goToDoor(),

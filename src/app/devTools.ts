@@ -1,4 +1,5 @@
 import { ITEMS, type ItemId } from '../config/items';
+import { ALLIES, type AllyId } from '../config/allies';
 import { SAIYAN } from '../config/saiyan';
 import { VEHICLES, type VehicleId } from '../config/vehicles';
 import * as THREE from 'three';
@@ -117,6 +118,14 @@ export async function wireDevTools(game: Game, d: {
     placeVehicle(id) {
       if (!inRun() || game.vehicles.driving) return;
       if (game.vehicles.spawnNear(game.player.pos, id as VehicleId, 5, 7)) runLog.event('dev', 'vehicle', id);
+    },
+    allies: Object.keys(ALLIES),
+    placeAlly(id) {
+      if (!inRun()) return;
+      const p = game.player, up = p.pos.clone().normalize();
+      game.allies.list.splice(0, game.allies.list.length, ...game.allies.list.filter((a) => a.kind !== id));
+      game.allies.placeAt(id as AllyId, up.multiplyScalar(p.pos.length()).addScaledVector(p.facing, 4));
+      runLog.event('dev', 'ally', id);
     },
     placeRadio() {
       if (!inRun()) return;

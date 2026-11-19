@@ -1,4 +1,5 @@
 import { PUMP_TIERS } from '../config/pumps';
+import { ALLIES } from '../config/allies';
 import { SYNERGIES } from '../config/weapons';
 import { SYNERGY_BANNER } from '../config/hud';
 import { AUDIO } from '../config/audio';
@@ -270,6 +271,16 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   game.events.on('doorBusy', () => { banner.show('Pas maintenant', PATRON_DOOR.busy); banner.hideAfter(1.8); });
   game.events.on('doorOpened', () => { banner.show('Le patron arrive...', 'La porte s\'ouvre'); banner.pulse(); banner.hideAfter(2); });
   game.events.on('vehicleEntered', ({ kind }) => vehicleHud.show(VEHICLES[kind].name));
+  game.events.on('allyJoined', ({ kind }) => { banner.show(`${ALLIES[kind].name} te rejoint !`, 'Il te suit une minute'); banner.pulse(); banner.hideAfter(2.2); });
+  game.events.on('allyLeft', ({ kind }) => { banner.show(`${ALLIES[kind].name} s'en va`, ''); banner.hideAfter(1.6); });
+  // Son cri, au premier usage de son pouvoir (pas à chaque fois)
+  const shouted = new Set<string>();
+  game.events.on('runStarted', () => shouted.clear());
+  game.events.on('allyPower', ({ kind }) => {
+    if (shouted.has(kind)) return;
+    shouted.add(kind);
+    banner.show(ALLIES[kind].shout, ''); banner.pulse(); banner.hideAfter(1.8);
+  });
   game.events.on('radioOn', () => { banner.show('Radio mydnic !', 'Toute la horde rapplique sur la radio'); banner.pulse(); banner.hideAfter(2.5); });
   game.events.on('radioBroken', () => { banner.show('La radio est cassée', 'La horde revient vers toi'); banner.hideAfter(2); });
   game.events.on('saiyanTierReached', ({ name }) => { banner.show(`${name} prêt !`, touchScreen() ? 'Bouton Saiyan pour te transformer' : 'F (Y à la manette) pour te transformer'); banner.hideAfter(2.2); });

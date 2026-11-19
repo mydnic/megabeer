@@ -17,6 +17,7 @@ import { createRangeRingView } from './fx/rangeRingView';
 import { createVehiclesView } from './world/vehiclesView';
 import { createAuraView } from './fx/auraView';
 import { createRadioView } from './world/radioView';
+import { createAlliesView } from './world/alliesView';
 import { createHairView } from './fx/hairView';
 import { createAfterimageView } from './fx/afterimageView';
 import { createEnemyShotsView } from './enemies/enemyShotsView';
@@ -137,6 +138,7 @@ const loading = {
   binsView: boot(createBinsView(scene)),
   vehiclesView: boot(createVehiclesView(scene, (p, feetR) => game.player.supportAt(p, feetR))),
   hairView: boot(createHairView(scene)),
+  alliesView: boot(createAlliesView(scene)),
   lastCallView: boot(createLastCallView(scene)),
   sonneurView: boot(createBossView(scene, { kind: 'sonneur', url: sonneurUrl, height: FRERE_SONNEUR.height, walkSpeed: FRERE_SONNEUR.speed })),
   abbeView: boot(createBossView(scene, { kind: 'abbe', url: abbeUrl, height: ABBE.height, walkSpeed: ABBE.speed })),
@@ -194,6 +196,8 @@ const bottleViews = Object.fromEntries(await loading.weaponViews) as Partial<Rec
 const enemyShotsView = await loading.enemyShotsView;
 const vehiclesView = await loading.vehiclesView;
 const hairView = await loading.hairView;
+const alliesView = await loading.alliesView;
+game.events.on('allyPower', ({ kind }) => alliesView.power(kind));
 const groundAt = (p: THREE.Vector3) => game.player.supportAt(p, p.length());
 const shards = createShards(scene, groundAt);
 const wine = createShards(scene, groundAt, WINE_BURST);
@@ -307,6 +311,7 @@ function frame(now: number) {
   buveur.root.visible = !game.vehicles.driving;
   vehiclesView.sync(game.vehicles, player, dt, game.phase === 'run');
   radioView.sync(game.radio, game.phase === 'run', dt);
+  alliesView.sync(game.allies, game.phase === 'run', dt);
   auraView.sync(game.phase === 'run' ? game.saiyan.current?.aura ?? null : null, player.renderPos, camera, dt);
   hairView.sync(game.phase === 'run' ? game.saiyan.current : null, buveur.head, buveur.root.visible, dt);
   afterimages.update(dt, player.renderPos, player.renderFacing);
