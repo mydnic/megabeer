@@ -201,12 +201,6 @@ export type GameEvents = {
   whistleBlown: { at: THREE.Vector3; radius: number };
   /** Juke-box (niveau gagné) ou Seconde tournée : une onde repousse les ennemis autour de `at`. */
   shockwave: { at: THREE.Vector3; radius: number };
-  /** Un objet à usage unique (Senzu, Seconde tournée) vient de servir : un exemplaire quitte les objets du joueur. */
-  private useUp(item: ItemId) {
-    const i = this.items.findIndex((it) => it.item === item);
-    if (i >= 0) this.items.splice(i, 1);
-  }
-
   /** Seconde tournée : le joueur revient à la vie avec `hp` PV. */
   revived: { hp: number };
   /** Bonnet du Père Noël : un coffre gratuit apparaît. */
@@ -1109,6 +1103,12 @@ export class Game {
       if (damage > 0) this.hitZombie(o, damage, false, o.pos, dir, null, knock);
       else o.damage(0, dir, knock);
     }
+  }
+
+  /** Un objet à usage unique (Senzu, Seconde tournée) vient de servir : un exemplaire quitte les objets du joueur. */
+  private useUp(item: ItemId) {
+    const i = this.items.findIndex((it) => it.item === item);
+    if (i >= 0) this.items.splice(i, 1);
   }
 
   /** Seconde tournée : le joueur revient avec une part de ses PV, invulnérable un instant, l'onde repousse. */
