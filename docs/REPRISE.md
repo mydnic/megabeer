@@ -209,7 +209,7 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    bas de l'écran ; DEV « Garer à côté ». **Checkpoint 2 fait le 2026-11-18, à valider** : le bus scolaire (Rare, 20 s, 180
    PV, lent, large : il écrase sur 3,2 m) et le tank (Légendaire, 25 s, 400 PV, très lent, tourne sur place, canon qui
    tire un obus explosif toutes les 1,4 s sur l'ennemi le plus proche à 24 m ; tourelle qui vise, chenilles animées) ;
-   tirés au poids de leur rareté (DeLorean le plus souvent, tank rarement). **Checkpoint 3 fait le 2026-11-18, à valider** : succès « Permis à points » (100 zombies tués écrasés dans une run, 30 TUNAS) et moteur synthétisé (`audio/vehicleEngine.ts`, deux dents de scie filtrées, régime qui suit la vitesse, réglages `AUDIO.engine`)), #7 (Super Saiyan : **checkpoint 1 fait le 2026-11-18, à valider** : objet Sang Saiyan (Légendaire, unique,
+   tirés au poids de leur rareté (DeLorean le plus souvent, tank rarement). **Checkpoint 3 fait le 2026-11-18, à valider** : succès « Permis à points » (100 zombies tués écrasés dans une run, 30 TUNAS) et moteur synthétisé (`audio/vehicleEngine.ts`, deux dents de scie filtrées, régime qui suit la vitesse, réglages `AUDIO.engine`)), #7 (Super Saiyan : **fait et validé par l'utilisateur le 2026-11-19** : objet Sang Saiyan (Légendaire, unique,
    débloqué par le succès « Tenir l'alcool »), jauge de colère (kills, élites, boss, PV perdus ; 6 paliers x3), touche F
    (Y à la manette, bouton Saiyan au tactile, choix de l'utilisateur), transformation 60 s au plus haut palier avec ses
    bonus (`game/saiyan.ts`, `config/saiyan.ts`), Kaioken qui brûle les PV sans tuer, éclairs du SSJ2, Ultra Instinct qui
