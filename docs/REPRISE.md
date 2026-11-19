@@ -220,8 +220,9 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    SSJ3 de deux modèles de Goku fournis, `fx/hairView.ts` les pose sur l'os de la tête de chaque perso (taille et centre
    de la tête relevés au chargement, `HeadAnchor` dans `buveurVisual.ts`), teintes selon le palier (doré, noir en SSJ4,
    argent en Ultra Instinct). Vérifié en jeu avec `?minuterie` (la boucle tourne même panneau masqué). Son d'aura `saiyan_aura.mp3` (fourni) en boucle pendant toute la
-   transformation. Ultra Instinct : à chaque esquive, deux images rémanentes bleutées du perso (`fx/afterimageView.ts`,
-   copies figées dans sa pose qui glissent et s'effacent). Reste : des effets propres aux autres paliers), #5 (Trilogie LOTR), #14 (braindump : radio,
+   transformation. Ultra Instinct : à chaque esquive, le perso « vibre » (`fx/afterimageView.ts` : 4 copies bleutées collées à lui, dans sa pose de chaque image, qui
+   tremblent très vite de chaque côté pendant 0,35 s, et le perso lui-même tremble un peu ; retour de l'utilisateur :
+   des copies figées plus loin ne se voyaient pas). Reste : des effets propres aux autres paliers), #5 (Trilogie LOTR), #14 (braindump : radio,
    alliés, boss et objets de pop culture ; l'utilisateur veut ses références telles quelles, sans remarque de droits).
    **Roster des persos arrêté le 2026-11-18 (décision de l'utilisateur) : 8 persos** (Buveur, Videur, Père Noël, Cop,
    Futur Marié, Barman, Serveuse, Pilier de bar). Le Moine brasseur et le Supporter restent au GDD pour plus tard.

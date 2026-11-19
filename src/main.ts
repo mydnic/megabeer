@@ -179,9 +179,10 @@ const ringViews = (Object.keys(WEAPON_FX) as WeaponId[]).filter((id) => WEAPON_F
 // Aura du Super Saiyan, de la couleur du palier ; images rémanentes de l'Ultra Instinct à chaque esquive
 const auraView = createAuraView(scene);
 const afterimages = createAfterimageView(scene);
+const shakeOff = new THREE.Vector3();
 game.events.on('playerDodged', ({ instinct }) => {
   const T = game.saiyan.current, model = buveur.model;
-  if (instinct && T && model) afterimages.spawn(model, game.player.renderPos, game.player.renderFacing, T.aura);
+  if (instinct && T && model) afterimages.spawn(model, T.aura);
 });
 // Ancrage du Pilier de bar : un rond doré sous ses pieds, d'autant plus net qu'il est accoudé depuis longtemps
 const anchorRing = createRangeRingView(scene, ANCHOR_RING, (p, feetR) => game.player.supportAt(p, feetR));
@@ -298,12 +299,14 @@ function frame(now: number) {
 
   const player = game.player;
   buveur.update(dt, player);
+  // Ultra Instinct : le perso vibre un instant à chaque esquive
+  buveur.root.position.add(afterimages.shake(shakeOff));
   // Au volant, le perso disparaît dans le véhicule
   buveur.root.visible = !game.vehicles.driving;
   vehiclesView.sync(game.vehicles, player, dt, game.phase === 'run');
   auraView.sync(game.phase === 'run' ? game.saiyan.current?.aura ?? null : null, player.renderPos, camera, dt);
   hairView.sync(game.phase === 'run' ? game.saiyan.current : null, buveur.head, buveur.root.visible, dt);
-  afterimages.update(dt);
+  afterimages.update(dt, player.renderPos, player.renderFacing);
   hordeView.sync(game.horde.zombies, camera);
   xpView.sync(game.xp.drops);
   coinView.sync(game.coinDrops.drops);

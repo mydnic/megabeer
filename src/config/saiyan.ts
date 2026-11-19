@@ -51,8 +51,10 @@ export const SAIYAN_LOOK = {
   /** Cheveux : taille (x la hauteur de la tête du perso), remontée au-dessus du centre de la tête (même unité), pousse (s). */
   hair: { scale: 1.15, lift: 0.18, growTime: 0.35 },
   /**
-   * Images rémanentes (Ultra Instinct, à chaque esquive) : copies de part et d'autre du perso, écart sur le côté et recul
-   * (m), glissement vers l'extérieur (m/s), opacité au départ, durée (s), part de leur teinte (`color`, bleu argenté de l'Ultra Instinct) dans leurs couleurs.
+   * Images rémanentes (Ultra Instinct, à chaque esquive) : le perso « vibre ». Nombre de copies (moitié de chaque côté,
+   * sur deux rangs), écart sur le côté du premier rang (m, tiré au hasard à chaque image), tremblement avant-arrière (m),
+   * opacité, durée (s), part de leur teinte (`color`, bleu argenté de l'Ultra Instinct) dans leurs couleurs ; le perso
+   * lui-même tremble aussi, d'au plus `selfJitter` m sur le côté.
    */
-  afterimage: { count: 2, offset: 1.4, back: 0.2, drift: 1.4, opacity: 0.7, life: 0.55, tint: 0.5, color: 0x7fa6ff },
+  afterimage: { count: 4, offset: 0.42, jitter: 0.18, opacity: 0.85, life: 0.35, tint: 0.55, color: 0x7fa6ff, selfJitter: 0.09 },
 } as const;
