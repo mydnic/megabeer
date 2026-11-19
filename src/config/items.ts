@@ -7,7 +7,7 @@
 /** Stats du joueur qu'un objet peut monter (champs de PlayerStats, sauf maxHp : les PV max). */
 export type ItemStatId =
   | 'damage' | 'attackSpeed' | 'maxHp' | 'moveSpeed' | 'pickupRange' | 'xpGain' | 'luck' | 'extraProjectiles'
-  | 'critChance' | 'critDamage' | 'size' | 'duration' | 'zoneDuration' | 'regen' | 'armor' | 'dodge' | 'knockback' | 'lifeSteal'
+  | 'critChance' | 'critDamage' | 'size' | 'duration' | 'regen' | 'armor' | 'dodge' | 'knockback' | 'lifeSteal'
   | 'coinGain' | 'pumpSpeed' | 'chestDiscount' | 'jumpHeight';
 
 /** Effets spéciaux (un déclencheur et un effet), réglés dans ITEM_EFFECTS. */
@@ -115,10 +115,10 @@ export const ITEMS = {
   demarche: { name: 'Démarche de pochtron', rarity: 1, stats: { dodge: 0.06 }, text: '+{dodge%} esquive' },
   // --- Autres objets
   ressort: { name: 'Ressort de canapé', rarity: 2, effect: 'doubleJump', value: 1, text: 'Double saut' },
-  // La Trilogie du Seigneur des Anneaux (issue #5) : les zones au sol durent bien plus longtemps. Deux éditions, chacune
-  // unique et débloquée par un succès (la version cinéma en Rare, la version longue en Légendaire)
-  trilogieCinema: { name: 'Trilogie du Seigneur des Anneaux (cinéma)', rarity: 2, unique: true, stats: { zoneDuration: 2.5 }, text: '+{zoneDuration%} durée des zones au sol (flaques, nuages)' },
-  trilogieLongue: { name: 'Trilogie du Seigneur des Anneaux (version longue)', rarity: 4, unique: true, stats: { zoneDuration: 3.5 }, text: '+{zoneDuration%} durée des zones au sol (flaques, nuages)' },
+  // La Trilogie du Seigneur des Anneaux (issue #5) : tous les effets durent bien plus longtemps (la stat Durée : zones au
+  // sol, gels, étourdissements, ralentis). Deux éditions, chacune unique et débloquée par un succès
+  trilogieCinema: { name: 'Trilogie du Seigneur des Anneaux (cinéma)', rarity: 2, unique: true, stats: { duration: 2.5 }, text: '+{duration%} durée des effets' },
+  trilogieLongue: { name: 'Trilogie du Seigneur des Anneaux (version longue)', rarity: 4, unique: true, stats: { duration: 3.5 }, text: '+{duration%} durée des effets' },
   sangSaiyan: { name: 'Sang Saiyan', rarity: 4, effect: 'saiyan', value: 1, unique: true, text: 'Jauge de colère : tue et encaisse, puis transforme-toi (F, Y à la manette)' },
   secondeTournee: { name: 'Seconde tournée', rarity: 4, effect: 'revive', value: 0.5, text: 'Revivre une fois avec {v%} des PV' },
   carteFidelite: { name: 'Carte de fidélité', rarity: 2, stats: { chestDiscount: 0.16 }, text: 'Coffres {chestDiscount%} moins chers' },

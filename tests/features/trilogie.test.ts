@@ -26,11 +26,11 @@ function puddleLife(item?: 'trilogieCinema' | 'trilogieLongue') {
 }
 
 describe('La Trilogie du Seigneur des Anneaux', () => {
-  it('les zones au sol durent bien plus longtemps : x3,5 en version cinéma, x4,5 en version longue', () => {
+  it('les effets durent bien plus longtemps (stat Durée) : les flaques x3,5 en version cinéma, x4,5 en version longue', () => {
     const base = puddleLife();
     expect(base).toBeCloseTo(F.life, 3);
-    expect(puddleLife('trilogieCinema') / base).toBeCloseTo(1 + ITEMS.trilogieCinema.stats.zoneDuration, 3);
-    expect(puddleLife('trilogieLongue') / base).toBeCloseTo(1 + ITEMS.trilogieLongue.stats.zoneDuration, 3);
+    expect(puddleLife('trilogieCinema') / base).toBeCloseTo(1 + ITEMS.trilogieCinema.stats.duration, 3);
+    expect(puddleLife('trilogieLongue') / base).toBeCloseTo(1 + ITEMS.trilogieLongue.stats.duration, 3);
   });
 
   it('une flaque de la version longue tient encore quand les autres ont séché', () => {
@@ -40,9 +40,9 @@ describe('La Trilogie du Seigneur des Anneaux', () => {
     expect((w.zones ?? []).some((z) => z.active)).toBe(true);
   });
 
-  it('seules les zones s allongent : la durée des autres effets (étourdissements, gels) ne bouge pas', () => {
+  it('elle monte la stat Durée elle-même : étourdissements et gels durent aussi plus longtemps', () => {
     const { t } = arena('trilogieLongue');
-    expect(t.game.stats.duration).toBe(1);
+    expect(t.game.stats.duration).toBeCloseTo(1 + ITEMS.trilogieLongue.stats.duration);
   });
 
   it('deux éditions uniques : la version cinéma en Rare, la version longue en Légendaire', () => {

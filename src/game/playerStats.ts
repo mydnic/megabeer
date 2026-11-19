@@ -36,8 +36,6 @@ export class PlayerStats {
   size!: number;
   /** Durée des effets (gel, ralenti, étourdissement, happy hour, sonné). */
   duration!: number;
-  /** Durée des zones au sol : flaques, nuages (x1 au départ ; la Trilogie du Seigneur des Anneaux, issue #5). */
-  zoneDuration!: number;
   /** PV rendus par seconde. */
   regen!: number;
   /** PV retirés de chaque coup reçu. */
@@ -77,7 +75,6 @@ export class PlayerStats {
     this.critDamage = 0;
     this.size = 1;
     this.duration = 1;
-    this.zoneDuration = 1;
     this.regen = 0;
     this.armor = 0;
     this.dodge = 0;
@@ -117,7 +114,6 @@ export class PlayerStats {
       ['Dégâts critiques', this.critDamage, 'number', this.critDamage],
       ['Taille', this.size, 'mult', this.size - 1],
       ['Durée', this.duration, 'mult', this.duration - 1],
-      ['Durée des zones', this.zoneDuration, 'mult', this.zoneDuration - 1],
       ['Régénération', this.regen, 'perSecond', this.regen],
       ['Armure', this.armor, 'number', this.armor],
       ['Esquive', this.dodgeChance, 'percent', this.dodgeChance],

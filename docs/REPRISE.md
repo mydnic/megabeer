@@ -223,8 +223,8 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    transformation. Ultra Instinct : à chaque esquive, le perso « vibre » (`fx/afterimageView.ts` : 4 copies bleutées collées à lui, dans sa pose de chaque image, qui
    tremblent très vite de chaque côté pendant 0,35 s, et le perso lui-même tremble un peu ; retour de l'utilisateur :
    des copies figées plus loin ne se voyaient pas). Reste : des effets propres aux autres paliers), #5 (Trilogie du Seigneur des Anneaux : **faite le 2026-11-19, à valider** : deux objets uniques, version cinéma
-   Rare +250 % et version longue Légendaire +350 % de durée des zones au sol, nouvelle stat `zoneDuration` (flaques,
-   nuages) pour ne pas allonger les étourdissements ; débloquées par Collectionneur et Jusqu'à la fermeture), #14 (braindump : radio,
+   Rare +250 % et version longue Légendaire +350 % de la stat Durée (choix de l'utilisateur : la stat de base, même si
+   les gels et étourdissements figent la horde, plutôt qu'une stat à part) ; débloquées par Collectionneur et Jusqu'à la fermeture), #14 (braindump : radio,
    alliés, boss et objets de pop culture ; l'utilisateur veut ses références telles quelles, sans remarque de droits).
    **Roster des persos arrêté le 2026-11-18 (décision de l'utilisateur) : 8 persos** (Buveur, Videur, Père Noël, Cop,
    Futur Marié, Barman, Serveuse, Pilier de bar). Le Moine brasseur et le Supporter restent au GDD pour plus tard.
