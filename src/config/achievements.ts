@@ -23,7 +23,7 @@ export type AchievementDef = { id: string; name: string; text: string; tunas: nu
 export const ACHIEVEMENTS: readonly AchievementDef[] = [
   { id: 'premierVerre', name: 'Premier verre', text: 'Terminer une run', tunas: 10, rule: { kind: 'runEnded' } },
   { id: 'tenirAlcool', name: "Tenir l'alcool", text: 'Survivre 5 min', tunas: 20, rule: { kind: 'survive', seconds: 300 }, unlocks: ['item:sangSaiyan'] },
-  { id: 'fermeture', name: "Jusqu'à la fermeture", text: "Survivre jusqu'à 10:00", tunas: 40, rule: { kind: 'survive', seconds: CLOSING.at } },
+  { id: 'fermeture', name: "Jusqu'à la fermeture", text: "Survivre jusqu'à 10:00", tunas: 40, rule: { kind: 'survive', seconds: CLOSING.at }, unlocks: ['item:trilogieLongue'] },
   { id: 'defierMort', name: 'Défier la Mort', text: 'Tenir 1 min après la fermeture', tunas: 60, rule: { kind: 'survive', seconds: CLOSING.at + 60 } },
   { id: 'sonne', name: 'Sonné', text: 'Tuer le Frère Sonneur', tunas: 30, rule: { kind: 'boss', boss: 'sonneur' }, unlocks: ['character:videur'] },
   { id: 'derniereMesse', name: 'Dernière messe', text: "Tuer l'Abbé", tunas: 60, rule: { kind: 'boss', boss: 'abbe' }, unlocks: ['item:secondeTournee'] },
@@ -34,7 +34,7 @@ export const ACHIEVEMENTS: readonly AchievementDef[] = [
   { id: 'arsenal', name: 'Arsenal complet', text: '4 armes équipées en même temps', tunas: 20, rule: { kind: 'weapons', n: 4 } },
   { id: 'caMatch', name: 'Ça match', text: 'Activer une synergie', tunas: 20, rule: { kind: 'synergy' } },
   { id: 'chasseurElites', name: "Chasseur d'élites", text: '5 élites dans une run', tunas: 30, rule: { kind: 'elites', n: 5 } },
-  { id: 'collectionneur', name: 'Collectionneur', text: '10 objets dans une run', tunas: 30, rule: { kind: 'items', n: 10 } },
+  { id: 'collectionneur', name: 'Collectionneur', text: '10 objets dans une run', tunas: 30, rule: { kind: 'items', n: 10 }, unlocks: ['item:trilogieCinema'] },
   { id: 'eboueur', name: 'Éboueur', text: 'Casser 50 poubelles dans une run', tunas: 20, rule: { kind: 'bins', n: 50 } },
   { id: 'permisAPoints', name: 'Permis à points', text: 'Écraser 100 zombies en véhicule dans une run', tunas: 30, rule: { kind: 'crushes', n: 100 } },
   { id: 'pleinAuxAs', name: 'Plein aux as', text: '100 TUNAS ramassés dans une run', tunas: 30, rule: { kind: 'tunas', n: 100 } },

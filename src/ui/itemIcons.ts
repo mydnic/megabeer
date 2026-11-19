@@ -226,6 +226,23 @@ ${L('M21 50.500c3-1.500 16-1.500 21-4M21 32.500c3-1.500 16-1.500 21-4', '#fff', 
 ${R(15, 6, 34, 6.5, 3, G.red, 'sh', 2.6)}
 ${L('M7 12l5 3M57 12l-5 3M32 1v3', '#ffc93a', 3, 1)}`,
 
+  // Coffret de la trilogie, version cinéma : trois boîtiers de DVD en éventail, l'Anneau unique doré sur celui de devant
+  trilogieCinema: `${R(4, 12, 24, 40, 3, '#3a4a32', 'sh')}${R(14, 8, 26, 44, 3, '#2e3d2a', 'sh')}
+${R(25, 5, 34, 52, 3.5, '#24331f', 'vol')}
+<ellipse cx="42" cy="27" rx="10.5" ry="10.5" fill="none" stroke="${K}" stroke-width="7"/><ellipse cx="42" cy="27" rx="10.5" ry="10.5" fill="none" stroke="#ffc93a" stroke-width="4"/>
+<ellipse cx="42" cy="27" rx="10.5" ry="10.5" fill="none" stroke="#fff4a0" stroke-width="1.4" stroke-dasharray="3 5" opacity=".9"/>
+${T(42, 50, 10, 'I II III', '#ffe9a0')}
+${spark(14, 50, 3.5, '#fff4a0', 0.8)}`,
+
+  // Coffret de la trilogie, version longue : même coffret, cerclé d'or, l'Anneau qui flamboie et « LONGUE »
+  trilogieLongue: `${glow(42, 27, 22, 0.9)}
+${R(4, 12, 24, 40, 3, '#5a3a18', 'sh')}${R(14, 8, 26, 44, 3, '#4a2e14', 'sh')}
+${R(25, 5, 34, 52, 3.5, '#3a2410', 'vol')}<rect x="27.5" y="7.5" width="29" height="47" rx="2.5" fill="none" stroke="#ffc93a" stroke-width="2"/>
+<ellipse cx="42" cy="26" rx="10.5" ry="10.5" fill="none" stroke="${K}" stroke-width="7"/><ellipse cx="42" cy="26" rx="10.5" ry="10.5" fill="none" stroke="#ffd84a" stroke-width="4"/>
+<ellipse cx="42" cy="26" rx="10.5" ry="10.5" fill="none" stroke="#ff8a2a" stroke-width="1.4" stroke-dasharray="3 5"/>
+${T(42, 49, 8.5, 'LONGUE', '#ffe9a0')}
+${spark(57, 8, 5, '#fff', 0.95)}${spark(10, 52, 3.5, '#fff4a0', 0.85)}`,
+
   // Perruque de Super Saiyan (image fournie par l'utilisateur), sur une lueur dorée
   sangSaiyan: `${glow(32, 30, 30, 0.9)}<image href="${sangSaiyanPng}" x="1" y="4" width="62" height="57"/>`,
 

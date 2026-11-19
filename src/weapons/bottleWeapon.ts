@@ -206,7 +206,7 @@ export function createBottleWeapon(ctx: WeaponContext, id: WeaponId, name: strin
     if (!z) { z = { pos: new THREE.Vector3(), radius: 1, age: 0, life: 1, active: false }; zones.push(z); }
     z.pos.copy(at);
     z.radius = P.radius * mods.size * ctx.stats.size;
-    z.life = P.life * mods.duration * ctx.stats.duration;
+    z.life = P.life * mods.duration * ctx.stats.duration * ctx.stats.zoneDuration;
     z.age = 0;
     z.active = true;
   }

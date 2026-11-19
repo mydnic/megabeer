@@ -354,7 +354,7 @@ Conséquence : trouver un objet d'évolution n'est jamais une carte morte, et il
 |---|---|---|
 | Ressort de canapé | Double saut | Fixe, Rare |
 | Seconde tournée | Revivre une fois avec 50% PV | Fixe, Légendaire |
-| Trilogie LOTR | +250% / +350% durée des zones | Fixe, Rare (Theatrical Cut) / Légendaire (Extended Edition), issue #5 |
+| Trilogie du Seigneur des Anneaux (fait le 2026-11-19) | +250% / +350% durée des zones au sol (stat à part, `zoneDuration` : les étourdissements et gels ne bougent pas) | Deux objets uniques : version cinéma (Rare, succès Collectionneur), version longue (Légendaire, succès Jusqu'à la fermeture), issue #5 |
 | Sang Saiyan | Active la jauge de colère (section 10) | Fixe, Légendaire uniquement, un seul exemplaire par run |
 | Tirelire | +10% TUNAS ramassés pendant la run | Intégrée dans la formule d'économie (section 14) |
 | Carte de fidélité | Fûts 8% moins chers | |

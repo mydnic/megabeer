@@ -26,7 +26,7 @@ export function createFlaqueBiere(ctx: WeaponContext): Weapon {
     if (!z) { z = { pos: new THREE.Vector3(), radius: 1, age: 0, life: 1, active: false }; zones.push(z); }
     z.pos.copy(at);
     z.radius = F.radius * mods.size * ctx.stats.size;
-    z.life = F.life * mods.duration * ctx.stats.duration;
+    z.life = F.life * mods.duration * ctx.stats.duration * ctx.stats.zoneDuration;
     z.age = 0;
     z.active = true;
   }
