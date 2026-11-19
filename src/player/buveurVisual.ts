@@ -23,8 +23,44 @@ export type BuveurSound =
 type Rig = {
   scene: THREE.Object3D; mixer: THREE.AnimationMixer; ik: FootIK; actions: Record<Clip, THREE.AnimationAction>;
   throwAction: THREE.AnimationAction; hand?: THREE.Object3D; pintOffset: THREE.Vector3; pintBone?: THREE.Object3D;
-  handL?: THREE.Object3D; materials: THREE.MeshToonMaterial[]; hasPint: boolean;
+  handL?: THREE.Object3D; materials: THREE.MeshToonMaterial[]; hasPint: boolean; head: HeadAnchor | null;
 };
+
+/**
+ * La tête d'un perso, relevée sur sa pose de repos : l'os qui la porte, son centre (repère de l'os), sa hauteur (m), et
+ * l'orientation du perso exprimée dans le repère de l'os (ce qu'on y pose regarde vers son avant, tête droite au repos).
+ */
+export type HeadAnchor = { bone: THREE.Object3D; centre: THREE.Vector3; size: number; inBone: THREE.Quaternion };
+
+/** Relève la tête d'un modèle à squelette : les sommets que l'os de la tête porte surtout, en pose de repos. */
+function findHead(scene: THREE.Object3D): HeadAnchor | null {
+  const bone = scene.getObjectByName('head') ?? scene.getObjectByName('Head');
+  if (!bone) return null;
+  scene.updateMatrixWorld(true);
+  // Boîte relevée dans le repère du modèle (son haut est y, quel que soit l'endroit de la planète où il se trouve)
+  const toScene = scene.matrixWorld.clone().invert();
+  const box = new THREE.Box3(), v = new THREE.Vector3();
+  scene.traverse((o) => {
+    const m = o as THREE.SkinnedMesh;
+    if (!m.isSkinnedMesh) return;
+    const bi = m.skeleton.bones.indexOf(bone as THREE.Bone);
+    if (bi < 0) return;
+    const pos = m.geometry.attributes.position, idx = m.geometry.attributes.skinIndex, w = m.geometry.attributes.skinWeight;
+    for (let i = 0; i < pos.count; i++) {
+      let on = 0;
+      for (let k = 0; k < 4; k++) if (idx.getComponent(i, k) === bi) on += w.getComponent(i, k);
+      if (on < 0.5) continue;
+      box.expandByPoint(v.fromBufferAttribute(pos, i).applyMatrix4(m.bindMatrix).applyMatrix4(m.matrixWorld).applyMatrix4(toScene));
+    }
+  });
+  if (box.isEmpty()) return null;
+  const centre = bone.worldToLocal(box.getCenter(new THREE.Vector3()).applyMatrix4(scene.matrixWorld));
+  const boneQ = bone.getWorldQuaternion(new THREE.Quaternion()), sceneQ = scene.getWorldQuaternion(new THREE.Quaternion());
+  const inBone = boneQ.invert().multiply(sceneQ);
+  // Hauteur en mètres : les deux bouts de la boîte ramenés dans le monde
+  const top = new THREE.Vector3(0, box.max.y, 0).applyMatrix4(scene.matrixWorld), bottom = new THREE.Vector3(0, box.min.y, 0).applyMatrix4(scene.matrixWorld);
+  return { bone, centre, size: top.distanceTo(bottom), inBone };
+}
 
 /**
  * Modèle animé du perso joué : charge les GLB des persos (générés par tools/blender/buveur.py, mêmes os et mêmes
@@ -107,6 +143,7 @@ export class BuveurVisual {
     });
     gltf.scene.visible = false;
     this.squashGroup.add(gltf.scene);
+    const head = findHead(gltf.scene);
     const ik = new FootIK(gltf.scene, this.root);
     // Haut de la pinte exprimé dans le repère de l'os de la main (pose de repos)
     const hand = gltf.scene.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('hand.R'));
@@ -143,7 +180,7 @@ export class BuveurVisual {
     this.rigs.set(id, {
       scene: gltf.scene, mixer, ik, actions, throwAction, hand, pintOffset, materials,
       pintBone: gltf.scene.getObjectByName('pint'), handL: gltf.scene.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('hand.L')),
-      hasPint: materials.some((m) => m.name === 'verre'),
+      hasPint: materials.some((m) => m.name === 'verre'), head,
     });
     if (!this.using || id === this.wanted) this.use(id);
   }
@@ -164,6 +201,9 @@ export class BuveurVisual {
     const sy = 1 + this.squash, sxz = 1 / Math.sqrt(Math.max(0.3, sy));
     this.squashGroup.scale.set(sxz, sy, sxz);
   }
+
+  /** La tête du perso affiché (null : pas encore chargé, ou modèle sans os de tête). */
+  get head(): HeadAnchor | null { return this.rigs.get(this.using)?.head ?? null; }
 
   /** Affiche le perso `id` (déjà chargé) à la place du précédent. */
   use(id: string) {

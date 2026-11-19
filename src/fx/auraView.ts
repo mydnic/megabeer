@@ -7,7 +7,7 @@ void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(
 
 // Flamme d'aura façon Dragon Ball : silhouette en œuf autour du corps qui s'effile vers le haut en langues de feu qui
 // montent (bruit qui défile), bord brillant, intérieur léger traversé de traits qui filent vers le ciel.
-const FRAG = `uniform float uTime; uniform vec3 uColor; uniform float uAlpha; uniform float uSeed;
+const FRAG = `uniform float uTime; uniform vec3 uColor; uniform float uAlpha; uniform float uSeed; uniform vec2 uMargin;
 varying vec2 vUv;
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float noise(vec2 p) {
@@ -16,7 +16,8 @@ float noise(vec2 p) {
 }
 float fbm(vec2 p) { float v = 0.0, a = 0.5; for (int i = 0; i < 4; i++) { v += a * noise(p); p *= 2.03; a *= 0.5; } return v; }
 void main() {
-  vec2 p = vec2(vUv.x * 2.0 - 1.0, vUv.y);
+  // La flamme tient dans le bas du cadre (marge en haut et sur les côtés : les langues montent sans être coupées)
+  vec2 p = vec2((vUv.x * 2.0 - 1.0) * uMargin.x, vUv.y * uMargin.y);
   float t = uTime + uSeed;
   // Enveloppe autour du corps (ellipse), étirée vers le haut en longues langues de feu qui montent et vacillent
   vec2 q = vec2(p.x / 0.6, (p.y - 0.36) / 0.4);
@@ -31,7 +32,9 @@ void main() {
   // Traits clairs qui filent vers le haut à l'intérieur
   float streak = smoothstep(0.6, 0.92, fbm(vec2(p.x * 9.0, p.y * 1.2 - t * 4.2)));
   vec3 col = mix(uColor, vec3(1.0), clamp(edge * 0.25 + inner * 0.25 + streak * 0.35, 0.0, 1.0));
-  float a = (0.22 + edge * 0.78 + streak * 0.3) * smoothstep(0.0, 0.07, p.y) * uAlpha;
+  float a = (0.35 + edge * 0.9 + streak * 0.4) * smoothstep(0.0, 0.07, p.y) * uAlpha;
+  // Les langues s'éteignent avant le bord du cadre
+  a *= (1.0 - smoothstep(0.82, 1.0, vUv.y)) * (1.0 - smoothstep(0.82, 1.0, abs(vUv.x * 2.0 - 1.0)));
   gl_FragColor = vec4(col * 1.4, a);
 }`;
 
@@ -44,7 +47,7 @@ export function createAuraView(scene: THREE.Scene) {
   const L = SAIYAN_LOOK.aura;
   const make = (seed: number, alpha: number) => {
     const mat = new THREE.ShaderMaterial({
-      uniforms: { uTime: { value: 0 }, uColor: { value: new THREE.Color() }, uAlpha: { value: 0 }, uSeed: { value: seed } },
+      uniforms: { uTime: { value: 0 }, uColor: { value: new THREE.Color() }, uAlpha: { value: 0 }, uSeed: { value: seed }, uMargin: { value: new THREE.Vector2(L.margin[0], L.margin[1]) } },
       vertexShader: VERT, fragmentShader: FRAG, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
     });
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0), mat);
@@ -80,7 +83,7 @@ export function createAuraView(scene: THREE.Scene) {
         const m = layer.mesh;
         m.position.copy(feet).addScaledVector(up, -0.1).addScaledVector(toCam, k - L.backOffset * (k === 0 ? 1 : 0));
         m.quaternion.setFromRotationMatrix(basis.makeBasis(right, up, toCam));
-        m.scale.set(L.width * grow * flicker, L.height * grow * (2 - flicker), 1);
+        m.scale.set(L.width * L.margin[0] * grow * flicker, L.height * L.margin[1] * grow * (2 - flicker), 1);
         layer.mat.uniforms.uTime.value = time;
         if (color !== null) layer.mat.uniforms.uColor.value.set(color);
         layer.mat.uniforms.uAlpha.value = strength * layer.alpha * (1 + burst);

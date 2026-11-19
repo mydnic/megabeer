@@ -1,4 +1,5 @@
 import type { ItemId } from '../config/items';
+import sangSaiyanPng from '../assets/icons/sang_saiyan.png?url';
 import { K, G, P, C, E, R, L, spark, burst, glow, pint, cap, svg64 } from './iconKit';
 
 /** Texte d'étiquette (police du jeu), contour sombre fin. */
@@ -225,15 +226,8 @@ ${L('M21 50.500c3-1.500 16-1.500 21-4M21 32.500c3-1.500 16-1.500 21-4', '#fff', 
 ${R(15, 6, 34, 6.5, 3, G.red, 'sh', 2.6)}
 ${L('M7 12l5 3M57 12l-5 3M32 1v3', '#ffc93a', 3, 1)}`,
 
-  // Tête de Super Saiyan : front et sourcils froncés, grandes mèches dorées dressées en flamme, mèches sur le front
-  sangSaiyan: `${glow(32, 28, 31, 1)}
-${E(32, 62, 16, 15, G.skin, 'ball')}
-${L('M20 53l8 3M44 53l-8 3', K, 3.4, 1)}
-${P('M13 47Q6 45 1 39q6 0 10-1Q5 31 3 21q7 4 12 8Q11 17 12 5q6 8 10 18Q23 10 29 0q2 10 2 19Q36 8 45 3q-2 10-6 20Q47 14 60 12q-6 9-13 16Q55 26 63 30q-7 4-14 7Q55 40 59 45q-6 1-11 0Q40 41 32 41T13 47z', G.gold, 'vol')}
-${P('M19 44l-3 13l8-8l2 10l5-11l4 9l3-10l8 7l-3-11q-6-2-12-2q-6 0-12 3z', G.gold, 'sh')}
-${L('M15 29q5 6 8 13M31 19q1 11 0 21M39 23q-3 8-4 18M47 28q-5 5-8 13', '#d98a12', 2.2, 0.85)}
-${L('M10 21q3 4 6 7M24 9q2 4 3 8', '#fff', 2.4, 0.8)}
-${spark(57, 54, 4.5, '#fff', 0.95)}${spark(6, 52, 3.5, '#fff4a0', 0.9)}`,
+  // Perruque de Super Saiyan (image fournie par l'utilisateur), sur une lueur dorée
+  sangSaiyan: `${glow(32, 30, 30, 0.9)}<image href="${sangSaiyanPng}" x="1" y="4" width="62" height="57"/>`,
 
   // Pinte vide derrière, pinte dorée ressuscitée devant, auréole
   secondeTournee: `${glow(40, 30, 26, 0.9)}

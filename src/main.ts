@@ -16,6 +16,7 @@ import { createZoneView } from './fx/zoneView';
 import { createRangeRingView } from './fx/rangeRingView';
 import { createVehiclesView } from './world/vehiclesView';
 import { createAuraView } from './fx/auraView';
+import { createHairView } from './fx/hairView';
 import { createEnemyShotsView } from './enemies/enemyShotsView';
 import { createShards } from './fx/shards';
 import { createFoamShieldView } from './fx/foamShieldView';
@@ -133,6 +134,7 @@ const loading = {
   chestsView: boot(createChestsView(scene)),
   binsView: boot(createBinsView(scene)),
   vehiclesView: boot(createVehiclesView(scene, (p, feetR) => game.player.supportAt(p, feetR))),
+  hairView: boot(createHairView(scene)),
   lastCallView: boot(createLastCallView(scene)),
   sonneurView: boot(createBossView(scene, { kind: 'sonneur', url: sonneurUrl, height: FRERE_SONNEUR.height, walkSpeed: FRERE_SONNEUR.speed })),
   abbeView: boot(createBossView(scene, { kind: 'abbe', url: abbeUrl, height: ABBE.height, walkSpeed: ABBE.speed })),
@@ -182,6 +184,7 @@ const anchorZone = { pos: new THREE.Vector3(), radius: ANCHOR_RING.radius, age: 
 const bottleViews = Object.fromEntries(await loading.weaponViews) as Partial<Record<WeaponId, Awaited<ReturnType<typeof createBottleView>>>>;
 const enemyShotsView = await loading.enemyShotsView;
 const vehiclesView = await loading.vehiclesView;
+const hairView = await loading.hairView;
 const groundAt = (p: THREE.Vector3) => game.player.supportAt(p, p.length());
 const shards = createShards(scene, groundAt);
 const wine = createShards(scene, groundAt, WINE_BURST);
@@ -293,6 +296,7 @@ function frame(now: number) {
   buveur.root.visible = !game.vehicles.driving;
   vehiclesView.sync(game.vehicles, player, dt, game.phase === 'run');
   auraView.sync(game.phase === 'run' ? game.saiyan.current?.aura ?? null : null, player.renderPos, camera, dt);
+  hairView.sync(game.phase === 'run' ? game.saiyan.current : null, buveur.head, buveur.root.visible, dt);
   hordeView.sync(game.horde.zombies, camera);
   xpView.sync(game.xp.drops);
   coinView.sync(game.coinDrops.drops);

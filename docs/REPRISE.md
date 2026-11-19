@@ -214,7 +214,13 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    (Y à la manette, bouton Saiyan au tactile, choix de l'utilisateur), transformation 60 s au plus haut palier avec ses
    bonus (`game/saiyan.ts`, `config/saiyan.ts`), Kaioken qui brûle les PV sans tuer, éclairs du SSJ2, Ultra Instinct qui
    esquive tout sauf les boss ; jauge en bas à gauche (`ui/saiyanHud.ts`, une seule barre qui se vide une fois transformé), aura en flamme façon Dragon Ball (`fx/auraView.ts` : deux flammes face à la caméra, shader de langues de feu qui montent ; les particules d'abord essayées ne ressemblaient à rien), icône en tête de Super Saiyan, onde à la transformation, sons ;
-   DEV « Remplir la jauge ». Checkpoint 2 : les cheveux (perruque par palier) et des effets propres à chaque palier), #5 (Trilogie LOTR), #14 (braindump : radio,
+   DEV « Remplir la jauge ». **Retours traités le 2026-11-19** : icône = l'image de perruque fournie par l'utilisateur
+   (`assets/icons/sang_saiyan.png`), aura plus grande et plus marquée, plus coupée en haut (marge du cadre), son
+   `saiyan.mp3` (fourni) à la transformation, **cheveux** : `tools/blender/cheveux.py` tire la coiffure SSJ et celle du
+   SSJ3 de deux modèles de Goku fournis, `fx/hairView.ts` les pose sur l'os de la tête de chaque perso (taille et centre
+   de la tête relevés au chargement, `HeadAnchor` dans `buveurVisual.ts`), teintes selon le palier (doré, noir en SSJ4,
+   argent en Ultra Instinct). Vérifié en jeu avec `?minuterie` (la boucle tourne même panneau masqué). Reste : des effets
+   propres à chaque palier), #5 (Trilogie LOTR), #14 (braindump : radio,
    alliés, boss et objets de pop culture ; l'utilisateur veut ses références telles quelles, sans remarque de droits).
    **Roster des persos arrêté le 2026-11-18 (décision de l'utilisateur) : 8 persos** (Buveur, Videur, Père Noël, Cop,
    Futur Marié, Barman, Serveuse, Pilier de bar). Le Moine brasseur et le Supporter restent au GDD pour plus tard.
