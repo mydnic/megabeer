@@ -350,6 +350,7 @@ export const WEAPON_INFO = {
   rot: { name: "Rot sonique", pitch: "Une onde autour de toi qui se charge avec les capsules ramassées : fonce, puis rote" },
   odeur: { name: "Odeur d'alcool", pitch: "Une aura autour de toi : les zombies trop près titubent et prennent des petits dégâts" },
   plateau: { name: "Plateau de serveur", pitch: "Lancé à plat, il ricoche de zombie en zombie et arrête les bouteilles ennemies" },
+  sabre: { name: "Sabre laser", pitch: "Des coups de lame rapides en arc devant toi, qui coupent aussi les bouteilles ennemies" },
   des421: { name: "Le 421", pitch: "Des dés de comptoir : chaque 6 aiguise tes critiques ; avec un troisième dé, 4-2-1 fait tout sauter" },
 } as const satisfies Record<string, { name: string; pitch: string }>;
 

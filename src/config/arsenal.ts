@@ -289,3 +289,27 @@ export const SYNERGY_FX = {
   /** Flipper : rebonds des bouteilles du bac. */
   flipper: { bounces: 2 },
 } as const;
+
+/**
+ * Sabre laser (issue #17, modèle « Light saber » d'April Lewer) : mêlée rapide en arc vers l'ennemi le plus proche.
+ * Toutes les `cooldown` s, si un zombie est à moins de `radius` + `triggerMargin` m, la lame balaie un arc de `arc` rad
+ * en `swingTime` s (une fois dans un sens, la fois suivante dans l'autre) ; chaque zombie traversé prend `damage`
+ * (critique `critChance`, x`critMult`), un recul `knock` (vitesse `knockSpeed` m/s). Un zombie à moins de `innerRadius` m
+ * est touché tout de suite. Les bouteilles ennemies à moins de `deflect` m de la lame sont coupées. Affichage : lame à
+ * `height` m du sol, son milieu à `holdDist` m du joueur ; geste du bras à `gestureRate`.
+ */
+export const SABRE = {
+  cooldown: 0.75, firstDelay: 0.3, damage: 15, critChance: 0.1, critMult: 2,
+  radius: 2.6, zombieRadius: 0.5, triggerMargin: 0.4, innerRadius: 0.6, arc: 2.4, swingTime: 0.18,
+  knock: 1.2, knockSpeed: 5, deflect: 0.7, height: 1.1, holdDist: 1.0, gestureRate: 2.5,
+} as const;
+export const SABRE_LOOK = {
+  file: 'sabre.glb', length: 1.6, fit: 'max' as const, glow: ['lame'] as readonly string[], glowBoost: 3,
+  colors: { lame: 0x9ff6ff, poignee_0: 0x2a2a2e, poignee_2: 0xb8bcc4, poignee_3: 0xd8dde4 } as Record<string, number>,
+};
+export const SABRE_SOUND = {
+  swing: { sample: 'impactMetal_light', volume: 0.28, pitch: 2.2 },
+  hit: { sample: 'impactMetal_medium', volume: 0.4, pitch: 1.5 },
+  hitGap: 0.04,
+} as const;
+export const SABRE_UPGRADES: readonly UpgradeDef[] = [DMG, RATEU, { id: 'size', label: 'portée du coup', value: 0.10, kind: 'percent' }, { id: 'projectiles', label: 'lame en plus', value: 1, kind: 'flat', whole: true }, CRIT, CRITM];

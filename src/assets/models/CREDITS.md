@@ -48,6 +48,8 @@
   `vehicules/tank.glb` : « Tank » par Quaternius ; fournis par l'utilisateur (fichiers Poly Pizza), non modifiés
   (orientation et taille réglées dans `src/config/vehicles.ts`).
 
+- `sabre.glb` : « Light saber » par April Lewer (fichier Poly Pizza fourni par l'utilisateur), redressé par
+  `tools/blender/sabre.py`.
 - `cheveux_ssj.glb` et `cheveux_ssj3.glb` : les coiffures de Goku tirées de « dbxv2_goku_damaged2_ssj.glb » et
   « goku_super_saiyan_3.glb », fournis par l'utilisateur (`tools/blender/cheveux.py` : coiffure seule, recalée sur le
   visage, texture en gris). Icône du Sang Saiyan : `src/assets/icons/sang_saiyan.png`, image « super-saiyan-hair-source »

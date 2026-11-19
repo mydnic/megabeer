@@ -69,6 +69,17 @@ ${P('M4 34c0-6 7.200-9 16-9s16 3 16 9v4c0 4.500-7.200 7.500-16 7.500S4 42.500 4 
 ${E(20, 33.500, 16, 6.800, '#c98a52', 'sh', 2.600)}
 <path d="M10 31.500c3-2 8-2.600 12-2.200" stroke="#fff" stroke-opacity=".45" stroke-width="2" fill="none" stroke-linecap="round"/>`);
 
+/** Sabre laser : poignée métal à bandes noires, longue lame cyan qui brille, en diagonale. */
+const sabreIcon = (cls: string) => tall(cls, `
+<path d="M31 6L12 64" stroke="${K}" stroke-width="10" stroke-linecap="round"/>
+<path d="M31 6L12 64" stroke="#9ff6ff" stroke-width="6" stroke-linecap="round"/>
+<path d="M30 9L14 58" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" opacity=".85"/>
+<path d="M12.500 64L7 81" stroke="${K}" stroke-width="10" stroke-linecap="round"/>
+<path d="M12.500 64L7 81" stroke="#c2c8d0" stroke-width="6.400" stroke-linecap="round"/>
+<path d="M9.700 69.500l3.200 1M8.400 73.800l3.200 1M7.300 77.400l3.200 1" stroke="${K}" stroke-width="2.600" stroke-linecap="round"/>
+<path d="M6 63.500l13 4.200" stroke="${K}" stroke-width="5" stroke-linecap="round"/>
+<path d="M6 63.500l13 4.200" stroke="#e8ecf2" stroke-width="2.400" stroke-linecap="round"/>`);
+
 /** Fût qui roule : tonneau en bois bombé, douelles, deux cerclages rivetés, bonde. */
 const FUT = 'M8 20c4-2 20-2 24 0c3 8 4 16 4 25s-1 17-4 25c-4 2-20 2-24 0c-3-8-4-16-4-25s1-17 4-25z';
 export const futIcon = (cls: string) => tall(cls, `
@@ -285,6 +296,7 @@ const WEAPON_ICONS: Record<WeaponId, (cls: string) => string> = {
   fut: futIcon,
   gueuze: gueuzeIcon,
   tabouret: tabouretIcon,
+  sabre: sabreIcon,
   biereNoel: noelIcon,
   decapsuleur: decapsuleurIcon,
   flaqueBiere: flaqueBiereIcon,

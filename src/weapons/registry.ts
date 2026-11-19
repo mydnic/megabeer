@@ -3,6 +3,7 @@ import { createFut } from './fut';
 import { createGueuze } from './gueuze';
 import { createStout } from './stout';
 import { createTabouret } from './tabouret';
+import { createSabre } from './sabre';
 import { createBiereNoel } from './biereNoel';
 import { createDecapsuleur } from './decapsuleur';
 import { createFlaqueBiere } from './flaqueBiere';
@@ -31,6 +32,7 @@ export const WEAPON_FACTORIES: Record<WeaponId, (ctx: WeaponContext) => Weapon> 
   fut: createFut,
   gueuze: createGueuze,
   tabouret: createTabouret,
+  sabre: createSabre,
   biereNoel: createBiereNoel,
   decapsuleur: createDecapsuleur,
   flaqueBiere: createFlaqueBiere,

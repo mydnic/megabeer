@@ -5,7 +5,7 @@ import type { UpgradeDef } from '../config/upgrades';
 import type { SynergyId } from '../game/synergies';
 
 /** Identifiant d'arme (une entrée de src/weapons/registry.ts). */
-export type WeaponId = 'canette' | 'stout' | 'fut' | 'gueuze' | 'tabouret' | 'biereNoel' | 'decapsuleur' | 'flaqueBiere' | 'kriek' | 'triple' | 'ipa' | 'sousBock' | 'flechettes' | 'bouchons' | 'petanque' | 'bac' | 'vomi' | 'weizen' | 'tireuse' | 'corne' | 'rot' | 'odeur' | 'plateau' | 'des421';
+export type WeaponId = 'canette' | 'stout' | 'fut' | 'gueuze' | 'tabouret' | 'biereNoel' | 'decapsuleur' | 'flaqueBiere' | 'kriek' | 'triple' | 'ipa' | 'sousBock' | 'flechettes' | 'bouchons' | 'petanque' | 'bac' | 'vomi' | 'weizen' | 'tireuse' | 'corne' | 'rot' | 'odeur' | 'plateau' | 'des421' | 'sabre';
 
 /** Améliorations d'une arme gagnées en run : un champ par id de carte, plus son niveau. */
 export type WeaponMods = { level: number } & Record<string, number>;

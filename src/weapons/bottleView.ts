@@ -1,14 +1,16 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { CANETTE_LOOK } from '../config/weapons';
-import { characterMaterial, LAYER_CHARACTER } from '../render/materials';
+import { characterMaterial, LAYER_CHARACTER, LAYER_SKY } from '../render/materials';
 import type { Projectile } from './weapon';
 
 const urls = import.meta.glob(['../assets/quaternius-food-pack/*.glb', '../assets/models/*.glb'], { query: '?url', import: 'default', eager: true }) as Record<string, string>;
 
 /** Apparence d'une bouteille : modèle, longueur en jeu (m), couleur par matériau du modèle. */
 /** `fit` : 'max' met la plus grande dimension à `length` (objets plats ou ronds), sinon la longueur le long de Y. */
-export type BottleLook = { file: string; length: number; colors: Record<string, number>; fit?: 'axis' | 'max' };
+export type BottleLook = { file: string; length: number; colors: Record<string, number>; fit?: 'axis' | 'max';
+  /** Matières qui brillent d'elles-mêmes (la lame du sabre laser) : sans éclairage, x`glowBoost` pour le halo lumineux. */
+  glow?: readonly string[]; glowBoost?: number };
 
 /** Nombre de projectiles prévus au départ ; la place double quand elle manque. */
 const INITIAL = 64;
@@ -42,7 +44,10 @@ export async function createBottleView(scene: THREE.Scene, L: BottleLook = CANET
     let m = mats.get(src.name);
     if (!m) {
       const c = L.colors[src.name];
-      m = characterMaterial({ color: c !== undefined ? new THREE.Color(c) : src.color });
+      const color = c !== undefined ? new THREE.Color(c) : src.color.clone();
+      m = L.glow?.includes(src.name)
+        ? new THREE.MeshBasicMaterial({ color: color.multiplyScalar(L.glowBoost ?? 2.5), toneMapped: false })
+        : characterMaterial({ color });
       mats.set(src.name, m);
     }
     const geo = mesh.geometry.clone().applyMatrix4(mesh.matrixWorld).applyMatrix4(recenter);
@@ -61,7 +66,8 @@ export async function createBottleView(scene: THREE.Scene, L: BottleLook = CANET
       m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
       m.castShadow = true;
       m.frustumCulled = false; // les instances sont partout autour du joueur
-      m.layers.set(LAYER_CHARACTER);
+      // Une pièce lumineuse (lame du sabre) reste hors du contour sombre des personnages, qui la noircirait
+      m.layers.set((p.mat as THREE.MeshBasicMaterial).isMeshBasicMaterial ? LAYER_SKY : LAYER_CHARACTER);
       m.count = 0;
       scene.add(m);
       return m;

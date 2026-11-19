@@ -33,6 +33,7 @@ export const EVOLUTIONS: Record<WeaponId, EvolutionDef> = {
   tireuse: { item: 'pression', name: 'Tireuse pression max', text: 'Un jet long qui repousse fort', mods: { size: 0.7, knock: 1.5, damage: 0.3 } },
   plateau: { item: 'gueuleDeBois', name: 'Service en salle', text: '4 ricochets de plus, et chaque ricochet frappe plus fort', mods: { bounces: 4, gain: 0.12 } },
   bouchons: { item: 'ticketTournee', name: 'Magnum', text: 'La rafale part à 360 degrés', mods: { projectiles: 5, ring: 1 } },
+  sabre: { item: 'mousseEpaisse', name: 'Sabre double', text: 'Une lame de chaque côté, qui frappent plus fort', mods: { damage: 0.3 } },
   tabouret: { item: 'gantsVideur', name: 'Bagarre générale', text: "Le tabouret ne s'arrête presque plus de tourner", mods: { rate: 3, damage: 0.3 } },
   flechettes: { item: 'lunettes', name: 'Triple 20', text: 'Trois fléchettes, critiques presque garantis', mods: { projectiles: 2, critChance: 0.4 } },
   corne: { item: 'echarpe', name: 'Hymne du stade', text: 'Une onde à 360 degrés qui étourdit', mods: { size: 0.3 } },
