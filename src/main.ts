@@ -15,6 +15,7 @@ import { createBottleView } from './weapons/bottleView';
 import { createZoneView } from './fx/zoneView';
 import { createRangeRingView } from './fx/rangeRingView';
 import { createVehiclesView } from './world/vehiclesView';
+import { createAuraView } from './fx/auraView';
 import { createEnemyShotsView } from './enemies/enemyShotsView';
 import { createShards } from './fx/shards';
 import { createFoamShieldView } from './fx/foamShieldView';
@@ -172,6 +173,8 @@ const zoneViews = (Object.keys(WEAPON_FX) as WeaponId[]).filter((id) => WEAPON_F
 // Un anneau de portée par arme qui en affiche une (Rot sonique)
 const ringViews = (Object.keys(WEAPON_FX) as WeaponId[]).filter((id) => WEAPON_FX[id].ring)
   .map((id) => [id, createRangeRingView(scene, WEAPON_FX[id].ring!, (p, feetR) => game.player.supportAt(p, feetR))] as const);
+// Aura du Super Saiyan, de la couleur du palier
+const auraView = createAuraView(scene);
 // Ancrage du Pilier de bar : un rond doré sous ses pieds, d'autant plus net qu'il est accoudé depuis longtemps
 const anchorRing = createRangeRingView(scene, ANCHOR_RING, (p, feetR) => game.player.supportAt(p, feetR));
 const anchorZone = { pos: new THREE.Vector3(), radius: ANCHOR_RING.radius, age: 0, life: Infinity, active: false, strength: 0 };
@@ -289,6 +292,7 @@ function frame(now: number) {
   // Au volant, le perso disparaît dans le véhicule
   buveur.root.visible = !game.vehicles.driving;
   vehiclesView.sync(game.vehicles, player, dt, game.phase === 'run');
+  auraView.sync(game.phase === 'run' ? game.saiyan.current?.aura ?? null : null, player.renderPos, camera, dt);
   hordeView.sync(game.horde.zombies, camera);
   xpView.sync(game.xp.drops);
   coinView.sync(game.coinDrops.drops);

@@ -213,7 +213,7 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    débloqué par le succès « Tenir l'alcool »), jauge de colère (kills, élites, boss, PV perdus ; 6 paliers x3), touche F
    (Y à la manette, bouton Saiyan au tactile, choix de l'utilisateur), transformation 60 s au plus haut palier avec ses
    bonus (`game/saiyan.ts`, `config/saiyan.ts`), Kaioken qui brûle les PV sans tuer, éclairs du SSJ2, Ultra Instinct qui
-   esquive tout sauf les boss ; jauge en bas à gauche (`ui/saiyanHud.ts`), aura colorée, onde à la transformation, sons ;
+   esquive tout sauf les boss ; jauge en bas à gauche (`ui/saiyanHud.ts`, une seule barre qui se vide une fois transformé), aura en flamme façon Dragon Ball (`fx/auraView.ts` : deux flammes face à la caméra, shader de langues de feu qui montent ; les particules d'abord essayées ne ressemblaient à rien), icône en tête de Super Saiyan, onde à la transformation, sons ;
    DEV « Remplir la jauge ». Checkpoint 2 : les cheveux (perruque par palier) et des effets propres à chaque palier), #5 (Trilogie LOTR), #14 (braindump : radio,
    alliés, boss et objets de pop culture ; l'utilisateur veut ses références telles quelles, sans remarque de droits).
    **Roster des persos arrêté le 2026-11-18 (décision de l'utilisateur) : 8 persos** (Buveur, Videur, Père Noël, Cop,

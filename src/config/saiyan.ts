@@ -37,5 +37,12 @@ export const SAIYAN = {
   ] as readonly SaiyanTier[],
 } as const;
 
-/** Rendu : particules d'aura émises par seconde, leur taille (m) et leur vie (s) ; éclair (couleur, points le long du trait). */
-export const SAIYAN_LOOK = { auraRate: 45, auraSize: 0.55, auraLife: 0.7, lightning: { color: 0xbfe8ff, points: 10 } } as const;
+/**
+ * Rendu. Aura (flamme face à la caméra) : largeur et hauteur (m), part d'opacité de la flamme de devant, recul de celle
+ * de derrière et avance de celle de devant (m), apparition et extinction (s), coup de grandeur à la transformation (x en
+ * plus, durée s). Éclair : couleur, points le long du trait.
+ */
+export const SAIYAN_LOOK = {
+  aura: { width: 2.6, height: 3.4, front: 0.35, backOffset: 0.35, frontOffset: 0.55, fadeIn: 0.25, fadeOut: 0.6, burstScale: 0.6, burstTime: 0.45 },
+  lightning: { color: 0xbfe8ff, points: 10 },
+} as const;

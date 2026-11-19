@@ -372,7 +372,7 @@ export function wireEffects(game: Game, d: Deps) {
     pipeline.fade.amount = 0;
   });
 
-  // Super Saiyan : onde et éclat à la transformation, éclairs du SSJ2, aura qui monte autour du perso
+  // Super Saiyan : onde et éclat à la transformation, éclairs du SSJ2 (l'aura : fx/auraView.ts)
   game.events.on('saiyanTransformed', ({ tier }) => {
     const c = SAIYAN.tiers[tier - 1].aura;
     up.copy(game.player.pos).normalize();
@@ -390,29 +390,9 @@ export function wireEffects(game: Game, d: Deps) {
     }
     vfx.hit(to);
   });
-  let auraAt = performance.now(), auraAcc = 0;
-  const auraPos = new THREE.Vector3(), auraVel = new THREE.Vector3(), auraSide = new THREE.Vector3();
-
   return {
-    /** Image qui se désature et s'assombrit après la mort ; aura du Super Saiyan. */
+    /** Image qui se désature et s'assombrit après la mort. */
     update() {
-      const now = performance.now(), dt = Math.min(0.1, (now - auraAt) / 1000);
-      auraAt = now;
-      const T = game.phase === 'run' && !game.frozen ? game.saiyan.current : null;
-      if (T) {
-        const L = SAIYAN_LOOK;
-        auraAcc += dt * L.auraRate;
-        const p = game.player.renderPos;
-        up.copy(p).normalize();
-        while (auraAcc >= 1) {
-          auraAcc--;
-          auraSide.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5);
-          auraSide.addScaledVector(up, -auraSide.dot(up)).normalize().multiplyScalar(0.35 + Math.random() * 0.25);
-          auraPos.copy(p).add(auraSide).addScaledVector(up, 0.2 + Math.random() * 1.4);
-          auraVel.copy(up).multiplyScalar(1.5 + Math.random() * 1.5);
-          d.sprites.emit(auraPos, { kind: 'glow', color: T.aura, size: L.auraSize, endSize: 0, life: L.auraLife, vel: auraVel, intensity: 1.6 });
-        }
-      } else auraAcc = 0;
       if (game.deadTime < 0) return;
       const B = DEATH_BANNER;
       pipeline.fade.amount = Math.min(1, game.deadTime / B.colorFade);

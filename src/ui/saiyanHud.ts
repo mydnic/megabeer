@@ -14,14 +14,18 @@ const CSS = `
 .ssj.ready .ssj-hint { animation: ssj-pulse .9s ease-in-out infinite alternate; }
 @keyframes ssj-pulse { 100% { color: #fff4dc; } }
 .ssj.active .ssj-track { box-shadow: 0 0 12px var(--aura, #ffd23a); }
+/* Transformé : une seule barre, de la couleur du palier, qui se vide de 100 % à 0 */
+.ssj-one { position: absolute; inset: 0; background: var(--aura, #ffd23a); transform-origin: left; display: none; }
+.ssj.active .ssj-one { display: block; }
+.ssj.active .ssj-seg { visibility: hidden; }
 `;
 
 const hex = (c: number) => `#${c.toString(16).padStart(6, '0')}`;
 
 /**
  * Jauge de colère (Super Saiyan), en bas à gauche, une fois le Sang Saiyan pris : un segment par palier (chacun se
- * remplit jusqu'à son seuil), le plus haut palier atteint et la touche pour se transformer ; transformé, le palier en
- * cours et le temps qui reste.
+ * remplit jusqu'à son seuil), le plus haut palier atteint et la touche pour se transformer ; transformé, une seule barre de
+ * la couleur du palier qui se vide avec le temps qui reste.
  */
 export function createSaiyanHud(keyHint: () => string) {
   const style = document.createElement('style');
@@ -32,11 +36,12 @@ export function createSaiyanHud(keyHint: () => string) {
   el.style.left = `${H.left}px`;
   el.style.bottom = `${H.bottom}px`;
   el.style.width = `${H.width}px`;
-  el.innerHTML = `<div class="ssj-title"></div><div class="ssj-track">${SAIYAN.tiers.map(() => '<div class="ssj-seg"><div></div></div>').join('')}</div><div class="ssj-hint"></div>`;
+  el.innerHTML = `<div class="ssj-title"></div><div class="ssj-track">${SAIYAN.tiers.map(() => '<div class="ssj-seg"><div></div></div>').join('')}<div class="ssj-one"></div></div><div class="ssj-hint"></div>`;
   document.body.appendChild(el);
   const title = el.querySelector<HTMLElement>('.ssj-title')!;
   const hint = el.querySelector<HTMLElement>('.ssj-hint')!;
   const fills = [...el.querySelectorAll<HTMLElement>('.ssj-seg div')];
+  const one = el.querySelector<HTMLElement>('.ssj-one')!;
   fills.forEach((f, i) => { f.style.background = hex(SAIYAN.tiers[i].aura); });
   let last = '';
   return {
@@ -45,10 +50,10 @@ export function createSaiyanHud(keyHint: () => string) {
       el.classList.toggle('on', visible);
       if (!visible) return;
       const T = SAIYAN.thresholds;
-      fills.forEach((f, i) => {
+      if (tier > 0) one.style.transform = `scaleX(${Math.max(0, left / SAIYAN.duration)})`;
+      else fills.forEach((f, i) => {
         const lo = i === 0 ? 0 : T[i - 1];
-        const k = tier > 0 ? (i < tier ? left / SAIYAN.duration : 0) : Math.max(0, Math.min(1, (points - lo) / (T[i] - lo)));
-        f.style.transform = `scaleX(${k})`;
+        f.style.transform = `scaleX(${Math.max(0, Math.min(1, (points - lo) / (T[i] - lo)))})`;
       });
       const shown = tier || reached;
       el.style.setProperty('--aura', hex(SAIYAN.tiers[Math.max(0, shown - 1)].aura));
