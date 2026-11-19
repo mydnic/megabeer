@@ -55,6 +55,9 @@
 - `steve.glb` : refait par `tools/blender/allies.py` (six blocs) avec la texture du fichier minecraft_player.glb fourni par
   l'utilisateur (auteur à confirmer), sur le squelette de la Universal Animation Library.
 - `tnt.glb` : minecraft_block_tnt.glb fourni par l'utilisateur (auteur à confirmer), préparé par `tools/blender/allies.py`.
+- `vador.glb` : modèle OBJ de Dark Vador fourni par l'utilisateur (archive `dark-vador-model20191006-8718-1p8srkq.zip`,
+  dossier `stan_x/dark-vador-model`, auteur « stan_x » à confirmer, licence à confirmer), coloré, monté sur le squelette de la
+  Universal Animation Library (Quaternius, CC0) et armé du sabre laser par `tools/blender/vador.py`.
 - `sabre.glb` : « Light saber » par April Lewer (fichier Poly Pizza fourni par l'utilisateur), redressé par
   `tools/blender/sabre.py`.
 - `cheveux_ssj.glb` et `cheveux_ssj3.glb` : les coiffures de Goku tirées de « dbxv2_goku_damaged2_ssj.glb » et
