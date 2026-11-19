@@ -16,6 +16,10 @@ export class Saiyan {
   left = 0;
   /** Prochain éclair (SSJ2), s. */
   lightningIn = 0;
+  /** Secondes de transformation en plus (skill tree : ligne Super Saiyan). */
+  extraTime = 0;
+  /** Durée d'une transformation (s). */
+  get duration() { return S.duration + this.extraTime; }
 
   reset() { this.enabled = false; this.points = 0; this.tier = 0; this.left = 0; this.lightningIn = 0; }
 
@@ -43,7 +47,7 @@ export class Saiyan {
   transform() {
     if (!this.enabled || this.active || this.reached === 0) return 0;
     this.tier = this.reached;
-    this.left = S.duration;
+    this.left = this.duration;
     this.lightningIn = 0;
     return this.tier;
   }

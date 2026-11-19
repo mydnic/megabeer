@@ -2,7 +2,7 @@
 
 import type { ItemStatId } from '../config/items';
 import type { CardOptionId } from '../config/shop';
-import { SKILL_LINES, SKILL_PRICES, type SkillLine } from '../config/skills';
+import { PERK_IDS, SKILL_LINES, SKILL_PRICES, type PerkId, type SkillLine } from '../config/skills';
 import type { Profile } from './profile';
 
 /** Paliers achetés dans une ligne (0 à tous). */
@@ -23,15 +23,18 @@ export function buySkill(p: Profile, lineId: string, now: number): Profile | nul
   return { ...p, tunas: p.tunas - price, skills: { ...p.skills, [lineId]: tiersOf(p, lineId) + 1 }, updatedAt: now };
 }
 
-/** Ce que la run reçoit des paliers achetés : des bonus de stat, et des utilisations d'options de cartes. */
+/** Ce que la run reçoit des paliers achetés : des bonus de stat, des utilisations d'options de cartes, des bonus de mécanique. */
 export function skillBonuses(p: Profile) {
   const stats: { stat: ItemStatId; value: number }[] = [];
   const options: Record<CardOptionId, number> = { reroll: 0, banish: 0, skip: 0 };
+  const perks = Object.fromEntries(PERK_IDS.map((id) => [id, 0])) as Record<PerkId, number>;
   for (const line of SKILL_LINES) {
     for (const tier of line.tiers.slice(0, tiersOf(p, line.id))) {
-      if ('stat' in tier.effect) stats.push({ stat: tier.effect.stat, value: tier.effect.value });
-      else options[tier.effect.option] += tier.effect.uses;
+      const e = tier.effect;
+      if ('stat' in e) stats.push({ stat: e.stat, value: e.value });
+      else if ('perk' in e) perks[e.perk] += e.value;
+      else options[e.option] += e.uses;
     }
   }
-  return { stats, options };
+  return { stats, options, perks };
 }

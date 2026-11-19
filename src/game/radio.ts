@@ -18,6 +18,8 @@ export class Radio {
   facing = new THREE.Vector3();
   state: RadioState = 'idle';
   hp: number = R.hp;
+  /** PV max (skill tree : ligne Radio). */
+  maxHp: number = R.hp;
   focus = false;
   private tmp = new THREE.Vector3();
 
@@ -26,7 +28,7 @@ export class Radio {
   clear() {
     this.pos = null;
     this.state = 'idle';
-    this.hp = R.hp;
+    this.hp = this.maxHp;
     this.focus = false;
   }
 
@@ -60,7 +62,7 @@ export class Radio {
     if (this.collider.occupied(this.tmp.copy(dir).multiplyScalar(pos.length() + 0.5), 0.8)) return false;
     this.pos = pos;
     this.state = 'idle';
-    this.hp = R.hp;
+    this.hp = this.maxHp;
     this.facing.crossVectors(dir, Math.abs(dir.y) < 0.9 ? Y : X).normalize().applyAxisAngle(dir, this.random() * Math.PI * 2);
     return true;
   }

@@ -56,6 +56,7 @@ import { Vehicles, type ParkedVehicle } from './vehicles';
 import { Saiyan } from './saiyan';
 import { Radio } from './radio';
 import { RADIO } from '../config/radio';
+import type { PerkId } from '../config/skills';
 import { SAIYAN } from '../config/saiyan';
 import { VEHICLE_SPAWN, VEHICLES, type VehicleId } from '../config/vehicles';
 import { MAP_MECHANICS, type MapId, type MapMechanic } from './mechanics/mechanic';
@@ -515,8 +516,12 @@ export class Game {
     this.phase = 'run';
     this.player.reset(spawn.dir, spawn.facing);
     for (const b of C.stats) this.applyStatBonus(b.stat, b.value, true);
-    // Skill tree : ses bonus de stat valent dès le début de la run
+    // Skill tree : ses bonus de stat valent dès le début de la run, comme ceux de la radio, du Super Saiyan et des véhicules
     for (const b of this.unlocks?.bonuses ?? []) this.applyStatBonus(b.stat, b.value, true);
+    this.radio.maxHp = RADIO.hp * (1 + this.perk('radioHp'));
+    this.saiyan.extraTime = this.perk('saiyanTime');
+    this.vehicles.timeMul = 1 + this.perk('vehicleTime');
+    this.vehicles.hpMul = 1 + this.perk('vehicleHp');
     this.pumps.place(spawn.dir);
     this.chests.place(spawn.dir, this.pumps.list.map((p) => p.pos), this.trapChance);
     this.lastCall.place(spawn.dir, this.chests.list.map((c) => c.pos), this.pumps.list.map((p) => p.pos));
@@ -1402,16 +1407,19 @@ export class Game {
   private hitRadio(damage: number) {
     if (this.radio.state !== 'playing') return;
     const broke = this.radio.hit(damage);
-    this.events.emit('radioHit', { hp: this.radio.hp, maxHp: RADIO.hp });
+    this.events.emit('radioHit', { hp: this.radio.hp, maxHp: this.radio.maxHp });
     if (broke) {
       this.horde.setDecoy(null);
       this.events.emit('radioBroken', { pos: this.radio.pos!.clone() });
     }
   }
 
-  /** Remplit la jauge de colère ; annonce le palier tout juste atteint. */
+  /** Bonus de mécanique du skill tree (0 sans palier acheté). */
+  private perk(id: PerkId) { return this.unlocks?.perks?.[id] ?? 0; }
+
+  /** Remplit la jauge de colère (plus vite avec la ligne Super Saiyan) ; annonce le palier tout juste atteint. */
   private saiyanGain(points: number) {
-    const tier = this.saiyan.gain(points);
+    const tier = this.saiyan.gain(points * (1 + this.perk('saiyanGain')));
     if (tier) this.events.emit('saiyanTierReached', { tier, name: SAIYAN.tiers[tier - 1].name });
   }
 
@@ -1421,7 +1429,7 @@ export class Game {
     if (!tier) return;
     const T = SAIYAN.tiers[tier - 1];
     for (const [stat, v] of Object.entries(T.stats) as [ItemStatId, number][]) this.applyStatBonus(stat, v, true);
-    this.events.emit('saiyanTransformed', { tier, name: T.name, duration: SAIYAN.duration });
+    this.events.emit('saiyanTransformed', { tier, name: T.name, duration: this.saiyan.duration });
   }
 
   /** Pendant la transformation : coût du Kaioken, éclairs du SSJ2 ; à la fin, les bonus sont retirés. */
@@ -1473,7 +1481,7 @@ export class Game {
     const speed = Math.abs(p.carSpeed);
     if (speed < C.minSpeed) return;
     const up = this.tmp.copy(p.pos).normalize();
-    const base = (C.damage + C.perSpeed * speed) * spawnCurveAt(this.runTime).hpMul * this.mods.hp;
+    const base = (C.damage + C.perSpeed * speed) * spawnCurveAt(this.runTime).hpMul * this.mods.hp * (1 + this.perk('vehicleCrush'));
     for (const o of this.horde.near(p.pos, C.radius, this.around)) {
       if (!o.targetable || o.dead || o.pos.distanceTo(p.pos) > C.radius) continue;
       if ((this.crushReady.get(o) ?? 0) > this.runTime) continue;

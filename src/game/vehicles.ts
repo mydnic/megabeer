@@ -24,6 +24,9 @@ export type Shell = { from: THREE.Vector3; to: THREE.Vector3; left: number; flig
 export class Vehicles {
   parked: ParkedVehicle | null = null;
   driving: DrivenVehicle | null = null;
+  /** Skill tree (ligne Véhicules) : durée et PV des véhicules (x). */
+  timeMul = 1;
+  hpMul = 1;
   /** Obus du tank en vol. */
   readonly shells: Shell[] = [];
   private tmp = new THREE.Vector3();
@@ -101,7 +104,8 @@ export class Vehicles {
   enter(v: ParkedVehicle) {
     const D = VEHICLES[v.kind];
     this.parked = null;
-    this.driving = { kind: v.kind, hp: D.hp, maxHp: D.hp, left: D.duration, duration: D.duration, hitCooldown: 0, reload: 0, aim: null };
+    const hp = D.hp * this.hpMul, duration = D.duration * this.timeMul;
+    this.driving = { kind: v.kind, hp, maxHp: hp, left: duration, duration, hitCooldown: 0, reload: 0, aim: null };
     return this.driving;
   }
 

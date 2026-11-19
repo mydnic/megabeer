@@ -46,11 +46,11 @@ export function createSaiyanHud(keyHint: () => string) {
   let last = '';
   return {
     /** Chaque image : visible ou non, points de jauge, palier en cours (0 : aucun), temps qui reste (s). */
-    update(visible: boolean, points: number, reached: number, tier: number, left: number) {
+    update(visible: boolean, points: number, reached: number, tier: number, left: number, duration: number = SAIYAN.duration) {
       el.classList.toggle('on', visible);
       if (!visible) return;
       const T = SAIYAN.thresholds;
-      if (tier > 0) one.style.transform = `scaleX(${Math.max(0, left / SAIYAN.duration)})`;
+      if (tier > 0) one.style.transform = `scaleX(${Math.max(0, left / duration)})`;
       else fills.forEach((f, i) => {
         const lo = i === 0 ? 0 : T[i - 1];
         f.style.transform = `scaleX(${Math.max(0, Math.min(1, (points - lo) / (T[i] - lo)))})`;

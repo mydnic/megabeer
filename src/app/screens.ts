@@ -357,7 +357,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
       itemHud.update(game.items);
       tourneeHud.update((id) => game.tournees.left(id));
       const sj = game.saiyan;
-      saiyanHud.update(game.phase === 'run' && sj.enabled, sj.points, sj.reached, sj.tier, sj.left);
+      saiyanHud.update(game.phase === 'run' && sj.enabled, sj.points, sj.reached, sj.tier, sj.left, sj.duration);
       const car = game.vehicles.driving;
       if (car) vehicleHud.update(car.hp / car.maxHp, car.left / car.duration, car.left);
       const boss = game.boss;

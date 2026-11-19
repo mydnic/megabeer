@@ -1,6 +1,7 @@
 // La boutique (GDD section 14), pure : ce qui est à vendre, ce qui est débloqué, et l'achat. Testée telle quelle.
 
 import { ITEMS, type ItemDef, type ItemId } from '../config/items';
+import type { PerkId } from '../config/skills';
 import { CARD_OPTIONS, ITEM_PRICES, SHOP_CHARACTERS, STARTING_CHARACTERS, STARTING_ITEMS, STARTING_WEAPONS, WEAPON_PRICE, type CardOptionId } from '../config/shop';
 import { WEAPON_FACTORIES } from '../weapons/registry';
 import type { WeaponId } from '../weapons/weapon';
@@ -60,7 +61,9 @@ export function buy(p: Profile, key: string, now: number): Profile | null {
  * Ce que la run peut utiliser : les armes qui sortent au level-up, les objets qui sortent des coffres (boutique), les
  * utilisations des options de cartes et les bonus de stat du début de run (skill tree).
  */
-export type RunUnlocks = { weapons: ReadonlySet<WeaponId>; items: ReadonlySet<ItemId>; options: Record<CardOptionId, number>; bonuses: readonly { stat: ItemStatId; value: number }[] };
+export type RunUnlocks = { weapons: ReadonlySet<WeaponId>; items: ReadonlySet<ItemId>; options: Record<CardOptionId, number>; bonuses: readonly { stat: ItemStatId; value: number }[];
+  /** Bonus de mécanique du skill tree (radio, Super Saiyan, véhicules). */
+  perks?: Partial<Record<PerkId, number>> };
 
 export function runUnlocks(p: Profile): RunUnlocks {
   const weapons = new Set((Object.keys(WEAPON_FACTORIES) as WeaponId[]).filter((id) => owned(p, weaponKey(id))));
@@ -68,5 +71,5 @@ export function runUnlocks(p: Profile): RunUnlocks {
   const skills = skillBonuses(p);
   const options = {} as Record<CardOptionId, number>;
   for (const o of Object.keys(CARD_OPTIONS) as CardOptionId[]) options[o] = skills.options[o];
-  return { weapons, items, options, bonuses: skills.stats };
+  return { weapons, items, options, bonuses: skills.stats, perks: skills.perks };
 }
