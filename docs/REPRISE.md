@@ -224,8 +224,8 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    tremblent très vite de chaque côté pendant 0,35 s, et le perso lui-même tremble un peu ; retour de l'utilisateur :
    des copies figées plus loin ne se voyaient pas). Reste : des effets propres aux autres paliers), #5 (Trilogie du Seigneur des Anneaux : **faite et validée le 2026-11-19** : deux objets uniques, version cinéma
    Rare +250 % et version longue Légendaire +350 % de la stat Durée (choix de l'utilisateur : la stat de base, même si
-   les gels et étourdissements figent la horde, plutôt qu'une stat à part) ; débloquées par Collectionneur et Jusqu'à la fermeture), #14 (braindump : radio,
-   alliés, boss et objets de pop culture ; l'utilisateur veut ses références telles quelles, sans remarque de droits).
+   les gels et étourdissements figent la horde, plutôt qu'une stat à part) ; débloquées par Collectionneur et Jusqu'à la fermeture), #14 découpé le 2026-11-19 en #15 Senzu, #16 Radio planquée, #17 Sabre laser, #18 Alliés, #19 Nouveaux boss, #20 Montagne
+   du Destin, #21 Relief (l'utilisateur veut ses références telles quelles, sans remarque de droits). Ordre : la Senzu d'abord).
    **Roster des persos arrêté le 2026-11-18 (décision de l'utilisateur) : 8 persos** (Buveur, Videur, Père Noël, Cop,
    Futur Marié, Barman, Serveuse, Pilier de bar). Le Moine brasseur et le Supporter restent au GDD pour plus tard.
    **Le Pilier de bar fait et validé par l'utilisateur le 2026-11-18** : passif Accoudé (`anchor` : immobile, l'ancrage monte en
