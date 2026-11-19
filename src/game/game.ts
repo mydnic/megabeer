@@ -201,6 +201,12 @@ export type GameEvents = {
   whistleBlown: { at: THREE.Vector3; radius: number };
   /** Juke-box (niveau gagné) ou Seconde tournée : une onde repousse les ennemis autour de `at`. */
   shockwave: { at: THREE.Vector3; radius: number };
+  /** Un objet à usage unique (Senzu, Seconde tournée) vient de servir : un exemplaire quitte les objets du joueur. */
+  private useUp(item: ItemId) {
+    const i = this.items.findIndex((it) => it.item === item);
+    if (i >= 0) this.items.splice(i, 1);
+  }
+
   /** Seconde tournée : le joueur revient à la vie avec `hp` PV. */
   revived: { hp: number };
   /** Bonnet du Père Noël : un coffre gratuit apparaît. */
@@ -1109,6 +1115,7 @@ export class Game {
   private revive() {
     const R = ITEM_EFFECTS.revive;
     this.effects.revives--;
+    this.useUp('secondeTournee');
     this.health.hp = Math.max(1, Math.min(this.health.max, this.health.max * ITEMS.secondeTournee.value));
     this.health.invuln = R.invuln;
     this.effects.owed = 0;
@@ -1123,9 +1130,7 @@ export class Game {
     if (this.effects.senzus > 0 && !this.health.dead && this.health.hp < this.health.max * ITEM_EFFECTS.senzu.below) {
       this.effects.senzus--;
       this.health.hp = this.health.max;
-      // Mangée : elle quitte les objets du joueur
-      const i = this.items.findIndex((it) => it.item === 'senzu');
-      if (i >= 0) this.items.splice(i, 1);
+      this.useUp('senzu');
       this.events.emit('senzuEaten', { left: this.effects.senzus });
     }
     // Tournées du bar : celles qui finissent rendent ce qu'elles avaient prêté

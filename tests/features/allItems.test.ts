@@ -206,6 +206,8 @@ describe('Tous les objets', () => {
     expect(t.game.phase).toBe('run');
     expect(t.game.health.hp).toBeCloseTo(t.game.health.max * ITEMS.secondeTournee.value, 5);
     expect(t.events('revived')).toHaveLength(1);
+    // Elle a servi : elle quitte les objets du joueur
+    expect(t.game.items.some((i) => i.item === 'secondeTournee')).toBe(false);
     t.game.health.invuln = 0;
     t.game.health.damage(9999);
     t.play(0.1);
