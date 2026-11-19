@@ -110,6 +110,7 @@ export const AUDIO = {
     vehicleHit: { sample: 'impactMetal_medium', volume: 0.5, rate: 1.0 },
     vehicleOut: { sample: 'impactPlate_heavy', volume: 0.6, rate: 0.7 },
     tankFire: { sample: 'impactPlate_heavy', volume: 0.6, rate: 0.55 },
+    senzu: { sample: 'impactBell_heavy', volume: 0.55, rate: 1.9 },
     saiyanReady: { sample: 'impactBell_heavy', volume: 0.45, rate: 1.6 },
     /** Son d'aura, en boucle pendant toute la transformation ; `fade` : fondu à la fin (s). */
     saiyanTransform: { sample: 'saiyan_aura', volume: 0.8, rate: 1, fade: 0.8 },

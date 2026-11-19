@@ -226,6 +226,13 @@ ${L('M21 50.500c3-1.500 16-1.500 21-4M21 32.500c3-1.500 16-1.500 21-4', '#fff', 
 ${R(15, 6, 34, 6.5, 3, G.red, 'sh', 2.6)}
 ${L('M7 12l5 3M57 12l-5 3M32 1v3', '#ffc93a', 3, 1)}`,
 
+  // Senzu : un haricot vert brillant, posé sur une lueur, une étincelle
+  senzu: `${glow(32, 34, 26, 0.85)}
+<g transform="rotate(-28 32 34)">${E(32, 34, 21, 13, G.green, 'ball')}</g>
+${L('M20 26q12-8 24 0', '#e9ffd0', 3.4, 0.75)}
+${L('M24 44q8 4 16 0', '#1f5a1c', 2.6, 0.7)}
+${spark(50, 14, 5.5, '#fff', 0.95)}${spark(14, 50, 3.5, '#e9ffd0', 0.85)}`,
+
   // Coffret de la trilogie, version cinéma : trois boîtiers de DVD en éventail, l'Anneau unique doré sur celui de devant
   trilogieCinema: `${R(4, 12, 24, 40, 3, '#3a4a32', 'sh')}${R(14, 8, 26, 44, 3, '#2e3d2a', 'sh')}
 ${R(25, 5, 34, 52, 3.5, '#24331f', 'vol')}

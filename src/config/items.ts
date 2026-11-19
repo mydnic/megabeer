@@ -14,7 +14,7 @@ export type ItemStatId =
 export type EffectId =
   | 'explodeOnKill' | 'foamShield' | 'happyHour' | 'healOnXp' | 'slowOnHit' | 'freezeChance' | 'closeDamage'
   | 'eliteDamage' | 'crowdBoost' | 'extraShotChance' | 'lowHpDamage' | 'damageSpread' | 'musicWave'
-  | 'standRegen' | 'whistle' | 'revive' | 'freeChest' | 'freeChestChance' | 'doubleJump' | 'saiyan';
+  | 'standRegen' | 'whistle' | 'revive' | 'freeChest' | 'freeChestChance' | 'doubleJump' | 'saiyan' | 'senzu';
 
 export type ItemDef = {
   name: string;
@@ -59,6 +59,7 @@ export type ItemDef = {
  * - freeChestChance (Bon de réduction) : chance qu'un coffre soit gratuit (plafond `max`).
  * - doubleJump (Ressort de canapé) : sauts en l'air en plus.
  * - saiyan (Sang Saiyan) : active la jauge de colère et la transformation (réglages dans config/saiyan.ts).
+ * - senzu (Senzu, issue #15) : une fois par exemplaire, rend tous les PV dès qu'ils passent sous `below` des PV max.
  */
 export const ITEM_EFFECTS = {
   explodeOnKill: { radius: 3.5, damage: 30, maxChance: 0.5 },
@@ -76,6 +77,7 @@ export const ITEM_EFFECTS = {
   revive: { invuln: 2, radius: 8, knock: 5 },
   freeChest: { every: 90, dist: 6 },
   freeChestChance: { max: 0.5 },
+  senzu: { below: 0.25 },
 } as const;
 
 /**
@@ -119,6 +121,7 @@ export const ITEMS = {
   // sol, gels, étourdissements, ralentis). Deux éditions, chacune unique et débloquée par un succès
   trilogieCinema: { name: 'Trilogie du Seigneur des Anneaux (cinéma)', rarity: 2, unique: true, stats: { duration: 2.5 }, text: '+{duration%} durée des effets' },
   trilogieLongue: { name: 'Trilogie du Seigneur des Anneaux (version longue)', rarity: 4, unique: true, stats: { duration: 3.5 }, text: '+{duration%} durée des effets' },
+  senzu: { name: 'Senzu', rarity: 3, effect: 'senzu', value: 1, text: `Une fois : tous les PV rendus sous ${E.senzu.below * 100} % PV` },
   sangSaiyan: { name: 'Sang Saiyan', rarity: 4, effect: 'saiyan', value: 1, unique: true, text: 'Jauge de colère : tue et encaisse, puis transforme-toi (F, Y à la manette)' },
   secondeTournee: { name: 'Seconde tournée', rarity: 4, effect: 'revive', value: 0.5, text: 'Revivre une fois avec {v%} des PV' },
   carteFidelite: { name: 'Carte de fidélité', rarity: 2, stats: { chestDiscount: 0.16 }, text: 'Coffres {chestDiscount%} moins chers' },

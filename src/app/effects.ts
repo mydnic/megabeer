@@ -372,6 +372,12 @@ export function wireEffects(game: Game, d: Deps) {
     pipeline.fade.amount = 0;
   });
 
+  // Senzu : éclat vert et onde au sol, le perso est guéri d'un coup
+  game.events.on('senzuEaten', () => {
+    up.copy(game.player.pos).normalize();
+    vfx.pop(numPos.copy(game.player.pos).addScaledVector(up, 1), 0x7fe05a, 2.4);
+    d.rings.spawn(game.player.pos, 4, 0x7fe05a);
+  });
   // Super Saiyan : onde et éclat à la transformation, éclairs du SSJ2 (l'aura : fx/auraView.ts)
   game.events.on('saiyanTransformed', ({ tier }) => {
     const c = SAIYAN.tiers[tier - 1].aura;

@@ -179,6 +179,8 @@ export type GameEvents = {
   vehicleCrushed: { zombie: Zombie; pos: THREE.Vector3; killed: boolean; speed: number };
   /** Le véhicule encaisse un coup à la place du joueur. */
   vehicleHit: { damage: number; hp: number; maxHp: number };
+  /** Senzu : le joueur en mange une (sous le seuil de PV), il retrouve tous ses PV ; `left` : celles qui restent. */
+  senzuEaten: { left: number };
   /** Jauge de colère : un nouveau palier de transformation est atteint (le joueur peut s'y transformer). */
   saiyanTierReached: { tier: number; name: string };
   /** Le joueur se transforme (palier `tier`, pour `duration` s). */
@@ -1117,6 +1119,12 @@ export class Game {
   /** Effets d'objets qui vivent à chaque pas : minuteries, régénération, Écharpe, ardoise. */
   private updateItemEffects(dt: number) {
     const fx = this.effects.update(dt, this.stats.duration);
+    // Senzu : sous le seuil, il en mange une et retrouve tous ses PV
+    if (this.effects.senzus > 0 && !this.health.dead && this.health.hp < this.health.max * ITEM_EFFECTS.senzu.below) {
+      this.effects.senzus--;
+      this.health.hp = this.health.max;
+      this.events.emit('senzuEaten', { left: this.effects.senzus });
+    }
     // Tournées du bar : celles qui finissent rendent ce qu'elles avaient prêté
     for (const id of this.tournees.update(dt, this.ended)) {
       if (id === 'sousBock') this.stats.luck -= TOURNEE_FX.sousBock.luck;

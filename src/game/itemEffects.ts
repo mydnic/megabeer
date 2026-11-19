@@ -3,7 +3,7 @@ import { ITEM_EFFECTS as E, type EffectId } from '../config/items';
 const NONE = (): Record<EffectId, number> => ({
   explodeOnKill: 0, foamShield: 0, happyHour: 0, healOnXp: 0, slowOnHit: 0, freezeChance: 0, closeDamage: 0,
   eliteDamage: 0, crowdBoost: 0, extraShotChance: 0, lowHpDamage: 0, damageSpread: 0, musicWave: 0,
-  standRegen: 0, whistle: 0, revive: 0, freeChest: 0, freeChestChance: 0, doubleJump: 0, saiyan: 0,
+  standRegen: 0, whistle: 0, revive: 0, freeChest: 0, freeChestChance: 0, doubleJump: 0, saiyan: 0, senzu: 0,
 });
 
 /**
@@ -28,6 +28,8 @@ export class ItemEffects {
   freeChestIn = 0;
   /** Seconde tournée : retours à la vie restants. */
   revives = 0;
+  /** Senzus encore à manger (une par exemplaire). */
+  senzus = 0;
   /** Ardoise du bar : dégâts encore à encaisser, et leur rythme (PV/s). */
   owed = 0;
   owedRate = 0;
@@ -40,6 +42,7 @@ export class ItemEffects {
     this.power[effect] += value;
     // Seconde tournée : un retour à la vie par exemplaire
     if (effect === 'revive') this.revives++;
+    if (effect === 'senzu') this.senzus++;
     // Mousse épaisse : chaque exemplaire apporte sa bulle, qui arrive pleine
     if (effect === 'foamShield') this.shields.push({ rate: value, ready: true, charge: 0 });
     if (!first) return;
@@ -116,6 +119,7 @@ export class ItemEffects {
     this.shields.length = 0;
     this.happyIn = this.happyLeft = this.whistleIn = this.musicIn = this.freeChestIn = 0;
     this.revives = 0;
+    this.senzus = 0;
     this.owed = this.owedRate = 0;
     this.crowded = false;
   }
