@@ -231,7 +231,7 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    (ghetto-blaster) cachée au hasard à plus de 45 m de l'arrivée (son propre tirage, qui ne décale pas le hasard du jeu),
    allumée avec E, elle joue radio.mydnic.be (simple lecteur audio, plus fort près du poste, musique du jeu coupée) et
    attire tous les ennemis sauf les boss (leurre de la horde, lanceurs compris) ; 400 PV, cassée la horde revient ; DEV
-   « Radio à côté » ; **skill tree : 3 lignes en plus le 2026-11-19, à valider** (demande de l'utilisateur) :
+   « Radio à côté » ; **skill tree : 3 lignes en plus le 2026-11-19, validées** (demande de l'utilisateur) :
    Radio (+40 % PV par palier), Super Saiyan (jauge plus rapide, transformation +10 s), Véhicules (durée, PV,
    écrasement) ; bonus de mécanique `perk` (`PerkId` dans `config/skills.ts`, `runUnlocks().perks`, `game.perk(id)`)).
    **Roster des persos arrêté le 2026-11-18 (décision de l'utilisateur) : 8 persos** (Buveur, Videur, Père Noël, Cop,
