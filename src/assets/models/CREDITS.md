@@ -50,6 +50,11 @@
 
 - `gandalf.glb` : « Wizard » (archive Wizard.zip fournie par l'utilisateur, auteur à confirmer), préparé par
   `tools/blender/gandalf.py`.
+- `krilin.glb`, `yoda.glb` : modèles Sketchfab fournis par l'utilisateur (krilin.glb, yoda.glb ; auteurs à confirmer),
+  montés sur le squelette de la Universal Animation Library (Quaternius, CC0) par `tools/blender/allies.py`.
+- `steve.glb` : refait par `tools/blender/allies.py` (six blocs) avec la texture du fichier minecraft_player.glb fourni par
+  l'utilisateur (auteur à confirmer), sur le squelette de la Universal Animation Library.
+- `tnt.glb` : minecraft_block_tnt.glb fourni par l'utilisateur (auteur à confirmer), préparé par `tools/blender/allies.py`.
 - `sabre.glb` : « Light saber » par April Lewer (fichier Poly Pizza fourni par l'utilisateur), redressé par
   `tools/blender/sabre.py`.
 - `cheveux_ssj.glb` et `cheveux_ssj3.glb` : les coiffures de Goku tirées de « dbxv2_goku_damaged2_ssj.glb » et

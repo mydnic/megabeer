@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { ALLY_FX } from '../config/allies';
 import { SAIYAN, SAIYAN_LOOK } from '../config/saiyan';
 import { BELLS } from '../config/abbey';
 import { ARRIVAL, DEATH_BANNER } from '../config/player';
@@ -372,15 +373,41 @@ export function wireEffects(game: Game, d: Deps) {
     pipeline.fade.amount = 0;
   });
 
-  // Allié : Gandalf frappe le sol de son bâton, une onde grise part, la poussière de pierre retombe sur les pétrifiés
-  game.events.on('allyPower', ({ pos, radius }) => {
-    d.rings.spawn(pos, radius, 0xc8c2b4);
-    vfx.dust(pos, 10, 0.8, radius * 0.6);
+  // Alliés : Gandalf frappe le sol (onde grise, poussière de pierre) ; Yoda pousse (onde verte) ; Krilin lance son disque ;
+  // Steve pose son bloc
+  game.events.on('allyPower', ({ kind, pos, radius }) => {
     up.copy(pos).normalize();
-    vfx.pop(numPos.copy(pos).addScaledVector(up, 1.8), 0xffffff, 2);
-    const k = 1 - pos.distanceTo(game.player.pos) / 25;
-    if (k > 0) rig.shake(HIT_FEEDBACK.shake * 0.5 * k, HIT_FEEDBACK.shakeAmplitude, HIT_FEEDBACK.shakeDecay);
+    const shake = (s: number) => {
+      const k = 1 - pos.distanceTo(game.player.pos) / 25;
+      if (k > 0) rig.shake(HIT_FEEDBACK.shake * s * k, HIT_FEEDBACK.shakeAmplitude, HIT_FEEDBACK.shakeDecay);
+    };
+    if (kind === 'gandalf') {
+      d.rings.spawn(pos, radius, 0xc8c2b4);
+      vfx.dust(pos, 10, 0.8, radius * 0.6);
+      vfx.pop(numPos.copy(pos).addScaledVector(up, 1.8), 0xffffff, 2);
+      shake(0.5);
+    } else if (kind === 'yoda') {
+      d.rings.spawn(pos, radius, 0x9fe8b0);
+      vfx.dust(pos, 8, 0.6, radius * 0.5);
+      vfx.pop(numPos.copy(pos).addScaledVector(up, 0.7), 0xb8ffc8, 1.6);
+      shake(0.3);
+    } else if (kind === 'krilin') {
+      vfx.pop(numPos.copy(pos).addScaledVector(up, ALLY_FX.disc.height), ALLY_FX.disc.color, 1.8);
+    } else {
+      vfx.dust(pos, 5, 0.4, 0.8);
+    }
   });
+  game.events.on('kienzanFaded', ({ pos }) => vfx.pop(numPos.copy(pos).addScaledVector(up.copy(pos).normalize(), ALLY_FX.disc.height), ALLY_FX.disc.color, 1.2));
+  game.events.on('tntExploded', ({ pos, radius }) => {
+    up.copy(pos).normalize();
+    numPos.copy(pos).addScaledVector(up, 0.4);
+    vfx.explosion(numPos, radius * 0.6, VFX.shell);
+    d.rings.spawn(pos, radius, VFX.shell.ember);
+    const k = 1 - pos.distanceTo(game.player.pos) / 30;
+    if (k > 0) rig.shake(HIT_FEEDBACK.shake * 0.7 * k, HIT_FEEDBACK.shakeAmplitude, HIT_FEEDBACK.shakeDecay);
+  });
+  // Soin de Krilin : une lueur verte sur le joueur
+  game.events.on('allyHealed', () => vfx.sparkle(game.player.pos, ALLY_FX.healColor, 5, 1, 1.6));
   // Senzu : éclat vert et onde au sol, le perso est guéri d'un coup
   game.events.on('senzuEaten', () => {
     up.copy(game.player.pos).normalize();

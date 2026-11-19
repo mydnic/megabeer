@@ -11,27 +11,33 @@ export type Ally = {
   left: number; cooldown: number; speed: number;
 };
 
+/** Un Kienzan en vol : où il est (au sol, l'affichage le lève), sa direction, la distance qui lui reste, qui il a tranché. */
+export type Disc = { pos: THREE.Vector3; dir: THREE.Vector3; left: number; hit: Set<object> };
+/** Un bloc de TNT posé par Steve : où, et le temps avant l'explosion (s). */
+export type Tnt = { pos: THREE.Vector3; fuse: number; fuseTime: number };
+
 const X = new THREE.Vector3(1, 0, 0), Y = new THREE.Vector3(0, 1, 0);
 
 /**
- * Les alliés d'une run (issue #18) : un par abbaye, sauf celle de l'arrivée. Touché, un allié rejoint le joueur et le suit
- * un temps ; le jeu applique son pouvoir quand `update` le demande.
+ * Les alliés d'une run (issue #18) : un par abbaye. Touché, un allié rejoint le joueur et le suit un temps ; le jeu
+ * applique son pouvoir quand `update` le demande. Ce que lancent ou posent les alliés (Kienzan, TNT) vit ici aussi.
  */
 export class Allies {
   readonly list: Ally[] = [];
+  readonly discs: Disc[] = [];
+  readonly tnts: Tnt[] = [];
   private tmp = new THREE.Vector3();
   private want = new THREE.Vector3();
 
   constructor(private collider: DecorCollider) {}
 
-  clear() { this.list.length = 0; }
+  clear() { this.list.length = 0; this.discs.length = 0; this.tnts.length = 0; }
 
-  /** Nouvelle run : un allié dans chaque abbaye autre que la plus proche de l'arrivée (dans l'ordre de `ALLIES`). */
-  place(spawnDir: THREE.Vector3, kinds: readonly AllyId[] = Object.keys(ALLIES) as AllyId[]) {
+  /** Nouvelle run : un allié dans chaque abbaye, dans l'ordre de `ALLIES` (l'arrivée est n'importe où sur la carte). */
+  place(kinds: readonly AllyId[] = Object.keys(ALLIES) as AllyId[]) {
     this.clear();
-    const sites = [...abbeySites].sort((a, b) => a.dir.angleTo(spawnDir) - b.dir.angleTo(spawnDir)).slice(1);
     kinds.forEach((kind, i) => {
-      const site = sites[i];
+      const site = abbeySites[i];
       if (!site) return;
       const pos = this.freeSpot(site.dir);
       const facing = new THREE.Vector3().crossVectors(pos.clone().normalize(), Math.abs(pos.y) < 0.9 * pos.length() ? Y : X).normalize();
@@ -55,6 +61,7 @@ export class Allies {
    */
   update(dt: number, playerPos: THREE.Vector3, playerFacing: THREE.Vector3, playerSpeed: number,
     on: { join(a: Ally): void; power(a: Ally): void; leave(a: Ally): void }) {
+    let slot = 0;
     for (const a of this.list) {
       if (a.state === 'waiting') {
         a.speed = 0;
@@ -69,17 +76,21 @@ export class Allies {
       if (a.state !== 'following') continue;
       a.left -= dt;
       if (a.left <= 0) { a.state = 'gone'; a.speed = 0; on.leave(a); continue; }
-      this.follow(a, dt, playerPos, playerFacing, playerSpeed);
+      this.follow(a, slot++, dt, playerPos, playerFacing, playerSpeed);
       a.cooldown -= dt;
       if (a.cooldown <= 0) { a.cooldown = ALLIES[a.kind].power.every; on.power(a); }
     }
   }
 
-  /** Marche vers sa place derrière le joueur, sur le côté ; trop loin, il réapparaît à côté de lui. */
-  private follow(a: Ally, dt: number, playerPos: THREE.Vector3, playerFacing: THREE.Vector3, playerSpeed: number) {
+  /**
+   * Marche vers sa place derrière le joueur ; chacun la sienne (`slot`) : un côté puis l'autre, un rang plus loin tous
+   * les deux. Trop loin, il réapparaît à côté de lui.
+   */
+  private follow(a: Ally, slot: number, dt: number, playerPos: THREE.Vector3, playerFacing: THREE.Vector3, playerSpeed: number) {
     const up = this.tmp.copy(playerPos).normalize();
     const side = new THREE.Vector3().crossVectors(playerFacing, up).normalize();
-    const target = playerPos.clone().addScaledVector(playerFacing, -R.followDistance).addScaledVector(side, -R.followSide);
+    const row = Math.floor(slot / 2), sign = slot % 2 ? 1 : -1;
+    const target = playerPos.clone().addScaledVector(playerFacing, -R.followDistance - row * R.rowGap).addScaledVector(side, sign * R.followSide * (1 + row * 0.5));
     const gap = target.distanceTo(a.pos);
     if (gap > R.catchUp) { a.pos.copy(target); this.ground(a.pos); a.speed = 0; return; }
     this.want.subVectors(target, a.pos);

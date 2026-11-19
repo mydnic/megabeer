@@ -17,6 +17,7 @@ import { CHARACTERS, type CharacterDef, type CharacterId } from '../config/chara
 import type { RunUnlocks } from '../meta/shop';
 import { createEnemyShots, type EnemyShot } from '../enemies/enemyShots';
 import { PLANET_RADIUS } from '../config/world';
+import { heightAt } from '../world/terrain';
 import { PlayerController } from '../player/controller';
 import { Health } from '../player/health';
 import { Progression } from '../player/progression';
@@ -56,7 +57,7 @@ import { Vehicles, type ParkedVehicle } from './vehicles';
 import { Saiyan } from './saiyan';
 import { Radio } from './radio';
 import { Allies, type Ally } from './allies';
-import { ALLIES, type AllyId } from '../config/allies';
+import { ALLIES, ALLY_FX, type AllyId, type AllyPower } from '../config/allies';
 import { RADIO } from '../config/radio';
 import type { PerkId } from '../config/skills';
 import { SAIYAN } from '../config/saiyan';
@@ -190,6 +191,14 @@ export type GameEvents = {
   allyPower: { kind: AllyId; pos: THREE.Vector3; radius: number; targets: number };
   /** Un allié s'en va (fin de sa compagnie). */
   allyLeft: { kind: AllyId };
+  /** Krilin a soigné le joueur de `amount` PV depuis la dernière fois (une fois par `ALLY_FX.healPulse` s). */
+  allyHealed: { amount: number };
+  /** Un Kienzan arrive au bout de sa course et s'éteint. */
+  kienzanFaded: { pos: THREE.Vector3 };
+  /** Steve pose un bloc de TNT, qui explose dans `fuse` s. */
+  tntPlaced: { pos: THREE.Vector3; fuse: number };
+  /** Un bloc de TNT explose (rayon `radius`). */
+  tntExploded: { pos: THREE.Vector3; radius: number };
   /** La radio est allumée : elle joue et attire la horde. */
   radioOn: { pos: THREE.Vector3 };
   /** Un ennemi frappe la radio ; `hp` : ce qui lui reste. */
@@ -542,8 +551,8 @@ export class Game {
     if (parked) this.events.emit('vehicleSpawned', { vehicle: parked });
     // La radio planquée : loin de l'arrivée, à l'écart du reste
     this.radio.place(spawn.dir, [...this.chests.list.map((c) => c.pos), ...this.pumps.list.map((q) => q.pos), ...this.lastCall.list.map((b) => b.pos), ...(parked ? [parked.pos] : [])]);
-    // Les alliés : un par abbaye, sauf celle de l'arrivée
-    this.allies.place(spawn.dir);
+    // Les alliés : un par abbaye
+    this.allies.place();
     this.bins.place(spawn.dir, [...this.chests.list.map((c) => c.pos), ...this.lastCall.list.map((b) => b.pos)], this.pumps.list.map((p) => p.pos), this.binCount);
     const landing = this.player.pos.clone();
     this.player.drop(ARRIVAL.height, ARRIVAL.speed);
@@ -696,6 +705,7 @@ export class Game {
           power: (a) => this.allyPower(a),
           leave: (a) => this.events.emit('allyLeft', { kind: a.kind }),
         });
+        this.updateAllyThings(dt);
         // Radio planquée : à portée, la touche d'action l'allume
         this.radio.update(p.pos);
         if (input.actionPressed && this.radio.focus && !this.chests.focus && !this.offer) this.turnRadioOn();
@@ -1414,20 +1424,104 @@ export class Game {
     this.events.emit('levelUpOffered', { level, cards, first });
   }
 
-  /** Atterrissage : la première horde sort de terre autour du joueur. */
-  /** Le pouvoir d'un allié. Gandalf : il pétrifie les ennemis autour de lui (pas les boss). */
+  /**
+   * Le pouvoir d'un allié. Gandalf pétrifie les ennemis autour de lui ; Krilin lance un Kienzan vers le plus proche ;
+   * Yoda les repousse et les sonne ; Steve pose un bloc de TNT. Les boss ne sont ni pétrifiés ni sonnés.
+   */
   private allyPower(a: Ally) {
-    const P = ALLIES[a.kind].power;
-    let n = 0;
-    if (P.kind === 'petrify') {
+    const P: AllyPower = ALLIES[a.kind].power;
+    let n = 0, radius = 0;
+    if (P.kind === 'petrify' || P.kind === 'push') {
+      radius = P.radius;
       for (const o of this.horde.near(a.pos, P.radius, this.around)) {
-        if (!o.targetable || o.dead || o.def.boss || o.pos.distanceTo(a.pos) > P.radius) continue;
-        o.frozen = Math.max(o.frozen, P.duration);
+        if (!o.targetable || o.dead || o.pos.distanceTo(a.pos) > P.radius) continue;
+        if (P.kind === 'petrify') {
+          if (o.def.boss) continue;
+          o.frozen = Math.max(o.frozen, P.duration);
+        } else {
+          const dir = o.pos.clone().sub(a.pos);
+          const up = this.tmp.copy(o.pos).normalize();
+          dir.addScaledVector(up, -dir.dot(up));
+          if (dir.lengthSq() < 1e-6) dir.copy(a.facing);
+          o.damage(0, dir.normalize(), P.knock);
+          if (!o.def.boss) this.freeze(o, P.stun);
+        }
         n++;
       }
+    } else if (P.kind === 'kienzan') {
+      let best: Zombie | null = null, bestD = P.range;
+      for (const o of this.horde.near(a.pos, P.range, this.around)) {
+        if (!o.targetable || o.dead) continue;
+        const d = o.pos.distanceTo(a.pos);
+        if (d < bestD) { bestD = d; best = o; }
+      }
+      // Personne à portée : il garde son disque pour plus tard
+      if (!best) { a.cooldown = 0.5; return; }
+      const up = a.pos.clone().normalize();
+      const dir = best.pos.clone().sub(a.pos);
+      dir.addScaledVector(up, -dir.dot(up)).normalize();
+      a.facing.copy(dir);
+      this.allies.discs.push({ pos: a.pos.clone(), dir, left: P.reach, hit: new Set() });
+      n = 1;
+    } else {
+      radius = P.radius;
+      const at = a.pos.clone().addScaledVector(a.facing, 0.9);
+      at.normalize().multiplyScalar(PLANET_RADIUS + heightAt(at.clone().normalize()));
+      this.allies.tnts.push({ pos: at, fuse: P.fuse, fuseTime: P.fuse });
+      this.events.emit('tntPlaced', { pos: at.clone(), fuse: P.fuse });
     }
-    this.events.emit('allyPower', { kind: a.kind, pos: a.pos.clone(), radius: P.radius, targets: n });
+    this.events.emit('allyPower', { kind: a.kind, pos: a.pos.clone(), radius, targets: n });
   }
+
+  /** Ce que les alliés ont lancé ou posé : les Kienzan filent et tranchent, les blocs de TNT explosent. Le soin de Krilin. */
+  private updateAllyThings(dt: number) {
+    const hpMul = spawnCurveAt(this.runTime).hpMul * this.mods.hp;
+    // Krilin soigne tant qu'il suit le joueur
+    const K = ALLIES.krilin.power;
+    if (this.allies.list.some((a) => a.kind === 'krilin' && a.state === 'following') && !this.health.dead) {
+      const before = this.health.hp;
+      this.health.heal(K.heal * dt);
+      this.allyHealed += this.health.hp - before;
+      if ((this.allyHealTimer -= dt) <= 0) {
+        this.allyHealTimer = ALLY_FX.healPulse;
+        this.events.emit('allyHealed', { amount: this.allyHealed });
+        this.allyHealed = 0;
+      }
+    }
+    const discs = this.allies.discs;
+    for (let i = discs.length - 1; i >= 0; i--) {
+      const d = discs[i];
+      const step = Math.min(d.left, K.speed * dt);
+      d.pos.addScaledVector(d.dir, step);
+      const up = this.tmp.copy(d.pos).normalize();
+      d.pos.copy(up).multiplyScalar(PLANET_RADIUS + heightAt(up));
+      d.dir.addScaledVector(up, -d.dir.dot(up)).normalize();
+      d.left -= step;
+      for (const o of this.horde.near(d.pos, K.width + 1, this.around)) {
+        if (!o.targetable || o.dead || d.hit.has(o) || o.pos.distanceTo(d.pos) > K.width) continue;
+        d.hit.add(o);
+        this.hitZombie(o, K.damage * hpMul, false, o.pos, d.dir.clone(), null, 0.5);
+      }
+      if (d.left <= 0) { discs.splice(i, 1); this.events.emit('kienzanFaded', { pos: d.pos.clone() }); }
+    }
+    const T = ALLIES.steve.power;
+    const tnts = this.allies.tnts;
+    for (let i = tnts.length - 1; i >= 0; i--) {
+      const t = tnts[i];
+      if ((t.fuse -= dt) > 0) continue;
+      tnts.splice(i, 1);
+      for (const o of this.horde.near(t.pos, T.radius, this.around)) {
+        if (!o.targetable || o.dead || o.pos.distanceTo(t.pos) > T.radius) continue;
+        this.hitZombie(o, T.damage * hpMul, false, o.pos, o.pos.clone().sub(t.pos), null, T.knock);
+      }
+      this.events.emit('tntExploded', { pos: t.pos.clone(), radius: T.radius });
+    }
+  }
+  /** Soin de Krilin cumulé depuis la dernière lueur, et temps avant la suivante. */
+  private allyHealed = 0;
+  private allyHealTimer = 0;
+
+  /** Atterrissage : la première horde sort de terre autour du joueur. */
 
   /** La radio s'allume : elle devient le leurre de la horde. */
   private turnRadioOn() {

@@ -197,7 +197,8 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
   });
   game.events.on('vehicleHit', () => audio.play(I.vehicleHit.sample, I.vehicleHit.volume, I.vehicleHit.rate * jitter(0.08)));
   game.events.on('allyJoined', () => audio.play(I.allyJoin.sample, I.allyJoin.volume, I.allyJoin.rate, 0, 'ui'));
-  game.events.on('allyPower', () => audio.play(I.allyStaff.sample, I.allyStaff.volume, I.allyStaff.rate * jitter(0.06)));
+  game.events.on('allyPower', ({ kind }) => { const S = I.allyPower[kind]; audio.play(S.sample, S.volume, S.rate * jitter(0.06)); });
+  game.events.on('tntExploded', () => audio.play(I.tntBoom.sample, I.tntBoom.volume, I.tntBoom.rate * jitter(0.08)));
   game.events.on('senzuEaten', () => audio.play(I.senzu.sample, I.senzu.volume, I.senzu.rate, 0, 'ui'));
   game.events.on('saiyanTierReached', () => audio.play(I.saiyanReady.sample, I.saiyanReady.volume, I.saiyanReady.rate));
   // Aura du Super Saiyan : le son tourne en boucle jusqu'à la fin de la transformation (ou de la run)

@@ -231,11 +231,13 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    (ghetto-blaster) cachée au hasard à plus de 45 m de l'arrivée (son propre tirage, qui ne décale pas le hasard du jeu),
    allumée avec E, elle joue radio.mydnic.be (simple lecteur audio, plus fort près du poste, musique du jeu coupée) et
    attire tous les ennemis sauf les boss (leurre de la horde, lanceurs compris) ; 400 PV, cassée la horde revient ; DEV
-   « Radio à côté » ; **#18 alliés, checkpoint 1 fait le 2026-11-19, à valider** : système d'alliés (un par abbaye sauf celle de l'arrivée,
-   colonne de lumière, touché il suit 1 min puis s'en va) et Gandalf (toutes les 6 s, coup de bâton : ennemis à 6 m pétrifiés
-   3 s, comme gelés, pas les boss ; « Vous ne passerez pas ! » au premier coup) ; pouvoirs validés pour la suite : Krilin
-   (à la place d'Eru : soin continu + Kienzan), Yoda (poussée de Force), Steve (bloc de TNT, modèle minecraft_block_tnt.glb
-   fourni) ; DEV « Allié à côté » ; **#17 sabre laser fait et validé le 2026-11-19** : arme 25 (`weapons/sabre.ts`, réglages `SABRE`), coups en arc de
+   « Radio à côté » ; **#18 alliés faits le 2026-11-19, à valider en jeu par l'utilisateur** : 4 abbayes (au lieu de 5, l'arrivée est au
+   hasard : décision de l'utilisateur ; une 5e quand il aura un nouvel allié), un allié dans chacune (colonne de lumière,
+   touché il suit 1 min puis s'en va, chacun à sa place derrière le joueur). Gandalf (toutes les 6 s, coup de bâton :
+   ennemis à 6 m pétrifiés 3 s, pas les boss), Krilin (soin +3 PV/s tant qu'il suit, Kienzan toutes les 5 s vers le plus
+   proche : disque qui tranche en ligne droite), Yoda (toutes les 5 s, poussée de Force : recul et 1,5 s sonnés), Steve
+   (toutes les 6 s, bloc de TNT qui explose 2 s plus tard). Modèles : `tools/blender/allies.py` (Steve refait en blocs,
+   le fichier fourni avait ses pièces éparpillées) ; DEV « Allié à côté » ; reste : validation, puis fermer #18 ; **#17 sabre laser fait et validé le 2026-11-19** : arme 25 (`weapons/sabre.ts`, réglages `SABRE`), coups en arc de
    140° vers l'ennemi le plus proche, en alternant le sens, frappe chaque zombie traversé et coupe les bouteilles ennemies
    sur la lame ; évolution Sabre double (Mousse épaisse) ; lame lumineuse (matière sans éclairage, hors contour) ; **skill tree : 3 lignes en plus le 2026-11-19, validées** (demande de l'utilisateur) :
    Radio (+40 % PV par palier), Super Saiyan (jauge plus rapide, transformation +10 s), Véhicules (durée, PV,

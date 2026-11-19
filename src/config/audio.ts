@@ -113,7 +113,14 @@ export const AUDIO = {
     radioHit: { sample: 'impactPlate_light', volume: 0.35, rate: 1.2 },
     radioBroken: { sample: 'impactGlass_heavy', volume: 0.7, rate: 0.8 },
     allyJoin: { sample: 'impactBell_heavy', volume: 0.5, rate: 1.3 },
-    allyStaff: { sample: 'impactMining', volume: 0.7, rate: 0.6 },
+    // Pouvoirs des alliés : bâton de Gandalf, Kienzan de Krilin, poussée de Yoda, bloc posé par Steve, son explosion
+    allyPower: {
+      gandalf: { sample: 'impactMining', volume: 0.7, rate: 0.6 },
+      krilin: { sample: 'impactMetal_light', volume: 0.6, rate: 1.7 },
+      yoda: { sample: 'impactSoft_heavy', volume: 0.7, rate: 0.75 },
+      steve: { sample: 'impactWood_heavy', volume: 0.6, rate: 1.1 },
+    },
+    tntBoom: { sample: 'impactSoft_heavy', volume: 0.85, rate: 0.45 },
     senzu: { sample: 'impactBell_heavy', volume: 0.55, rate: 1.9 },
     saiyanReady: { sample: 'impactBell_heavy', volume: 0.45, rate: 1.6 },
     /** Son d'aura, en boucle pendant toute la transformation ; `fade` : fondu à la fin (s). */

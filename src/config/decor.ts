@@ -81,7 +81,7 @@ export const DECOR_LAYOUT = {
   abbeyRadius: 34,
   abbeyBlend: 18,
   /** Nombre d'abbayes sur la planète (la première est celle du départ). */
-  abbeyCount: 5,
+  abbeyCount: 4,
   /** Écart minimal entre deux abbayes (m, le long du sol). */
   abbeyMinGap: 180,
   /** Un site d'abbaye doit être assez bas et plat : écart de relief max sur l'enclos (m). */
