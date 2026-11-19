@@ -231,7 +231,7 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    (ghetto-blaster) cachée au hasard à plus de 45 m de l'arrivée (son propre tirage, qui ne décale pas le hasard du jeu),
    allumée avec E, elle joue radio.mydnic.be (simple lecteur audio, plus fort près du poste, musique du jeu coupée) et
    attire tous les ennemis sauf les boss (leurre de la horde, lanceurs compris) ; 400 PV, cassée la horde revient ; DEV
-   « Radio à côté » ; **#17 sabre laser fait le 2026-11-19, à valider** : arme 25 (`weapons/sabre.ts`, réglages `SABRE`), coups en arc de
+   « Radio à côté » ; **#17 sabre laser fait et validé le 2026-11-19** : arme 25 (`weapons/sabre.ts`, réglages `SABRE`), coups en arc de
    140° vers l'ennemi le plus proche, en alternant le sens, frappe chaque zombie traversé et coupe les bouteilles ennemies
    sur la lame ; évolution Sabre double (Mousse épaisse) ; lame lumineuse (matière sans éclairage, hors contour) ; **skill tree : 3 lignes en plus le 2026-11-19, validées** (demande de l'utilisateur) :
    Radio (+40 % PV par palier), Super Saiyan (jauge plus rapide, transformation +10 s), Véhicules (durée, PV,
