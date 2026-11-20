@@ -123,6 +123,9 @@ export const AUDIO = {
     tntBoom: { sample: 'impactSoft_heavy', volume: 0.85, rate: 0.45 },
     // Coup de sabre de Vador : un grand bourdon métallique, plus fort s'il touche
     saberStrike: { sample: 'impactMetal_heavy', volume: 0.6, rate: 0.7, hitVolume: 0.9 },
+    // Sabre lancé (phase 2) : un sifflement métallique au départ, un claquement quand il revient en main
+    saberThrow: { sample: 'impactMetal_light', volume: 0.5, rate: 0.6 },
+    saberCatch: { sample: 'impactMetal_medium', volume: 0.45, rate: 1.3 },
     senzu: { sample: 'impactBell_heavy', volume: 0.55, rate: 1.9 },
     saiyanReady: { sample: 'impactBell_heavy', volume: 0.45, rate: 1.6 },
     /** Son d'aura, en boucle pendant toute la transformation ; `fade` : fondu à la fin (s). */

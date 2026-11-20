@@ -36,7 +36,8 @@ import { createPumpsView } from './world/pumpsView';
 import { createChestsView } from './world/chestsView';
 import { createBinsView } from './world/binsView';
 import { createLastCallView } from './world/lastCallView';
-import { createBossView, createSaberMarkView, createWaveRingView, createWineView } from './world/bossView';
+import { createBossView, createSaberMarkView, createThrownSaberView, createWaveRingView, createWineView } from './world/bossView';
+import sabreUrl from './assets/models/sabre.glb?url';
 import type { Vador } from './game/vador';
 import type { BossKind } from './game/boss';
 import { createDoorView } from './world/doorView';
@@ -146,6 +147,7 @@ const loading = {
   sonneurView: boot(createBossView(scene, { kind: 'sonneur', url: sonneurUrl, height: FRERE_SONNEUR.height, walkSpeed: FRERE_SONNEUR.speed })),
   abbeView: boot(createBossView(scene, { kind: 'abbe', url: abbeUrl, height: ABBE.height, walkSpeed: ABBE.speed })),
   vadorView: boot(createBossView(scene, { kind: 'vador', url: vadorUrl, height: VADOR.height, walkSpeed: VADOR.speed })),
+  thrownSaberView: boot(createThrownSaberView(scene, sabreUrl)),
   doorView: boot(createDoorView(scene)),
   reaperView: boot(createReaperView(scene)),
   bellView: boot(createBellDropsView(scene)),
@@ -217,6 +219,7 @@ const sonneurView = await loading.sonneurView;
 const abbeView = await loading.abbeView;
 const vadorView = await loading.vadorView;
 const saberView = createSaberMarkView(scene);
+const thrownSaberView = await loading.thrownSaberView;
 const waveView = createWaveRingView(scene);
 const wineView = createWineView(scene);
 const doorView = await loading.doorView;
@@ -347,6 +350,9 @@ function frame(now: number) {
   abbeView.sync(bossOf('abbe'), dt);
   vadorView.sync(bossOf('vador'), dt, game.phase === 'run' ? game.graveBosses.list.find((b) => b.kind === 'vador' && b.waiting) ?? null : null);
   saberView.sync(vadorView.boss as Vador | null);
+  thrownSaberView.sync(vadorView.boss as Vador | null, dt);
+  // Le sabre lancé n'est plus dans sa main
+  vadorView.hideParts(['glow_sabre', 'poignee'], !!(vadorView.boss as Vador | null)?.thrown);
   waveView.sync(sonneurView.boss as FrereSonneur | null);
   wineView.sync(abbeView.boss as Abbe | null);
   doorView.sync(game.door, dt);

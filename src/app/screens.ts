@@ -254,7 +254,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   const BOSS_TEXT = {
     sonneur: { come: 'Saute par-dessus les ondes de sa cloche', rage: ['Il est furieux !', 'Plus rapide, et deux ondes à chaque coup'], fall: 'Un coffre légendaire t\'attend' },
     abbe: { come: 'Ne reste pas dans son vin de messe', rage: ['Il a bu le calice !', 'Il devient géant'], fall: 'Un coffre légendaire t\'attend. Tiens jusqu\'à la fermeture' },
-    vador: { come: 'Sors de la zone rouge avant le coup', rage: ['Il est furieux !', ''], fall: 'Un coffre légendaire t\'attend' },
+    vador: { come: 'Sors de la zone rouge avant le coup', rage: ['Il est furieux !', 'Il lance son sabre'], fall: 'Un coffre légendaire t\'attend' },
   } as const;
   game.events.on('bossSpawned', ({ boss }) => {
     bossBar.show(boss, boss.name, boss.phaseAt);

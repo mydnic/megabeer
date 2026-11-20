@@ -7,7 +7,7 @@ import type { Abbe } from '../game/abbe';
 import type { Boss, BossKind } from '../game/boss';
 import type { FrereSonneur } from '../game/frereSonneur';
 import { characterMaterial, LAYER_CHARACTER, LAYER_SKY } from '../render/materials';
-import { ABBE, GRAVE_BOSSES as G, VADOR_LOOK } from '../config/bosses';
+import { ABBE, GRAVE_BOSSES as G, VADOR, VADOR_LOOK } from '../config/bosses';
 import type { Vador } from '../game/vador';
 import { heightAt } from './terrain';
 
@@ -29,6 +29,8 @@ export async function createBossView(scene: THREE.Scene, M: BossModel) {
   const scale = M.height / (box.max.y - box.min.y);
   const materials: THREE.MeshToonMaterial[] = [];
   const mats = new Map<string, THREE.Material>();
+  /** Les pièces par matière (on peut en cacher : le sabre lancé n'est plus dans la main). */
+  const parts = new Map<string, THREE.Object3D[]>();
   model.traverse((o) => {
     const mesh = o as THREE.Mesh;
     if (!mesh.isMesh) return;
@@ -43,6 +45,8 @@ export async function createBossView(scene: THREE.Scene, M: BossModel) {
       mats.set(src.name, m);
     }
     mesh.material = m;
+    if (!parts.has(src.name)) parts.set(src.name, []);
+    parts.get(src.name)!.push(mesh);
     mesh.castShadow = !glow;
     mesh.receiveShadow = false;
     mesh.layers.set(glow ? LAYER_SKY : LAYER_CHARACTER);
@@ -87,6 +91,10 @@ export async function createBossView(scene: THREE.Scene, M: BossModel) {
   return {
     /** Le boss a encaissé un coup : éclair blanc. */
     hit() { flash = 1; },
+    /** Cache (ou remontre) les pièces de ces matières. */
+    hideParts(names: readonly string[], hidden: boolean) {
+      for (const n of names) for (const o of parts.get(n) ?? []) o.visible = !hidden;
+    },
     /** Le boss de ce type dessiné en ce moment (y compris son corps qui tombe), ou null. */
     get boss() { return held; },
     /**
@@ -226,6 +234,62 @@ export function createSaberMarkView(scene: THREE.Scene) {
       const m = boss && !boss.zombie.dead ? boss.mark : null;
       if (m) { one.at = m.at; one.radius = m.radius; one.t = m.t; list.push(one); }
       marks.sync(list);
+    },
+  };
+}
+
+/** Le sabre lancé de Vador : le sabre laser du jeu, lame rouge lumineuse, qui tourne à plat au-dessus du sol. */
+export async function createThrownSaberView(scene: THREE.Scene, url: string) {
+  const T = VADOR_LOOK.thrown;
+  const src = (await new GLTFLoader().loadAsync(url)).scene;
+  const root = new THREE.Group();
+  const spinner = new THREE.Group();
+  root.add(spinner);
+  const box = new THREE.Box3().setFromObject(src);
+  const size = box.getSize(new THREE.Vector3()), center = box.getCenter(new THREE.Vector3());
+  // Couché à plat : la lame (axe Y du modèle) le long de X, centré sur sa poignée tournante
+  const holder = new THREE.Group();
+  holder.add(src);
+  src.position.sub(center);
+  // Plus épais que dans la main : il doit se lire de loin
+  const k = T.length / Math.max(size.x, size.y, size.z);
+  holder.scale.set(k * T.thick, k, k * T.thick);
+  holder.rotation.z = Math.PI / 2;
+  spinner.add(holder);
+  // Le flou de la rotation : un disque rouge lumineux, à plat
+  const blur = new THREE.Mesh(new THREE.RingGeometry(T.length * 0.12, T.length * 0.5, 40).rotateX(-Math.PI / 2),
+    new THREE.MeshBasicMaterial({ color: T.blade, transparent: true, opacity: T.blur, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, toneMapped: false }));
+  blur.layers.set(LAYER_SKY);
+  blur.frustumCulled = false;
+  root.add(blur);
+  src.traverse((o) => {
+    const mesh = o as THREE.Mesh;
+    if (!mesh.isMesh) return;
+    const blade = (mesh.material as THREE.Material).name.startsWith('lame');
+    mesh.material = blade
+      ? new THREE.MeshBasicMaterial({ color: new THREE.Color(T.blade).multiplyScalar(T.glow), toneMapped: false })
+      : characterMaterial({ color: T.hilt });
+    mesh.layers.set(blade ? LAYER_SKY : LAYER_CHARACTER);
+    mesh.castShadow = true;
+    mesh.frustumCulled = false;
+  });
+  root.visible = false;
+  scene.add(root);
+  const up = new THREE.Vector3(), side = new THREE.Vector3(), fwd = new THREE.Vector3(), basis = new THREE.Matrix4();
+  const X = new THREE.Vector3(1, 0, 0), Y = new THREE.Vector3(0, 1, 0);
+  let t = 0;
+  return {
+    sync(boss: Vador | null, dt: number) {
+      const s = boss && !boss.zombie.dead ? boss.thrown : null;
+      root.visible = !!s;
+      if (!s) return;
+      t += dt;
+      up.copy(s.pos).normalize();
+      fwd.crossVectors(Math.abs(up.y) < 0.9 ? Y : X, up).normalize();
+      side.crossVectors(up, fwd);
+      root.quaternion.setFromRotationMatrix(basis.makeBasis(side, up, fwd));
+      root.position.copy(up).multiplyScalar(PLANET_RADIUS + heightAt(up) + VADOR.phase2.throw.height);
+      spinner.rotation.y = t * T.spin;
     },
   };
 }

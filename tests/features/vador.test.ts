@@ -154,3 +154,60 @@ describe('Dark Vador, boss optionnel d un cimetière', () => {
     expect(t.game.bosses).toHaveLength(0);
   });
 });
+
+describe('Dark Vador, phase 2 : le sabre lancé', () => {
+  const TH = V.phase2.throw;
+  /** Vador défié, passé sous la moitié de ses PV ; le joueur à `d` m de lui. */
+  function enraged(d = 10) {
+    const { t, boss } = fight(4);
+    t.game.cheats.god = false;
+    const z = boss.zombie;
+    z.hp = z.maxHp * V.phase2.below * 0.9;
+    const p = t.game.player;
+    const axis = new THREE.Vector3().crossVectors(z.pos, z.facing);
+    p.reset(around(z.pos, d, axis), p.facing.clone());
+    t.play(0.05);
+    return { t, boss };
+  }
+
+  it('sous la moitié de ses PV, il passe en phase 2 (furieux)', () => {
+    const { t, boss } = enraged();
+    expect(boss.phase).toBe(2);
+    expect(t.events('bossPhase').map((e) => e.phase)).toEqual([2]);
+  });
+
+  it('il lance son sabre vers le joueur : la lame part de lui, va loin, puis revient dans sa main', () => {
+    const { t, boss } = enraged(10);
+    t.playUntil(() => !!boss.thrown, V.phase2.pause + TH.every + 2);
+    expect(t.events('saberThrown')).toHaveLength(1);
+    let far = 0;
+    t.playUntil(() => { if (boss.thrown) far = Math.max(far, dist(boss.thrown.pos, boss.zombie.pos)); return !boss.thrown; }, 6);
+    expect(far).toBeGreaterThan(8);
+    expect(t.events('saberCaught')).toHaveLength(1);
+  });
+
+  it('le sabre blesse le joueur qu il traverse, une fois à l aller et une fois au retour', () => {
+    const { t, boss } = enraged(10);
+    t.game.cheats.god = false;
+    // Le joueur reste planté sur la trajectoire : touché à l'aller puis au retour
+    t.playUntil(() => !!boss.thrown, V.phase2.pause + TH.every + 2);
+    const hp = t.game.health.hp;
+    const before = t.events('playerHurt').length;
+    // (le temps d'invulnérabilité après un coup est remis à zéro : on compte chaque passage)
+    t.playUntil(() => { t.game.health.invuln = 0; return !boss.thrown; }, 6);
+    expect(t.events('playerHurt').length - before).toBe(2);
+    expect(t.game.health.hp).toBeLessThan(hp);
+  });
+
+  it('sabre lancé, il ne frappe pas au corps à corps', () => {
+    const { t, boss } = enraged(10);
+    t.playUntil(() => !!boss.thrown, V.phase2.pause + TH.every + 2);
+    // Le joueur se colle à lui pendant que le sabre vole
+    const p = t.game.player;
+    p.reset(around(boss.zombie.pos, 2, new THREE.Vector3().crossVectors(boss.zombie.pos, boss.zombie.facing)), p.facing.clone());
+    const strikes = t.events('saberStrike').length;
+    t.playUntil(() => !boss.thrown || !!boss.mark, 6);
+    expect(boss.mark).toBeNull();
+    expect(t.events('saberStrike')).toHaveLength(strikes);
+  });
+});

@@ -191,14 +191,30 @@ export const VADOR = {
    * `duration` s) et blesse le joueur resté dedans.
    */
   strike: { range: 5, cooldown: 1.6, windup: 0.8, ahead: 2.6, radius: 2.6, hitAt: 0.45, duration: 1.5, damage: 35 },
+  /**
+   * Phase 2 sous `below` de ses PV : il s'arrête `pause` s (furieux), puis marche un peu plus vite et lance son sabre
+   * toutes les `every` s quand le joueur est à plus de `minDist` m : la lame tourne à plat à `height` m du sol, file
+   * vers le joueur jusqu'à `range` m à `speed` m/s, puis revient dans sa main. Elle blesse le joueur qu'elle traverse
+   * (rayon `radius` m), une fois à l'aller et une fois au retour. Le geste dure `windup` s avant le lâcher. Sans sabre
+   * en main, il ne frappe pas.
+   */
+  phase2: {
+    below: 0.5, pause: 1.0, speedMul: 1.2,
+    throw: { every: 4.5, minDist: 4, windup: 0.5, range: 16, speed: 16, radius: 1.1, height: 1.5, damage: 25 },
+  },
   /** Coffre gratuit laissé à sa mort (rang dans RARITIES, 4 : Légendaire). */
   chestRarity: 4,
   music: 'vador',
   /** Durée des animations (s), fixées par tools/blender/vador.py. */
-  clips: { idle: 1.67, walk: 1.33, strike: 1.5, hit: 0.33, death: 2.38 },
+  clips: { idle: 1.67, walk: 1.33, strike: 1.5, cast: 0.5, hit: 0.33, death: 2.38 },
 } as const;
 
 /** Marque au sol du coup de sabre de Vador. */
 export const VADOR_LOOK = {
   strike: { markColor: 0xff2a1a, markOpacity: 0.6, markRing: 0.1 },
+  /**
+   * Sabre lancé : longueur (m), épaisseur (x, il doit se lire de loin), vitesse de rotation (rad/s), couleur de la
+   * lame (x`glow`, lumineuse), opacité du disque de flou qui tourne avec lui.
+   */
+  thrown: { length: 2.4, thick: 2.5, spin: 22, blade: 0xff1a10, glow: 2.5, hilt: 0x8a8a94, blur: 0.35 },
 } as const;

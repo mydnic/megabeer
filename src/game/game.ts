@@ -158,6 +158,9 @@ export type GameEvents = {
   doorOpened: { at: THREE.Vector3 };
   /** Vador frappe de son sabre la zone `at` (rayon `radius`) ; `hit` : le joueur y était. */
   saberStrike: { boss: Vador; at: THREE.Vector3; radius: number; hit: boolean };
+  /** Vador lance son sabre (phase 2) ; le sabre revient dans sa main. */
+  saberThrown: { boss: Vador };
+  saberCaught: { boss: Vador };
   /** Un boss optionnel est défié. */
   graveBossChallenged: { boss: Boss };
   /** 10:00 : la fermeture du bar, la Mort arrive. */
@@ -1050,6 +1053,9 @@ export class Game {
       playerPos: () => this.player.pos,
       hurtPlayer: (dir, damage) => this.hurtPlayer(z, dir, damage),
       onStrike: (sat, radius, hit) => this.events.emit('saberStrike', { boss, at: sat, radius, hit }),
+      onPhase: (phase) => this.events.emit('bossPhase', { boss, phase }),
+      onThrow: () => this.events.emit('saberThrown', { boss }),
+      onCatch: () => this.events.emit('saberCaught', { boss }),
     });
     this.bosses.push(boss);
     this.events.emit('bossSpawned', { boss });
