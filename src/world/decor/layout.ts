@@ -6,6 +6,8 @@ import { abbeySites, heightAt, slopeGradient } from '../terrain';
 
 /** Un élément posé : modèle et transformation locale -> monde (le y local suit la verticale). */
 export type Placement = { id: DecorModelId; matrix: THREE.Matrix4 };
+/** Un cimetière des amas : devant son portail (au sol, direction depuis le centre de la planète), et la direction qui en sort. */
+export type GraveSite = { dir: THREE.Vector3; out: THREE.Vector3 };
 
 const Y = new THREE.Vector3(0, 1, 0);
 
@@ -73,10 +75,11 @@ export function randomSpawn(isClear: (dir: THREE.Vector3) => boolean) {
   return null;
 }
 
-export function layoutAbbeyPlanet(seed: number): { placements: Placement[]; spawn: { dir: THREE.Vector3; facing: THREE.Vector3 } } {
+export function layoutAbbeyPlanet(seed: number): { placements: Placement[]; spawn: { dir: THREE.Vector3; facing: THREE.Vector3 }; graveyards: GraveSite[] } {
   const r = rng(seed);
   const out: Placement[] = [];
   const add = (id: DecorModelId, m: THREE.Matrix4) => out.push({ id, matrix: m });
+  const graveyards: GraveSite[] = [];
 
   // ---------------------------------------------------------------- les abbayes
   // Repère d'une abbaye (glTF) : façade vers +z, parvis jusqu'à z = 32, clocher côté -x, cloître côté +x
@@ -150,7 +153,7 @@ export function layoutAbbeyPlanet(seed: number): { placements: Placement[]; spaw
       centers.push(c);
       placed++;
       if (kind === 'ruin') ruin(r, f.at, f.q, add);
-      else graveyard(r, f.at, f.q, 0, 0, 3 + Math.floor(r() * 3), 4 + Math.floor(r() * 3), add, false);
+      else graveyards.push(graveyard(r, f.at, f.q, 0, 0, 3 + Math.floor(r() * 3), 4 + Math.floor(r() * 3), add, false));
     }
   }
 
@@ -193,14 +196,14 @@ export function layoutAbbeyPlanet(seed: number): { placements: Placement[]; spaw
   const spawnDir = A(0, 27);
   const facing = A(0, 10).multiplyScalar(R).sub(spawnDir.clone().multiplyScalar(R));
   facing.addScaledVector(spawnDir, -facing.dot(spawnDir)).normalize();
-  return { placements: out, spawn: { dir: spawnDir, facing } };
+  return { placements: out, spawn: { dir: spawnDir, facing }, graveyards };
 }
 
 type Add = (id: DecorModelId, m: THREE.Matrix4) => void;
 type At = (x: number, z: number) => THREE.Vector3;
 
-/** Cimetière : rangées de tombes, grille en fer avec portail, lanternes, crypte au fond. */
-function graveyard(r: () => number, at: At, q: THREE.Quaternion, cx: number, cz: number, rows: number, cols: number, add: Add, big: boolean) {
+/** Cimetière : rangées de tombes, grille en fer avec portail, lanternes, crypte au fond. Rend le devant de son portail. */
+function graveyard(r: () => number, at: At, q: THREE.Quaternion, cx: number, cz: number, rows: number, cols: number, add: Add, big: boolean): GraveSite {
   const SX = 2.6, SZ = 3.2, F = 2.4; // espacements, longueur d'un élément de grille
   const w = cols * SX, d = rows * SZ;
   const graves = ['graveBevel', 'graveCross', 'graveCrossLarge', 'graveDecorative', 'graveRoof', 'graveRound', 'graveWide', 'graveBroken', 'cross', 'crossWood'] as const;
@@ -242,6 +245,8 @@ function graveyard(r: () => number, at: At, q: THREE.Quaternion, cx: number, cz:
     const a = r() * Math.PI * 2;
     add('pine', placeAt(at(cx + Math.cos(a) * (hx + 3 + r() * 3), cz + Math.sin(a) * (hz + 3 + r() * 3)), r() * 6, null, 0.1));
   }
+  const gate = at(cx, cz + hz + 3);
+  return { dir: gate, out: at(cx, cz + hz + 4).sub(gate).normalize() };
 }
 
 /** Ruine : fondations rectangulaires de murs de pierre (pans manquants ou abîmés), piliers, gravats. */

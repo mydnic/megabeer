@@ -7,7 +7,8 @@ import type { Abbe } from '../game/abbe';
 import type { Boss, BossKind } from '../game/boss';
 import type { FrereSonneur } from '../game/frereSonneur';
 import { characterMaterial, LAYER_CHARACTER, LAYER_SKY } from '../render/materials';
-import { ABBE } from '../config/bosses';
+import { ABBE, GRAVE_BOSSES as G, VADOR_LOOK } from '../config/bosses';
+import type { Vador } from '../game/vador';
 import { heightAt } from './terrain';
 
 /** Ce qu'il faut pour dessiner un boss : son modèle, sa hauteur (m), sa vitesse de marche (pour la cadence des pas). */
@@ -27,17 +28,24 @@ export async function createBossView(scene: THREE.Scene, M: BossModel) {
   const box = new THREE.Box3().setFromObject(model);
   const scale = M.height / (box.max.y - box.min.y);
   const materials: THREE.MeshToonMaterial[] = [];
-  const mats = new Map<string, THREE.MeshToonMaterial>();
+  const mats = new Map<string, THREE.Material>();
   model.traverse((o) => {
     const mesh = o as THREE.Mesh;
     if (!mesh.isMesh) return;
     const src = mesh.material as THREE.MeshStandardMaterial;
+    // Les pièces `glow_*` (sabre laser, lumières du plastron) brillent d'elles-mêmes, hors du contour sombre
+    const glow = src.name.startsWith('glow_');
     let m = mats.get(src.name);
-    if (!m) { m = characterMaterial({ color: src.color }); m.name = src.name; mats.set(src.name, m); materials.push(m); }
+    if (!m) {
+      if (glow) m = new THREE.MeshBasicMaterial({ color: src.color.clone().multiplyScalar(L.glowBoost), toneMapped: false });
+      else { const t = characterMaterial({ color: src.color }); materials.push(t); m = t; }
+      m.name = src.name;
+      mats.set(src.name, m);
+    }
     mesh.material = m;
-    mesh.castShadow = true;
+    mesh.castShadow = !glow;
     mesh.receiveShadow = false;
-    mesh.layers.set(LAYER_CHARACTER);
+    mesh.layers.set(glow ? LAYER_SKY : LAYER_CHARACTER);
     mesh.frustumCulled = false;
   });
   const root = new THREE.Group();
@@ -59,6 +67,13 @@ export async function createBossView(scene: THREE.Scene, M: BossModel) {
   let shown: string | null = null;
   let flash = 0;
   let held: Boss | null = null;
+  // Le boss optionnel qui attend (avant le défi) : debout, en garde, sous une colonne de lumière
+  const beamGeo = new THREE.CylinderGeometry(G.beamRadius * 0.6, G.beamRadius, G.beamHeight, 16, 1, true).translate(0, G.beamHeight / 2, 0);
+  const beam = new THREE.Mesh(beamGeo, new THREE.MeshBasicMaterial({ color: G.beamColor, transparent: true, opacity: G.beamOpacity, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+  beam.layers.set(LAYER_SKY);
+  beam.visible = false;
+  scene.add(beam);
+  let t = 0;
   const up = new THREE.Vector3(), side = new THREE.Vector3(), fwd = new THREE.Vector3(), basis = new THREE.Matrix4();
 
   function play(anim: string) {
@@ -74,11 +89,31 @@ export async function createBossView(scene: THREE.Scene, M: BossModel) {
     hit() { flash = 1; },
     /** Le boss de ce type dessiné en ce moment (y compris son corps qui tombe), ou null. */
     get boss() { return held; },
-    /** Recopie le boss (null, ou d'un autre type : rien) ; `dt` : temps de jeu écoulé (0 : figé). */
-    sync(live: Boss | null, dt: number) {
+    /**
+     * Recopie le boss (null, ou d'un autre type : rien) ; `dt` : temps de jeu écoulé (0 : figé). `waiting` : le boss
+     * optionnel de ce type qui attend qu'on le défie (debout, sous sa colonne de lumière).
+     */
+    sync(live: Boss | null, dt: number, waiting: { pos: THREE.Vector3; facing: THREE.Vector3 } | null = null) {
       if (live && live.kind === M.kind) held = live;
       const boss = held;
       const z = boss?.zombie;
+      beam.visible = !!waiting && !boss;
+      if (waiting && !boss) {
+        t += dt;
+        root.visible = true;
+        if (shown !== 'idle') { shown = 'idle'; play('idle'); }
+        mixer.update(dt);
+        up.copy(waiting.pos).normalize();
+        side.crossVectors(up, waiting.facing).normalize();
+        fwd.crossVectors(side, up);
+        root.quaternion.setFromRotationMatrix(basis.makeBasis(side, up, fwd));
+        root.scale.setScalar(1);
+        root.position.copy(waiting.pos);
+        beam.position.copy(waiting.pos);
+        beam.quaternion.copy(root.quaternion);
+        (beam.material as THREE.MeshBasicMaterial).opacity = G.beamOpacity * (0.8 + 0.2 * Math.sin(t * 3));
+        return;
+      }
       if (!boss || !z || z.gone) {
         root.visible = false;
         held = null;
@@ -176,6 +211,21 @@ export function createWineView(scene: THREE.Scene) {
       }
       arming.sync(a);
       burning.sync(b);
+    },
+  };
+}
+
+/** Coup de sabre de Vador : la zone marquée au sol, qui se remplit jusqu'au coup. */
+export function createSaberMarkView(scene: THREE.Scene) {
+  const marks = createGroundMarks(scene, VADOR_LOOK.strike);
+  const list: GroundMark[] = [];
+  const one: GroundMark = { at: new THREE.Vector3(), radius: 0, t: 0 };
+  return {
+    sync(boss: Vador | null) {
+      list.length = 0;
+      const m = boss && !boss.zombie.dead ? boss.mark : null;
+      if (m) { one.at = m.at; one.radius = m.radius; one.t = m.t; list.push(one); }
+      marks.sync(list);
     },
   };
 }

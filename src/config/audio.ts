@@ -121,6 +121,8 @@ export const AUDIO = {
       steve: { sample: 'impactWood_heavy', volume: 0.6, rate: 1.1 },
     },
     tntBoom: { sample: 'impactSoft_heavy', volume: 0.85, rate: 0.45 },
+    // Coup de sabre de Vador : un grand bourdon métallique, plus fort s'il touche
+    saberStrike: { sample: 'impactMetal_heavy', volume: 0.6, rate: 0.7, hitVolume: 0.9 },
     senzu: { sample: 'impactBell_heavy', volume: 0.55, rate: 1.9 },
     saiyanReady: { sample: 'impactBell_heavy', volume: 0.45, rate: 1.6 },
     /** Son d'aura, en boucle pendant toute la transformation ; `fade` : fondu à la fin (s). */

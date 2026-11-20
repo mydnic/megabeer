@@ -24,7 +24,7 @@ import { RARITIES } from '../config/upgrades';
 import { PUMP_TIERS } from '../config/pumps';
 import { TOURNEE_FX, TOURNEES } from '../config/tournees';
 import { ELITES } from '../config/elites';
-import { BOSS_LOOK, DOOR_LOOK, WINE_LOOK } from '../config/bosses';
+import { BOSS_LOOK, DOOR_LOOK, VADOR_LOOK, WINE_LOOK } from '../config/bosses';
 import type { Vfx } from '../fx/vfx';
 import type { Sprites } from '../fx/sprites';
 
@@ -188,6 +188,12 @@ export function wireEffects(game: Game, d: Deps) {
     earth.burst(numPos.copy(at).setLength(at.length() + 0.1), still);
     const k = Math.max(0.3, 1 - at.distanceTo(game.player.pos) / 30);
     rig.shake(HIT_FEEDBACK.shake * 2 * k, HIT_FEEDBACK.shakeAmplitude * 1.5, HIT_FEEDBACK.shakeDecay);
+  });
+  // Coup de sabre de Vador : un éclat rouge sur la zone, la caméra tremble s'il touche
+  game.events.on('saberStrike', ({ at, radius, hit }) => {
+    vfx.pop(numPos.copy(at).setLength(at.length() + 1), VADOR_LOOK.strike.markColor, 4);
+    vfx.dust(at, 10, radius * 0.5, 5);
+    if (hit) rig.shake(HIT_FEEDBACK.shake * 2, HIT_FEEDBACK.shakeAmplitude * 1.5, HIT_FEEDBACK.shakeDecay);
   });
   game.events.on('bossPhase', ({ boss }) => {
     d.rings.spawn(boss.zombie.pos, 8, ELITES.color);

@@ -1,7 +1,7 @@
 import type { Zombie } from '../enemies/zombie';
 
 /** Les boss du jeu (un contrôleur et un modèle chacun). */
-export type BossKind = 'sonneur' | 'abbe';
+export type BossKind = 'sonneur' | 'abbe' | 'vador';
 
 /**
  * Ce que le jeu, l'affichage et l'interface lisent de n'importe quel boss. Son corps est un zombie de la horde

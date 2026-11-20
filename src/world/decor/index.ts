@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { DECOR_LAYOUT, DECOR_LIGHTS as LI, LIGHT_SOURCES, type DecorModelId } from '../../config/decor';
 import { PLANET_RADIUS, PLAYER_PHYSICS } from '../../config/world';
 import { DecorCollider, type Bend, type DecorBody } from './collider';
-import { layoutAbbeyPlanet, randomSpawn } from './layout';
+import { layoutAbbeyPlanet, randomSpawn, type GraveSite } from './layout';
 import { heightAt } from '../terrain';
 import { LAYER_CHARACTER } from '../../render/materials';
 import { loadDecorLibrary } from './library';
@@ -85,6 +85,7 @@ export async function createDecor(scene: THREE.Scene) {
   let group: THREE.Group | null = null;
   let flames: THREE.Vector3[] = [];
   let spawn = { dir: new THREE.Vector3(0, 1, 0), facing: new THREE.Vector3(1, 0, 0) };
+  let graveyards: GraveSite[] = [];
 
   /** Retire le décor de la planète précédente (les géométries des modèles sont partagées : gardées). */
   function clear() {
@@ -100,7 +101,8 @@ export async function createDecor(scene: THREE.Scene) {
   /** Génère le décor par morceaux : chaque yield donne l'avancement (0 à 1). */
   function* generateSteps(seed: number): Generator<number, void> {
     clear();
-    const { placements, spawn: s } = layoutAbbeyPlanet(seed);
+    const { placements, spawn: s, graveyards: g0 } = layoutAbbeyPlanet(seed);
+    graveyards = g0;
     yield 0.15;
     spawn = s;
     const g = new THREE.Group();
@@ -186,9 +188,10 @@ export async function createDecor(scene: THREE.Scene) {
     generateSteps,
     /** Point de départ de repli : le parvis de l'abbaye principale. */
     get spawn() { return spawn; },
-    /** Départ de run au hasard sur la planète, loin de tout élément du décor (repli : le parvis). */
+    /** Départ de run au hasard sur la planète, loin de tout élément du décor (repli : le parvis) ; avec les cimetières. */
     randomSpawn() {
-      return randomSpawn((dir) => collider.near(spawnTmp.copy(dir).multiplyScalar(PLANET_RADIUS + heightAt(dir)), DECOR_LAYOUT.spawnClearance).length === 0) ?? spawn;
+      const s = randomSpawn((dir) => collider.near(spawnTmp.copy(dir).multiplyScalar(PLANET_RADIUS + heightAt(dir)), DECOR_LAYOUT.spawnClearance).length === 0) ?? spawn;
+      return { ...s, graveyards };
     },
     /** `night` : 0 en plein jour, 1 en pleine nuit. */
     update(dt: number, playerPos: THREE.Vector3, night: number) {

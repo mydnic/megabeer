@@ -41,9 +41,10 @@ JOINTS = {'pelvis': (0, -0.05, 0.95), 'chest': (0, -0.05, 1.30), 'neck': (0, -0.
 CLIPS = {'Sword_Idle': 'idle', 'Walk_Formal_Loop': 'walk', 'Sword_Attack': 'strike', 'Spell_Simple_Shoot': 'cast',
          'Spell_Simple_Idle_Loop': 'choke', 'Hit_Chest': 'hit', 'Death01': 'death'}
 # Pièce du fichier (début du nom) : matière, couleur
-COLORS = [('mat_helmet', 'casque', (0.035, 0.035, 0.04)), ('mat_body', 'corps', (0.05, 0.05, 0.055)),
-          ('mat_cape', 'cape', (0.03, 0.03, 0.035)), ('mat_innercape', 'cape_int', (0.06, 0.06, 0.065)),
-          ('mat_glove', 'gants', (0.04, 0.04, 0.045)), ('mat_beltEmRed', 'ceinture', (0.55, 0.55, 0.58)),
+# (noir pas tout à fait noir : le cel-shading doit encore lire les formes)
+COLORS = [('mat_helmet', 'casque', (0.09, 0.09, 0.1)), ('mat_body', 'corps', (0.13, 0.13, 0.14)),
+          ('mat_cape', 'cape', (0.07, 0.07, 0.08)), ('mat_innercape', 'cape_int', (0.11, 0.11, 0.12)),
+          ('mat_glove', 'gants', (0.1, 0.1, 0.11)), ('mat_beltEmRed', 'ceinture', (0.55, 0.55, 0.58)),
           ('mat_emissiveChest1', 'glow_rouge', (1.0, 0.1, 0.08)), ('mat_emissiveChest2', 'glow_bleu', (0.2, 0.5, 1.0)),
           ('mat_emissiveChest3', 'glow_rouge', (1.0, 0.1, 0.08)), ('mat_emissiveChestGreen', 'glow_vert', (0.2, 1.0, 0.3)),
           ('mat_beltEmGreen', 'glow_vert', (0.2, 1.0, 0.3))]

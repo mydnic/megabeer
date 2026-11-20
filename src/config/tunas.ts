@@ -11,7 +11,7 @@ export const TUNAS = {
   /** Un élite tué lâche une grosse liasse. */
   elite: 5,
   /** Un boss tué lâche une liasse de cette valeur. */
-  boss: { sonneur: 15, abbe: 25 },
+  boss: { sonneur: 15, abbe: 25, vador: 40 },
   /** Bonus de fin de run, à la mort seulement (pas à l'abandon) : TUNAS par minute survécue. */
   endBonusPerMinute: 3,
 } as const;

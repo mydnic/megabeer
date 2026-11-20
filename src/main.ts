@@ -36,12 +36,14 @@ import { createPumpsView } from './world/pumpsView';
 import { createChestsView } from './world/chestsView';
 import { createBinsView } from './world/binsView';
 import { createLastCallView } from './world/lastCallView';
-import { createBossView, createWaveRingView, createWineView } from './world/bossView';
+import { createBossView, createSaberMarkView, createWaveRingView, createWineView } from './world/bossView';
+import type { Vador } from './game/vador';
 import { createDoorView } from './world/doorView';
 import { createReaperView } from './world/reaperView';
 import sonneurUrl from './assets/models/sonneur.glb?url';
 import abbeUrl from './assets/models/abbe.glb?url';
-import { ABBE, FRERE_SONNEUR } from './config/bosses';
+import vadorUrl from './assets/models/vador.glb?url';
+import { ABBE, FRERE_SONNEUR, VADOR } from './config/bosses';
 import type { FrereSonneur } from './game/frereSonneur';
 import type { Abbe } from './game/abbe';
 import { createBellDropsView } from './pickups/bellDropsView';
@@ -142,6 +144,7 @@ const loading = {
   lastCallView: boot(createLastCallView(scene)),
   sonneurView: boot(createBossView(scene, { kind: 'sonneur', url: sonneurUrl, height: FRERE_SONNEUR.height, walkSpeed: FRERE_SONNEUR.speed })),
   abbeView: boot(createBossView(scene, { kind: 'abbe', url: abbeUrl, height: ABBE.height, walkSpeed: ABBE.speed })),
+  vadorView: boot(createBossView(scene, { kind: 'vador', url: vadorUrl, height: VADOR.height, walkSpeed: VADOR.speed })),
   doorView: boot(createDoorView(scene)),
   reaperView: boot(createReaperView(scene)),
   bellView: boot(createBellDropsView(scene)),
@@ -211,11 +214,13 @@ const binsView = await loading.binsView;
 const lastCallView = await loading.lastCallView;
 const sonneurView = await loading.sonneurView;
 const abbeView = await loading.abbeView;
+const vadorView = await loading.vadorView;
+const saberView = createSaberMarkView(scene);
 const waveView = createWaveRingView(scene);
 const wineView = createWineView(scene);
 const doorView = await loading.doorView;
 const reaperView = await loading.reaperView;
-game.events.on('zombieHit', ({ zombie }) => { if (zombie === game.boss?.zombie) (game.boss.kind === 'abbe' ? abbeView : sonneurView).hit(); });
+game.events.on('zombieHit', ({ zombie }) => { if (zombie === game.boss?.zombie) ({ abbe: abbeView, vador: vadorView, sonneur: sonneurView })[game.boss.kind].hit(); });
 const bellView = await loading.bellView;
 const tourneeView = createTourneeDropsView(scene);
 const snackView = await loading.snackView;
@@ -337,6 +342,8 @@ function frame(now: number) {
   lastCallView.sync(game.lastCall.list);
   sonneurView.sync(game.boss, dt);
   abbeView.sync(game.boss, dt);
+  vadorView.sync(game.boss, dt, game.phase === 'run' ? game.graveBosses.list.find((b) => b.kind === 'vador' && b.waiting) ?? null : null);
+  saberView.sync(vadorView.boss as Vador | null);
   waveView.sync(sonneurView.boss as FrereSonneur | null);
   wineView.sync(abbeView.boss as Abbe | null);
   doorView.sync(game.door, dt);

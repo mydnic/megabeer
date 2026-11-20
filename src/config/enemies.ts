@@ -1,7 +1,7 @@
 // Ennemis (GDD section 11) : chaque type est une fiche de config, et chaque map a son roster (un
 // nouveau type par minute, les anciens restent). Valeurs de départ, calées avec le journal de run.
 
-import { ABBE, FRERE_SONNEUR } from './bosses';
+import { ABBE, FRERE_SONNEUR, VADOR } from './bosses';
 import type { ZombieModel } from './zombies';
 
 export type EnemyDef = {
@@ -160,6 +160,8 @@ export const ENEMIES = {
   /** Boss final de l'Abbaye, appelé par la Porte du patron (hors roster) : réglages dans config/bosses.ts. */
   abbe: { name: ABBE.name, model: 'abbe', hp: ABBE.hp, speed: ABBE.speed, damage: ABBE.cast.damage, xp: ABBE.xp, boss: true },
   sonneur: { name: FRERE_SONNEUR.name, model: 'sonneur', hp: FRERE_SONNEUR.hp, speed: FRERE_SONNEUR.speed, damage: FRERE_SONNEUR.wave.damage, xp: FRERE_SONNEUR.xp, boss: true },
+  /** Boss optionnel, devant le portail d'un cimetière (hors roster) : réglages dans config/bosses.ts. */
+  vador: { name: VADOR.name, model: 'vador', hp: VADOR.hp, speed: VADOR.speed, damage: VADOR.strike.damage, xp: VADOR.xp, boss: true },
 } as const satisfies Record<string, EnemyDef>;
 
 export type EnemyId = keyof typeof ENEMIES;

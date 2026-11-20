@@ -127,6 +127,13 @@ export async function wireDevTools(game: Game, d: {
       game.allies.placeAt(id as AllyId, up.multiplyScalar(p.pos.length()).addScaledVector(p.facing, 4));
       runLog.event('dev', 'ally', id);
     },
+    placeVador() {
+      if (!inRun() || game.boss) return;
+      const p = game.player, up = p.pos.clone().normalize();
+      const b = game.graveBosses.placeAt('vador', up.multiplyScalar(p.pos.length()).addScaledVector(p.facing, 7));
+      b.facing.copy(p.facing).negate();
+      runLog.event('dev', 'vador');
+    },
     placeRadio() {
       if (!inRun()) return;
       const p = game.player, up = p.pos.clone().normalize(), right = new THREE.Vector3().crossVectors(p.facing, up).normalize();

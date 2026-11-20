@@ -231,7 +231,7 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    (ghetto-blaster) cachée au hasard à plus de 45 m de l'arrivée (son propre tirage, qui ne décale pas le hasard du jeu),
    allumée avec E, elle joue radio.mydnic.be (simple lecteur audio, plus fort près du poste, musique du jeu coupée) et
    attire tous les ennemis sauf les boss (leurre de la horde, lanceurs compris) ; 400 PV, cassée la horde revient ; DEV
-   « Radio à côté » ; **#18 alliés faits et validés le 2026-11-19 (issue fermée)** : 4 abbayes (au lieu de 5, l'arrivée est au
+   « Radio à côté » ; **#19 boss en cours (2026-11-20) : Dark Vador, checkpoint 1 fait, à valider** : boss optionnel (décision de l'utilisateur : les boss optionnels attendent dans les cimetières, on va les défier, beaucoup d'XP et un coffre gratuit, mais forts) ; combat au sabre seulement : marche lente, coup de sabre marqué au sol ; checkpoint 2 prévu : phase 2 à mi-vie, sabre lancé qui revient en boomerang ; puis Logen, Guts, Fitz et Oeil-de-Nuit ; DEV « Vador à côté » ; **#18 alliés faits et validés le 2026-11-19 (issue fermée)** : 4 abbayes (au lieu de 5, l'arrivée est au
    hasard : décision de l'utilisateur ; une 5e quand il aura un nouvel allié), un allié dans chacune (colonne de lumière,
    touché il suit 1 min puis s'en va, chacun à sa place derrière le joueur). Gandalf (toutes les 6 s, coup de bâton :
    ennemis à 6 m pétrifiés 3 s, pas les boss), Krilin (soin +3 PV/s tant qu'il suit, Kienzan toutes les 5 s vers le plus

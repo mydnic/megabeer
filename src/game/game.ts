@@ -37,10 +37,13 @@ import { BELL_DROPS, LAST_CALL } from '../config/lastCall';
 import { Tournees, TOURNEE_IDS, rollTournee, tourneeDropChance } from './tournees';
 import { TOURNEE_FX, TOURNEES, type TourneeId } from '../config/tournees';
 import { ELITES } from '../config/elites';
-import { ABBE, FRERE_SONNEUR, PATRON_DOOR } from '../config/bosses';
+import { ABBE, FRERE_SONNEUR, PATRON_DOOR, VADOR } from '../config/bosses';
 import { FrereSonneur } from './frereSonneur';
 import { Abbe, type WinePuddle } from './abbe';
-import type { Boss } from './boss';
+import type { Boss, BossKind } from './boss';
+import { Vador } from './vador';
+import { GraveBosses, type GraveBoss } from './graveBosses';
+import type { GraveSite } from '../world/decor/layout';
 import { PatronDoor } from './patronDoor';
 import { Closing, type Reaper } from './closing';
 import { BINS, SNACK, SNACK_DROPS } from '../config/bins';
@@ -65,7 +68,8 @@ import { VEHICLE_SPAWN, VEHICLES, type VehicleId } from '../config/vehicles';
 import { MAP_MECHANICS, type MapId, type MapMechanic } from './mechanics/mechanic';
 
 export type Phase = 'home' | 'run' | 'dead';
-export type Spawn = { dir: THREE.Vector3; facing: THREE.Vector3 };
+/** Départ d'une run ; `graveyards` : les cimetières de la planète (où attendent les boss optionnels). */
+export type Spawn = { dir: THREE.Vector3; facing: THREE.Vector3; graveyards?: readonly GraveSite[] };
 export type RunEnd = 'mort' | 'abandon';
 /** Ce que lâche une poubelle cassée. */
 export type BinLoot = 'xp' | 'coins' | 'tunas' | 'snack';
@@ -154,6 +158,11 @@ export type GameEvents = {
   doorOpened: { at: THREE.Vector3 };
   /** Touche d'action devant la porte alors qu'un boss est déjà là. */
   doorBusy: Record<string, never>;
+  /** Vador frappe de son sabre la zone `at` (rayon `radius`) ; `hit` : le joueur y était. */
+  saberStrike: { boss: Vador; at: THREE.Vector3; radius: number; hit: boolean };
+  /** Un boss optionnel est défié ; défi refusé parce qu'un autre boss est debout. */
+  graveBossChallenged: { boss: Boss };
+  graveBossBusy: Record<string, never>;
   /** 10:00 : la fermeture du bar, la Mort arrive. */
   closingStarted: Record<string, never>;
   /** Une Mort sort de terre ; une Mort lève sa faux. */
@@ -320,6 +329,8 @@ export class Game {
   boss: Boss | null = null;
   /** La Porte du patron de la run. */
   readonly door: PatronDoor;
+  /** Les boss optionnels qui attendent devant les cimetières. */
+  readonly graveBosses: GraveBosses;
   /** La fermeture du bar (10:00) : les Morts. */
   readonly closing: Closing;
   bossDone = false;
@@ -417,6 +428,7 @@ export class Game {
       ...deps.zombieKinds,
       sonneur: deps.zombieKinds.sonneur ?? { scale: 1, clips: { idle: clip(C.idle), walk: clip(C.walk), attack: clip(C.strike), hit: clip(C.hit), death: clip(C.death), cast: clip(C.roar) } },
       abbe: deps.zombieKinds.abbe ?? { scale: 1, clips: { idle: clip(AC.idle), walk: clip(AC.walk), attack: clip(AC.cast), hit: clip(AC.hit), death: clip(AC.death), cast: clip(AC.roar) } },
+      vador: deps.zombieKinds.vador ?? { scale: 1, clips: { idle: clip(VADOR.clips.idle), walk: clip(VADOR.clips.walk), attack: clip(VADOR.clips.strike), hit: clip(VADOR.clips.hit), death: clip(VADOR.clips.death), cast: clip(VADOR.clips.strike) } },
     };
     this.horde = createHorde(kinds, player, deps.collider);
     this.pumps = new Pumps(deps.collider);
@@ -425,6 +437,7 @@ export class Game {
     this.radio = new Radio(deps.collider, () => this.random());
     this.allies = new Allies(deps.collider);
     this.door = new PatronDoor(deps.collider);
+    this.graveBosses = new GraveBosses(deps.collider, () => this.random());
     this.closing = new Closing({
       playerPos: () => this.player.pos,
       hurtPlayer: (dir, damage) => this.hurtPlayer(null, dir, damage),
@@ -551,8 +564,9 @@ export class Game {
     if (parked) this.events.emit('vehicleSpawned', { vehicle: parked });
     // La radio planquée : loin de l'arrivée, à l'écart du reste
     this.radio.place(spawn.dir, [...this.chests.list.map((c) => c.pos), ...this.pumps.list.map((q) => q.pos), ...this.lastCall.list.map((b) => b.pos), ...(parked ? [parked.pos] : [])]);
-    // Les alliés : un par abbaye
+    // Les alliés : un par abbaye ; les boss optionnels : chacun devant un cimetière
     this.allies.place();
+    this.graveBosses.place(spawn.dir, spawn.graveyards);
     this.bins.place(spawn.dir, [...this.chests.list.map((c) => c.pos), ...this.lastCall.list.map((b) => b.pos)], this.pumps.list.map((p) => p.pos), this.binCount);
     const landing = this.player.pos.clone();
     this.player.drop(ARRIVAL.height, ARRIVAL.speed);
@@ -713,6 +727,10 @@ export class Game {
         else if (input.actionPressed && this.lastCall.focus && !this.offer) this.ringBell(this.lastCall.focus);
         this.door.update(p.pos);
         if (input.actionPressed && !this.chests.focus && !this.lastCall.focus && this.door.focus && !this.offer) this.openDoor();
+        // Boss optionnels : à portée, la touche d'action le défie
+        this.graveBosses.update(p.pos);
+        const challenged = this.graveBosses.focus;
+        if (input.actionPressed && challenged && !this.chests.focus && !this.lastCall.focus && !this.door.focus && !this.offer) this.challenge(challenged);
         // Poubelles : le Buveur qui passe dessus la casse
         const bin = this.bins.touching(p.pos);
         if (bin) this.breakBin(bin, 'player');
@@ -1011,6 +1029,32 @@ export class Game {
     return boss;
   }
 
+  /** Défie un boss optionnel qui attend : il entre en combat là où il est (pas pendant qu'un autre boss est debout). */
+  challenge(b: GraveBoss) {
+    if (!b.waiting || this.phase !== 'run') return null;
+    if (this.boss) { this.events.emit('graveBossBusy', {}); return null; }
+    const boss = this.spawnGraveBoss(b.kind, b.pos, b.facing);
+    if (!boss) return null;
+    b.waiting = false;
+    this.events.emit('graveBossChallenged', { boss });
+    return boss;
+  }
+
+  /** Fait entrer en combat le boss optionnel `kind` à `at`, tourné vers `facing`. */
+  private spawnGraveBoss(kind: BossKind, at: THREE.Vector3, facing: THREE.Vector3) {
+    if (this.boss || this.arriving || kind !== 'vador') return null;
+    const z = this.spawnZombie('vador', at, facing);
+    if (!z) return null;
+    const boss: Vador = new Vador(z, {
+      playerPos: () => this.player.pos,
+      hurtPlayer: (dir, damage) => this.hurtPlayer(z, dir, damage),
+      onStrike: (sat, radius, hit) => this.events.emit('saberStrike', { boss, at: sat, radius, hit }),
+    });
+    this.boss = boss;
+    this.events.emit('bossSpawned', { boss });
+    return boss;
+  }
+
   /** Fait apparaître un élite : l'ennemi en plus grand, avec plus de PV (et plus de dégâts, `damageOf`). */
   spawnElite(enemy: EnemyId, at: THREE.Vector3, facing: THREE.Vector3) {
     const z = this.spawnZombie(enemy, at, facing);
@@ -1077,7 +1121,7 @@ export class Game {
       const boss = this.boss;
       this.boss = null;
       const chest = this.chests.addFreeAt(z.pos);
-      if (chest) chest.rarity = boss.kind === 'abbe' ? ABBE.chestRarity : FRERE_SONNEUR.chestRarity;
+      if (chest) chest.rarity = boss.kind === 'abbe' ? ABBE.chestRarity : boss.kind === 'vador' ? VADOR.chestRarity : FRERE_SONNEUR.chestRarity;
       if (boss.kind === 'abbe') this.abbeKilled = true;
       this.tunaDrops.drop(z.pos, TUNAS.boss[boss.kind]);
       this.events.emit('bossKilled', { boss, chest });
@@ -1750,6 +1794,7 @@ export class Game {
     this.abbeKilled = false;
     this.achievements.reset();
     this.door.clear();
+    this.graveBosses.clear();
     this.closing.clear();
     this.items.length = 0;
     this.effects.reset();

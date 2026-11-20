@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { ABBE, FRERE_SONNEUR } from '../../src/config/bosses';
+import { ABBE, FRERE_SONNEUR, VADOR } from '../../src/config/bosses';
 import { describe, expect, it } from 'vitest';
 import { ZOMBIE_MODELS, ZOMBIE_VISUAL } from '../../src/config/zombies';
 
@@ -41,7 +41,7 @@ function rotationRange(glb: ReturnType<typeof readGlb>, clip: string) {
 
 const generated = Object.entries(ZOMBIE_MODELS).filter(([, m]) => m.file.endsWith('.glb') && !m.file.startsWith('character-') && !('separate' in m));
 /** Animations attendues de chaque boss (celles que le jeu joue, durées dans config/bosses.ts). */
-const BOSS_CLIPS: Record<string, object> = { 'sonneur.glb': FRERE_SONNEUR.clips, 'abbe.glb': ABBE.clips };
+const BOSS_CLIPS: Record<string, object> = { 'sonneur.glb': FRERE_SONNEUR.clips, 'abbe.glb': ABBE.clips, 'vador.glb': VADOR.clips };
 /** Modèles dessinés à part (boss) : ils ont leurs propres animations. */
 const separate = Object.entries(ZOMBIE_MODELS).filter(([, m]) => 'separate' in m);
 

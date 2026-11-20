@@ -35,7 +35,7 @@ import { createSaiyanHud } from '../ui/saiyanHud';
 import { isTouchDevice as touchScreen } from '../core/input';
 import { VEHICLES } from '../config/vehicles';
 import { BOSS_HUD } from '../config/hud';
-import { PATRON_DOOR } from '../config/bosses';
+import { GRAVE_BOSSES, PATRON_DOOR, VADOR } from '../config/bosses';
 import { CLOSING } from '../config/closing';
 import { createPadNav } from '../ui/padNav';
 import { createAccountPanel } from '../ui/accountPanel';
@@ -101,6 +101,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   const bellPrompt = createChestPrompt(null, LAST_CALL_TEXT.prompt);
   const doorPrompt = createChestPrompt(null, PATRON_DOOR.prompt);
   const radioPrompt = createChestPrompt(null, 'Allumer la radio');
+  const vadorPrompt = createChestPrompt(null, VADOR.prompt);
   const chestReveal = createChestReveal();
   const runHud = createRunHud();
   const banner = createEventBanner();
@@ -253,6 +254,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   const BOSS_TEXT = {
     sonneur: { come: 'Saute par-dessus les ondes de sa cloche', rage: ['Il est furieux !', 'Plus rapide, et deux ondes à chaque coup'], fall: 'Un coffre légendaire t\'attend' },
     abbe: { come: 'Ne reste pas dans son vin de messe', rage: ['Il a bu le calice !', 'Il devient géant'], fall: 'Un coffre légendaire t\'attend. Tiens jusqu\'à la fermeture' },
+    vador: { come: 'Sors de la zone rouge avant le coup', rage: ['Il est furieux !', ''], fall: 'Un coffre légendaire t\'attend' },
   } as const;
   game.events.on('bossSpawned', ({ boss }) => {
     bossBar.show(boss.name, boss.phaseAt);
@@ -269,6 +271,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   });
   game.events.on('closingStarted', () => { banner.show(CLOSING.banner.title, CLOSING.banner.sub); banner.pulse(); banner.hideAfter(4); });
   game.events.on('doorBusy', () => { banner.show('Pas maintenant', PATRON_DOOR.busy); banner.hideAfter(1.8); });
+  game.events.on('graveBossBusy', () => { banner.show('Pas maintenant', GRAVE_BOSSES.busy); banner.hideAfter(1.8); });
   game.events.on('doorOpened', () => { banner.show('Le patron arrive...', 'La porte s\'ouvre'); banner.pulse(); banner.hideAfter(2); });
   game.events.on('vehicleEntered', ({ kind }) => vehicleHud.show(VEHICLES[kind].name));
   game.events.on('allyJoined', ({ kind }) => { banner.show(`${ALLIES[kind].name} te rejoint !`, 'Il te suit une minute'); banner.pulse(); banner.hideAfter(2.2); });
@@ -363,6 +366,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
       bellPrompt.update(!chest && game.phase === 'run' && !game.frozen && game.lastCall.focus ? 0 : null, game.coins);
       doorPrompt.update(!chest && !game.lastCall.focus && game.phase === 'run' && !game.frozen && game.door.focus ? 0 : null, game.coins);
       radioPrompt.update(!chest && game.phase === 'run' && !game.frozen && game.radio.focus ? 0 : null, game.coins);
+      vadorPrompt.update(!chest && !game.door.focus && game.phase === 'run' && !game.frozen && game.graveBosses.focus?.kind === 'vador' ? 0 : null, game.coins);
       runHud.update(game.runTime, game.kills, game.coins, Math.floor(game.tunas + 1e-9));
       weaponHud.update(slots());
       itemHud.update(game.items);

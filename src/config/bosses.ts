@@ -58,6 +58,8 @@ export const BOSS_LOOK = {
   /** Éclair blanc quand il encaisse un coup (intensité, durée s). */
   flash: 0.6,
   flashTime: 0.12,
+  /** Les pièces `glow_*` des modèles (sabre laser) : leur couleur x`glowBoost`, sans éclairage. */
+  glowBoost: 2.5,
 } as const;
 
 /**
@@ -148,4 +150,57 @@ export const DOOR_LOOK = {
 export const WINE_LOOK = {
   arming: { markColor: 0xb0203a, markOpacity: 0.55, markRing: 0.12 },
   burning: { markColor: 0x6a0a1e, markOpacity: 0.85, markRing: 0.18 },
+} as const;
+
+/**
+ * Les boss optionnels (issue #19) : chacun attend devant le portail d'un cimetière, loin du départ, sous une colonne
+ * de lumière. Le joueur va le voir et le défie à la touche d'action : il est fort, mais rapporte beaucoup d'XP, un
+ * coffre gratuit et des TUNAS. Un seul boss debout à la fois.
+ */
+export const GRAVE_BOSSES = {
+  /** Les boss posés à chaque run, dans cet ordre (un cimetière chacun). */
+  kinds: ['vador'] as const,
+  /** Pas dans un cimetière à moins de `minFromSpawn` m du départ ; portée de la touche d'action (m). */
+  minFromSpawn: 80,
+  interactRange: 6,
+  /** Point libre cherché jusqu'à `searchRadius` m du portail (un sapin peut le gêner). */
+  searchRadius: 8,
+  busy: 'Un boss est déjà là',
+  /** Colonne de lumière au-dessus d'un boss qui attend (rendu). */
+  beamColor: 0xff2a1a,
+  beamRadius: 1.4,
+  beamHeight: 60,
+  beamOpacity: 0.26,
+} as const;
+
+/**
+ * Dark Vador (boss optionnel, issue #19) : il marche lentement vers le joueur et, de près, frappe de son sabre laser
+ * devant lui. Avant le coup, la zone touchée est marquée au sol (`windup` s) : il faut en sortir. Valeurs de départ.
+ */
+export const VADOR = {
+  name: 'Dark Vador',
+  prompt: 'Défier Dark Vador',
+  /** Points de vie (multipliés par la difficulté), vitesse de marche (m/s), XP à sa mort. */
+  hp: 4000,
+  speed: 2.2,
+  xp: 250,
+  /** Hauteur du modèle (m) ; corps plus large qu'un zombie (multiplie le rayon du corps). */
+  height: 3.4,
+  bodyScale: 2.0,
+  /**
+   * Coup de sabre : à moins de `range` m du joueur, au plus toutes les `cooldown` s. La zone (un disque de `radius` m,
+   * à `ahead` m devant lui) est marquée `windup` s avant, puis le coup part (`hitAt` s après le début du geste, qui dure
+   * `duration` s) et blesse le joueur resté dedans.
+   */
+  strike: { range: 5, cooldown: 1.6, windup: 0.8, ahead: 2.6, radius: 2.6, hitAt: 0.45, duration: 1.5, damage: 35 },
+  /** Coffre gratuit laissé à sa mort (rang dans RARITIES, 4 : Légendaire). */
+  chestRarity: 4,
+  music: 'vador',
+  /** Durée des animations (s), fixées par tools/blender/vador.py. */
+  clips: { idle: 1.67, walk: 1.33, strike: 1.5, hit: 0.33, death: 2.38 },
+} as const;
+
+/** Marque au sol du coup de sabre de Vador. */
+export const VADOR_LOOK = {
+  strike: { markColor: 0xff2a1a, markOpacity: 0.6, markRing: 0.1 },
 } as const;
