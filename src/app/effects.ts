@@ -190,6 +190,9 @@ export function wireEffects(game: Game, d: Deps) {
     rig.shake(HIT_FEEDBACK.shake * 2 * k, HIT_FEEDBACK.shakeAmplitude * 1.5, HIT_FEEDBACK.shakeDecay);
   });
   // Coup de sabre de Vador : un éclat rouge sur la zone, la caméra tremble s'il touche
+  // Logen : poussière au départ de sa charge et au début de son tourbillon
+  game.events.on('logenCharge', ({ boss }) => vfx.dust(boss.zombie.pos, 16, 1.6, 7));
+  game.events.on('logenSpin', ({ boss }) => { vfx.dust(boss.zombie.pos, 18, 2.4, 7); d.rings.spawn(boss.zombie.pos, 5, VADOR_LOOK.strike.markColor); });
   game.events.on('saberStrike', ({ at, radius, hit }) => {
     vfx.pop(numPos.copy(at).setLength(at.length() + 1), VADOR_LOOK.strike.markColor, 4);
     vfx.dust(at, 10, radius * 0.5, 5);

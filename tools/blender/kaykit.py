@@ -11,6 +11,8 @@ Variantes (--variant) :
 - squelette : le Skeleton Minion, que le Prieur fait sortir de terre.
 - porte_reliques : le Rogue encapuchonné sans son masque, en bure crème, qui tient à deux mains
   devant lui un coffret doré (le coffre en or du KayKit Dungeon, réduit) : le Moine porte-reliques.
+- logen : le Barbarian (peau d'ours, barbe) et la grande épée à deux mains dans la main droite : Logen Neuf-Doigts,
+  boss optionnel (issue #19), dessiné à part (world/bossView.ts) avec ses propres noms de clips (`clips` de la variante).
 
 Les fichiers source sont lus dans la bibliothèque d'assets (--lib, le dossier MODELS trié).
 
@@ -70,6 +72,17 @@ VARIANTS = {
         # Les deux mains posées de chaque côté du reliquaire (poignet gauche ; le droit en miroir), dans ces animations
         'hold': {'wrist': (0.33, -0.46, 0.97), 'actions': ['Idle', 'Walk', 'Run', 'HitReact']},
     },
+    # Logen Neuf-Doigts : le Barbarian, sa grande épée tenue dans le poing droit (le manche à `grip` de son bout, lame
+    # dans la direction `dir` en pose en T) ; clips du boss : repos, marche, charge (course), tourbillon (bras tendus,
+    # le jeu le fait tourner), cri (phase 2), touché, mort
+    'logen': {
+        'character': 'personnages/kaykit_adventurers/personnages/Barbarian.glb',
+        'drop': ['Icosphere'],
+        'prop': {'file': 'personnages/kaykit_adventurers/gltf/sword_2handed.gltf', 'bone': 'handslot.r', 'size': 2.6,
+                 'grip': 0.3, 'dir': (0, -1, 0)},
+        'clips': {'Idle_B': 'idle', 'Walking_A': 'walk', 'Running_B': 'run', 'T-Pose': 'spin', 'Spawn_Ground': 'roar',
+                  'Hit_A': 'hit', 'Death_A': 'death'},
+    },
     # Le squelette que le Prieur fait sortir de terre : le Skeleton Minion tel quel
     'squelette': {
         'character': 'personnages/kaykit_skeletons/personnages/Skeleton_Minion.glb',
@@ -125,9 +138,10 @@ for path in ANIMS:
         a.use_fake_user = True
     for o in new:
         bpy.data.objects.remove(o)
+keep = variant.get('clips', CLIPS)
 for a in list(bpy.data.actions):
-    if a.name in CLIPS:
-        a.name = CLIPS[a.name]
+    if a.name in keep:
+        a.name = keep[a.name]
     else:
         bpy.data.actions.remove(a)
 arm.animation_data_create()
@@ -215,14 +229,24 @@ if prop_cfg:
     lo = Vector([min(v[i] for v in vs) for i in range(3)])
     hi = Vector([max(v[i] for v in vs) for i in range(3)])
     k = prop_cfg['size'] / max(hi - lo)
-    if 'at' in prop_cfg:
+    if 'grip' in prop_cfg:
+        # Tenu au poing : le manche (à `grip` de son bout, après mise à la taille) sur l'os, la lame dans `dir`
+        head = arm.matrix_world @ arm.data.bones[prop_cfg['bone']].head_local
+        base = Vector(((lo.x + hi.x) / 2, (lo.y + hi.y) / 2, lo.z))
+        rot = Vector((0, 0, 1)).rotation_difference(Vector(prop_cfg['dir']).normalized()).to_matrix()
+        for v in prop.data.vertices:
+            v.co = head + rot @ ((v.co - base) * k - Vector((0, 0, prop_cfg['grip'])))
+    elif 'at' in prop_cfg:
         at = Vector(prop_cfg['at'])
     else:
         at = arm.matrix_world @ arm.data.bones[prop_cfg['bone']].head_local + Vector(prop_cfg.get('offset', (0, 0, 0)))
-    center = (lo + hi) / 2
-    for v in prop.data.vertices:
-        v.co = (v.co - center) * k + at
+    if 'grip' not in prop_cfg:
+        center = (lo + hi) / 2
+        for v in prop.data.vertices:
+            v.co = (v.co - center) * k + at
     prop.vertex_groups.new(name=prop_cfg['bone']).add(range(len(prop.data.vertices)), 1.0, 'REPLACE')
+    # (l'os qui porte l'objet doit déformer, sinon l'objet resterait figé : les os « slot » KayKit ne déforment pas)
+    arm.data.bones[prop_cfg['bone']].use_deform = True
     meshes.append(prop)
 
 # Un seul maillage

@@ -126,6 +126,9 @@ export const AUDIO = {
     // Sabre lancé (phase 2) : un sifflement métallique au départ, un claquement quand il revient en main
     saberThrow: { sample: 'impactMetal_light', volume: 0.5, rate: 0.6 },
     saberCatch: { sample: 'impactMetal_medium', volume: 0.45, rate: 1.3 },
+    // Logen : il part en charge (lourd), il tourne épée tendue (métal qui siffle)
+    logenCharge: { sample: 'impactPunch_heavy', volume: 0.7, rate: 0.6 },
+    logenSpin: { sample: 'impactMetal_light', volume: 0.55, rate: 0.5 },
     senzu: { sample: 'impactBell_heavy', volume: 0.55, rate: 1.9 },
     saiyanReady: { sample: 'impactBell_heavy', volume: 0.45, rate: 1.6 },
     /** Son d'aura, en boucle pendant toute la transformation ; `fade` : fondu à la fin (s). */

@@ -1,7 +1,7 @@
 import type { Zombie } from '../enemies/zombie';
 
 /** Les boss du jeu (un contrôleur et un modèle chacun). */
-export type BossKind = 'sonneur' | 'abbe' | 'vador';
+export type BossKind = 'sonneur' | 'abbe' | 'vador' | 'logen';
 
 /**
  * Ce que le jeu, l'affichage et l'interface lisent de n'importe quel boss. Son corps est un zombie de la horde
@@ -19,6 +19,8 @@ export interface Boss {
   animTime: number;
   /** Taille (1 : normale ; l'Abbé grandit en phase 2). */
   scale: number;
+  /** Rotation sur lui-même (rad), pour un boss qui tourbillonne (Logen). */
+  turn?: number;
   /** Musique (dossier de music/boss/). */
   readonly music: string;
   update(dt: number): void;

@@ -41,6 +41,8 @@ export const ZOMBIE_MODELS = {
   abbe: { file: 'abbe.glb', height: 5.0, separate: true },
   // Dark Vador (boss optionnel d'un cimetière) : tools/blender/vador.py, dessiné à part
   vador: { file: 'vador.glb', height: 3.4, separate: true },
+  // Logen Neuf-Doigts (boss optionnel d'un cimetière) : le Barbarian KayKit (tools/blender/kaykit.py --variant logen), dessiné à part
+  logen: { file: 'logen.glb', height: 3.6, separate: true },
   // Le Novice : il court (et bondit pour frapper, il n'a pas d'attaque)
   ribcage: { file: 'Zombie_Ribcage.gltf', height: 1.4, clips: { walk: ['Run'] }, walkAnimAt: 3.7 },
 } as const;

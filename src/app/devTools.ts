@@ -1,5 +1,6 @@
 import { ITEMS, type ItemId } from '../config/items';
 import { ALLIES, type AllyId } from '../config/allies';
+import { GRAVE_BOSSES } from '../config/bosses';
 import { SAIYAN } from '../config/saiyan';
 import { VEHICLES, type VehicleId } from '../config/vehicles';
 import * as THREE from 'three';
@@ -127,12 +128,14 @@ export async function wireDevTools(game: Game, d: {
       game.allies.placeAt(id as AllyId, up.multiplyScalar(p.pos.length()).addScaledVector(p.facing, 4));
       runLog.event('dev', 'ally', id);
     },
-    placeVador() {
-      if (!inRun() || game.bossUp('vador')) return;
+    graveBosses: GRAVE_BOSSES.kinds,
+    placeGraveBoss(kind) {
+      const k = kind as (typeof GRAVE_BOSSES.kinds)[number];
+      if (!inRun() || game.bossUp(k)) return;
       const p = game.player, up = p.pos.clone().normalize();
-      const b = game.graveBosses.placeAt('vador', up.multiplyScalar(p.pos.length()).addScaledVector(p.facing, 7));
+      const b = game.graveBosses.placeAt(k, up.multiplyScalar(p.pos.length()).addScaledVector(p.facing, 7));
       b.facing.copy(p.facing).negate();
-      runLog.event('dev', 'vador');
+      runLog.event('dev', 'graveBoss', k);
     },
     placeRadio() {
       if (!inRun()) return;

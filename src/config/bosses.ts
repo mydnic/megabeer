@@ -158,7 +158,7 @@ export const WINE_LOOK = {
  */
 export const GRAVE_BOSSES = {
   /** Les boss posés à chaque run, dans cet ordre (un cimetière chacun). */
-  kinds: ['vador'] as const,
+  kinds: ['vador', 'logen'] as const,
   /** Pas dans un cimetière à moins de `minFromSpawn` m du départ ; portée de la touche d'action (m). */
   minFromSpawn: 80,
   interactRange: 6,
@@ -219,4 +219,48 @@ export const VADOR_LOOK = {
    * lame (x`glow`, lumineuse), opacité du disque de flou qui tourne avec lui.
    */
   thrown: { length: 2.4, thick: 2.5, spin: 22, blade: 0xff1a10, glow: 2.5, hilt: 0x8a8a94, blur: 0.35 },
+} as const;
+
+/**
+ * Logen Neuf-Doigts (boss optionnel, issue #19) : le Barbarian KayKit (tools/blender/kaykit.py --variant logen) et sa
+ * grande épée. Il marche vers le joueur ; de loin il charge en ligne droite, de près il frappe en tourbillon. Chaque
+ * attaque est marquée au sol avant de partir. Valeurs de départ.
+ */
+export const LOGEN = {
+  name: 'Logen Neuf-Doigts',
+  prompt: 'Défier Logen Neuf-Doigts',
+  hp: 4500,
+  speed: 2.4,
+  xp: 250,
+  height: 3.6,
+  bodyScale: 2.0,
+  /**
+   * Charge : quand le joueur est entre `minDist` et `range` m, au plus toutes les `cooldown` s. Il se met en garde
+   * `windup` s (la bande de `width` m sur `length` m devant lui est marquée), puis fonce à `speed` m/s le long de la
+   * bande et blesse le joueur qu'il percute (une fois). Au bout, essoufflé, il reste sur place `tired` s.
+   */
+  charge: { range: 16, minDist: 5, cooldown: 3, windup: 0.8, length: 18, width: 2.6, speed: 18, damage: 30, tired: 1.2 },
+  /**
+   * Tourbillon : quand le joueur est à moins de `range` m, au plus toutes les `cooldown` s. Le cercle de `radius` m
+   * autour de lui est marqué `windup` s, puis il tourne sur lui-même `duration` s à `turns` tours par seconde, épée
+   * tendue : le joueur dans le cercle pendant le tourbillon encaisse (une fois).
+   */
+  spin: { range: 4.5, cooldown: 2.5, windup: 0.6, radius: 4.8, duration: 1.0, turns: 3, damage: 30 },
+  /**
+   * Phase 2 « le Sanguinaire » sous `below` de ses PV : il crie `pause` s, puis va plus vite, ne s'essouffle plus et
+   * enchaîne `charges` charges d'affilée (la suivante se prépare en `rewindup` s).
+   */
+  phase2: { below: 0.5, pause: 1.3, speedMul: 1.25, charges: 2, rewindup: 0.45 },
+  chestRarity: 4,
+  music: 'logen',
+  /** Durée des animations (s), fixées par tools/blender/kaykit.py (variante logen). */
+  clips: { idle: 2.13, walk: 1.04, run: 0.79, spin: 0.04, roar: 1.29, hit: 0.67, death: 0.79 },
+} as const;
+
+/** Marques au sol de Logen : la bande de sa charge (des disques côte à côte), le cercle de son tourbillon. */
+export const LOGEN_LOOK = {
+  charge: { markColor: 0xff7a1a, markOpacity: 0.55, markRing: 0.12 },
+  spin: { markColor: 0xff2a1a, markOpacity: 0.55, markRing: 0.08 },
+  /** Disques par bande de charge. */
+  chargeDiscs: 7,
 } as const;

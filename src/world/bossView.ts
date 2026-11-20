@@ -7,8 +7,9 @@ import type { Abbe } from '../game/abbe';
 import type { Boss, BossKind } from '../game/boss';
 import type { FrereSonneur } from '../game/frereSonneur';
 import { characterMaterial, LAYER_CHARACTER, LAYER_SKY } from '../render/materials';
-import { ABBE, GRAVE_BOSSES as G, VADOR, VADOR_LOOK } from '../config/bosses';
+import { ABBE, GRAVE_BOSSES as G, LOGEN_LOOK, VADOR, VADOR_LOOK } from '../config/bosses';
 import type { Vador } from '../game/vador';
+import type { Logen } from '../game/logen';
 import { heightAt } from './terrain';
 
 /** Ce qu'il faut pour dessiner un boss : son modèle, sa hauteur (m), sa vitesse de marche (pour la cadence des pas). */
@@ -40,7 +41,7 @@ export async function createBossView(scene: THREE.Scene, M: BossModel) {
     let m = mats.get(src.name);
     if (!m) {
       if (glow) m = new THREE.MeshBasicMaterial({ color: src.color.clone().multiplyScalar(L.glowBoost), toneMapped: false });
-      else { const t = characterMaterial({ color: src.color }); materials.push(t); m = t; }
+      else { const t = characterMaterial({ color: src.color, map: src.map ?? null }); materials.push(t); m = t; }
       m.name = src.name;
       mats.set(src.name, m);
     }
@@ -140,6 +141,8 @@ export async function createBossView(scene: THREE.Scene, M: BossModel) {
       basis.makeBasis(side, up, fwd);
       root.quaternion.setFromRotationMatrix(basis);
       root.scale.setScalar(boss.scale);
+      // Un boss qui tourne sur lui-même (le tourbillon de Logen)
+      if (boss.turn) root.rotateY(boss.turn);
       root.position.copy(z.pos).addScaledVector(up, -z.sink * (M.height * boss.scale / 2));
       flash = Math.max(0, flash - dt / L.flashTime);
       for (const mat of materials) mat.emissive.setScalar(flash * flash * L.flash);
@@ -290,6 +293,40 @@ export async function createThrownSaberView(scene: THREE.Scene, url: string) {
       root.quaternion.setFromRotationMatrix(basis.makeBasis(side, up, fwd));
       root.position.copy(up).multiplyScalar(PLANET_RADIUS + heightAt(up) + VADOR.phase2.throw.height);
       spinner.rotation.y = t * T.spin;
+    },
+  };
+}
+
+/** Marques au sol de Logen : la bande de sa charge (des disques côte à côte qui se remplissent), le cercle de son tourbillon. */
+export function createLogenMarksView(scene: THREE.Scene) {
+  const lanes = createGroundMarks(scene, LOGEN_LOOK.charge);
+  const rings = createGroundMarks(scene, LOGEN_LOOK.spin);
+  const N = LOGEN_LOOK.chargeDiscs;
+  const discs: GroundMark[] = Array.from({ length: N }, () => ({ at: new THREE.Vector3(), radius: 0, t: 0 }));
+  const ring: GroundMark = { at: new THREE.Vector3(), radius: 0, t: 0 };
+  const lane: GroundMark[] = [], one: GroundMark[] = [];
+  const axis = new THREE.Vector3();
+  return {
+    sync(boss: Logen | null) {
+      lane.length = 0; one.length = 0;
+      const live = boss && !boss.zombie.dead ? boss : null;
+      const l = live?.lane;
+      if (l) {
+        // Les disques le long de la bande, sur la sphère (de son départ jusqu'au bout de la charge)
+        axis.crossVectors(l.from, l.dir).normalize();
+        for (let i = 0; i < N; i++) {
+          const m = discs[i];
+          const along = ((i + 0.5) / N) * l.length;
+          m.at.copy(l.from).applyAxisAngle(axis, along / l.from.length());
+          m.radius = l.width / 2;
+          m.t = l.t;
+          lane.push(m);
+        }
+      }
+      const r = live?.ring;
+      if (r) { ring.at.copy(r.at); ring.radius = r.radius; ring.t = r.t; one.push(ring); }
+      lanes.sync(lane);
+      rings.sync(one);
     },
   };
 }

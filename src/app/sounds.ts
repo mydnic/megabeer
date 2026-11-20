@@ -199,6 +199,8 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
   game.events.on('allyPower', ({ kind }) => { const S = I.allyPower[kind]; audio.play(S.sample, S.volume, S.rate * jitter(0.06)); });
   game.events.on('tntExploded', () => audio.play(I.tntBoom.sample, I.tntBoom.volume, I.tntBoom.rate * jitter(0.08)));
   game.events.on('saberStrike', ({ hit }) => audio.play(I.saberStrike.sample, hit ? I.saberStrike.hitVolume : I.saberStrike.volume, I.saberStrike.rate * jitter(0.05)));
+  game.events.on('logenCharge', () => audio.play(I.logenCharge.sample, I.logenCharge.volume, I.logenCharge.rate * jitter(0.05)));
+  game.events.on('logenSpin', () => audio.play(I.logenSpin.sample, I.logenSpin.volume, I.logenSpin.rate * jitter(0.05)));
   game.events.on('saberThrown', () => audio.play(I.saberThrow.sample, I.saberThrow.volume, I.saberThrow.rate * jitter(0.05)));
   game.events.on('saberCaught', () => audio.play(I.saberCatch.sample, I.saberCatch.volume, I.saberCatch.rate * jitter(0.05)));
   game.events.on('senzuEaten', () => audio.play(I.senzu.sample, I.senzu.volume, I.senzu.rate, 0, 'ui'));
