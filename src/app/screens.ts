@@ -35,7 +35,7 @@ import { createSaiyanHud } from '../ui/saiyanHud';
 import { isTouchDevice as touchScreen } from '../core/input';
 import { VEHICLES } from '../config/vehicles';
 import { BOSS_HUD } from '../config/hud';
-import { LOGEN, PATRON_DOOR, VADOR } from '../config/bosses';
+import { LOGEN, PATRON_DOOR, VADOR, XENO } from '../config/bosses';
 import { CLOSING } from '../config/closing';
 import { createPadNav } from '../ui/padNav';
 import { createAccountPanel } from '../ui/accountPanel';
@@ -102,7 +102,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
   const doorPrompt = createChestPrompt(null, PATRON_DOOR.prompt);
   const radioPrompt = createChestPrompt(null, 'Allumer la radio');
   // Un boss optionnel à portée : « Défier ... »
-  const gravePrompts = { vador: createChestPrompt(null, VADOR.prompt), logen: createChestPrompt(null, LOGEN.prompt) };
+  const gravePrompts = { vador: createChestPrompt(null, VADOR.prompt), logen: createChestPrompt(null, LOGEN.prompt), xeno: createChestPrompt(null, XENO.prompt) };
   const chestReveal = createChestReveal();
   const runHud = createRunHud();
   const banner = createEventBanner();
@@ -256,6 +256,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
     sonneur: { come: 'Saute par-dessus les ondes de sa cloche', rage: ['Il est furieux !', 'Plus rapide, et deux ondes à chaque coup'], fall: 'Un coffre légendaire t\'attend' },
     abbe: { come: 'Ne reste pas dans son vin de messe', rage: ['Il a bu le calice !', 'Il devient géant'], fall: 'Un coffre légendaire t\'attend. Tiens jusqu\'à la fermeture' },
     logen: { come: 'Écarte-toi de sa charge, recule devant son tourbillon', rage: ['Le Sanguinaire !', 'Il ne se fatigue plus'], fall: "Un coffre légendaire t'attend" },
+    xeno: { come: "Sors du cercle avant qu'il retombe, et de la bande de sa queue", rage: ['Il hurle !', 'Son sang acide ronge le sol'], fall: "Un coffre légendaire t'attend" },
     vador: { come: 'Sors de la zone rouge avant le coup', rage: ['Il est furieux !', 'Il lance son sabre'], fall: 'Un coffre légendaire t\'attend' },
   } as const;
   game.events.on('bossSpawned', ({ boss }) => {

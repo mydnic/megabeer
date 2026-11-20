@@ -24,7 +24,7 @@ import { RARITIES } from '../config/upgrades';
 import { PUMP_TIERS } from '../config/pumps';
 import { TOURNEE_FX, TOURNEES } from '../config/tournees';
 import { ELITES } from '../config/elites';
-import { BOSS_LOOK, DOOR_LOOK, VADOR_LOOK, WINE_LOOK } from '../config/bosses';
+import { BOSS_LOOK, DOOR_LOOK, VADOR_LOOK, WINE_LOOK, XENO_LOOK } from '../config/bosses';
 import type { Vfx } from '../fx/vfx';
 import type { Sprites } from '../fx/sprites';
 
@@ -193,6 +193,19 @@ export function wireEffects(game: Game, d: Deps) {
   // Logen : poussière au départ de sa charge et au début de son tourbillon
   game.events.on('logenCharge', ({ boss }) => vfx.dust(boss.zombie.pos, 16, 1.6, 7));
   game.events.on('logenSpin', ({ boss }) => { vfx.dust(boss.zombie.pos, 18, 2.4, 7); d.rings.spawn(boss.zombie.pos, 5, VADOR_LOOK.strike.markColor); });
+  // Le Xénomorphe : poussière au saut, onde et tremblement quand il retombe, éclat quand sa queue pique
+  game.events.on('xenoLeap', ({ boss }) => vfx.dust(boss.zombie.pos, 12, 1.6, 6));
+  game.events.on('xenoLand', ({ at, radius, hit }) => {
+    vfx.dust(at, 20, radius * 0.7, 8);
+    d.rings.spawn(at, radius * 1.4, XENO_LOOK.pounce.markColor);
+    const k = Math.max(0.3, 1 - at.distanceTo(game.player.pos) / 30);
+    rig.shake(HIT_FEEDBACK.shake * (hit ? 2.5 : 1.5) * k, HIT_FEEDBACK.shakeAmplitude * 1.5, HIT_FEEDBACK.shakeDecay);
+  });
+  game.events.on('xenoTail', ({ boss, hit }) => {
+    const l = boss.lane;
+    if (l) vfx.pop(numPos.copy(l.from).addScaledVector(l.dir, l.length * 0.6).setLength(l.from.length() + 1), XENO_LOOK.tail.markColor, 4);
+    if (hit) rig.shake(HIT_FEEDBACK.shake * 2, HIT_FEEDBACK.shakeAmplitude * 1.5, HIT_FEEDBACK.shakeDecay);
+  });
   game.events.on('saberStrike', ({ at, radius, hit }) => {
     vfx.pop(numPos.copy(at).setLength(at.length() + 1), VADOR_LOOK.strike.markColor, 4);
     vfx.dust(at, 10, radius * 0.5, 5);

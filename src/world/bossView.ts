@@ -7,7 +7,8 @@ import type { Abbe } from '../game/abbe';
 import type { Boss, BossKind } from '../game/boss';
 import type { FrereSonneur } from '../game/frereSonneur';
 import { characterMaterial, LAYER_CHARACTER, LAYER_SKY } from '../render/materials';
-import { ABBE, GRAVE_BOSSES as G, LOGEN_LOOK, VADOR, VADOR_LOOK } from '../config/bosses';
+import { ABBE, GRAVE_BOSSES as G, LOGEN_LOOK, VADOR, VADOR_LOOK, XENO, XENO_LOOK } from '../config/bosses';
+import type { Xeno } from '../game/xeno';
 import type { Vador } from '../game/vador';
 import type { Logen } from '../game/logen';
 import { heightAt } from './terrain';
@@ -16,7 +17,7 @@ import { heightAt } from './terrain';
 export type BossModel = { kind: BossKind; url: string; height: number; walkSpeed: number };
 
 /** Animations jouées une seule fois (elles restent sur leur dernière image). */
-const ONCE = ['strike', 'cast', 'roar', 'death'];
+const ONCE = ['strike', 'cast', 'roar', 'death', 'tail'];
 
 /**
  * Rendu d'un boss (modèles sculptés de tools/blender/) : le modèle détaillé en cel-shading, animé par un mixeur (fondu
@@ -143,7 +144,7 @@ export async function createBossView(scene: THREE.Scene, M: BossModel) {
       root.scale.setScalar(boss.scale);
       // Un boss qui tourne sur lui-même (le tourbillon de Logen)
       if (boss.turn) root.rotateY(boss.turn);
-      root.position.copy(z.pos).addScaledVector(up, -z.sink * (M.height * boss.scale / 2));
+      root.position.copy(z.pos).addScaledVector(up, -z.sink * (M.height * boss.scale / 2) + (boss.air ?? 0));
       flash = Math.max(0, flash - dt / L.flashTime);
       for (const mat of materials) mat.emissive.setScalar(flash * flash * L.flash);
     },
@@ -327,6 +328,51 @@ export function createLogenMarksView(scene: THREE.Scene) {
       if (r) { ring.at.copy(r.at); ring.radius = r.radius; ring.t = r.t; one.push(ring); }
       lanes.sync(lane);
       rings.sync(one);
+    },
+  };
+}
+
+/** Marques au sol du Xénomorphe : le point de chute de son bond, la bande de son coup de queue, ses flaques d'acide. */
+export function createXenoMarksView(scene: THREE.Scene) {
+  const pounce = createGroundMarks(scene, XENO_LOOK.pounce);
+  const tails = createGroundMarks(scene, XENO_LOOK.tail);
+  const acid = createGroundMarks(scene, XENO_LOOK.acid);
+  const N = XENO_LOOK.tailDiscs;
+  const discs: GroundMark[] = Array.from({ length: N }, () => ({ at: new THREE.Vector3(), radius: 0, t: 0 }));
+  const ring: GroundMark = { at: new THREE.Vector3(), radius: 0, t: 0 };
+  const pools: GroundMark[] = [];
+  const lane: GroundMark[] = [], one: GroundMark[] = [], wet: GroundMark[] = [];
+  const axis = new THREE.Vector3();
+  return {
+    sync(boss: Xeno | null) {
+      lane.length = 0; one.length = 0; wet.length = 0;
+      const live = boss && !boss.zombie.dead ? boss : null;
+      const l = live?.lane;
+      if (l) {
+        axis.crossVectors(l.from, l.dir).normalize();
+        for (let i = 0; i < N; i++) {
+          const m = discs[i];
+          m.at.copy(l.from).applyAxisAngle(axis, (((i + 0.5) / N) * l.length) / l.from.length());
+          m.radius = l.width / 2;
+          m.t = l.t;
+          lane.push(m);
+        }
+      }
+      const r = live?.mark;
+      if (r) { ring.at.copy(r.at); ring.radius = r.radius; ring.t = r.t; one.push(ring); }
+      let k = 0;
+      for (const w of boss ? boss.pools : []) {
+        const m = pools[k] ?? (pools[k] = { at: w.at, radius: 0, t: 1 });
+        k++;
+        m.at = w.at;
+        // Elle s'étale vite, puis sèche en rétrécissant à la fin
+        m.radius = w.radius * Math.min(1, w.t / 0.25, (XENO.phase2.acid.life - w.t) / 0.6);
+        m.t = 1;
+        wet.push(m);
+      }
+      tails.sync(lane);
+      pounce.sync(one);
+      acid.sync(wet);
     },
   };
 }

@@ -37,12 +37,13 @@ import { BELL_DROPS, LAST_CALL } from '../config/lastCall';
 import { Tournees, TOURNEE_IDS, rollTournee, tourneeDropChance } from './tournees';
 import { TOURNEE_FX, TOURNEES, type TourneeId } from '../config/tournees';
 import { ELITES } from '../config/elites';
-import { ABBE, FRERE_SONNEUR, LOGEN, PATRON_DOOR, VADOR } from '../config/bosses';
+import { ABBE, FRERE_SONNEUR, LOGEN, PATRON_DOOR, VADOR, XENO } from '../config/bosses';
 import { FrereSonneur } from './frereSonneur';
 import { Abbe, type WinePuddle } from './abbe';
 import type { Boss, BossKind } from './boss';
 import { Vador } from './vador';
 import { Logen } from './logen';
+import { Xeno } from './xeno';
 import { GraveBosses, type GraveBoss } from './graveBosses';
 import type { GraveSite } from '../world/decor/layout';
 import { PatronDoor } from './patronDoor';
@@ -165,6 +166,10 @@ export type GameEvents = {
   /** Logen part en charge ; il commence son tourbillon. */
   logenCharge: { boss: Logen };
   logenSpin: { boss: Logen };
+  /** Le Xénomorphe bondit ; il retombe (`hit` : sur le joueur) ; sa queue frappe. */
+  xenoLeap: { boss: Xeno };
+  xenoLand: { boss: Xeno; at: THREE.Vector3; radius: number; hit: boolean };
+  xenoTail: { boss: Xeno; hit: boolean };
   /** Un boss optionnel est défié. */
   graveBossChallenged: { boss: Boss };
   /** 10:00 : la fermeture du bar, la Mort arrive. */
@@ -436,6 +441,7 @@ export class Game {
       sonneur: deps.zombieKinds.sonneur ?? { scale: 1, clips: { idle: clip(C.idle), walk: clip(C.walk), attack: clip(C.strike), hit: clip(C.hit), death: clip(C.death), cast: clip(C.roar) } },
       abbe: deps.zombieKinds.abbe ?? { scale: 1, clips: { idle: clip(AC.idle), walk: clip(AC.walk), attack: clip(AC.cast), hit: clip(AC.hit), death: clip(AC.death), cast: clip(AC.roar) } },
       logen: deps.zombieKinds.logen ?? { scale: 1, clips: { idle: clip(LOGEN.clips.idle), walk: clip(LOGEN.clips.walk), attack: clip(LOGEN.clips.run), hit: clip(LOGEN.clips.hit), death: clip(LOGEN.clips.death), cast: clip(LOGEN.clips.roar) } },
+      xeno: deps.zombieKinds.xeno ?? { scale: 1, clips: { idle: clip(XENO.clips.idle), walk: clip(XENO.clips.walk), attack: clip(XENO.clips.tail), hit: clip(XENO.clips.hit), death: clip(XENO.clips.death), cast: clip(XENO.clips.roar) } },
       vador: deps.zombieKinds.vador ?? { scale: 1, clips: { idle: clip(VADOR.clips.idle), walk: clip(VADOR.clips.walk), attack: clip(VADOR.clips.strike), hit: clip(VADOR.clips.hit), death: clip(VADOR.clips.death), cast: clip(VADOR.clips.strike) } },
     };
     this.horde = createHorde(kinds, player, deps.collider);
@@ -1051,9 +1057,23 @@ export class Game {
 
   /** Fait entrer en combat le boss optionnel `kind` à `at`, tourné vers `facing`. */
   private spawnGraveBoss(kind: BossKind, at: THREE.Vector3, facing: THREE.Vector3) {
-    if (this.bossUp(kind) || this.arriving || (kind !== 'vador' && kind !== 'logen')) return null;
+    if (this.bossUp(kind) || this.arriving || (kind !== 'vador' && kind !== 'logen' && kind !== 'xeno')) return null;
     const z = this.spawnZombie(kind, at, facing);
     if (!z) return null;
+    if (kind === 'xeno') {
+      const xeno: Xeno = new Xeno(z, {
+        playerPos: () => this.player.pos,
+        playerHeight: () => this.player.pos.length() - this.groundAt(this.player.pos),
+        hurtPlayer: (dir, damage) => this.hurtPlayer(z, dir, damage),
+        onPhase: (phase) => this.events.emit('bossPhase', { boss: xeno, phase }),
+        onLeap: () => this.events.emit('xenoLeap', { boss: xeno }),
+        onLand: (at, radius, hit) => this.events.emit('xenoLand', { boss: xeno, at, radius, hit }),
+        onTail: (hit) => this.events.emit('xenoTail', { boss: xeno, hit }),
+      });
+      this.bosses.push(xeno);
+      this.events.emit('bossSpawned', { boss: xeno });
+      return xeno;
+    }
     if (kind === 'logen') {
       const logen: Logen = new Logen(z, {
         playerPos: () => this.player.pos,
@@ -1145,7 +1165,7 @@ export class Game {
     if (bi >= 0) {
       const boss = this.bosses.splice(bi, 1)[0];
       const chest = this.chests.addFreeAt(z.pos);
-      if (chest) chest.rarity = ({ abbe: ABBE, vador: VADOR, logen: LOGEN, sonneur: FRERE_SONNEUR } as const)[boss.kind].chestRarity;
+      if (chest) chest.rarity = ({ abbe: ABBE, vador: VADOR, logen: LOGEN, xeno: XENO, sonneur: FRERE_SONNEUR } as const)[boss.kind].chestRarity;
       if (boss.kind === 'abbe') this.abbeKilled = true;
       this.tunaDrops.drop(z.pos, TUNAS.boss[boss.kind]);
       this.events.emit('bossKilled', { boss, chest });

@@ -200,6 +200,9 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
   game.events.on('tntExploded', () => audio.play(I.tntBoom.sample, I.tntBoom.volume, I.tntBoom.rate * jitter(0.08)));
   game.events.on('saberStrike', ({ hit }) => audio.play(I.saberStrike.sample, hit ? I.saberStrike.hitVolume : I.saberStrike.volume, I.saberStrike.rate * jitter(0.05)));
   game.events.on('logenCharge', () => audio.play(I.logenCharge.sample, I.logenCharge.volume, I.logenCharge.rate * jitter(0.05)));
+  game.events.on('xenoLeap', () => audio.play(I.xenoLeap.sample, I.xenoLeap.volume, I.xenoLeap.rate * jitter(0.05)));
+  game.events.on('xenoLand', () => audio.play(I.xenoLand.sample, I.xenoLand.volume, I.xenoLand.rate * jitter(0.05)));
+  game.events.on('xenoTail', () => audio.play(I.xenoTail.sample, I.xenoTail.volume, I.xenoTail.rate * jitter(0.05)));
   game.events.on('logenSpin', () => audio.play(I.logenSpin.sample, I.logenSpin.volume, I.logenSpin.rate * jitter(0.05)));
   game.events.on('saberThrown', () => audio.play(I.saberThrow.sample, I.saberThrow.volume, I.saberThrow.rate * jitter(0.05)));
   game.events.on('saberCaught', () => audio.play(I.saberCatch.sample, I.saberCatch.volume, I.saberCatch.rate * jitter(0.05)));

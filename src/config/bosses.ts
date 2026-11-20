@@ -158,7 +158,7 @@ export const WINE_LOOK = {
  */
 export const GRAVE_BOSSES = {
   /** Les boss posés à chaque run, dans cet ordre (un cimetière chacun). */
-  kinds: ['vador', 'logen'] as const,
+  kinds: ['vador', 'logen', 'xeno'] as const,
   /** Pas dans un cimetière à moins de `minFromSpawn` m du départ ; portée de la touche d'action (m). */
   minFromSpawn: 80,
   interactRange: 6,
@@ -263,4 +263,54 @@ export const LOGEN_LOOK = {
   spin: { markColor: 0xff2a1a, markOpacity: 0.55, markRing: 0.08 },
   /** Disques par bande de charge. */
   chargeDiscs: 7,
+} as const;
+
+/**
+ * Le Xénomorphe (boss optionnel, issue #19, à la place de Fitz et Oeil-de-Nuit) : le Xenomorph de poly.pizza monté sur un
+ * squelette de quadrupède (tools/blender/xeno.py). Il court vite à quatre pattes ; de loin il bondit sur le joueur (le
+ * point de chute est marqué au sol), de près il pique de la queue devant lui (bande marquée). Valeurs de départ.
+ */
+export const XENO = {
+  name: 'Le Xénomorphe',
+  prompt: 'Défier le Xénomorphe',
+  hp: 4200,
+  speed: 4.5,
+  xp: 250,
+  /** Hauteur du modèle (m, queue dressée comprise) ; il fait 6 m de long. */
+  height: 3.2,
+  bodyScale: 2.2,
+  /** Il ne s'approche pas plus près que `keep` m (il tourne autour à portée de queue). */
+  keep: 3.5,
+  /**
+   * Bond : quand le joueur est entre `minDist` et `range` m, au plus toutes les `cooldown` s. Il se ramasse `windup` s
+   * (le point de chute, un disque de `radius` m, est marqué là où est le joueur ; pendant la première part `track` de ce
+   * temps il le suit, puis il se fige), puis saute : `flight` s en l'air, jusqu'à `arc` m de haut. À l'atterrissage, le
+   * joueur dans le disque encaisse. Il reste ensuite `recover` s sur place.
+   */
+  pounce: { range: 20, minDist: 7, cooldown: 3.2, windup: 0.8, track: 0.5, radius: 3.4, flight: 0.65, arc: 4, damage: 30, recover: 0.7 },
+  /**
+   * Coup de queue : quand le joueur est à moins de `range` m, au plus toutes les `cooldown` s. Il se ramasse `windup` s
+   * (la bande de `width` m sur `length` m devant lui est marquée ; elle suit le joueur pendant la part `track`), puis sa
+   * queue passe par-dessus son dos et pique : `hitAt` s après le début du geste (qui dure `duration` s), le joueur dans
+   * la bande encaisse.
+   */
+  tail: { range: 7, cooldown: 2.0, windup: 0.55, track: 0.5, length: 8, width: 1.8, hitAt: 0.3, duration: 0.71, damage: 28 },
+  /**
+   * Phase 2 sous `below` de ses PV : il se cabre et hurle `pause` s, puis court plus vite, enchaîne `pounces` bonds
+   * (le suivant se prépare en `rewindup` s) et chaque atterrissage laisse une flaque de sang acide (`radius` m, `life`
+   * s) qui ronge le joueur au sol dedans (`damage` toutes les `tick` s).
+   */
+  phase2: { below: 0.5, pause: 1.2, speedMul: 1.2, pounces: 2, rewindup: 0.45, acid: { radius: 2.8, life: 5, tick: 0.5, damage: 8 } },
+  chestRarity: 4,
+  music: 'xeno',
+  /** Durée des animations (s), fixées par tools/blender/xeno.py. */
+  clips: { idle: 2.42, walk: 0.5, crouch: 1.0, leap: 0.58, tail: 0.71, roar: 1.21, hit: 0.29, death: 1.5 },
+} as const;
+
+/** Marques au sol du Xénomorphe : point de chute du bond, bande du coup de queue, flaques d'acide. */
+export const XENO_LOOK = {
+  pounce: { markColor: 0xff2a1a, markOpacity: 0.55, markRing: 0.1 },
+  tail: { markColor: 0xff7a1a, markOpacity: 0.55, markRing: 0.12 },
+  acid: { markColor: 0x9cff1a, markOpacity: 0.7, markRing: 0.2 },
+  tailDiscs: 5,
 } as const;

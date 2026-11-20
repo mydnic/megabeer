@@ -55,6 +55,8 @@
 - `steve.glb` : refait par `tools/blender/allies.py` (six blocs) avec la texture du fichier minecraft_player.glb fourni par
   l'utilisateur (auteur à confirmer), sur le squelette de la Universal Animation Library.
 - `tnt.glb` : minecraft_block_tnt.glb fourni par l'utilisateur (auteur à confirmer), préparé par `tools/blender/allies.py`.
+- `xeno.glb` : « Xenomorph » de Slaan (https://poly.pizza/m/0Dia0TyI_Uh), CC BY 3.0, monté sur un squelette de
+  quadrupède, recoloré et animé par `tools/blender/xeno.py`.
 - `vador.glb` : modèle OBJ de Dark Vador fourni par l'utilisateur (archive `dark-vador-model20191006-8718-1p8srkq.zip`,
   dossier `stan_x/dark-vador-model`, auteur « stan_x » à confirmer, licence à confirmer), coloré, monté sur le squelette de la
   Universal Animation Library (Quaternius, CC0) et armé du sabre laser par `tools/blender/vador.py`.

@@ -78,6 +78,8 @@ export class Zombie {
   casting = 0;
   /** Sortie de terre en cours (s restantes) : il émerge du sol, immobile, sans frapper. */
   rise = 0;
+  /** En l'air (un boss qui bondit) : il passe au-dessus du joueur sans le pousser. */
+  airborne = false;
   /** Rayon du sol sous ses pieds au dernier sondage (0 : pas encore sondé) ; la horde ne le resonde qu'une image sur deux. */
   groundR = 0;
   /** Vrai quand le corps a fini de s'enfoncer : la horde le retire. */

@@ -261,6 +261,7 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
     up.copy(player.pos).normalize();
     for (const z of near(player.pos, M.radius * 2 + M.playerRadius + 0.5, around)) {
       // Corps à l'échelle (un élite est plus large)
+      if (z.airborne) continue;
       const pr = M.radius * z.size + M.playerRadius;
       push.subVectors(player.pos, z.pos);
       push.addScaledVector(up, -push.dot(up));

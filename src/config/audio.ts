@@ -129,6 +129,10 @@ export const AUDIO = {
     // Logen : il part en charge (lourd), il tourne épée tendue (métal qui siffle)
     logenCharge: { sample: 'impactPunch_heavy', volume: 0.7, rate: 0.6 },
     logenSpin: { sample: 'impactMetal_light', volume: 0.55, rate: 0.5 },
+    // Le Xénomorphe : il bondit (souffle), retombe (lourd), sa queue claque
+    xenoLeap: { sample: 'impactSoft_heavy', volume: 0.5, rate: 1.4 },
+    xenoLand: { sample: 'impactPunch_heavy', volume: 0.75, rate: 0.75 },
+    xenoTail: { sample: 'impactMetal_light', volume: 0.6, rate: 1.3 },
     senzu: { sample: 'impactBell_heavy', volume: 0.55, rate: 1.9 },
     saiyanReady: { sample: 'impactBell_heavy', volume: 0.45, rate: 1.6 },
     /** Son d'aura, en boucle pendant toute la transformation ; `fade` : fondu à la fin (s). */
