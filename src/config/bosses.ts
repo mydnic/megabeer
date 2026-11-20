@@ -326,20 +326,20 @@ export const GUTS = {
   hp: 4800,
   speed: 2.6,
   xp: 250,
-  height: 3.4,
-  bodyScale: 2.0,
+  height: 6.8,
+  bodyScale: 3.5,
   /**
    * Fauchage : quand le joueur est à moins de `range` m, au plus toutes les `cooldown` s. L'arc devant lui (`radius` m,
    * `angle` degrés en tout) est marqué `windup` s ; il suit le joueur pendant la part `track` de ce temps, puis se fige.
    * L'épée passe `hitAt` s après le début du geste (qui dure `duration` s) : le joueur dans l'arc encaisse.
    */
-  sweep: { range: 5.5, cooldown: 1.6, windup: 0.6, track: 0.5, radius: 6, angle: 150, hitAt: 0.45, duration: 1.0, damage: 32 },
+  sweep: { range: 8, cooldown: 1.6, windup: 0.6, track: 0.5, radius: 9, angle: 150, hitAt: 0.45, duration: 1.0, damage: 32 },
   /**
    * Coup abattu : quand le joueur est entre `minDist` et `range` m, au plus toutes les `cooldown` s. La bande de `width`
    * m sur `length` m devant lui est marquée `windup` s (elle suit le joueur pendant la part `track`), puis l'épée
    * s'abat (`hitAt` s après le début du geste, qui dure `duration` s) : le joueur dans la bande encaisse.
    */
-  slam: { range: 12, minDist: 5, cooldown: 3.5, windup: 0.8, track: 0.5, length: 10, width: 2.4, hitAt: 0.5, duration: 1.5, damage: 36 },
+  slam: { range: 18, minDist: 8, cooldown: 3.5, windup: 0.8, track: 0.5, length: 16, width: 3.2, hitAt: 0.5, duration: 1.5, damage: 36 },
   /**
    * Phase 2 « le Berserker » sous `below` de ses PV : il crie `pause` s, puis s'embrase de rouge, va plus vite,
    * enchaîne `sweeps` fauchages sans pause (le suivant se prépare en `rewindup` s) et n'encaisse plus que `1 - armor`
@@ -357,8 +357,8 @@ export const GUTS_LOOK = {
   sweep: { markColor: 0xff2a1a, markOpacity: 0.5, markRing: 0.1 },
   slam: { markColor: 0xff7a1a, markOpacity: 0.55, markRing: 0.12 },
   /** Disques de l'arc : un rang par distance (m), autant de disques que donné, de rayon `disc` m. */
-  sweepRows: [[2.2, 3], [3.9, 5], [5.3, 7]] as const,
-  sweepDisc: 1.0,
+  sweepRows: [[3, 3], [5.4, 5], [7.7, 7]] as const,
+  sweepDisc: 1.4,
   slamDiscs: 6,
   rage: { color: 0xff1a08, strength: 0.55 },
 } as const;

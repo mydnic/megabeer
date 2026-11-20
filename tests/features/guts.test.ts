@@ -80,7 +80,7 @@ describe('Guts, boss optionnel d un cimetière', () => {
   });
 
   it('de plus loin, il abat l épée en ligne : la bande est marquée, puis le joueur dedans encaisse', () => {
-    const { t, boss } = fight(11);
+    const { t, boss } = fight(17);
     t.playUntil(() => !!boss.lane, 4);
     expect(boss.lane).not.toBeNull();
     t.playUntil(() => t.events('gutsSlam').length > 0, G.slam.windup + G.slam.duration + 0.5);
@@ -89,7 +89,7 @@ describe('Guts, boss optionnel d un cimetière', () => {
   });
 
   it('un pas de côté hors de la bande évite le coup abattu', () => {
-    const { t, boss } = fight(11);
+    const { t, boss } = fight(17);
     t.playUntil(() => !!boss.lane && boss.lane.t > G.slam.track + 0.05, 4);
     const l = boss.lane!;
     const p = t.game.player;
