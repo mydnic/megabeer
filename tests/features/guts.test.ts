@@ -45,7 +45,7 @@ describe('Guts, boss optionnel d un cimetière', () => {
     const side = new THREE.Vector3().crossVectors(spawn.dir, spawn.facing).normalize();
     const graves = [100, 140, 180, 220, 260].map((d) => ({ dir: around(spawn.dir, d, side), out: spawn.facing.clone() }));
     t.game.startRun({ ...spawn, graveyards: graves });
-    const list = t.game.graveBosses.list;
+    const list = t.game.graveBosses.list.filter((b) => b.kind !== 'sauron');
     expect(list.map((b) => b.kind).sort()).toEqual([...GB.kinds].sort());
     const guts = list.find((b) => b.kind === 'guts')!;
     for (const o of list) if (o !== guts) expect(dist(o.pos, guts.pos)).toBeGreaterThan(20);

@@ -362,3 +362,72 @@ export const GUTS_LOOK = {
   slamDiscs: 6,
   rage: { color: 0xff1a08, strength: 0.55 },
 } as const;
+
+/**
+ * Sauron (boss de la Montagne du Destin, issue #20) : le modèle fourni (`sauron.glb`) monté sur la Universal Animation
+ * Library (tools/blender/sauron.py), sa masse en main. Il attend au fond du cratère, derrière l'anneau de lave ; on le
+ * défie à la touche d'action. Il ne quitte pas le cratère (`arena` m du centre au plus). De près, il balaie tout un
+ * arc de sa masse et projette le joueur au loin (vers la lave) ; de plus loin, il abat sa masse devant lui : le point
+ * d'impact écrase, et une onde de choc en anneau part de là, à sauter. Chaque coup est marqué au sol avant de partir.
+ * Valeurs de départ.
+ */
+export const SAURON = {
+  name: 'Sauron',
+  prompt: 'Défier Sauron',
+  hp: 6000,
+  speed: 2.2,
+  xp: 300,
+  height: 7.5,
+  bodyScale: 3.6,
+  /** Il reste à moins de `arena` m du centre du cratère (l'anneau de lave commence à `DOOM_MOUNTAIN.lava.inner`). */
+  arena: 7.6,
+  /**
+   * Balayage : quand le joueur est à moins de `range` m, au plus toutes les `cooldown` s. L'arc devant lui (`radius` m,
+   * `angle` degrés en tout) est marqué `windup` s ; il suit le joueur pendant la part `track` de ce temps, puis se fige.
+   * La masse passe `hitAt` s après le début du geste (qui dure `duration` s) : le joueur dans l'arc encaisse et part
+   * au loin (`knock` : vitesse m/s, saut m/s, amortissement s).
+   */
+  sweep: {
+    range: 7, cooldown: 2.4, windup: 0.75, track: 0.5, radius: 8, angle: 140, hitAt: 0.55, duration: 1.08, damage: 26,
+    knock: { speed: 20, lift: 6, decay: 0.35 },
+  },
+  /**
+   * Masse abattue : quand le joueur est entre `minDist` et `range` m, au plus toutes les `cooldown` s. Le point d'impact
+   * (`reach` m devant lui, vers le joueur ; disque de `radius` m) est marqué `windup` s (il suit le joueur pendant la
+   * part `track`), puis la masse s'abat (`hitAt` s après le début du geste, qui dure `duration` s) : le joueur dans le
+   * disque encaisse, et une onde part du point d'impact.
+   */
+  slam: { range: 14, minDist: 4, cooldown: 3.2, windup: 0.9, track: 0.6, reach: 4.5, radius: 2.6, hitAt: 0.5, duration: 1.53, damage: 34 },
+  /** Onde de choc : grandit à `speed` m/s jusqu'à `maxRadius` m, front de `width` m ; le joueur à moins de `clear` m du sol encaisse `damage`. */
+  wave: { speed: 9, maxRadius: 16, width: 1.1, clear: 0.45, damage: 20 },
+  /**
+   * Phase 2 « l'Oeil » sous `below` de ses PV : il lève le bras vers le ciel `pause` s, l'Oeil s'allume au-dessus du
+   * cratère. Son regard (un disque de `eye.radius` m au sol) part de Sauron et traque le joueur à `eye.speed` m/s ; le
+   * joueur au sol dedans perd `eye.damage` PV toutes les `eye.tick` s. Sauron va un peu plus vite, et chaque masse
+   * abattue lance `waves` ondes, à `gap` s d'écart.
+   */
+  phase2: { below: 0.5, pause: 1.6, speedMul: 1.15, waves: 2, gap: 0.55, eye: { radius: 2.6, speed: 3.6, damage: 7, tick: 0.35 } },
+  chestRarity: 4,
+  music: 'sauron',
+  /** Durée des animations (s), fixées par tools/blender/sauron.py. */
+  clips: { idle: 1.67, walk: 1.33, sweep: 1.08, slam: 1.53, roar: 1.58, hit: 0.33, death: 2.4 },
+} as const;
+
+/** Marques au sol de Sauron (arc du balayage, point d'impact de la masse), son onde, et l'Oeil (au-dessus du cratère). */
+export const SAURON_LOOK = {
+  sweep: { markColor: 0xff3a14, markOpacity: 0.5, markRing: 0.1 },
+  slam: { markColor: 0xff7a1a, markOpacity: 0.6, markRing: 0.14 },
+  /** Disques de l'arc : un rang par distance (m), autant de disques que donné, de rayon `disc` m. */
+  sweepRows: [[2.6, 3], [4.8, 5], [6.9, 7]] as const,
+  sweepDisc: 1.3,
+  waveColor: 0xff5a10,
+  /**
+   * L'Oeil : flottant `height` m au-dessus du fond du cratère, de `size` m ; couleurs du feu et de la pupille, x`glow`
+   * (au-delà de 1, le bloom le fait rayonner). Son regard : un faisceau (`beam`) jusqu'au disque au sol (`gaze`).
+   */
+  eye: {
+    height: 30, size: 7, fire: 0xff3a00, core: 0xffa018, pupil: 0x050000, glow: 1.35,
+    beam: { color: 0xff7a20, opacity: 0.22 },
+    gaze: { markColor: 0xffa030, markOpacity: 0.55, markRing: 0.2 },
+  },
+} as const;

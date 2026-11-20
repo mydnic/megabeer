@@ -201,6 +201,10 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
   game.events.on('saberStrike', ({ hit }) => audio.play(I.saberStrike.sample, hit ? I.saberStrike.hitVolume : I.saberStrike.volume, I.saberStrike.rate * jitter(0.05)));
   game.events.on('logenCharge', () => audio.play(I.logenCharge.sample, I.logenCharge.volume, I.logenCharge.rate * jitter(0.05)));
   game.events.on('gutsSweep', () => audio.play(I.gutsSweep.sample, I.gutsSweep.volume, I.gutsSweep.rate * jitter(0.05)));
+  game.events.on('sauronSweep', () => audio.play(I.sauronSweep.sample, I.sauronSweep.volume, I.sauronSweep.rate * jitter(0.05)));
+  game.events.on('sauronSlam', () => audio.play(I.sauronSlam.sample, I.sauronSlam.volume, I.sauronSlam.rate * jitter(0.05)));
+  game.events.on('sauronWave', ({ at }) => audio.play(BS.thud, BS.thudVolume * Math.max(0.35, near(at, BS.hearDist)), BS.thudRate * 0.8 * jitter(0.05)));
+  game.events.on('sauronGaze', () => audio.play(I.sauronGaze.sample, I.sauronGaze.volume, I.sauronGaze.rate * jitter(0.08)));
   game.events.on('gutsSlam', () => audio.play(I.gutsSlam.sample, I.gutsSlam.volume, I.gutsSlam.rate * jitter(0.05)));
   game.events.on('xenoLeap', () => audio.play(I.xenoLeap.sample, I.xenoLeap.volume, I.xenoLeap.rate * jitter(0.05)));
   game.events.on('xenoLand', () => audio.play(I.xenoLand.sample, I.xenoLand.volume, I.xenoLand.rate * jitter(0.05)));

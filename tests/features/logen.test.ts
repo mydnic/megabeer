@@ -46,7 +46,7 @@ describe('Logen Neuf-Doigts, boss optionnel d un cimetière', () => {
     const out = spawn.facing.clone();
     const graves = [100, 150, 200].map((d) => ({ dir: around(spawn.dir, d, side), out }));
     t.game.startRun({ ...spawn, graveyards: graves });
-    const kinds = t.game.graveBosses.list.map((b) => b.kind).sort();
+    const kinds = t.game.graveBosses.list.filter((b) => b.kind !== 'sauron').map((b) => b.kind).sort();
     expect(kinds).toEqual([...G.kinds].sort());
     const [a, b] = t.game.graveBosses.list;
     expect(dist(a.pos, b.pos)).toBeGreaterThan(20);

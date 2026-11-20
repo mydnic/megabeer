@@ -47,6 +47,8 @@ export const ZOMBIE_MODELS = {
   xeno: { file: 'xeno.glb', height: 3.2, separate: true },
   // Guts (boss optionnel d'un cimetière) : tools/blender/guts.py, dessiné à part
   guts: { file: 'guts.glb', height: 6.8, separate: true },
+  // Sauron (boss de la Montagne du Destin) : tools/blender/sauron.py, dessiné à part
+  sauron: { file: 'sauron.glb', height: 7.5, separate: true },
   // Le Novice : il court (et bondit pour frapper, il n'a pas d'attaque)
   ribcage: { file: 'Zombie_Ribcage.gltf', height: 1.4, clips: { walk: ['Run'] }, walkAnimAt: 3.7 },
 } as const;

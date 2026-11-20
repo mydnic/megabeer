@@ -45,7 +45,7 @@ describe('Le Xénomorphe, boss optionnel d un cimetière', () => {
     const side = new THREE.Vector3().crossVectors(spawn.dir, spawn.facing).normalize();
     const graves = [100, 140, 180, 220].map((d) => ({ dir: around(spawn.dir, d, side), out: spawn.facing.clone() }));
     t.game.startRun({ ...spawn, graveyards: graves });
-    const list = t.game.graveBosses.list;
+    const list = t.game.graveBosses.list.filter((b) => b.kind !== 'sauron');
     expect(list.map((b) => b.kind).sort()).toEqual([...G.kinds].sort());
     const xeno = list.find((b) => b.kind === 'xeno')!;
     for (const o of list) if (o !== xeno) expect(dist(o.pos, xeno.pos)).toBeGreaterThan(20);

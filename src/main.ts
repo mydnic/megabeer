@@ -41,6 +41,9 @@ import type { Logen } from './game/logen';
 import logenUrl from './assets/models/logen.glb?url';
 import xenoUrl from './assets/models/xeno.glb?url';
 import gutsUrl from './assets/models/guts.glb?url';
+import sauronUrl from './assets/models/sauron.glb?url';
+import type { Sauron } from './game/sauron';
+import { createSauronEyeView, createSauronMarksView } from './world/sauronView';
 import type { Guts } from './game/guts';
 import type { Xeno } from './game/xeno';
 import sabreUrl from './assets/models/sabre.glb?url';
@@ -52,7 +55,7 @@ import { createReaperView } from './world/reaperView';
 import sonneurUrl from './assets/models/sonneur.glb?url';
 import abbeUrl from './assets/models/abbe.glb?url';
 import vadorUrl from './assets/models/vador.glb?url';
-import { ABBE, FRERE_SONNEUR, LOGEN, VADOR, XENO, GUTS } from './config/bosses';
+import { ABBE, FRERE_SONNEUR, LOGEN, VADOR, XENO, GUTS, SAURON, SAURON_LOOK } from './config/bosses';
 import type { FrereSonneur } from './game/frereSonneur';
 import type { Abbe } from './game/abbe';
 import { createBellDropsView } from './pickups/bellDropsView';
@@ -156,6 +159,7 @@ const loading = {
   vadorView: boot(createBossView(scene, { kind: 'vador', url: vadorUrl, height: VADOR.height, walkSpeed: VADOR.speed })),
   logenView: boot(createBossView(scene, { kind: 'logen', url: logenUrl, height: LOGEN.height, walkSpeed: LOGEN.speed })),
   gutsView: boot(createBossView(scene, { kind: 'guts', url: gutsUrl, height: GUTS.height, walkSpeed: GUTS.speed })),
+  sauronView: boot(createBossView(scene, { kind: 'sauron', url: sauronUrl, height: SAURON.height, walkSpeed: SAURON.speed, beam: false })),
   xenoView: boot(createBossView(scene, { kind: 'xeno', url: xenoUrl, height: XENO.height, walkSpeed: XENO.speed })),
   thrownSaberView: boot(createThrownSaberView(scene, sabreUrl)),
   doorView: boot(createDoorView(scene)),
@@ -234,6 +238,10 @@ const xenoView = await loading.xenoView;
 const xenoMarks = createXenoMarksView(scene);
 const gutsView = await loading.gutsView;
 const gutsMarks = createGutsMarksView(scene);
+const sauronView = await loading.sauronView;
+const sauronMarks = createSauronMarksView(scene);
+const sauronEye = createSauronEyeView(scene);
+const sauronWaves = createWaveRingView(scene, { color: SAURON_LOOK.waveColor, maxRadius: SAURON.wave.maxRadius, width: SAURON.wave.width });
 const saberView = createSaberMarkView(scene);
 const thrownSaberView = await loading.thrownSaberView;
 const waveView = createWaveRingView(scene);
@@ -241,7 +249,7 @@ const wineView = createWineView(scene);
 const doorView = await loading.doorView;
 const doomView = createDoomView(scene);
 const reaperView = await loading.reaperView;
-const bossViews = { abbe: abbeView, vador: vadorView, logen: logenView, xeno: xenoView, guts: gutsView, sonneur: sonneurView };
+const bossViews = { abbe: abbeView, vador: vadorView, logen: logenView, xeno: xenoView, guts: gutsView, sauron: sauronView, sonneur: sonneurView };
 game.events.on('zombieHit', ({ zombie }) => { const b = zombie.def.boss ? game.bosses.find((x) => x.zombie === zombie) : undefined; if (b) bossViews[b.kind].hit(); });
 const bellView = await loading.bellView;
 const tourneeView = createTourneeDropsView(scene);
@@ -373,6 +381,10 @@ function frame(now: number) {
   xenoMarks.sync(xenoView.boss as Xeno | null);
   gutsView.sync(bossOf('guts'), dt, waitingOf('guts'));
   gutsMarks.sync(gutsView.boss as Guts | null);
+  sauronView.sync(bossOf('sauron'), dt, waitingOf('sauron'));
+  sauronMarks.sync(sauronView.boss as Sauron | null);
+  sauronEye.sync(sauronView.boss as Sauron | null, dt);
+  sauronWaves.sync(sauronView.boss as Sauron | null);
   saberView.sync(vadorView.boss as Vador | null);
   thrownSaberView.sync(vadorView.boss as Vador | null, dt);
   // Le sabre lancé n'est plus dans sa main
@@ -380,7 +392,7 @@ function frame(now: number) {
   waveView.sync(sonneurView.boss as FrereSonneur | null);
   wineView.sync(abbeView.boss as Abbe | null);
   doorView.sync(game.door, dt);
-  doomView.sync(dt);
+  doomView.sync(dt, sauronEye.on);
   reaperView.sync(game.closing.reapers, dt);
   bellView.sync(game.bellDrops.drops);
   tourneeView.sync(game.tournees.drops.drops, dt);

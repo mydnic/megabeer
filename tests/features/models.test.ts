@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { ABBE, FRERE_SONNEUR, LOGEN, VADOR, XENO, GUTS } from '../../src/config/bosses';
+import { ABBE, FRERE_SONNEUR, LOGEN, VADOR, XENO, GUTS, SAURON } from '../../src/config/bosses';
 import { describe, expect, it } from 'vitest';
 import { ZOMBIE_MODELS, ZOMBIE_VISUAL } from '../../src/config/zombies';
 
@@ -43,7 +43,7 @@ const generated = Object.entries(ZOMBIE_MODELS).filter(([, m]) => m.file.endsWit
 /** Animations attendues de chaque boss (celles que le jeu joue, durées dans config/bosses.ts). */
 // (le tourbillon de Logen est une pose fixe, bras tendus : c'est le jeu qui le fait tourner)
 const { spin: _spin, ...LOGEN_MOVING } = LOGEN.clips;
-const BOSS_CLIPS: Record<string, object> = { 'sonneur.glb': FRERE_SONNEUR.clips, 'abbe.glb': ABBE.clips, 'vador.glb': VADOR.clips, 'logen.glb': LOGEN_MOVING, 'xeno.glb': XENO.clips, 'guts.glb': GUTS.clips };
+const BOSS_CLIPS: Record<string, object> = { 'sonneur.glb': FRERE_SONNEUR.clips, 'abbe.glb': ABBE.clips, 'vador.glb': VADOR.clips, 'logen.glb': LOGEN_MOVING, 'xeno.glb': XENO.clips, 'guts.glb': GUTS.clips, 'sauron.glb': SAURON.clips };
 /** Modèles dessinés à part (boss) : ils ont leurs propres animations. */
 const separate = Object.entries(ZOMBIE_MODELS).filter(([, m]) => 'separate' in m);
 

@@ -195,12 +195,14 @@ export function createDoomView(scene: THREE.Scene) {
   }
 
   return {
-    sync(dt: number) {
+    /** `hide` (0 à 1) : la colonne s'efface d'autant (l'Oeil de Sauron flotte à sa place). */
+    sync(dt: number, hide = 0) {
       if (!built.equals(doomSite.dir)) build();
       t += dt;
       poolMat.uniforms.uTime.value = t;
       flowMat.color.setScalar(VL.glow * (1 + VL.pulse * Math.sin(t * VL.speed)));
-      (beam.material as THREE.MeshBasicMaterial).opacity = B.opacity * (0.85 + 0.15 * Math.sin(t * 1.3));
+      beam.visible = hide < 1;
+      (beam.material as THREE.MeshBasicMaterial).opacity = B.opacity * (1 - hide) * (0.85 + 0.15 * Math.sin(t * 1.3));
     },
   };
 }

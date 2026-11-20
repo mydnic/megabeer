@@ -37,7 +37,7 @@ import { BELL_DROPS, LAST_CALL } from '../config/lastCall';
 import { Tournees, TOURNEE_IDS, rollTournee, tourneeDropChance } from './tournees';
 import { TOURNEE_FX, TOURNEES, type TourneeId } from '../config/tournees';
 import { ELITES } from '../config/elites';
-import { ABBE, FRERE_SONNEUR, LOGEN, PATRON_DOOR, VADOR, XENO, GUTS } from '../config/bosses';
+import { ABBE, FRERE_SONNEUR, LOGEN, PATRON_DOOR, VADOR, XENO, GUTS, SAURON } from '../config/bosses';
 import { FrereSonneur } from './frereSonneur';
 import { Abbe, type WinePuddle } from './abbe';
 import type { Boss, BossKind } from './boss';
@@ -45,6 +45,7 @@ import { Vador } from './vador';
 import { Logen } from './logen';
 import { Xeno } from './xeno';
 import { Guts } from './guts';
+import { Sauron } from './sauron';
 import { GraveBosses, type GraveBoss } from './graveBosses';
 import { DoomMountain } from './doomMountain';
 import { DOOM_MOUNTAIN } from '../config/doom';
@@ -176,6 +177,11 @@ export type GameEvents = {
   /** L'épée de Guts passe (fauchage) ou s'abat (coup) ; `hit` : sur le joueur. */
   gutsSweep: { boss: Guts; hit: boolean };
   gutsSlam: { boss: Guts; hit: boolean };
+  /** La masse de Sauron balaie (`hit` : le joueur, projeté au loin) ou s'abat en `at` ; une onde part de `at` ; l'Oeil brûle le joueur. */
+  sauronSweep: { boss: Sauron; hit: boolean };
+  sauronSlam: { boss: Sauron; at: THREE.Vector3; hit: boolean };
+  sauronWave: { boss: Sauron; at: THREE.Vector3 };
+  sauronGaze: { boss: Sauron; at: THREE.Vector3 };
   /** Un boss optionnel est défié. */
   graveBossChallenged: { boss: Boss };
   /** La lave du cratère de la Montagne du Destin brûle le joueur. */
@@ -452,6 +458,7 @@ export class Game {
       abbe: deps.zombieKinds.abbe ?? { scale: 1, clips: { idle: clip(AC.idle), walk: clip(AC.walk), attack: clip(AC.cast), hit: clip(AC.hit), death: clip(AC.death), cast: clip(AC.roar) } },
       logen: deps.zombieKinds.logen ?? { scale: 1, clips: { idle: clip(LOGEN.clips.idle), walk: clip(LOGEN.clips.walk), attack: clip(LOGEN.clips.run), hit: clip(LOGEN.clips.hit), death: clip(LOGEN.clips.death), cast: clip(LOGEN.clips.roar) } },
       guts: deps.zombieKinds.guts ?? { scale: 1, clips: { idle: clip(GUTS.clips.idle), walk: clip(GUTS.clips.walk), attack: clip(GUTS.clips.sweep), hit: clip(GUTS.clips.hit), death: clip(GUTS.clips.death), cast: clip(GUTS.clips.roar) } },
+      sauron: deps.zombieKinds.sauron ?? { scale: 1, clips: { idle: clip(SAURON.clips.idle), walk: clip(SAURON.clips.walk), attack: clip(SAURON.clips.sweep), hit: clip(SAURON.clips.hit), death: clip(SAURON.clips.death), cast: clip(SAURON.clips.roar) } },
       xeno: deps.zombieKinds.xeno ?? { scale: 1, clips: { idle: clip(XENO.clips.idle), walk: clip(XENO.clips.walk), attack: clip(XENO.clips.tail), hit: clip(XENO.clips.hit), death: clip(XENO.clips.death), cast: clip(XENO.clips.roar) } },
       vador: deps.zombieKinds.vador ?? { scale: 1, clips: { idle: clip(VADOR.clips.idle), walk: clip(VADOR.clips.walk), attack: clip(VADOR.clips.strike), hit: clip(VADOR.clips.hit), death: clip(VADOR.clips.death), cast: clip(VADOR.clips.strike) } },
     };
@@ -591,7 +598,7 @@ export class Game {
     this.radio.place(spawn.dir, [...this.chests.list.map((c) => c.pos), ...this.pumps.list.map((q) => q.pos), ...this.lastCall.list.map((b) => b.pos), ...(parked ? [parked.pos] : [])]);
     // Les alliés : un par abbaye ; les boss optionnels : chacun devant un cimetière
     this.allies.place();
-    this.graveBosses.place(spawn.dir, spawn.graveyards);
+    this.graveBosses.place(spawn.dir, spawn.graveyards, this.doom.dir);
     this.bins.place(spawn.dir, [...this.chests.list.map((c) => c.pos), ...this.lastCall.list.map((b) => b.pos)], this.pumps.list.map((p) => p.pos), this.binCount);
     const landing = this.player.pos.clone();
     this.player.drop(ARRIVAL.height, ARRIVAL.speed);
@@ -1074,9 +1081,26 @@ export class Game {
 
   /** Fait entrer en combat le boss optionnel `kind` à `at`, tourné vers `facing`. */
   private spawnGraveBoss(kind: BossKind, at: THREE.Vector3, facing: THREE.Vector3) {
-    if (this.bossUp(kind) || this.arriving || (kind !== 'vador' && kind !== 'logen' && kind !== 'xeno' && kind !== 'guts')) return null;
+    if (this.bossUp(kind) || this.arriving || (kind !== 'vador' && kind !== 'logen' && kind !== 'xeno' && kind !== 'guts' && kind !== 'sauron')) return null;
     const z = this.spawnZombie(kind, at, facing);
     if (!z) return null;
+    if (kind === 'sauron') {
+      const K = SAURON.sweep.knock;
+      const sauron: Sauron = new Sauron(z, {
+        playerPos: () => this.player.pos,
+        playerHeight: () => this.player.pos.length() - this.groundAt(this.player.pos),
+        hurtPlayer: (dir, damage) => this.hurtPlayer(z, dir, damage),
+        throwPlayer: (dir) => { if (!this.vehicles.driving && !this.knockImmune) this.player.knock(dir, K.speed, K.lift, K.decay); },
+        onPhase: (phase) => this.events.emit('bossPhase', { boss: sauron, phase }),
+        onSweep: (hit) => this.events.emit('sauronSweep', { boss: sauron, hit }),
+        onSlam: (sat, hit) => this.events.emit('sauronSlam', { boss: sauron, at: sat, hit }),
+        onWave: (wat) => this.events.emit('sauronWave', { boss: sauron, at: wat }),
+        onGaze: (gat) => this.events.emit('sauronGaze', { boss: sauron, at: gat }),
+      }, this.doom.dir);
+      this.bosses.push(sauron);
+      this.events.emit('bossSpawned', { boss: sauron });
+      return sauron;
+    }
     if (kind === 'guts') {
       const guts: Guts = new Guts(z, {
         playerPos: () => this.player.pos,
@@ -1195,7 +1219,7 @@ export class Game {
     if (bi >= 0) {
       const boss = this.bosses.splice(bi, 1)[0];
       const chest = this.chests.addFreeAt(z.pos);
-      if (chest) chest.rarity = ({ abbe: ABBE, vador: VADOR, logen: LOGEN, xeno: XENO, guts: GUTS, sonneur: FRERE_SONNEUR } as const)[boss.kind].chestRarity;
+      if (chest) chest.rarity = ({ abbe: ABBE, vador: VADOR, logen: LOGEN, xeno: XENO, guts: GUTS, sauron: SAURON, sonneur: FRERE_SONNEUR } as const)[boss.kind].chestRarity;
       if (boss.kind === 'abbe') this.abbeKilled = true;
       this.tunaDrops.drop(z.pos, TUNAS.boss[boss.kind]);
       this.events.emit('bossKilled', { boss, chest });

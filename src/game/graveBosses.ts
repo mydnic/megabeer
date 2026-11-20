@@ -24,8 +24,11 @@ export class GraveBosses {
 
   clear() { this.list.length = 0; this.focus = null; }
 
-  /** Nouvelle run : chaque boss devant un cimetière différent, tiré au hasard parmi ceux loin du départ. */
-  place(spawnDir: THREE.Vector3, graveyards: readonly GraveSite[] = []) {
+  /**
+   * Nouvelle run : chaque boss devant un cimetière différent, tiré au hasard parmi ceux loin du départ ; Sauron au fond
+   * du cratère de la Montagne du Destin (`doomDir`).
+   */
+  place(spawnDir: THREE.Vector3, graveyards: readonly GraveSite[] = [], doomDir: THREE.Vector3 | null = null) {
     this.clear();
     const far = graveyards.filter((g) => g.dir.angleTo(spawnDir) * PLANET_RADIUS >= G.minFromSpawn);
     for (const kind of G.kinds) {
@@ -49,6 +52,7 @@ export class GraveBosses {
       }
       this.placeAt(kind, dir);
     }
+    if (doomDir) this.placeAt('sauron', doomDir);
   }
 
   /** Pose un boss `kind` qui attend à la direction `dir` (panneau DEV, tests) ; un seul de chaque sorte. */

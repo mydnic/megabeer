@@ -5,7 +5,7 @@ import { PLANET_RADIUS } from '../config/world';
 import { createGroundMarks, type GroundMark } from '../fx/groundMarks';
 import type { Abbe } from '../game/abbe';
 import type { Boss, BossKind } from '../game/boss';
-import type { FrereSonneur } from '../game/frereSonneur';
+import type { BossWave } from '../game/frereSonneur';
 import { characterMaterial, LAYER_CHARACTER, LAYER_SKY } from '../render/materials';
 import { ABBE, GRAVE_BOSSES as G, LOGEN_LOOK, VADOR, VADOR_LOOK, XENO, XENO_LOOK, GUTS_LOOK } from '../config/bosses';
 import type { Guts } from '../game/guts';
@@ -14,8 +14,8 @@ import type { Vador } from '../game/vador';
 import type { Logen } from '../game/logen';
 import { heightAt } from './terrain';
 
-/** Ce qu'il faut pour dessiner un boss : son modèle, sa hauteur (m), sa vitesse de marche (pour la cadence des pas). */
-export type BossModel = { kind: BossKind; url: string; height: number; walkSpeed: number };
+/** Ce qu'il faut pour dessiner un boss : son modèle, sa hauteur (m), sa vitesse de marche (pour la cadence des pas) ; `beam` : colonne de lumière au-dessus de lui tant qu'il attend (oui par défaut ; Sauron a celle du volcan). */
+export type BossModel = { kind: BossKind; url: string; height: number; walkSpeed: number; beam?: boolean };
 
 /** Animations jouées une seule fois (elles restent sur leur dernière image). */
 const ONCE = ['strike', 'cast', 'roar', 'death', 'tail', 'slam', 'sweep'];
@@ -109,7 +109,7 @@ export async function createBossView(scene: THREE.Scene, M: BossModel) {
       if (live && live.kind === M.kind) held = live;
       const boss = held;
       const z = boss?.zombie;
-      beam.visible = !!waiting && !boss;
+      beam.visible = !!waiting && !boss && M.beam !== false;
       if (waiting && !boss) {
         t += dt;
         root.visible = true;
@@ -155,11 +155,17 @@ export async function createBossView(scene: THREE.Scene, M: BossModel) {
   };
 }
 
-/** Ondes du Frère Sonneur : un anneau de segments lumineux posés un à un sur le relief, qui grandit comme l'onde du jeu. */
-export function createWaveRingView(scene: THREE.Scene) {
+/** Une onde à dessiner : couleur, rayon où elle s'éteint, largeur de son front (m). */
+export type WaveLook = { color: number; maxRadius: number; width: number };
+
+/**
+ * Ondes d'un boss (le Frère Sonneur, Sauron) : un anneau de segments lumineux posés un à un sur le relief, qui grandit
+ * comme l'onde du jeu.
+ */
+export function createWaveRingView(scene: THREE.Scene, look: WaveLook = { color: L.waveColor, maxRadius: F.wave.maxRadius, width: F.wave.width }) {
   const N = L.waveSegments, maxWaves = 4;
   const segGeo = new THREE.BoxGeometry(1, 1, 1).translate(0, 0.5, 0);
-  const segMat = new THREE.MeshBasicMaterial({ color: L.waveColor, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false });
+  const segMat = new THREE.MeshBasicMaterial({ color: look.color, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false });
   const segs = new THREE.InstancedMesh(segGeo, segMat, N * maxWaves);
   segs.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   segs.frustumCulled = false;
@@ -171,11 +177,11 @@ export function createWaveRingView(scene: THREE.Scene) {
   const q = new THREE.Quaternion(), cw = new THREE.Vector3(), bw = new THREE.Vector3(), along = new THREE.Vector3(), out = new THREE.Vector3();
 
   return {
-    sync(boss: FrereSonneur | null) {
+    sync(boss: { waves: readonly BossWave[]; zombie: { dead: boolean } } | null) {
       let n = 0;
       for (const w of boss && !boss.zombie.dead ? boss.waves : []) {
         if (n + N > N * maxWaves) break;
-        const fade = 1 - w.radius / F.wave.maxRadius;
+        const fade = 1 - w.radius / look.maxRadius;
         const c = cw.copy(w.at).normalize();
         const a = tan.copy(Math.abs(c.y) < 0.9 ? Y : X).cross(c).normalize();
         const b = bw.crossVectors(c, a);
@@ -190,7 +196,7 @@ export function createWaveRingView(scene: THREE.Scene) {
           out.crossVectors(along, pos);
           basis.makeBasis(along, pos, out);
           q.setFromRotationMatrix(basis);
-          s.set(segLen, L.waveHeight * (0.4 + 0.6 * fade), F.wave.width * 0.35);
+          s.set(segLen, L.waveHeight * (0.4 + 0.6 * fade), look.width * 0.35);
           m.compose(pos.multiplyScalar(ground), q, s);
           segs.setMatrixAt(n++, m);
         }

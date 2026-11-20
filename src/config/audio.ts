@@ -135,6 +135,10 @@ export const AUDIO = {
     // Guts : l'épée géante qui fauche (métal lourd), qui s'abat (choc)
     gutsSweep: { sample: 'impactMetal_heavy', volume: 0.6, rate: 0.55 },
     gutsSlam: { sample: 'impactPunch_heavy', volume: 0.8, rate: 0.5 },
+    // Sauron : la masse qui balaie (métal lourd, plus grave), qui s'abat (choc sourd) ; le regard de l'Oeil qui brûle
+    sauronSweep: { sample: 'impactMetal_heavy', volume: 0.65, rate: 0.45 },
+    sauronSlam: { sample: 'impactPunch_heavy', volume: 0.85, rate: 0.42 },
+    sauronGaze: { sample: 'impactSoft_heavy', volume: 0.35, rate: 0.6 },
     xenoTail: { sample: 'impactMetal_light', volume: 0.6, rate: 1.3 },
     senzu: { sample: 'impactBell_heavy', volume: 0.55, rate: 1.9 },
     saiyanReady: { sample: 'impactBell_heavy', volume: 0.45, rate: 1.6 },

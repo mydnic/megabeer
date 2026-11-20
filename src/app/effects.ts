@@ -25,7 +25,7 @@ import { PUMP_TIERS } from '../config/pumps';
 import { TOURNEE_FX, TOURNEES } from '../config/tournees';
 import { ELITES } from '../config/elites';
 import { DOOM_MOUNTAIN } from '../config/doom';
-import { BOSS_LOOK, DOOR_LOOK, VADOR_LOOK, WINE_LOOK, XENO_LOOK, GUTS, GUTS_LOOK } from '../config/bosses';
+import { BOSS_LOOK, DOOR_LOOK, VADOR_LOOK, WINE_LOOK, XENO_LOOK, GUTS, GUTS_LOOK, SAURON, SAURON_LOOK } from '../config/bosses';
 import type { Vfx } from '../fx/vfx';
 import type { Sprites } from '../fx/sprites';
 
@@ -208,6 +208,20 @@ export function wireEffects(game: Game, d: Deps) {
     const k = Math.max(0.3, 1 - boss.zombie.pos.distanceTo(game.player.pos) / 30);
     rig.shake(HIT_FEEDBACK.shake * (hit ? 2.5 : 1.5) * k, HIT_FEEDBACK.shakeAmplitude * 1.5, HIT_FEEDBACK.shakeDecay);
   });
+  // Sauron : l'arc balayé (onde rouge, la caméra tremble fort s'il touche), la masse qui s'abat (poussière, éclat),
+  // l'onde qui en part, le regard de l'Oeil qui brûle
+  game.events.on('sauronSweep', ({ boss, hit }) => {
+    d.rings.spawn(boss.zombie.pos, SAURON.sweep.radius, SAURON_LOOK.sweep.markColor);
+    if (hit) rig.shake(HIT_FEEDBACK.shake * 2.5, HIT_FEEDBACK.shakeAmplitude * 1.8, HIT_FEEDBACK.shakeDecay);
+  });
+  game.events.on('sauronSlam', ({ at, hit }) => {
+    vfx.dust(at, 22, SAURON.slam.radius * 0.8, 8);
+    vfx.pop(numPos.copy(at).setLength(at.length() + 0.4), SAURON_LOOK.slam.markColor, 3);
+    const k = Math.max(0.3, 1 - at.distanceTo(game.player.pos) / 30);
+    rig.shake(HIT_FEEDBACK.shake * (hit ? 2.5 : 1.8) * k, HIT_FEEDBACK.shakeAmplitude * 1.5, HIT_FEEDBACK.shakeDecay);
+  });
+  game.events.on('sauronWave', ({ at }) => d.rings.spawn(at, 4, SAURON_LOOK.waveColor));
+  game.events.on('sauronGaze', ({ at }) => vfx.pop(numPos.copy(at).setLength(at.length() + 0.4), SAURON_LOOK.eye.fire, 2));
   game.events.on('xenoLeap', ({ boss }) => vfx.dust(boss.zombie.pos, 12, 1.6, 6));
   game.events.on('xenoLand', ({ at, radius, hit }) => {
     vfx.dust(at, 20, radius * 0.7, 8);
