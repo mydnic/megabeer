@@ -28,8 +28,11 @@ export const DOOM_MOUNTAIN = {
   floor: 0x2a1a16,
   /** Couleur des éclats quand la lave brûle le joueur ; lueur visible de loin (colonne rouge au-dessus du cratère). */
   lavaColor: 0xff4a10,
-  /** La colonne part `above` m au-dessus de la crête (elle ne voile pas l'arène). */
-  beam: { color: 0xff3a10, radius: 7, height: 70, opacity: 0.16, above: 3 },
+  /**
+   * La colonne part `above` m au-dessus de la crête (elle ne voile pas l'arène) ; elle s'allume sur la première part
+   * `fadeIn` de sa hauteur et se dissout dans le ciel à partir de `fadeOut` (parts de la hauteur).
+   */
+  beam: { color: 0xff3a10, radius: 7, height: 90, opacity: 0.2, above: 3, fadeIn: 0.12, fadeOut: 0.35 },
   /**
    * Lave du cratère (shader) : croûte sombre, lave en fusion, fissures incandescentes ; `glow` multiplie les couleurs
    * (au-delà de 1, le bloom la fait rayonner) ; taille du motif (m).

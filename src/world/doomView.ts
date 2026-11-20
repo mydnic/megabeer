@@ -92,8 +92,16 @@ export function createDoomView(scene: THREE.Scene) {
   scene.add(veins);
 
   const B = DM.beam;
-  const beamGeo = new THREE.CylinderGeometry(B.radius * 0.5, B.radius, B.height, 24, 1, true).translate(0, B.height / 2, 0);
-  const beam = new THREE.Mesh(beamGeo, new THREE.MeshBasicMaterial({ color: B.color, transparent: true, opacity: B.opacity, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+  // La colonne s'allume au-dessus de la crête et se dissout dans le ciel (opacité par sommet, pas de bord net)
+  const beamGeo = new THREE.CylinderGeometry(B.radius * 0.5, B.radius, B.height, 24, 16, true).translate(0, B.height / 2, 0);
+  const by = beamGeo.attributes.position, fade = new Float32Array(by.count * 4);
+  for (let i = 0; i < by.count; i++) {
+    const h = by.getY(i) / B.height;
+    const a = THREE.MathUtils.smoothstep(h, 0, B.fadeIn) * (1 - THREE.MathUtils.smoothstep(h, B.fadeOut, 1));
+    fade.set([1, 1, 1, a], i * 4);
+  }
+  beamGeo.setAttribute('color', new THREE.BufferAttribute(fade, 4));
+  const beam = new THREE.Mesh(beamGeo, new THREE.MeshBasicMaterial({ color: B.color, vertexColors: true, transparent: true, opacity: B.opacity, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
   beam.layers.set(LAYER_SKY);
   scene.add(beam);
 
