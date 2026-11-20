@@ -38,11 +38,11 @@ export const DOOM_MOUNTAIN = {
   /**
    * Coulées de lave sur les flancs (décor, sans dégâts) : `count` coulées partent de la crête et descendent la pente,
    * presque droites (`wiggle`), jusqu'à `reach` x le rayon du pied ; largeur de `top` m en haut, finissant en pointe
-   * (`bottom` m), posées `lift` m au-dessus du sol. `look` : couleur unie, bords (`edge`) et coeur (`core`) ; elle pulse
-   * (`pulse` : amplitude, `speed` rad/s), la pulsation descend la coulée (`wave` rad par m).
+   * (`bottom` m), posées `lift` m au-dessus du sol, `across` points en travers (elles épousent le relief) tous les `step` m. `look` : couleur unie, bords (`edge`) et coeur (`core`), x`glow` ; elle pulse
+   * (`pulse` : amplitude, `speed` rad/s).
    */
   veins: {
-    count: 7, step: 0.8, top: 2.4, bottom: 0.25, wiggle: 0.12, reach: 0.82, lift: 0.35,
-    look: { edge: 0xff3a08, core: 0xffb030, glow: 1.6, pulse: 0.25, speed: 2.0, wave: 0.12 },
+    count: 7, step: 0.5, across: 4, top: 2.4, bottom: 0.25, wiggle: 0.12, reach: 0.82, lift: 0.08,
+    look: { edge: 0xff3a08, core: 0xffb030, glow: 1.6, pulse: 0.25, speed: 2.0 },
   },
 } as const;

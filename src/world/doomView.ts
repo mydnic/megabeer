@@ -57,32 +57,6 @@ function lavaMaterial() {
 }
 
 /**
- * Une coulée sur les flancs : sans motif, une couleur unie, plus chaude au milieu qu'aux bords, qui pulse ; la pulsation
- * descend la coulée (uv.x : distance depuis la crête, en m ; uv.y : d'un bord à l'autre).
- */
-function veinMaterial() {
-  const V = DM.veins.look;
-  return new THREE.ShaderMaterial({
-    uniforms: { uTime: { value: 0 }, uEdge: { value: new THREE.Color(V.edge) }, uCore: { value: new THREE.Color(V.core) } },
-    vertexShader: /* glsl */ `
-      varying vec2 vUv;
-      void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-    fragmentShader: /* glsl */ `
-      uniform float uTime;
-      uniform vec3 uEdge, uCore;
-      varying vec2 vUv;
-      void main() {
-        float across = abs(vUv.y - 0.5) * 2.0;
-        float core = 1.0 - across * across;
-        float pulse = 1.0 + ${V.pulse.toFixed(2)} * sin(uTime * ${V.speed.toFixed(2)} - vUv.x * ${V.wave.toFixed(3)});
-        gl_FragColor = vec4(mix(uEdge, uCore, core * core) * ${V.glow.toFixed(2)} * pulse, 1.0);
-      }`,
-    side: THREE.DoubleSide,
-    toneMapped: false,
-  });
-}
-
-/**
  * La Montagne du Destin vue de près et de loin : l'anneau de lave au fond du cratère, les coulées de lave qui descendent
  * les flancs, une colonne rouge au-dessus du cratère, visible de loin. Refait quand la planète change.
  */
@@ -101,7 +75,11 @@ export function createDoomView(scene: THREE.Scene) {
     }
   }
   ringGeo.setIndex(idx);
-  const poolMat = lavaMaterial(), flowMat = veinMaterial();
+  const poolMat = lavaMaterial();
+  // Les coulées : une couleur unie, plus chaude au coeur qu'aux bords (couleurs par sommet), qui pulse
+  const VL = DM.veins.look;
+  const flowMat = new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false, side: THREE.DoubleSide });
+  const edge = new THREE.Color(VL.edge), core = new THREE.Color(VL.core), tint = new THREE.Color();
   const pool = new THREE.Mesh(ringGeo, poolMat);
   pool.layers.set(LAYER_SKY);
   pool.frustumCulled = false;
@@ -128,8 +106,9 @@ export function createDoomView(scene: THREE.Scene) {
 
   function buildVeins(c: THREE.Vector3) {
     const V = DM.veins;
+    const ACROSS = V.across;
     const rand = seededRandom(Math.floor((c.x * 7919 + c.y * 104729 + c.z * 1299709) * 1000));
-    const pos: number[] = [], uv: number[] = [], index: number[] = [];
+    const pos: number[] = [], col: number[] = [], index: number[] = [];
     const g = new THREE.Vector3(), side = new THREE.Vector3(), q = new THREE.Vector3(), n = new THREE.Vector3(), down = new THREE.Vector3();
     for (let k = 0; k < V.count; k++) {
       const a = ((k + 0.25 + rand() * 0.5) / V.count) * Math.PI * 2;
@@ -153,15 +132,22 @@ export function createDoomView(scene: THREE.Scene) {
         const s = n.angleTo(c) * PLANET_RADIUS;
         const u = Math.min(1, (s - DM.rimRadius) / (DM.baseRadius * V.reach - DM.rimRadius));
         const w = V.top + (V.bottom - V.top) * u;
-        for (const sgn of [-1, 1]) {
-          q.copy(n).addScaledVector(side, (sgn * w * 0.5) / PLANET_RADIUS).normalize();
+        // En travers, plusieurs points posés chacun sur le relief : la coulée épouse la pente sur toute sa largeur
+        for (let j = 0; j <= ACROSS; j++) {
+          const f = j / ACROSS;
+          q.copy(n).addScaledVector(side, ((f - 0.5) * w) / PLANET_RADIUS).normalize();
           q.multiplyScalar(PLANET_RADIUS + heightAt(q) + V.lift);
           pos.push(q.x, q.y, q.z);
-          uv.push(dist, sgn < 0 ? 0 : 1);
+          const k = 1 - (2 * f - 1) ** 2;
+          tint.copy(edge).lerp(core, k * k);
+          col.push(tint.r, tint.g, tint.b);
         }
         if (i > 0) {
-          const b = first + (i - 1) * 2;
-          index.push(b, b + 2, b + 1, b + 1, b + 2, b + 3);
+          const b = first + (i - 1) * (ACROSS + 1);
+          for (let j = 0; j < ACROSS; j++) {
+            const a0 = b + j, a1 = a0 + ACROSS + 1;
+            index.push(a0, a1, a0 + 1, a0 + 1, a1, a1 + 1);
+          }
         }
         if (u >= 1) break;
         p.copy(n).addScaledVector(step, V.step / PLANET_RADIUS).normalize();
@@ -170,7 +156,7 @@ export function createDoomView(scene: THREE.Scene) {
     }
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-    geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
     geo.setIndex(index);
     veins.geometry.dispose();
     veins.geometry = geo;
@@ -187,11 +173,12 @@ export function createDoomView(scene: THREE.Scene) {
         const a = (i / SEG) * Math.PI * 2;
         dir.copy(t1).multiplyScalar(Math.cos(a)).addScaledVector(t2, Math.sin(a));
         along(c, dir, s, p);
-        p.multiplyScalar(PLANET_RADIUS + heightAt(p) + 0.06);
+        p.multiplyScalar(PLANET_RADIUS + heightAt(p) + 0.03);
         ringPos.set([p.x, p.y, p.z], (r * SEG + i) * 3);
       }
     }
     ringGeo.attributes.position.needsUpdate = true;
+    ringGeo.computeVertexNormals();
     ringGeo.computeBoundingSphere();
     buildVeins(c);
     // Au-dessus de la crête : la colonne se voit de loin sans voiler l'arène
@@ -204,7 +191,7 @@ export function createDoomView(scene: THREE.Scene) {
       if (!built.equals(doomSite.dir)) build();
       t += dt;
       poolMat.uniforms.uTime.value = t;
-      flowMat.uniforms.uTime.value = t;
+      flowMat.color.setScalar(VL.glow * (1 + VL.pulse * Math.sin(t * VL.speed)));
       (beam.material as THREE.MeshBasicMaterial).opacity = B.opacity * (0.85 + 0.15 * Math.sin(t * 1.3));
     },
   };
