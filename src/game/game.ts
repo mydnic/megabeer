@@ -46,6 +46,8 @@ import { Logen } from './logen';
 import { Xeno } from './xeno';
 import { Guts } from './guts';
 import { GraveBosses, type GraveBoss } from './graveBosses';
+import { DoomMountain } from './doomMountain';
+import { DOOM_MOUNTAIN } from '../config/doom';
 import type { GraveSite } from '../world/decor/layout';
 import { PatronDoor } from './patronDoor';
 import { Closing, type Reaper } from './closing';
@@ -176,6 +178,8 @@ export type GameEvents = {
   gutsSlam: { boss: Guts; hit: boolean };
   /** Un boss optionnel est défié. */
   graveBossChallenged: { boss: Boss };
+  /** La lave du cratère de la Montagne du Destin brûle le joueur. */
+  lavaBurn: { at: THREE.Vector3 };
   /** 10:00 : la fermeture du bar, la Mort arrive. */
   closingStarted: Record<string, never>;
   /** Une Mort sort de terre ; une Mort lève sa faux. */
@@ -347,6 +351,8 @@ export class Game {
   readonly door: PatronDoor;
   /** Les boss optionnels qui attendent devant les cimetières. */
   readonly graveBosses: GraveBosses;
+  /** La Montagne du Destin (issue #20) : la lave de son cratère. */
+  readonly doom = new DoomMountain();
   /** La fermeture du bar (10:00) : les Morts. */
   readonly closing: Closing;
   bossDone = false;
@@ -750,6 +756,12 @@ export class Game {
         this.graveBosses.update(p.pos);
         const challenged = this.graveBosses.focus;
         if (input.actionPressed && challenged && !this.chests.focus && !this.lastCall.focus && !this.door.focus && !this.offer) this.challenge(challenged);
+        // Montagne du Destin : la lave du cratère brûle le joueur qui y marche
+        if (!this.vehicles.driving && this.doom.update(dt, p.pos, p.pos.length() - this.groundAt(p.pos))) {
+          const away = this.tmp.copy(p.pos).normalize().sub(this.doom.dir).normalize();
+          this.hurtPlayer(null, away.clone(), DOOM_MOUNTAIN.lava.damage);
+          this.events.emit('lavaBurn', { at: p.pos.clone() });
+        }
         // Poubelles : le Buveur qui passe dessus la casse
         const bin = this.bins.touching(p.pos);
         if (bin) this.breakBin(bin, 'player');

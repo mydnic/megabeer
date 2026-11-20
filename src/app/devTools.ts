@@ -14,6 +14,8 @@ import type { Game } from '../game/game';
 import { TOURNEE_IDS } from '../game/tournees';
 import type { TourneeId } from '../config/tournees';
 import { CLOSING } from '../config/closing';
+import { DOOM_MOUNTAIN } from '../config/doom';
+import { PLANET_RADIUS } from '../config/world';
 
 /**
  * Panneau DEV (yarn dev seulement, importé dynamiquement : absent du build). Toutes ses actions
@@ -108,6 +110,16 @@ export async function wireDevTools(game: Game, d: {
       if (!inRun()) return;
       game.runTime = Math.max(game.runTime, CLOSING.at);
       runLog.event('dev', 'closing');
+    },
+    goToDoom() {
+      if (!inRun()) return;
+      // Au pied de la montagne, face au cratère
+      const c = game.doom.dir;
+      const side = new THREE.Vector3().crossVectors(c, Math.abs(c.y) < 0.9 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0)).normalize();
+      const at = c.clone().applyAxisAngle(side, (DOOM_MOUNTAIN.baseRadius + 6) / PLANET_RADIUS);
+      const facing = c.clone().sub(at.clone().multiplyScalar(c.dot(at))).normalize();
+      game.player.reset(at, facing);
+      runLog.event('dev', 'doom');
     },
     goToDoor() {
       const d = game.door;

@@ -146,7 +146,7 @@ recopie son état à chaque image. Ne jamais remettre de logique de jeu dans `ma
 - `main.ts` : **assemblage seulement** (création des objets, boucle : `game.step` puis les vues).
   Physique du joueur à pas fixe 120 Hz dans le noyau, rendu interpolé (`player.renderPos`).
 - `world/` : `terrain.ts` (planète sphérique, `heightAt(dir)` est la source de vérité du sol,
-  sites des abbayes aplanis), `sky.ts` (soleil et lune en orbite, période 600 s, ombres),
+  sites des abbayes aplanis, Montagne du Destin `doomSite` : volcan posé à chaque run sur une plaine loin des abbayes, cratère creux à fond plat, réglages `config/doom.ts` ; la lave de son cratère : `game/doomMountain.ts`, rendu `world/doomView.ts`), `sky.ts` (soleil et lune en orbite, période 600 s, ombres),
   `clouds.ts`, `decor/` (chargement des GLB, placement, instancing, collisions par grille + BVH,
   abbaye pliée sur la sphère, lanternes).
 - `player/` : `controller.ts` (déplacement sur la sphère, saut, collisions décor),

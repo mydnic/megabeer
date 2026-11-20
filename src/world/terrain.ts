@@ -5,6 +5,7 @@ import { PLANET, PLANET_RADIUS } from '../config/world';
 import { litMaterial } from '../render/materials';
 import { TERRAIN_PALETTE } from '../config/visual';
 import { ABBEY_DIR, DECOR_LAYOUT } from '../config/decor';
+import { DOOM_MOUNTAIN as DM } from '../config/doom';
 
 const R = PLANET_RADIUS;
 const perlin = new ImprovedNoise();
@@ -34,6 +35,9 @@ export function seededRandom(seed: number) {
 /** Sites des abbayes de la planète en cours (le premier est l'abbaye principale). */
 export const abbeySites: { dir: THREE.Vector3; height: number }[] = [];
 
+/** La Montagne du Destin de la planète en cours : centre du cratère, sol de départ (m). */
+export const doomSite: { dir: THREE.Vector3; base: number } = { dir: new THREE.Vector3(0, -1, 0), base: 0 };
+
 /**
  * Change de planète : relief décalé selon la seed, puis sites des abbayes recalculés. À appeler
  * avant buildTerrain et la génération du décor. Même seed = même planète.
@@ -44,7 +48,60 @@ export function setTerrainSeed(seed: number) {
   off.set(r() * 256, r() * 256, r() * 256);
   abbeySites.length = 0;
   abbeySites.push(...computeAbbeySites(r));
+  computeDoomSite(r);
 }
+
+/**
+ * La Montagne du Destin : loin de toutes les abbayes, sur une plaine (le relief autour de son pied s'écarte peu de son
+ * centre : sinon le raccord ferait des falaises), tirée au hasard parmi les sites les plus plats.
+ */
+function computeDoomSite(r: () => number) {
+  const N = 600, ga = Math.PI * (3 - Math.sqrt(5));
+  const min = (DM.minFromAbbeys + DECOR_LAYOUT.abbeyRadius + DM.baseRadius) / R;
+  const scored: { d: THREE.Vector3; relief: number }[] = [];
+  let best = new THREE.Vector3(0, -1, 0), bestGap = -1;
+  const t1 = new THREE.Vector3(), t2 = new THREE.Vector3(), p = new THREE.Vector3();
+  for (let i = 0; i < N; i++) {
+    const y = 1 - (2 * (i + 0.5)) / N, rr = Math.sqrt(1 - y * y);
+    const d = new THREE.Vector3(Math.cos(ga * i) * rr, y, Math.sin(ga * i) * rr);
+    const gap = Math.min(...abbeySites.map((s) => s.dir.angleTo(d)));
+    if (gap > bestGap) { bestGap = gap; best = d; }
+    if (gap <= min) continue;
+    // Écart de relief entre le centre et des points sous les flancs et au pied
+    const h0 = rawHeight(d);
+    t1.set(0, 1, 0).cross(d);
+    if (t1.lengthSq() < 1e-6) t1.set(1, 0, 0);
+    t1.normalize();
+    t2.crossVectors(d, t1);
+    let relief = 0;
+    for (let k = 0; k < 12; k++) {
+      const a = (k / 12) * Math.PI * 2;
+      for (const f of [0.6, 0.85, 1.05]) {
+        p.copy(d).applyAxisAngle(t1.clone().multiplyScalar(Math.cos(a)).addScaledVector(t2, Math.sin(a)), (DM.baseRadius * f) / R);
+        relief = Math.max(relief, Math.abs(rawHeight(p) - h0));
+      }
+    }
+    scored.push({ d, relief });
+  }
+  scored.sort((a, b) => a.relief - b.relief);
+  const pool = scored.slice(0, Math.max(1, Math.ceil(scored.length * DM.flattest)));
+  doomSite.dir.copy(pool.length && scored.length ? pool[Math.floor(r() * pool.length)].d : best);
+  doomSite.base = rawHeight(doomSite.dir);
+}
+
+/**
+ * Hauteur de la montagne (au-dessus de son sol de départ) à `s` m du centre du cratère : fond plat, paroi intérieure
+ * qui remonte jusqu'à la crête, puis flancs qui descendent jusqu'au pied.
+ */
+export function doomProfile(s: number) {
+  const floor = DM.height - DM.depth;
+  if (s <= DM.floorRadius) return floor;
+  if (s <= DM.rimRadius) return floor + DM.depth * THREE.MathUtils.smoothstep(s, DM.floorRadius, DM.rimRadius);
+  if (s >= DM.baseRadius) return 0;
+  const u = (s - DM.rimRadius) / (DM.baseRadius - DM.rimRadius);
+  return DM.height * Math.pow(1 - u, DM.flankCurve);
+}
+const DOOM_OUT = (DM.baseRadius * 1.08) / R, COS_DOOM = Math.cos(DOOM_OUT);
 
 /**
  * Sites des abbayes : la principale tirée au hasard parmi les terrains bas et plats, puis les autres
@@ -95,6 +152,16 @@ const COS_OUT = Math.cos(FLAT_OUT);
 /** Hauteur du relief (au-dessus du rayon de base) pour une direction unitaire. */
 export function heightAt(d: THREE.Vector3): number {
   const h = rawHeight(d);
+  // La Montagne du Destin : son relief remplace celui de la planète, raccordé au pied
+  const cd = d.dot(doomSite.dir);
+  if (cd > COS_DOOM) {
+    const s = Math.acos(Math.min(1, cd)) * R;
+    const w = 1 - THREE.MathUtils.smoothstep(s, DM.baseRadius * 0.7, DM.baseRadius * 1.08);
+    let m = doomSite.base + doomProfile(s);
+    // Flancs rugueux (pas le fond du cratère : l'arène reste plane)
+    if (s > DM.rimRadius) m += noise.noise(d.x * 40 + 3, d.y * 40, d.z * 40) * DM.roughness * THREE.MathUtils.smoothstep(s, DM.rimRadius, DM.rimRadius + 6);
+    return h + (m - h) * w;
+  }
   // Enclos des abbayes : terrain aplani, raccordé en douceur au relief
   for (const s of abbeySites) {
     const c = d.dot(s.dir);
@@ -203,6 +270,7 @@ function* colorTerrainSteps(mesh: THREE.Mesh, p: TerrainPalette): Generator<numb
     path: new THREE.Color(p.path),
   };
   const c = new THREE.Color(), n = new THREE.Vector3(), v = new THREE.Vector3(), vn = new THREE.Vector3();
+  const doomRock = new THREE.Color(DM.rock), doomFloor = new THREE.Color(DM.floor);
   for (let i = 0; i < pos.count; i++) {
     v.fromBufferAttribute(pos, i);
     n.fromBufferAttribute(nrm, i);
@@ -222,6 +290,12 @@ function* colorTerrainSteps(mesh: THREE.Mesh, p: TerrainPalette): Generator<numb
     c.lerp(pal.rock, THREE.MathUtils.smoothstep(steep, 0.2, 0.3));
     c.lerp(pal.rock, THREE.MathUtils.smoothstep(h, 14, 18));
     c.lerp(pal.snow, THREE.MathUtils.smoothstep(h, 24, 26) * (1 - THREE.MathUtils.smoothstep(steep, 0.35, 0.5)));
+    // La Montagne du Destin : basalte sombre, fond du cratère presque noir
+    const s = vn.angleTo(doomSite.dir) * R;
+    if (s < DM.baseRadius * 1.08) {
+      c.lerp(doomRock, 1 - THREE.MathUtils.smoothstep(s, DM.baseRadius * 0.6, DM.baseRadius * 1.02));
+      c.lerp(doomFloor, 1 - THREE.MathUtils.smoothstep(s, DM.floorRadius, DM.rimRadius - 3));
+    }
     col.setXYZ(i, c.r, c.g, c.b);
     if ((i & 4095) === 4095) yield i / pos.count;
   }

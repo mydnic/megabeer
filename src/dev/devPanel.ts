@@ -47,6 +47,7 @@ export interface DevApi {
   closingNow(): void;
   /** Pose le joueur devant la Porte du patron. */
   goToDoor(): void;
+  goToDoom(): void;
   /** Fait apparaître un élite du modèle choisi (liste des ennemis) devant le joueur. */
   spawnElite(model: string): void;
   /** Tournées du bar : en lâcher une devant le joueur. */
@@ -92,7 +93,7 @@ export function createDevPanel(api: DevApi) {
       <br><select data-k="item">${api.items.map((w) => `<option>${w}</option>`).join('')}</select> <button data-a="item">Donner l'objet</button>
       <br><button data-a="coins">+50 capsules</button>
       <br><button data-a="bin">Poubelle devant</button> <button data-a="trap">Coffre piégé devant</button>
-      <br><button data-a="bell">Clochette devant</button> <button data-a="boss">Boss maintenant</button> <button data-a="abbe">Abbé maintenant</button> <button data-a="door">Aller à la porte</button> <button data-a="closing">Fermeture maintenant</button> <button data-a="elite">Élite devant (modèle ci-dessus)</button>
+      <br><button data-a="bell">Clochette devant</button> <button data-a="boss">Boss maintenant</button> <button data-a="abbe">Abbé maintenant</button> <button data-a="door">Aller à la porte</button> <button data-a="doom">Aller à la Montagne du Destin</button> <button data-a="closing">Fermeture maintenant</button> <button data-a="elite">Élite devant (modèle ci-dessus)</button>
       <br>véhicule <select data-k="vehicle">${api.vehicles.map((v) => `<option>${v}</option>`).join('')}</select> <button data-a="vehicle">Garer à côté</button>
       <br>colère palier <select data-k="ssj"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option selected>6</option></select> <button data-a="ssj">Remplir la jauge</button> <button data-a="radio">Radio à côté</button>
       <br>allié <select data-k="ally">${api.allies.map((a) => `<option>${a}</option>`).join('')}</select> <button data-a="ally">Allié à côté</button> <br>boss du cimetière <select data-k="graveBoss">${api.graveBosses.map((a) => `<option>${a}</option>`).join('')}</select> <button data-a="graveBoss">À côté</button>
@@ -128,6 +129,7 @@ export function createDevPanel(api: DevApi) {
     boss: () => api.spawnBoss(),
     abbe: () => api.spawnAbbe(),
     door: () => api.goToDoor(),
+    doom: () => api.goToDoom(),
     closing: () => api.closingNow(),
     elite: () => api.spawnElite(q<HTMLSelectElement>('model').value),
     tournee: () => api.dropTournee(q<HTMLSelectElement>('tournee').value),

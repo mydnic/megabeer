@@ -24,6 +24,7 @@ import { RARITIES } from '../config/upgrades';
 import { PUMP_TIERS } from '../config/pumps';
 import { TOURNEE_FX, TOURNEES } from '../config/tournees';
 import { ELITES } from '../config/elites';
+import { DOOM_MOUNTAIN } from '../config/doom';
 import { BOSS_LOOK, DOOR_LOOK, VADOR_LOOK, WINE_LOOK, XENO_LOOK, GUTS, GUTS_LOOK } from '../config/bosses';
 import type { Vfx } from '../fx/vfx';
 import type { Sprites } from '../fx/sprites';
@@ -194,6 +195,8 @@ export function wireEffects(game: Game, d: Deps) {
   game.events.on('logenCharge', ({ boss }) => vfx.dust(boss.zombie.pos, 16, 1.6, 7));
   game.events.on('logenSpin', ({ boss }) => { vfx.dust(boss.zombie.pos, 18, 2.4, 7); d.rings.spawn(boss.zombie.pos, 5, VADOR_LOOK.strike.markColor); });
   // Le Xénomorphe : poussière au saut, onde et tremblement quand il retombe, éclat quand sa queue pique
+  // Montagne du Destin : la lave grésille sous les pieds
+  game.events.on('lavaBurn', ({ at }) => vfx.pop(numPos.copy(at).setLength(at.length() + 0.3), DOOM_MOUNTAIN.lavaColor, 2));
   // Guts : l'arc fauché (onde rouge), l'épée abattue (poussière le long de la bande, la caméra tremble)
   game.events.on('gutsSweep', ({ boss, hit }) => {
     d.rings.spawn(boss.zombie.pos, GUTS.sweep.radius, GUTS_LOOK.sweep.markColor);
