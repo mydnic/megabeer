@@ -186,6 +186,42 @@ describe('Dark Vador, phase 2 : le sabre lancé', () => {
     expect(t.events('saberCaught')).toHaveLength(1);
   });
 
+  it('au bout de sa course, la lame tourne sur place une seconde, revient, et il la relance vite', () => {
+    const { t, boss } = enraged(10);
+    t.playUntil(() => !!boss.thrown, V.phase2.pause + TH.every + 2);
+    // Aller et retour à sa vitesse, plus l'attente au bout (marge pour Vador qui marche pendant le vol)
+    let flight = 0;
+    t.playUntil(() => { flight += 1 / 60; return !boss.thrown; }, 10);
+    expect(boss.thrown).toBeNull();
+    expect(flight).toBeLessThan((2 * TH.range) / TH.speed + TH.hold + 0.6);
+    expect(flight).toBeGreaterThan(TH.hold);
+    // Revenu dans sa main, il le relance peu après (le joueur toujours loin : pas de coup au corps à corps)
+    const p = t.game.player;
+    p.reset(around(boss.zombie.pos, 10, new THREE.Vector3().crossVectors(boss.zombie.pos, boss.zombie.facing)), p.facing.clone());
+    // (un coup au corps à corps commencé au rattrapage se termine d'abord)
+    t.playUntil(() => !boss.mark, 4);
+    let wait = 0;
+    t.playUntil(() => { wait += 1 / 60; return !!boss.thrown; }, 10);
+    expect(boss.thrown).not.toBeNull();
+    expect(wait).toBeLessThan(TH.every + TH.windup + 0.2);
+  });
+
+  it('lancé loin, le sabre ne reste pas bloqué au bout de sa course (bug trouvé en jeu)', () => {
+    // Le bug : le point visé était au-dessus du sol (tangent à la planète), la lame volant au ras du sol ne
+    // l'atteignait jamais et tournait sur place sans fin
+    for (const d of [6, 10, 14]) {
+      const { t, boss } = fight(4);
+      boss.zombie.hp = boss.zombie.maxHp * V.phase2.below * 0.9;
+      const z = boss.zombie, p = t.game.player;
+      p.reset(around(z.pos, d, new THREE.Vector3().crossVectors(z.pos, z.facing)), p.facing.clone());
+      t.playUntil(() => !!boss.thrown, V.phase2.pause + TH.every + 3);
+      expect(boss.thrown).not.toBeNull();
+      let flight = 0;
+      t.playUntil(() => { flight += 1 / 60; return !boss.thrown; }, 20);
+      expect(flight).toBeLessThan((2 * TH.range) / TH.speed + TH.hold + 0.6);
+    }
+  });
+
   it('le sabre blesse le joueur qu il traverse, une fois à l aller et une fois au retour', () => {
     const { t, boss } = enraged(10);
     t.game.cheats.god = false;
@@ -205,9 +241,8 @@ describe('Dark Vador, phase 2 : le sabre lancé', () => {
     // Le joueur se colle à lui pendant que le sabre vole
     const p = t.game.player;
     p.reset(around(boss.zombie.pos, 2, new THREE.Vector3().crossVectors(boss.zombie.pos, boss.zombie.facing)), p.facing.clone());
-    const strikes = t.events('saberStrike').length;
-    t.playUntil(() => !boss.thrown || !!boss.mark, 6);
-    expect(boss.mark).toBeNull();
-    expect(t.events('saberStrike')).toHaveLength(strikes);
+    let struckInFlight = false;
+    t.playUntil(() => { if (boss.thrown && boss.mark) struckInFlight = true; return !boss.thrown; }, 6);
+    expect(struckInFlight).toBe(false);
   });
 });

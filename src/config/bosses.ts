@@ -193,14 +193,14 @@ export const VADOR = {
   strike: { range: 5, cooldown: 1.6, windup: 0.8, ahead: 2.6, radius: 2.6, hitAt: 0.45, duration: 1.5, damage: 35 },
   /**
    * Phase 2 sous `below` de ses PV : il s'arrête `pause` s (furieux), puis marche un peu plus vite et lance son sabre
-   * toutes les `every` s quand le joueur est à plus de `minDist` m : la lame tourne à plat à `height` m du sol, file
-   * vers le joueur jusqu'à `range` m à `speed` m/s, puis revient dans sa main. Elle blesse le joueur qu'elle traverse
+   * quand le joueur est à plus de `minDist` m, `every` s après l'avoir rattrapé : la lame tourne à plat à `height` m du
+   * sol, file vers le joueur jusqu'à `range` m à `speed` m/s, tourne sur place `hold` s, puis revient dans sa main. Elle blesse le joueur qu'elle traverse
    * (rayon `radius` m), une fois à l'aller et une fois au retour. Le geste dure `windup` s avant le lâcher. Sans sabre
    * en main, il ne frappe pas.
    */
   phase2: {
     below: 0.5, pause: 1.0, speedMul: 1.2,
-    throw: { every: 4.5, minDist: 4, windup: 0.5, range: 16, speed: 16, radius: 1.1, height: 1.5, damage: 25 },
+    throw: { every: 1.2, minDist: 4, windup: 0.5, range: 16, speed: 16, hold: 1, radius: 1.1, height: 1.5, damage: 25 },
   },
   /** Coffre gratuit laissé à sa mort (rang dans RARITIES, 4 : Légendaire). */
   chestRarity: 4,

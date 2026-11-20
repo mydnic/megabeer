@@ -11,10 +11,10 @@ export type VadorAnim = 'idle' | 'walk' | 'strike' | 'cast' | 'death';
 export type SaberMark = { at: THREE.Vector3; radius: number; t: number };
 
 /**
- * Le sabre lancé (phase 2) : où il est (au sol, l'affichage le lève), où il va (`target` à l'aller), s'il revient ;
- * s'il a déjà blessé le joueur à l'aller, au retour.
+ * Le sabre lancé (phase 2) : où il est (au sol, l'affichage le lève), où il va (`target` à l'aller), le temps qu'il
+ * tourne encore sur place au bout de sa course (`hold`), s'il revient ; s'il a déjà blessé le joueur à l'aller, au retour.
  */
-export type ThrownSaber = { pos: THREE.Vector3; target: THREE.Vector3; back: boolean; hitOut: boolean; hitBack: boolean };
+export type ThrownSaber = { pos: THREE.Vector3; target: THREE.Vector3; back: boolean; hold: number; hitOut: boolean; hitBack: boolean };
 
 /** Ce dont Vador a besoin du jeu. */
 export type VadorHooks = {
@@ -95,9 +95,9 @@ export class Vador implements Boss {
         const dir = p.clone().sub(z.pos);
         dir.addScaledVector(this.up, -dir.dot(this.up));
         const far = Math.min(TH.range, Math.max(d + 3, TH.range * 0.6));
-        dir.setLength(far);
-        this.thrown = { pos: z.pos.clone(), target: z.pos.clone().add(dir), back: false, hitOut: false, hitBack: false };
-        this.throwCooldown = TH.every;
+        // Le point visé, ramené sur la sphère (à la hauteur de Vador) : la lame l'atteint vraiment
+        const target = z.pos.clone().normalize().applyAxisAngle(this.want.crossVectors(this.up, dir).normalize(), far / PLANET_RADIUS).multiplyScalar(z.pos.length());
+        this.thrown = { pos: z.pos.clone(), target, back: false, hold: TH.hold, hitOut: false, hitBack: false };
         this.hooks.onThrow();
         this.set('idle');
       }
@@ -173,12 +173,15 @@ export class Vador implements Boss {
     const left = step.length();
     if (left <= TH.speed * dt) {
       s.pos.copy(to);
-      if (s.back) { this.thrown = null; this.hooks.onCatch(); return; }
-      s.back = true;
+      // Rattrapé : il le relance `every` s plus tard
+      if (s.back) { this.thrown = null; this.throwCooldown = TH.every; this.hooks.onCatch(); return; }
+      // Au bout de sa course, il tourne sur place un instant, puis revient
+      s.hold -= dt;
+      if (s.hold <= 0) s.back = true;
     } else {
       s.pos.addScaledVector(step, (TH.speed * dt) / left);
-      // Il suit le sol (la planète est ronde)
-      s.pos.setLength(this.zombie.pos.length());
+      // Il suit la courbure de la planète, à la hauteur de là où il va (sinon il manquerait sa cible)
+      s.pos.setLength(to.length());
     }
     if (p.angleTo(s.pos) * PLANET_RADIUS < TH.radius && !(s.back ? s.hitBack : s.hitOut)) {
       if (s.back) s.hitBack = true; else s.hitOut = true;
