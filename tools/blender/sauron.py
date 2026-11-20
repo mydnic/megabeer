@@ -49,6 +49,9 @@ LOOSE = 0.11
 # Sous LEGS_Z m, une pièce loin des os reste aux jambes ; sous BOOT_Z m près des pieds, c'est une botte (jamais la cape)
 LEGS_Z = 0.4
 BOOT_Z = 0.14
+# La cape en jupe : sous `top` m, elle suit de plus en plus les cuisses, jusqu'à `legs` (part) dès `full` m ; de part et
+# d'autre du milieu du dos sur `seam` m, elle passe d'une cuisse à l'autre
+CAPE_SKIRT = {'top': 0.95, 'full': 0.3, 'legs': 0.85, 'seam': 0.12}
 # Direction de la tête de la masse en pose en T, dans le repère du squelette (comme l'épée de Guts : vers le haut)
 MACE_DIR = Vector((0, 0, 1))
 SWEEP = 1.1  # durée du balayage (s)
@@ -185,6 +188,7 @@ for e in body.data.edges:
     a, b = e.vertices
     links[a].append(b); links[b].append(a)
 seen = [False] * len(body.data.vertices)
+cape = []
 for start in range(len(body.data.vertices)):
     if seen[start]:
         continue
@@ -198,6 +202,7 @@ for start in range(len(body.data.vertices)):
     c = sum((body.data.vertices[i].co for i in island), Vector()) / len(island)
     if is_cape(c):
         bone = 'spine_03'
+        cape.extend(island)
     elif abs(c.x) < 0.09 and 0.35 < c.z < 0.95:
         bone = 'pelvis'
     else:
@@ -205,7 +210,28 @@ for start in range(len(body.data.vertices)):
         # Loin de tout os (un bord de cape près d'une main) : il pend du dos avec la cape ; pas aux jambes (jambières, bottes)
         if seg_dist(c, *segs[bone]) > LOOSE and LEGS_Z < c.z < 1.42:
             bone = 'spine_03'
+            cape.extend(island)
     groups[bone].add(island, 1.0, 'REPLACE')
+
+# La cape montée comme une jupe : le haut tient au dos, le bas suit de plus en plus la cuisse de son côté (les jambes ne
+# la traversent plus en marchant) ; au milieu du dos, la moyenne des deux cuisses (elle ne se déchire pas)
+def smooth(e):
+    e = max(0.0, min(1.0, e))
+    return e * e * (3 - 2 * e)
+
+
+S_ = CAPE_SKIRT
+for i in cape:
+    v = body.data.vertices[i].co
+    w = S_['legs'] * smooth((S_['top'] - v.z) / (S_['top'] - S_['full']))
+    if w <= 0:
+        continue
+    left = smooth((v.x + S_['seam']) / (2 * S_['seam']))
+    groups['spine_03'].add([i], 1.0 - w, 'REPLACE')
+    if w * left > 0:
+        groups['thigh_l'].add([i], w * left, 'REPLACE')
+    if w * (1 - left) > 0:
+        groups['thigh_r'].add([i], w * (1 - left), 'REPLACE')
 mod = body.modifiers.new('tmp', 'ARMATURE'); mod.object = tmp
 body.parent = tmp
 
@@ -331,11 +357,6 @@ def rot(name, axis, deg):
     h = pb.head.copy()
     pb.matrix = Matrix.Translation(h) @ Matrix.Rotation(math.radians(deg), 4, axis) @ Matrix.Translation(-h) @ pb.matrix
     bpy.context.view_layer.update()
-
-
-def smooth(e):
-    e = max(0.0, min(1.0, e))
-    return e * e * (3 - 2 * e)
 
 
 def sweep_pose(u):
