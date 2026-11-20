@@ -3,7 +3,7 @@ import { ITEM_EFFECTS as E, type EffectId } from '../config/items';
 const NONE = (): Record<EffectId, number> => ({
   explodeOnKill: 0, foamShield: 0, happyHour: 0, healOnXp: 0, slowOnHit: 0, freezeChance: 0, closeDamage: 0,
   eliteDamage: 0, crowdBoost: 0, extraShotChance: 0, lowHpDamage: 0, damageSpread: 0, musicWave: 0,
-  standRegen: 0, whistle: 0, revive: 0, freeChest: 0, freeChestChance: 0, doubleJump: 0, saiyan: 0, senzu: 0,
+  standRegen: 0, whistle: 0, revive: 0, freeChest: 0, freeChestChance: 0, doubleJump: 0, saiyan: 0, senzu: 0, ring: 0,
 });
 
 /**
@@ -30,6 +30,9 @@ export class ItemEffects {
   revives = 0;
   /** Senzus encore à manger (une par exemplaire). */
   senzus = 0;
+  /** L'Anneau unique : temps avant qu'il s'enfile (s), et temps d'invisibilité restant (s). */
+  ringIn = 0;
+  ringLeft = 0;
   /** Ardoise du bar : dégâts encore à encaisser, et leur rythme (PV/s). */
   owed = 0;
   owedRate = 0;
@@ -51,9 +54,13 @@ export class ItemEffects {
     if (effect === 'whistle') this.whistleIn = E.whistle.every;
     if (effect === 'musicWave') this.musicIn = E.musicWave.every;
     if (effect === 'freeChest') this.freeChestIn = this.freeChestEvery;
+    if (effect === 'ring') this.ringIn = E.ring.every;
   }
 
   has(effect: EffectId) { return this.power[effect] > 0; }
+
+  /** L'Anneau est enfilé : le joueur est invisible. */
+  get invisible() { return this.ringLeft > 0; }
 
   get explodeChance() { return Math.min(E.explodeOnKill.maxChance, this.power.explodeOnKill); }
   get healPerXp() { return this.power.healOnXp; }
@@ -88,7 +95,7 @@ export class ItemEffects {
 
   /** Avance les minuteries (`duration` : stat Durée) ; renvoie ce qui vient de se passer. */
   update(dt: number, duration: number) {
-    let shieldUp = false, happyStart = false, happyEnd = false, whistle = false, music = false, freeChest = false;
+    let shieldUp = false, happyStart = false, happyEnd = false, whistle = false, music = false, freeChest = false, ringOn = false, ringOff = false;
     for (const s of this.shields) {
       if (s.ready) continue;
       s.charge += s.rate * dt;
@@ -102,6 +109,15 @@ export class ItemEffects {
         happyStart = true;
       }
     }
+    // L'Anneau : il s'enfile tout seul à intervalle régulier
+    if (this.power.ring > 0) {
+      if (this.ringLeft > 0 && (this.ringLeft -= dt) <= 0) { this.ringLeft = 0; ringOff = true; }
+      if ((this.ringIn -= dt) <= 0) {
+        this.ringIn += E.ring.every;
+        this.ringLeft = E.ring.duration * duration;
+        ringOn = true;
+      }
+    }
     if (this.power.whistle > 0 && (this.whistleIn -= dt) <= 0) { this.whistleIn += E.whistle.every; whistle = true; }
     if (this.power.musicWave > 0 && (this.musicIn -= dt) <= 0) { this.musicIn += E.musicWave.every; music = true; }
     if (this.power.freeChest > 0 && (this.freeChestIn -= dt) <= 0) { this.freeChestIn += this.freeChestEvery; freeChest = true; }
@@ -111,7 +127,7 @@ export class ItemEffects {
       owedNow = Math.min(this.owed, this.owedRate * dt);
       this.owed -= owedNow;
     }
-    return { shieldUp, happyStart, happyEnd, whistle, music, freeChest, owedNow };
+    return { shieldUp, happyStart, happyEnd, whistle, music, freeChest, ringOn, ringOff, owedNow };
   }
 
   reset() {
@@ -120,6 +136,7 @@ export class ItemEffects {
     this.happyIn = this.happyLeft = this.whistleIn = this.musicIn = this.freeChestIn = 0;
     this.revives = 0;
     this.senzus = 0;
+    this.ringIn = this.ringLeft = 0;
     this.owed = this.owedRate = 0;
     this.crowded = false;
   }

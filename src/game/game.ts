@@ -186,6 +186,12 @@ export type GameEvents = {
   graveBossChallenged: { boss: Boss };
   /** La lave du cratère de la Montagne du Destin brûle le joueur. */
   lavaBurn: { at: THREE.Vector3 };
+  /** Sauron tombé, l'Anneau unique roule au sol en `at` ; le joueur le ramasse. */
+  ringDropped: { at: THREE.Vector3 };
+  ringTaken: Record<string, never>;
+  /** L'Anneau s'enfile (invisible `duration` s) ; il s'enlève (le joueur réapparaît). */
+  ringOn: { duration: number };
+  ringOff: Record<string, never>;
   /** 10:00 : la fermeture du bar, la Mort arrive. */
   closingStarted: Record<string, never>;
   /** Une Mort sort de terre ; une Mort lève sa faux. */
@@ -359,6 +365,14 @@ export class Game {
   readonly graveBosses: GraveBosses;
   /** La Montagne du Destin (issue #20) : la lave de son cratère. */
   readonly doom = new DoomMountain();
+  /** L'Anneau unique lâché par Sauron, au sol en attendant qu'on le ramasse (null : pas d'anneau au sol). */
+  ringDrop: THREE.Vector3 | null = null;
+  /** Là où les ennemis ont vu le joueur pour la dernière fois (il est invisible : l'Anneau). */
+  private readonly lastSeen = new THREE.Vector3();
+  /** Ce que les ennemis et les boss visent : le joueur, ou là où il était quand il a enfilé l'Anneau. */
+  get seenPos() { return this.effects.invisible ? this.lastSeen : this.player.pos; }
+  /** Le joueur est invisible (l'Anneau unique). */
+  get invisible() { return this.effects.invisible; }
   /** La fermeture du bar (10:00) : les Morts. */
   readonly closing: Closing;
   bossDone = false;
@@ -471,7 +485,7 @@ export class Game {
     this.door = new PatronDoor(deps.collider);
     this.graveBosses = new GraveBosses(deps.collider, () => this.random());
     this.closing = new Closing({
-      playerPos: () => this.player.pos,
+      playerPos: () => this.seenPos,
       hurtPlayer: (dir, damage) => this.hurtPlayer(null, dir, damage),
       random: () => this.random(),
       onStart: () => this.events.emit('closingStarted', {}),
@@ -769,6 +783,12 @@ export class Game {
           this.hurtPlayer(null, away.clone(), DOOM_MOUNTAIN.lava.damage);
           this.events.emit('lavaBurn', { at: p.pos.clone() });
         }
+        // L'Anneau unique au sol : on le ramasse en marchant dessus
+        if (this.ringDrop && this.ringDrop.angleTo(p.pos) * PLANET_RADIUS < SAURON.ring.pickRange) {
+          this.ringDrop = null;
+          this.gainItem('anneau');
+          this.events.emit('ringTaken', {});
+        }
         // Poubelles : le Buveur qui passe dessus la casse
         const bin = this.bins.touching(p.pos);
         if (bin) this.breakBin(bin, 'player');
@@ -1026,7 +1046,7 @@ export class Game {
     if (!z) return null;
     z.emerge();
     const boss = new FrereSonneur(z, {
-      playerPos: () => this.player.pos,
+      playerPos: () => this.seenPos,
       playerHeight: () => this.player.pos.length() - this.groundAt(this.player.pos),
       hurtPlayer: (dir, damage) => this.hurtPlayer(z, dir, damage),
       onWave: (wat) => this.events.emit('bossWave', { boss, at: wat.clone() }),
@@ -1056,7 +1076,7 @@ export class Game {
     if (!z) return null;
     z.emerge();
     const boss: Abbe = new Abbe(z, {
-      playerPos: () => this.player.pos,
+      playerPos: () => this.seenPos,
       playerHeight: () => this.player.pos.length() - this.groundAt(this.player.pos),
       groundAt: (q) => this.groundAt(q),
       hurtPlayer: (dir, damage) => this.hurtPlayer(z, dir, damage),
@@ -1087,7 +1107,7 @@ export class Game {
     if (kind === 'sauron') {
       const K = SAURON.sweep.knock;
       const sauron: Sauron = new Sauron(z, {
-        playerPos: () => this.player.pos,
+        playerPos: () => this.seenPos,
         playerHeight: () => this.player.pos.length() - this.groundAt(this.player.pos),
         hurtPlayer: (dir, damage) => this.hurtPlayer(z, dir, damage),
         throwPlayer: (dir) => { if (!this.vehicles.driving && !this.knockImmune) this.player.knock(dir, K.speed, K.lift, K.decay); },
@@ -1103,7 +1123,7 @@ export class Game {
     }
     if (kind === 'guts') {
       const guts: Guts = new Guts(z, {
-        playerPos: () => this.player.pos,
+        playerPos: () => this.seenPos,
         hurtPlayer: (dir, damage) => this.hurtPlayer(z, dir, damage),
         onPhase: (phase) => this.events.emit('bossPhase', { boss: guts, phase }),
         onSweep: (hit) => this.events.emit('gutsSweep', { boss: guts, hit }),
@@ -1115,7 +1135,7 @@ export class Game {
     }
     if (kind === 'xeno') {
       const xeno: Xeno = new Xeno(z, {
-        playerPos: () => this.player.pos,
+        playerPos: () => this.seenPos,
         playerHeight: () => this.player.pos.length() - this.groundAt(this.player.pos),
         hurtPlayer: (dir, damage) => this.hurtPlayer(z, dir, damage),
         onPhase: (phase) => this.events.emit('bossPhase', { boss: xeno, phase }),
@@ -1129,7 +1149,7 @@ export class Game {
     }
     if (kind === 'logen') {
       const logen: Logen = new Logen(z, {
-        playerPos: () => this.player.pos,
+        playerPos: () => this.seenPos,
         hurtPlayer: (dir, damage) => this.hurtPlayer(z, dir, damage),
         onPhase: (phase) => this.events.emit('bossPhase', { boss: logen, phase }),
         onCharge: () => this.events.emit('logenCharge', { boss: logen }),
@@ -1140,7 +1160,7 @@ export class Game {
       return logen;
     }
     const boss: Vador = new Vador(z, {
-      playerPos: () => this.player.pos,
+      playerPos: () => this.seenPos,
       hurtPlayer: (dir, damage) => this.hurtPlayer(z, dir, damage),
       onStrike: (sat, radius, hit) => this.events.emit('saberStrike', { boss, at: sat, radius, hit }),
       onPhase: (phase) => this.events.emit('bossPhase', { boss, phase }),
@@ -1221,6 +1241,12 @@ export class Game {
       const chest = this.chests.addFreeAt(z.pos);
       if (chest) chest.rarity = ({ abbe: ABBE, vador: VADOR, logen: LOGEN, xeno: XENO, guts: GUTS, sauron: SAURON, sonneur: FRERE_SONNEUR } as const)[boss.kind].chestRarity;
       if (boss.kind === 'abbe') this.abbeKilled = true;
+      // Sauron lâche l'Anneau unique à côté de son coffre
+      if (boss.kind === 'sauron' && !this.items.some((i) => i.item === 'anneau')) {
+        const side = this.tmp.crossVectors(z.pos, z.facing).normalize();
+        this.ringDrop = z.pos.clone().applyAxisAngle(side, SAURON.ring.offset / z.pos.length());
+        this.events.emit('ringDropped', { at: this.ringDrop.clone() });
+      }
       this.tunaDrops.drop(z.pos, TUNAS.boss[boss.kind]);
       this.events.emit('bossKilled', { boss, chest });
     }
@@ -1252,13 +1278,14 @@ export class Game {
     }
   }
 
-  /** Multiplicateur de dégâts des objets sur ce zombie (Gants de videur, Lunettes, Last order). */
+  /** Multiplicateur de dégâts des objets sur ce zombie (Gants de videur, Lunettes, Last order, l'Anneau). */
   private itemDamageMul(z: Zombie) {
     const P = this.effects.power;
     let mul = 1;
     if (P.closeDamage > 0 && z.pos.distanceTo(this.player.pos) < ITEM_EFFECTS.closeDamage.range) mul += P.closeDamage;
     if (P.eliteDamage > 0 && z.def.hp >= ITEM_EFFECTS.eliteDamage.minHp) mul += P.eliteDamage;
     if (P.lowHpDamage > 0 && this.health.ratio < ITEM_EFFECTS.lowHpDamage.below) mul += P.lowHpDamage;
+    if (this.effects.invisible) mul += ITEM_EFFECTS.ring.damage;
     return mul;
   }
 
@@ -1334,6 +1361,16 @@ export class Game {
     if (fx.shieldUp) this.events.emit('foamShieldUp', {});
     if (fx.happyStart) this.events.emit('happyHourStarted', { duration: this.effects.happyLeft });
     if (fx.happyEnd) this.events.emit('happyHourEnded', {});
+    // L'Anneau : les ennemis vont là où ils l'ont vu, puis le retrouvent quand il l'enlève
+    if (fx.ringOn) {
+      this.lastSeen.copy(this.player.pos);
+      this.horde.setLost(this.lastSeen);
+      this.events.emit('ringOn', { duration: this.effects.ringLeft });
+    }
+    if (fx.ringOff) {
+      this.horde.setLost(null);
+      this.events.emit('ringOff', {});
+    }
     this.stats.rateMul = this.effects.rateMul;
     this.stats.extraShotChance = this.effects.extraShotChance;
     // Ardoise du bar : la part de la dette qui tombe maintenant
@@ -1442,6 +1479,8 @@ export class Game {
 
   /** Le joueur encaisse un coup de `z` (au contact ou à distance ; null : un piège), venant de la direction `dir`. */
   private hurtPlayer(z: Zombie | null, dir: THREE.Vector3, baseDamage: number) {
+    // Invisible (l'Anneau) : rien ne le touche
+    if (this.effects.invisible) return;
     let damage = baseDamage * this.mods.damage;
     // Au volant, c'est le véhicule qui encaisse
     if (this.vehicles.driving) { this.hitVehicle(damage); return; }
@@ -1528,7 +1567,7 @@ export class Game {
     const up = this.tmp.copy(z.pos).normalize();
     const from = z.pos.clone().addScaledVector(up, 1.7).addScaledVector(z.facing, 0.3);
     // Vers la radio si elle joue (leurre), sinon vers le joueur
-    const to = (this.horde.decoy ?? this.player.pos).clone().normalize();
+    const to = (this.horde.decoy ?? this.seenPos).clone().normalize();
     to.multiplyScalar(this.groundAt(to.clone().multiplyScalar(PLANET_RADIUS + 60)));
     const shot = this.shots.launch(z, from, to, T, this.damageOf(z, T.damage));
     this.events.emit('enemyThrow', { shot });
@@ -1893,6 +1932,8 @@ export class Game {
     this.achievements.reset();
     this.door.clear();
     this.graveBosses.clear();
+    this.ringDrop = null;
+    this.horde.setLost(null);
     this.closing.clear();
     this.items.length = 0;
     this.effects.reset();

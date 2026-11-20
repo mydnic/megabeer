@@ -44,6 +44,7 @@ import gutsUrl from './assets/models/guts.glb?url';
 import sauronUrl from './assets/models/sauron.glb?url';
 import type { Sauron } from './game/sauron';
 import { createSauronEyeView, createSauronMarksView } from './world/sauronView';
+import { createRingView } from './fx/ringView';
 import type { Guts } from './game/guts';
 import type { Xeno } from './game/xeno';
 import sabreUrl from './assets/models/sabre.glb?url';
@@ -241,6 +242,7 @@ const gutsMarks = createGutsMarksView(scene);
 const sauronView = await loading.sauronView;
 const sauronMarks = createSauronMarksView(scene);
 const sauronEye = createSauronEyeView(scene);
+const ringView = createRingView(scene);
 const sauronWaves = createWaveRingView(scene, { color: SAURON_LOOK.waveColor, maxRadius: SAURON.wave.maxRadius, width: SAURON.wave.width });
 const saberView = createSaberMarkView(scene);
 const thrownSaberView = await loading.thrownSaberView;
@@ -385,6 +387,8 @@ function frame(now: number) {
   sauronMarks.sync(sauronView.boss as Sauron | null);
   sauronEye.sync(sauronView.boss as Sauron | null, dt);
   sauronWaves.sync(sauronView.boss as Sauron | null);
+  ringView.sync(game.phase === 'run' ? game.ringDrop : null, dt);
+  ringView.syncPlayer(buveur.model, game.invisible, dt);
   saberView.sync(vadorView.boss as Vador | null);
   thrownSaberView.sync(vadorView.boss as Vador | null, dt);
   // Le sabre lancé n'est plus dans sa main

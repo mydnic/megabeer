@@ -213,6 +213,9 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
   game.events.on('saberThrown', () => audio.play(I.saberThrow.sample, I.saberThrow.volume, I.saberThrow.rate * jitter(0.05)));
   game.events.on('saberCaught', () => audio.play(I.saberCatch.sample, I.saberCatch.volume, I.saberCatch.rate * jitter(0.05)));
   game.events.on('senzuEaten', () => audio.play(I.senzu.sample, I.senzu.volume, I.senzu.rate, 0, 'ui'));
+  game.events.on('ringTaken', () => audio.play(I.ringTaken.sample, I.ringTaken.volume, I.ringTaken.rate, 0, 'ui'));
+  game.events.on('ringOn', () => audio.play(I.ringOn.sample, I.ringOn.volume, I.ringOn.rate, 0, 'ui'));
+  game.events.on('ringOff', () => audio.play(I.ringOff.sample, I.ringOff.volume, I.ringOff.rate, 0, 'ui'));
   game.events.on('saiyanTierReached', () => audio.play(I.saiyanReady.sample, I.saiyanReady.volume, I.saiyanReady.rate));
   // Aura du Super Saiyan : le son tourne en boucle jusqu'à la fin de la transformation (ou de la run)
   let auraSound: ((fade?: number) => void) | null = null;

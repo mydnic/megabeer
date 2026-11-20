@@ -233,6 +233,14 @@ ${L('M20 26q12-8 24 0', '#e9ffd0', 3.4, 0.75)}
 ${L('M24 44q8 4 16 0', '#1f5a1c', 2.6, 0.7)}
 ${spark(50, 14, 5.5, '#fff', 0.95)}${spark(14, 50, 3.5, '#e9ffd0', 0.85)}`,
 
+  // L'Anneau unique : un anneau d'or épais vu de biais sur une lueur, l'inscription en lettres de feu, des étincelles
+  anneau: `${glow(32, 34, 28, 0.9)}
+<ellipse cx="32" cy="36" rx="21" ry="13" fill="none" stroke="${K}" stroke-width="14"/>
+<ellipse cx="32" cy="36" rx="21" ry="13" fill="none" stroke="${G.gold}" stroke-width="9"/>
+<ellipse cx="32" cy="36" rx="21" ry="13" fill="none" stroke="#ff7a1a" stroke-width="1.8" stroke-dasharray="2.5 1.6 1 1.6" opacity=".95"/>
+${L('M14 31c4-6 11-8.500 18-8.500', '#fff8c8', 2.6, 0.85)}
+${spark(52, 14, 5.5, '#fff', 0.95)}${spark(12, 52, 3.5, '#ffe9a0', 0.85)}`,
+
   // Coffret de la trilogie, version cinéma : trois boîtiers de DVD en éventail, l'Anneau unique doré sur celui de devant
   trilogieCinema: `${R(4, 12, 24, 40, 3, '#3a4a32', 'sh')}${R(14, 8, 26, 44, 3, '#2e3d2a', 'sh')}
 ${R(25, 5, 34, 52, 3.5, '#24331f', 'vol')}

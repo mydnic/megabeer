@@ -25,7 +25,7 @@ import { PUMP_TIERS } from '../config/pumps';
 import { TOURNEE_FX, TOURNEES } from '../config/tournees';
 import { ELITES } from '../config/elites';
 import { DOOM_MOUNTAIN } from '../config/doom';
-import { BOSS_LOOK, DOOR_LOOK, VADOR_LOOK, WINE_LOOK, XENO_LOOK, GUTS, GUTS_LOOK, SAURON, SAURON_LOOK } from '../config/bosses';
+import { BOSS_LOOK, DOOR_LOOK, VADOR_LOOK, WINE_LOOK, XENO_LOOK, GUTS, GUTS_LOOK, SAURON, SAURON_LOOK, RING_LOOK } from '../config/bosses';
 import type { Vfx } from '../fx/vfx';
 import type { Sprites } from '../fx/sprites';
 
@@ -458,6 +458,14 @@ export function wireEffects(game: Game, d: Deps) {
   });
   // Soin de Krilin : une lueur verte sur le joueur
   game.events.on('allyHealed', () => vfx.sparkle(game.player.pos, ALLY_FX.healColor, 5, 1, 1.6));
+  // L'Anneau unique : éclat doré quand il tombe et quand on le ramasse ; onde dorée quand il s'enfile ou s'enlève
+  game.events.on('ringDropped', ({ at }) => { d.rings.spawn(at, 3, RING_LOOK.color); vfx.sparkle(at, RING_LOOK.color, 8, 1, 2); });
+  game.events.on('ringTaken', () => {
+    up.copy(game.player.pos).normalize();
+    vfx.pop(numPos.copy(game.player.pos).addScaledVector(up, 1), RING_LOOK.color, 2.6);
+  });
+  game.events.on('ringOn', () => d.rings.spawn(game.player.pos, 3, RING_LOOK.color));
+  game.events.on('ringOff', () => d.rings.spawn(game.player.pos, 2, RING_LOOK.color));
   // Senzu : éclat vert et onde au sol, le perso est guéri d'un coup
   game.events.on('senzuEaten', () => {
     up.copy(game.player.pos).normalize();

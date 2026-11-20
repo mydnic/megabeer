@@ -238,6 +238,9 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
     banner.hideAfter(SYNERGY_BANNER.duration);
   });
   // Happy hour : bandeau le temps qu'elle dure
+  // L'Anneau unique : au doigt, puis invisible quelques secondes à intervalle régulier
+  game.events.on('ringTaken', () => { banner.show("L'Anneau unique !", `Toutes les ${ITEM_EFFECTS.ring.every} s, tu deviens invisible`); banner.pulse(); banner.hideAfter(3); });
+  game.events.on('ringOn', () => { banner.show('Invisible !', 'Ils ont perdu ta trace'); banner.hideAfter(1.4); });
   game.events.on('happyHourStarted', ({ duration }) => {
     banner.show('Happy hour !', `Vitesse d'attaque x${ITEM_EFFECTS.happyHour.rate} pendant ${Math.round(duration)} s`);
     banner.pulse();
@@ -257,7 +260,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
     abbe: { come: 'Ne reste pas dans son vin de messe', rage: ['Il a bu le calice !', 'Il devient géant'], fall: 'Un coffre légendaire t\'attend. Tiens jusqu\'à la fermeture' },
     logen: { come: 'Écarte-toi de sa charge, recule devant son tourbillon', rage: ['Le Sanguinaire !', 'Il ne se fatigue plus'], fall: "Un coffre légendaire t'attend" },
     guts: { come: "Recule hors de l'arc rouge, écarte-toi de la bande", rage: ['Le Berserker !', 'Trois fauchages, et il encaisse moitié moins'], fall: "Un coffre légendaire t'attend" },
-    sauron: { come: "Sors de l'arc de sa masse, saute ses ondes, gare à la lave", rage: ["L'Oeil s'allume !", 'Ne reste pas dans son regard'], fall: "Un coffre légendaire t'attend" },
+    sauron: { come: "Sors de l'arc de sa masse, saute ses ondes, gare à la lave", rage: ["L'Oeil s'allume !", 'Ne reste pas dans son regard'], fall: "Il a lâché l'Anneau unique : ramasse-le" },
     xeno: { come: "Sors du cercle avant qu'il retombe, et de la bande de sa queue", rage: ['Il hurle !', 'Son sang acide ronge le sol'], fall: "Un coffre légendaire t'attend" },
     vador: { come: 'Sors de la zone rouge avant le coup', rage: ['Il est furieux !', 'Il lance son sabre'], fall: 'Un coffre légendaire t\'attend' },
   } as const;

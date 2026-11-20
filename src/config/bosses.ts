@@ -407,6 +407,8 @@ export const SAURON = {
    * abattue lance `waves` ondes, à `gap` s d'écart.
    */
   phase2: { below: 0.5, pause: 1.6, speedMul: 1.15, waves: 2, gap: 0.55, eye: { radius: 2.6, speed: 3.6, damage: 7, tick: 0.35 } },
+  /** L'Anneau unique : à sa mort, il tombe à `offset` m de lui (à côté de son coffre) ; ramassé à moins de `pickRange` m. */
+  ring: { offset: 2.5, pickRange: 1.4 },
   chestRarity: 4,
   music: 'sauron',
   /** Durée des animations (s), fixées par tools/blender/sauron.py. */
@@ -431,3 +433,10 @@ export const SAURON_LOOK = {
     gaze: { markColor: 0xffa030, markOpacity: 0.55, markRing: 0.2 },
   },
 } as const;
+
+/**
+ * L'Anneau unique au sol (lâché par Sauron) : anneau d'or de `radius` m (épaisseur `tube`), x`glow` (le bloom le fait
+ * briller), flottant `hover` m au-dessus du sol, qui tourne (`spin` rad/s). Au doigt, le joueur invisible est à
+ * `playerOpacity` d'opacité.
+ */
+export const RING_LOOK = { color: 0xffc93a, radius: 0.35, tube: 0.07, glow: 1.6, hover: 0.8, spin: 1.6, playerOpacity: 0.35 } as const;

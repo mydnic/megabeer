@@ -24,7 +24,8 @@ export function catalog(): ShopEntry[] {
   const characters = SHOP_CHARACTERS.map((c): ShopEntry => ({ key: `character:${c.id}`, kind: 'character', character: c.id, name: c.name, pitch: c.pitch, price: c.price }));
   const weapons = (Object.keys(WEAPON_FACTORIES) as WeaponId[])
     .map((weapon): ShopEntry => ({ key: weaponKey(weapon), kind: 'weapon', weapon, price: WEAPON_PRICE }));
-  const items = (Object.keys(ITEMS) as ItemId[])
+  // Les objets lâchés par un boss (l'Anneau) ne s'achètent pas
+  const items = (Object.keys(ITEMS) as ItemId[]).filter((item) => !(ITEMS[item] as ItemDef).drop)
     .map((item): ShopEntry => { const rarity = (ITEMS[item] as ItemDef).rarity; return { key: itemKey(item), kind: 'item', item, rarity, price: ITEM_PRICES[rarity] }; })
     .sort((a, b) => (a.kind === 'item' && b.kind === 'item' ? a.rarity - b.rarity : 0));
   return [...characters, ...weapons, ...items];

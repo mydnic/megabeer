@@ -141,6 +141,10 @@ export const AUDIO = {
     sauronGaze: { sample: 'impactSoft_heavy', volume: 0.35, rate: 0.6 },
     xenoTail: { sample: 'impactMetal_light', volume: 0.6, rate: 1.3 },
     senzu: { sample: 'impactBell_heavy', volume: 0.55, rate: 1.9 },
+    // L'Anneau unique : ramassé (cloche grave), il s'enfile (cloche qui monte), il s'enlève (plus bas)
+    ringTaken: { sample: 'impactBell_heavy', volume: 0.6, rate: 0.7 },
+    ringOn: { sample: 'impactBell_heavy', volume: 0.35, rate: 1.4 },
+    ringOff: { sample: 'impactBell_heavy', volume: 0.25, rate: 1.0 },
     saiyanReady: { sample: 'impactBell_heavy', volume: 0.45, rate: 1.6 },
     /** Son d'aura, en boucle pendant toute la transformation ; `fade` : fondu à la fin (s). */
     saiyanTransform: { sample: 'saiyan_aura', volume: 0.8, rate: 1, fade: 0.8 },

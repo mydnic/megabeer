@@ -146,7 +146,8 @@ export function rollItemCards(rarity: number, n: number, allowed?: ReadonlySet<I
   const left = (Object.keys(ITEMS) as ItemId[]).filter((id) => {
     const def = ITEMS[id] as ItemDef;
     // Un objet unique déjà pris ne ressort plus
-    return def.rarity === rarity && (!allowed || allowed.has(id)) && !(def.unique && owned?.has(id));
+    // Un objet lâché par un boss (l'Anneau) ne sort jamais d'un coffre
+    return def.rarity === rarity && !def.drop && (!allowed || allowed.has(id)) && !(def.unique && owned?.has(id));
   });
   const cards: ItemCard[] = [];
   while (cards.length < n && left.length) cards.push({ kind: 'item', item: left.splice(Math.floor(Math.random() * left.length), 1)[0], rarity });

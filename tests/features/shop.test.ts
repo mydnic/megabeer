@@ -16,7 +16,8 @@ describe('La boutique', () => {
       expect(STARTING_ITEMS.filter((id) => (ITEMS[id] as ItemDef).rarity === r)).toHaveLength(3);
     }
     const items = catalog().filter((e) => e.kind === 'item');
-    expect(items).toHaveLength(Object.keys(ITEMS).length);
+    // Sauf ceux lâchés par un boss (l'Anneau)
+    expect(items).toHaveLength((Object.keys(ITEMS) as ItemId[]).filter((id) => !(ITEMS[id] as ItemDef).drop).length);
     expect(items.filter((e) => owned(emptyProfile(), e.key))).toHaveLength(STARTING_ITEMS.length);
     for (const e of items) if (e.kind === 'item') expect(e.price).toBe(ITEM_PRICES[e.rarity]);
     // Les objets, armes et persos de départ ne s'achètent pas

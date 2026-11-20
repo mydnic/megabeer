@@ -274,10 +274,14 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
   let passive = false;
   /** Leurre (la radio allumée) : les ennemis (pas les boss) vont vers lui et le frappent à moins de `decoyReach` m. */
   let decoy: THREE.Vector3 | null = null, decoyReach = 1.5;
+  /** Joueur invisible (l'Anneau) : les ennemis vont là où ils l'ont vu (`lost`) et ne le frappent plus. */
+  let lost: THREE.Vector3 | null = null;
   const api = {
     /** Pose ou retire le leurre. */
     setDecoy(pos: THREE.Vector3 | null, reach = 1.5) { decoy = pos; decoyReach = reach; },
     get decoy() { return decoy; },
+    /** Le joueur devient invisible (dernier endroit où on l'a vu) ou réapparaît (null). */
+    setLost(pos: THREE.Vector3 | null) { lost = pos; },
     zombies,
     spawn,
     /** Joueur mort : plus de coups, ils se rassemblent autour du corps. */
@@ -286,7 +290,7 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
     clear() { zombies.length = 0; reindex(); },
     update(dt: number) {
       // Un leurre (la radio) attire tout le monde sauf les boss
-      for (const z of zombies) if (!z.def.boss) step(z, dt, decoy ?? player.pos);
+      for (const z of zombies) if (!z.def.boss) step(z, dt, decoy ?? lost ?? player.pos);
       separate();
       tick++;
       for (let i = 0; i < zombies.length; i++) {
@@ -313,7 +317,7 @@ export function createHorde(kinds: Record<ZombieModel, ZombieTimings>, player: P
         // Leurre : le coup porte sur lui s'il est à portée
         if (decoy && !passive && !z.dead && z.hitNow && !z.def.boss && z.pos.distanceTo(decoy) < decoyReach * z.size) { api.onHitDecoy?.(z); continue; }
         // Le coup porte si le joueur est encore à portée au moment où le bras arrive
-        if (!passive && !z.dead && z.hitNow && z.pos.distanceTo(player.pos) < ZOMBIE_ATTACK.reach * z.size) {
+        if (!passive && !lost && !z.dead && z.hitNow && z.pos.distanceTo(player.pos) < ZOMBIE_ATTACK.reach * z.size) {
           up.copy(player.pos).normalize();
           push.subVectors(player.pos, z.pos);
           push.addScaledVector(up, -push.dot(up));
