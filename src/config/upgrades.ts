@@ -114,6 +114,8 @@ export const LEVEL_UP_SCREEN = {
   introTime: 0.55,
   /** Durée de la sortie (s) : la carte prise s'envole, les autres retombent, le jeu a déjà repris. */
   outTime: 0.36,
+  /** Fondu de fermeture de l'écran (s), le même que la transition d'opacité du CSS (`.lu`). */
+  fadeTime: 0.2,
   /**
    * Cartes d'un coffre : elles jaillissent de la bouche du coffre (`mouth` : hauteur dans le coffre,
    * 0 = haut), l'une après l'autre (`stagger`), en tournoyant (`spin` degrés au départ).

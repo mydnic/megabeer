@@ -11,7 +11,7 @@ const OUTLINE = '-2px 0 #1a120c, 2px 0 #1a120c, 0 -2px #1a120c, 0 2px #1a120c';
 const CSS = `
 .lu { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 4vh; background: radial-gradient(ellipse at center, rgba(20,10,4,.55), rgba(10,5,2,.85)); font-family: 'Lilita One', system-ui, sans-serif;
-  opacity: 0; pointer-events: none; transition: opacity .2s; overflow: hidden; }
+  opacity: 0; pointer-events: none; transition: opacity ${L.fadeTime}s; overflow: hidden; }
 .lu.on { opacity: 1; pointer-events: auto; }
 /* Rayons qui tournent lentement derrière tout l'écran, de la couleur de l'occasion */
 .lu::before { content: ''; position: absolute; left: 50%; top: 48%; width: 170vmax; aspect-ratio: 1; translate: -50% -50%; pointer-events: none;
@@ -198,7 +198,16 @@ export function createLevelUpScreen(onPick: (card: Card) => void, onHover: () =>
     [...row.children].forEach((c, k) => { c.classList.remove('sel'); c.classList.toggle('picked', k === i); });
     el.classList.add('leave');
     clearTimeout(leaveTimer);
-    leaveTimer = window.setTimeout(() => el.classList.remove('on', 'leave'), L.outTime * 1000);
+    leaveTimer = window.setTimeout(close, L.outTime * 1000);
+  }
+  /**
+   * Ferme l'écran : il s'efface d'abord (`on` retiré, le fond reste transparent grâce à `leave`), puis `leave` part une
+   * fois l'effacement fini. Les retirer ensemble faisait revenir le fond sombre le temps du fondu : un flash.
+   */
+  function close() {
+    el.classList.remove('on');
+    clearTimeout(leaveTimer);
+    leaveTimer = window.setTimeout(() => { if (!open) el.classList.remove('leave'); }, L.fadeTime * 1000);
   }
 
   function select(i: number) {
@@ -334,6 +343,6 @@ export function createLevelUpScreen(onPick: (card: Card) => void, onHover: () =>
       lastMoveX = dir;
       if (confirm) { if (inOpts) useOption(opts[optSel]); else pick(sel); }
     },
-    hide() { open = false; clearTimeout(leaveTimer); el.classList.remove('on', 'leave'); },
+    hide() { open = false; el.classList.add('leave'); close(); },
   };
 }

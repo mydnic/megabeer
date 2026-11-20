@@ -1,5 +1,5 @@
 import { ENEMIES } from '../../src/config/enemies';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { LEVELS, XP_DROPS } from '../../src/config/xp';
 import { LEVEL_UP_SCREEN, RARITIES } from '../../src/config/upgrades';
 import { rollCards, cardText, cardStatChange, type Card, type UpgradeCard } from '../../src/game/levelUpCards';
@@ -153,9 +153,13 @@ describe('Les cartes', () => {
   });
 
   it('avec 3 armes, une nouvelle arme peut sortir sans être garantie', () => {
+    // Hasard à graine fixe : sans elle, le test échouait parfois (300 tirages tous avec une nouvelle arme)
+    let s = 7;
+    const spy = vi.spyOn(Math, 'random').mockImplementation(() => { s = (s * 1664525 + 1013904223) >>> 0; return s / 2 ** 32; });
     const w = fakes(3);
     let withNew = 0;
     for (let i = 0; i < 300; i++) if (rollCards(3, 0, w, ids(5)).some((c) => c.kind === 'weapon')) withNew++;
+    spy.mockRestore();
     expect(withNew).toBeGreaterThan(0);
     expect(withNew).toBeLessThan(300);
   });
