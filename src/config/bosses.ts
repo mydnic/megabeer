@@ -187,20 +187,22 @@ export const VADOR = {
   bodyScale: 2.0,
   /**
    * Coup de sabre : à moins de `range` m du joueur, au plus toutes les `cooldown` s. La zone (un disque de `radius` m,
-   * à `ahead` m devant lui) est marquée `windup` s avant, puis le coup part (`hitAt` s après le début du geste, qui dure
-   * `duration` s) et blesse le joueur resté dedans.
+   * à `ahead` m devant lui) est marquée `windup` s avant ; pendant la première part `track` de ce temps, il se tourne
+   * encore vers le joueur et la zone le suit, puis elle se fige. Le coup part (`hitAt` s après le début du geste, qui
+   * dure `duration` s) et blesse le joueur resté dedans.
    */
-  strike: { range: 5, cooldown: 1.6, windup: 0.8, ahead: 2.6, radius: 2.6, hitAt: 0.45, duration: 1.5, damage: 35 },
+  strike: { range: 6, cooldown: 1.0, windup: 0.55, track: 0.5, ahead: 2.8, radius: 3.0, hitAt: 0.45, duration: 1.5, damage: 35 },
   /**
    * Phase 2 sous `below` de ses PV : il s'arrête `pause` s (furieux), puis marche un peu plus vite et lance son sabre
    * quand le joueur est à plus de `minDist` m, `every` s après l'avoir rattrapé : la lame tourne à plat à `height` m du
-   * sol, file vers le joueur jusqu'à `range` m à `speed` m/s, tourne sur place `hold` s, puis revient dans sa main. Elle blesse le joueur qu'elle traverse
+   * sol, file vers là où le joueur sera (sa course prolongée de `lead` x le temps de vol) jusqu'à `range` m à `speed`
+   * m/s, tourne sur place `hold` s en glissant vers le joueur à `drift` m/s, puis revient dans sa main. Elle blesse le joueur qu'elle traverse
    * (rayon `radius` m), une fois à l'aller et une fois au retour. Le geste dure `windup` s avant le lâcher. Sans sabre
    * en main, il ne frappe pas.
    */
   phase2: {
     below: 0.5, pause: 1.0, speedMul: 1.2,
-    throw: { every: 1.2, minDist: 4, windup: 0.5, range: 16, speed: 16, hold: 1, radius: 1.1, height: 1.5, damage: 25 },
+    throw: { every: 1.2, minDist: 4, windup: 0.5, range: 18, speed: 20, lead: 1, hold: 1, drift: 4, radius: 1.4, height: 1.5, damage: 25 },
   },
   /** Coffre gratuit laissé à sa mort (rang dans RARITIES, 4 : Légendaire). */
   chestRarity: 4,

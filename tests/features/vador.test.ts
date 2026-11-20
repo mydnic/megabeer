@@ -38,6 +38,15 @@ function fight(d = 4) {
   return { t, b, boss: t.game.bosses.find((x) => x.kind === 'vador') as Vador };
 }
 
+/** Le point `p` décalé de `d` m sur le côté, perpendiculairement à la ligne qui le relie à `from`. */
+function sidestep(p: THREE.Vector3, from: THREE.Vector3, d: number) {
+  const up = p.clone().normalize();
+  const toward = from.clone().sub(p);
+  toward.addScaledVector(up, -toward.dot(up)).normalize();
+  // Tourner autour de la direction « vers from » fait glisser sur le côté
+  return around(p, d, toward);
+}
+
 /** Un point au sol à `d` m d'un point, sur un grand cercle tiré d'une direction tangente. */
 function around(at: THREE.Vector3, d: number, axis: THREE.Vector3) {
   return at.clone().normalize().applyAxisAngle(axis.clone().normalize(), d / PLANET_RADIUS);
@@ -131,6 +140,22 @@ describe('Dark Vador, boss optionnel d un cimetière', () => {
     expect(t.game.health.hp).toBe(hp);
   });
 
+  it('au début de la préparation, la zone suit le joueur qui s écarte ; puis elle se fige', () => {
+    const { t, boss } = fight(3);
+    t.playUntil(() => !!boss.mark, 3);
+    const m = boss.mark!;
+    const start = m.at.clone();
+    // Le joueur fait un pas de côté tout de suite : la zone le suit
+    const p = t.game.player;
+    p.reset(sidestep(p.pos, boss.zombie.pos, 3), p.facing.clone());
+    t.playUntil(() => boss.mark!.t >= V.strike.track, 1);
+    const tracked = boss.mark!.at.clone();
+    expect(dist(tracked, start)).toBeGreaterThan(0.3);
+    // Figée : elle ne bouge plus jusqu'au coup
+    t.play(V.strike.windup * (1 - V.strike.track) * 0.8);
+    expect(dist(boss.mark!.at, tracked)).toBeLessThan(0.05);
+  });
+
   it('il marche vers le joueur resté loin', () => {
     const { t, boss } = fight(4);
     const p = t.game.player;
@@ -220,6 +245,36 @@ describe('Dark Vador, phase 2 : le sabre lancé', () => {
       t.playUntil(() => { flight += 1 / 60; return !boss.thrown; }, 20);
       expect(flight).toBeLessThan((2 * TH.range) / TH.speed + TH.hold + 0.6);
     }
+  });
+
+  it('il vise là où le joueur va, pas là où il est', () => {
+    const { t, boss } = enraged(10);
+    t.game.cheats.god = true;
+    // Le joueur court de côté à 8 m/s, en ligne droite : la lame part devant lui
+    const p = t.game.player;
+    const side = (() => { const up = p.pos.clone().normalize(); const to = boss.zombie.pos.clone().sub(p.pos); to.addScaledVector(up, -to.dot(up)).normalize(); return to; })();
+    const run = () => { p.reset(around(p.pos, 8 / 60, side), p.facing.clone()); return !!boss.thrown; };
+    // Il court dès que Vador arme son lancer (sinon il serait déjà hors de portée)
+    t.playUntil(() => boss.anim === 'cast', V.phase2.pause + TH.every + 2);
+    t.playUntil(run, TH.windup + 0.5);
+    const now = p.pos.clone(), target = boss.thrown!.target;
+    for (let i = 0; i < Math.round((dist(boss.zombie.pos, now) / TH.speed) * 60); i++) { run(); t.play(1 / 60); }
+    expect(dist(target, p.pos)).toBeLessThan(dist(target, now));
+  });
+
+  it('au bout de sa course, la lame glisse vers le joueur pendant qu elle tourne sur place', () => {
+    const { t, boss } = enraged(6);
+    t.game.cheats.god = true;
+    t.playUntil(() => !!boss.thrown, V.phase2.pause + TH.every + 2);
+    t.playUntil(() => !!boss.thrown && boss.thrown.hold < TH.hold, 3);
+    const s = boss.thrown!;
+    // Le joueur s'écarte de la lame : elle le suit
+    const p = t.game.player;
+    p.reset(sidestep(s.pos, boss.zombie.pos, 6), p.facing.clone());
+    const before = dist(s.pos, p.pos);
+    t.play(TH.hold * 0.5);
+    expect(boss.thrown?.back).toBe(false);
+    expect(dist(boss.thrown!.pos, p.pos)).toBeLessThan(before - TH.drift * TH.hold * 0.3);
   });
 
   it('le sabre blesse le joueur qu il traverse, une fois à l aller et une fois au retour', () => {

@@ -55,6 +55,10 @@ export class Vador implements Boss {
   private struck = false;
   private readonly up = new THREE.Vector3();
   private readonly want = new THREE.Vector3();
+  /** Vitesse du joueur (m/s, lissée) : il vise là où le joueur va. */
+  private readonly playerVel = new THREE.Vector3();
+  private readonly lastPlayer = new THREE.Vector3();
+  private seen = false;
 
   constructor(readonly zombie: Zombie, private readonly hooks: VadorHooks) {
     zombie.size = V.bodyScale;
@@ -76,6 +80,9 @@ export class Vador implements Boss {
     const p = this.hooks.playerPos();
     const d = z.pos.angleTo(p) * PLANET_RADIUS;
     const S = V.strike, P2 = V.phase2, TH = P2.throw;
+    if (this.seen && dt > 0) this.playerVel.lerp(this.want.subVectors(p, this.lastPlayer).divideScalar(dt), 1 - Math.exp(-dt * 6));
+    this.lastPlayer.copy(p);
+    this.seen = true;
     this.updateSaber(dt, p);
 
     // Phase 2 : il s'arrête un instant, furieux
@@ -92,9 +99,11 @@ export class Vador implements Boss {
       z.turnToward(p, dt * 2);
       if (this.animTime >= TH.windup) {
         this.up.copy(z.pos).normalize();
-        const dir = p.clone().sub(z.pos);
+        // Il vise là où le joueur sera quand la lame arrivera
+        const aim = p.clone().addScaledVector(this.playerVel, TH.lead * (d / TH.speed));
+        const dir = aim.sub(z.pos);
         dir.addScaledVector(this.up, -dir.dot(this.up));
-        const far = Math.min(TH.range, Math.max(d + 3, TH.range * 0.6));
+        const far = Math.min(TH.range, Math.max(dir.length() + 3, TH.range * 0.6));
         // Le point visé, ramené sur la sphère (à la hauteur de Vador) : la lame l'atteint vraiment
         const target = z.pos.clone().normalize().applyAxisAngle(this.want.crossVectors(this.up, dir).normalize(), far / PLANET_RADIUS).multiplyScalar(z.pos.length());
         this.thrown = { pos: z.pos.clone(), target, back: false, hold: TH.hold, hitOut: false, hitBack: false };
@@ -105,10 +114,17 @@ export class Vador implements Boss {
     }
 
     if (this.mark) {
-      // Sabre levé : la zone devant lui se remplit ; il ne tourne plus (on peut en sortir)
+      // Sabre levé : la zone devant lui se remplit ; au début il se tourne encore vers le joueur (la zone le suit),
+      // puis elle se fige : on peut en sortir
       z.walkSpeed = 0;
       if (this.windup < S.windup) {
         this.windup += dt;
+        if (this.windup < S.windup * S.track) {
+          z.turnToward(p, dt * 3);
+          this.up.copy(z.pos).normalize();
+          this.want.copy(z.facing).addScaledVector(this.up, -z.facing.dot(this.up)).normalize();
+          this.mark.at.copy(z.pos).addScaledVector(this.want, S.ahead);
+        }
         this.mark.t = Math.min(1, this.windup / S.windup);
         if (this.windup >= S.windup) this.set('strike');
         else this.set('idle');
@@ -175,9 +191,15 @@ export class Vador implements Boss {
       s.pos.copy(to);
       // Rattrapé : il le relance `every` s plus tard
       if (s.back) { this.thrown = null; this.throwCooldown = TH.every; this.hooks.onCatch(); return; }
-      // Au bout de sa course, il tourne sur place un instant, puis revient
+      // Au bout de sa course, il tourne sur place un instant en glissant vers le joueur, puis revient
       s.hold -= dt;
       if (s.hold <= 0) s.back = true;
+      else {
+        const toP = this.want.subVectors(p, s.pos);
+        const dp = toP.length();
+        if (dp > 0.05) s.pos.addScaledVector(toP, Math.min(dp, TH.drift * dt) / dp).setLength(s.target.length());
+        s.target.copy(s.pos);
+      }
     } else {
       s.pos.addScaledVector(step, (TH.speed * dt) / left);
       // Il suit la courbure de la planète, à la hauteur de là où il va (sinon il manquerait sa cible)
