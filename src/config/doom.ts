@@ -26,9 +26,19 @@ export const DOOM_MOUNTAIN = {
   /** Couleurs du sol (basalte des flancs, fond du cratère). */
   rock: 0x3a302c,
   floor: 0x2a1a16,
-  /** Rendu de la lave (couleur lumineuse) et de la lueur visible de loin (colonne rouge au-dessus du cratère). */
+  /** Couleur des éclats quand la lave brûle le joueur ; lueur visible de loin (colonne rouge au-dessus du cratère). */
   lavaColor: 0xff4a10,
-  lavaGlow: 2.2,
   /** La colonne part `above` m au-dessus de la crête (elle ne voile pas l'arène). */
   beam: { color: 0xff3a10, radius: 7, height: 70, opacity: 0.16, above: 3 },
+  /**
+   * Aspect de la lave (shader) : croûte sombre, lave en fusion, fissures incandescentes ; `glow` multiplie les couleurs
+   * (au-delà de 1, le bloom la fait rayonner) ; taille du motif (m), vitesse du courant (m/s).
+   */
+  look: { crust: 0x160604, molten: 0xe8380a, hot: 0xffc040, glow: 1.9, scale: 2.2, flow: 0.6 },
+  /**
+   * Coulées de lave sur les flancs (décor, sans dégâts) : `count` coulées partent de la crête et descendent la pente en
+   * serpentant (`wiggle`) jusqu'à `reach` x le rayon du pied ; largeur de `top` m en haut à `bottom` m en bas, posées
+   * `lift` m au-dessus du sol.
+   */
+  veins: { count: 7, step: 0.8, top: 3.2, bottom: 1.2, wiggle: 0.55, reach: 0.82, lift: 0.35 },
 } as const;
