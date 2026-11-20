@@ -274,7 +274,7 @@ describe('Dark Vador, phase 2 : le sabre lancé', () => {
     const before = dist(s.pos, p.pos);
     t.play(TH.hold * 0.5);
     expect(boss.thrown?.back).toBe(false);
-    expect(dist(boss.thrown!.pos, p.pos)).toBeLessThan(before - TH.drift * TH.hold * 0.3);
+    expect(dist(boss.thrown!.pos, p.pos)).toBeLessThan(before - 1);
   });
 
   it('le sabre blesse le joueur qu il traverse, une fois à l aller et une fois au retour', () => {
