@@ -158,7 +158,7 @@ export const WINE_LOOK = {
  */
 export const GRAVE_BOSSES = {
   /** Les boss posés à chaque run, dans cet ordre (un cimetière chacun). */
-  kinds: ['vador', 'logen', 'xeno'] as const,
+  kinds: ['vador', 'logen', 'xeno', 'guts'] as const,
   /** Pas dans un cimetière à moins de `minFromSpawn` m du départ ; portée de la touche d'action (m). */
   minFromSpawn: 80,
   interactRange: 6,
@@ -313,4 +313,52 @@ export const XENO_LOOK = {
   tail: { markColor: 0xff7a1a, markOpacity: 0.55, markRing: 0.12 },
   acid: { markColor: 0x9cff1a, markOpacity: 0.7, markRing: 0.2 },
   tailDiscs: 5,
+} as const;
+
+/**
+ * Guts (boss optionnel, issue #19) : le modèle fourni (`guts.glb`) monté sur la Universal Animation Library
+ * (tools/blender/guts.py), son épée géante en main. Il marche vers le joueur ; de près il fauche tout un arc devant lui,
+ * de plus loin il abat l'épée en ligne. Chaque coup est marqué au sol avant de partir. Valeurs de départ.
+ */
+export const GUTS = {
+  name: 'Guts',
+  prompt: 'Défier Guts',
+  hp: 4800,
+  speed: 2.6,
+  xp: 250,
+  height: 3.4,
+  bodyScale: 2.0,
+  /**
+   * Fauchage : quand le joueur est à moins de `range` m, au plus toutes les `cooldown` s. L'arc devant lui (`radius` m,
+   * `angle` degrés en tout) est marqué `windup` s ; il suit le joueur pendant la part `track` de ce temps, puis se fige.
+   * L'épée passe `hitAt` s après le début du geste (qui dure `duration` s) : le joueur dans l'arc encaisse.
+   */
+  sweep: { range: 5.5, cooldown: 1.6, windup: 0.6, track: 0.5, radius: 6, angle: 150, hitAt: 0.45, duration: 1.0, damage: 32 },
+  /**
+   * Coup abattu : quand le joueur est entre `minDist` et `range` m, au plus toutes les `cooldown` s. La bande de `width`
+   * m sur `length` m devant lui est marquée `windup` s (elle suit le joueur pendant la part `track`), puis l'épée
+   * s'abat (`hitAt` s après le début du geste, qui dure `duration` s) : le joueur dans la bande encaisse.
+   */
+  slam: { range: 12, minDist: 5, cooldown: 3.5, windup: 0.8, track: 0.5, length: 10, width: 2.4, hitAt: 0.5, duration: 1.5, damage: 36 },
+  /**
+   * Phase 2 « le Berserker » sous `below` de ses PV : il crie `pause` s, puis s'embrase de rouge, va plus vite,
+   * enchaîne `sweeps` fauchages sans pause (le suivant se prépare en `rewindup` s) et n'encaisse plus que `1 - armor`
+   * des dégâts.
+   */
+  phase2: { below: 0.5, pause: 1.3, speedMul: 1.3, sweeps: 3, rewindup: 0.3, armor: 0.5 },
+  chestRarity: 4,
+  music: 'guts',
+  /** Durée des animations (s), fixées par tools/blender/guts.py. */
+  clips: { idle: 1.67, walk: 1.33, sweep: 1.0, slam: 1.53, roar: 1.27, hit: 0.33, death: 2.4 },
+} as const;
+
+/** Marques au sol de Guts (arc du fauchage, bande du coup abattu) ; lueur rouge du Berserker (couleur, intensité). */
+export const GUTS_LOOK = {
+  sweep: { markColor: 0xff2a1a, markOpacity: 0.5, markRing: 0.1 },
+  slam: { markColor: 0xff7a1a, markOpacity: 0.55, markRing: 0.12 },
+  /** Disques de l'arc : un rang par distance (m), autant de disques que donné, de rayon `disc` m. */
+  sweepRows: [[2.2, 3], [3.9, 5], [5.3, 7]] as const,
+  sweepDisc: 1.0,
+  slamDiscs: 6,
+  rage: { color: 0xff1a08, strength: 0.55 },
 } as const;

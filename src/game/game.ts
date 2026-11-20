@@ -37,13 +37,14 @@ import { BELL_DROPS, LAST_CALL } from '../config/lastCall';
 import { Tournees, TOURNEE_IDS, rollTournee, tourneeDropChance } from './tournees';
 import { TOURNEE_FX, TOURNEES, type TourneeId } from '../config/tournees';
 import { ELITES } from '../config/elites';
-import { ABBE, FRERE_SONNEUR, LOGEN, PATRON_DOOR, VADOR, XENO } from '../config/bosses';
+import { ABBE, FRERE_SONNEUR, LOGEN, PATRON_DOOR, VADOR, XENO, GUTS } from '../config/bosses';
 import { FrereSonneur } from './frereSonneur';
 import { Abbe, type WinePuddle } from './abbe';
 import type { Boss, BossKind } from './boss';
 import { Vador } from './vador';
 import { Logen } from './logen';
 import { Xeno } from './xeno';
+import { Guts } from './guts';
 import { GraveBosses, type GraveBoss } from './graveBosses';
 import type { GraveSite } from '../world/decor/layout';
 import { PatronDoor } from './patronDoor';
@@ -170,6 +171,9 @@ export type GameEvents = {
   xenoLeap: { boss: Xeno };
   xenoLand: { boss: Xeno; at: THREE.Vector3; radius: number; hit: boolean };
   xenoTail: { boss: Xeno; hit: boolean };
+  /** L'épée de Guts passe (fauchage) ou s'abat (coup) ; `hit` : sur le joueur. */
+  gutsSweep: { boss: Guts; hit: boolean };
+  gutsSlam: { boss: Guts; hit: boolean };
   /** Un boss optionnel est défié. */
   graveBossChallenged: { boss: Boss };
   /** 10:00 : la fermeture du bar, la Mort arrive. */
@@ -441,6 +445,7 @@ export class Game {
       sonneur: deps.zombieKinds.sonneur ?? { scale: 1, clips: { idle: clip(C.idle), walk: clip(C.walk), attack: clip(C.strike), hit: clip(C.hit), death: clip(C.death), cast: clip(C.roar) } },
       abbe: deps.zombieKinds.abbe ?? { scale: 1, clips: { idle: clip(AC.idle), walk: clip(AC.walk), attack: clip(AC.cast), hit: clip(AC.hit), death: clip(AC.death), cast: clip(AC.roar) } },
       logen: deps.zombieKinds.logen ?? { scale: 1, clips: { idle: clip(LOGEN.clips.idle), walk: clip(LOGEN.clips.walk), attack: clip(LOGEN.clips.run), hit: clip(LOGEN.clips.hit), death: clip(LOGEN.clips.death), cast: clip(LOGEN.clips.roar) } },
+      guts: deps.zombieKinds.guts ?? { scale: 1, clips: { idle: clip(GUTS.clips.idle), walk: clip(GUTS.clips.walk), attack: clip(GUTS.clips.sweep), hit: clip(GUTS.clips.hit), death: clip(GUTS.clips.death), cast: clip(GUTS.clips.roar) } },
       xeno: deps.zombieKinds.xeno ?? { scale: 1, clips: { idle: clip(XENO.clips.idle), walk: clip(XENO.clips.walk), attack: clip(XENO.clips.tail), hit: clip(XENO.clips.hit), death: clip(XENO.clips.death), cast: clip(XENO.clips.roar) } },
       vador: deps.zombieKinds.vador ?? { scale: 1, clips: { idle: clip(VADOR.clips.idle), walk: clip(VADOR.clips.walk), attack: clip(VADOR.clips.strike), hit: clip(VADOR.clips.hit), death: clip(VADOR.clips.death), cast: clip(VADOR.clips.strike) } },
     };
@@ -1057,9 +1062,21 @@ export class Game {
 
   /** Fait entrer en combat le boss optionnel `kind` à `at`, tourné vers `facing`. */
   private spawnGraveBoss(kind: BossKind, at: THREE.Vector3, facing: THREE.Vector3) {
-    if (this.bossUp(kind) || this.arriving || (kind !== 'vador' && kind !== 'logen' && kind !== 'xeno')) return null;
+    if (this.bossUp(kind) || this.arriving || (kind !== 'vador' && kind !== 'logen' && kind !== 'xeno' && kind !== 'guts')) return null;
     const z = this.spawnZombie(kind, at, facing);
     if (!z) return null;
+    if (kind === 'guts') {
+      const guts: Guts = new Guts(z, {
+        playerPos: () => this.player.pos,
+        hurtPlayer: (dir, damage) => this.hurtPlayer(z, dir, damage),
+        onPhase: (phase) => this.events.emit('bossPhase', { boss: guts, phase }),
+        onSweep: (hit) => this.events.emit('gutsSweep', { boss: guts, hit }),
+        onSlam: (hit) => this.events.emit('gutsSlam', { boss: guts, hit }),
+      });
+      this.bosses.push(guts);
+      this.events.emit('bossSpawned', { boss: guts });
+      return guts;
+    }
     if (kind === 'xeno') {
       const xeno: Xeno = new Xeno(z, {
         playerPos: () => this.player.pos,
@@ -1138,6 +1155,7 @@ export class Game {
     // Dans le halo d'un porte-reliques : dégâts réduits
     const shield = this.horde.shieldOf(z);
     damage *= 1 - shield;
+    damage *= 1 - z.armor;
     const up = this.tmp.copy(z.pos).normalize();
     const dir = vel.clone().addScaledVector(up, -vel.dot(up)).normalize();
     const killed = z.damage(damage, dir, knock);
@@ -1165,7 +1183,7 @@ export class Game {
     if (bi >= 0) {
       const boss = this.bosses.splice(bi, 1)[0];
       const chest = this.chests.addFreeAt(z.pos);
-      if (chest) chest.rarity = ({ abbe: ABBE, vador: VADOR, logen: LOGEN, xeno: XENO, sonneur: FRERE_SONNEUR } as const)[boss.kind].chestRarity;
+      if (chest) chest.rarity = ({ abbe: ABBE, vador: VADOR, logen: LOGEN, xeno: XENO, guts: GUTS, sonneur: FRERE_SONNEUR } as const)[boss.kind].chestRarity;
       if (boss.kind === 'abbe') this.abbeKilled = true;
       this.tunaDrops.drop(z.pos, TUNAS.boss[boss.kind]);
       this.events.emit('bossKilled', { boss, chest });

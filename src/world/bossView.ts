@@ -7,7 +7,8 @@ import type { Abbe } from '../game/abbe';
 import type { Boss, BossKind } from '../game/boss';
 import type { FrereSonneur } from '../game/frereSonneur';
 import { characterMaterial, LAYER_CHARACTER, LAYER_SKY } from '../render/materials';
-import { ABBE, GRAVE_BOSSES as G, LOGEN_LOOK, VADOR, VADOR_LOOK, XENO, XENO_LOOK } from '../config/bosses';
+import { ABBE, GRAVE_BOSSES as G, LOGEN_LOOK, VADOR, VADOR_LOOK, XENO, XENO_LOOK, GUTS_LOOK } from '../config/bosses';
+import type { Guts } from '../game/guts';
 import type { Xeno } from '../game/xeno';
 import type { Vador } from '../game/vador';
 import type { Logen } from '../game/logen';
@@ -17,7 +18,7 @@ import { heightAt } from './terrain';
 export type BossModel = { kind: BossKind; url: string; height: number; walkSpeed: number };
 
 /** Animations jouées une seule fois (elles restent sur leur dernière image). */
-const ONCE = ['strike', 'cast', 'roar', 'death', 'tail'];
+const ONCE = ['strike', 'cast', 'roar', 'death', 'tail', 'slam', 'sweep'];
 
 /**
  * Rendu d'un boss (modèles sculptés de tools/blender/) : le modèle détaillé en cel-shading, animé par un mixeur (fondu
@@ -80,6 +81,7 @@ export async function createBossView(scene: THREE.Scene, M: BossModel) {
   beam.visible = false;
   scene.add(beam);
   let t = 0;
+  const rageColor = new THREE.Color(GUTS_LOOK.rage.color);
   const up = new THREE.Vector3(), side = new THREE.Vector3(), fwd = new THREE.Vector3(), basis = new THREE.Matrix4();
 
   function play(anim: string) {
@@ -146,7 +148,9 @@ export async function createBossView(scene: THREE.Scene, M: BossModel) {
       if (boss.turn) root.rotateY(boss.turn);
       root.position.copy(z.pos).addScaledVector(up, -z.sink * (M.height * boss.scale / 2) + (boss.air ?? 0));
       flash = Math.max(0, flash - dt / L.flashTime);
-      for (const mat of materials) mat.emissive.setScalar(flash * flash * L.flash);
+      // Éclair blanc quand il encaisse ; lueur rouge de rage (le Berserker)
+      const rage = boss.glow ?? 0;
+      for (const mat of materials) mat.emissive.copy(rageColor).multiplyScalar(rage * GUTS_LOOK.rage.strength).addScalar(flash * flash * L.flash);
     },
   };
 }
@@ -373,6 +377,55 @@ export function createXenoMarksView(scene: THREE.Scene) {
       tails.sync(lane);
       pounce.sync(one);
       acid.sync(wet);
+    },
+  };
+}
+
+/** Marques au sol de Guts : l'arc de son fauchage (des rangs de disques en éventail), la bande de son coup abattu. */
+export function createGutsMarksView(scene: THREE.Scene) {
+  const arcs = createGroundMarks(scene, GUTS_LOOK.sweep);
+  const lanes = createGroundMarks(scene, GUTS_LOOK.slam);
+  const fan: GroundMark[] = [];
+  for (const [, n] of GUTS_LOOK.sweepRows) for (let i = 0; i < n; i++) fan.push({ at: new THREE.Vector3(), radius: 0, t: 0 });
+  const N = GUTS_LOOK.slamDiscs;
+  const discs: GroundMark[] = Array.from({ length: N }, () => ({ at: new THREE.Vector3(), radius: 0, t: 0 }));
+  const a1: GroundMark[] = [], l1: GroundMark[] = [];
+  const axis = new THREE.Vector3(), dir = new THREE.Vector3(), up = new THREE.Vector3();
+  return {
+    sync(boss: Guts | null) {
+      a1.length = 0; l1.length = 0;
+      const live = boss && !boss.zombie.dead ? boss : null;
+      const a = live?.arc;
+      if (a) {
+        up.copy(a.at).normalize();
+        let k = 0;
+        for (const [dist, n] of GUTS_LOOK.sweepRows) {
+          for (let i = 0; i < n; i++) {
+            const m = fan[k++];
+            // Le long de l'arc, d'un bord à l'autre
+            const ang = -a.half + (2 * a.half * i) / Math.max(1, n - 1);
+            dir.copy(a.dir).applyAxisAngle(up, ang);
+            axis.crossVectors(a.at, dir).normalize();
+            m.at.copy(a.at).applyAxisAngle(axis, Math.min(dist, a.radius - GUTS_LOOK.sweepDisc * 0.5) / a.at.length());
+            m.radius = GUTS_LOOK.sweepDisc;
+            m.t = a.t;
+            a1.push(m);
+          }
+        }
+      }
+      const l = live?.lane;
+      if (l) {
+        axis.crossVectors(l.from, l.dir).normalize();
+        for (let i = 0; i < N; i++) {
+          const m = discs[i];
+          m.at.copy(l.from).applyAxisAngle(axis, (((i + 0.5) / N) * l.length) / l.from.length());
+          m.radius = l.width / 2;
+          m.t = l.t;
+          l1.push(m);
+        }
+      }
+      arcs.sync(a1);
+      lanes.sync(l1);
     },
   };
 }

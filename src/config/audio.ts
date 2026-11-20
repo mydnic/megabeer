@@ -132,6 +132,9 @@ export const AUDIO = {
     // Le Xénomorphe : il bondit (souffle), retombe (lourd), sa queue claque
     xenoLeap: { sample: 'impactSoft_heavy', volume: 0.5, rate: 1.4 },
     xenoLand: { sample: 'impactPunch_heavy', volume: 0.75, rate: 0.75 },
+    // Guts : l'épée géante qui fauche (métal lourd), qui s'abat (choc)
+    gutsSweep: { sample: 'impactMetal_heavy', volume: 0.6, rate: 0.55 },
+    gutsSlam: { sample: 'impactPunch_heavy', volume: 0.8, rate: 0.5 },
     xenoTail: { sample: 'impactMetal_light', volume: 0.6, rate: 1.3 },
     senzu: { sample: 'impactBell_heavy', volume: 0.55, rate: 1.9 },
     saiyanReady: { sample: 'impactBell_heavy', volume: 0.45, rate: 1.6 },
