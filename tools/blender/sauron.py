@@ -46,6 +46,9 @@ CLIPS = {'Sword_Idle': 'idle', 'Walk_Formal_Loop': 'walk', 'Sword_Attack': 'slam
 MACE_X = -0.25
 # Une pièce dont le centre est à plus de LOOSE m de tout os pend du dos (bords de cape)
 LOOSE = 0.11
+# Sous LEGS_Z m, une pièce loin des os reste aux jambes ; sous BOOT_Z m près des pieds, c'est une botte (jamais la cape)
+LEGS_Z = 0.4
+BOOT_Z = 0.14
 # Direction de la tête de la masse en pose en T, dans le repère du squelette (comme l'épée de Guts : vers le haut)
 MACE_DIR = Vector((0, 0, 1))
 SWEEP = 1.1  # durée du balayage (s)
@@ -159,8 +162,15 @@ for name in TEMP:
 bpy.ops.object.mode_set(mode='OBJECT')
 
 
+def is_boot(p):
+    # Les bottes : au ras du sol, près des pieds (la cape, elle, s'évase plus loin)
+    return p.z < BOOT_Z and abs(p.x) < 0.3
+
+
 def is_cape(p):
-    # Derrière le dos (sauf le casque et la couronne), ou sur les côtés sous les mains, loin des jambes
+    # Derrière le dos (sauf le casque et la couronne), ou sur les côtés sous les mains ; jamais les bottes
+    if is_boot(p):
+        return False
     if p.y > 0.07 and p.z < 1.42:
         return True
     return p.z < 0.72 and abs(p.x) > 0.21
@@ -192,8 +202,8 @@ for start in range(len(body.data.vertices)):
         bone = 'pelvis'
     else:
         bone = min(segs, key=lambda n: seg_dist(c, *segs[n]))
-        # Loin de tout os (un bord de cape près d'une main ou d'un pied) : il pend du dos avec la cape
-        if seg_dist(c, *segs[bone]) > LOOSE and c.z < 1.42:
+        # Loin de tout os (un bord de cape près d'une main) : il pend du dos avec la cape ; pas aux jambes (jambières, bottes)
+        if seg_dist(c, *segs[bone]) > LOOSE and LEGS_Z < c.z < 1.42:
             bone = 'spine_03'
     groups[bone].add(island, 1.0, 'REPLACE')
 mod = body.modifiers.new('tmp', 'ARMATURE'); mod.object = tmp
