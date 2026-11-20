@@ -78,7 +78,8 @@ export function createHomeScreen(onPlay: () => void, onOptions: () => void, onSh
       if (document.pointerLockElement) document.exitPointerLock();
       btn.focus({ preventScroll: true });
     },
-    hide() { el.classList.add('off'); },
+    // Rend le focus au jeu : un bouton caché garderait Espace (le saut) pour lui
+    hide() { el.classList.add('off'); if (el.contains(document.activeElement)) (document.activeElement as HTMLElement).blur(); },
     /** Remet le focus sur Jouer (après la fermeture d'un panneau). */
     focus() { btn.focus({ preventScroll: true }); },
   };

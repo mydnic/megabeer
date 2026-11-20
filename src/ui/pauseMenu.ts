@@ -128,7 +128,8 @@ export function createPauseMenu(cb: { resume: () => void; options: () => void; q
       if (document.pointerLockElement) document.exitPointerLock();
       buttons[0].focus({ preventScroll: true });
     },
-    hide() { el.classList.add('off'); },
+    // Rend le focus au jeu : un bouton caché garderait Espace (le saut) pour lui
+    hide() { el.classList.add('off'); if (el.contains(document.activeElement)) (document.activeElement as HTMLElement).blur(); },
     /** Remet le focus sur Reprendre (après la fermeture des options). */
     focus() { buttons[0].focus({ preventScroll: true }); },
   };

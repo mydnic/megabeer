@@ -130,7 +130,8 @@ export function createSetupScreen(cb: {
       playBtn.focus({ preventScroll: true });
     },
     /** Ferme sans revenir à l'accueil (la run démarre). */
-    hide() { el.classList.add('off'); },
+    // Rend le focus au jeu : un bouton caché garderait Espace (le saut) pour lui
+    hide() { el.classList.add('off'); if (el.contains(document.activeElement)) (document.activeElement as HTMLElement).blur(); },
     close,
     /** Un portrait vient d'être rendu. */
     refresh() { if (state && !el.classList.contains('off')) render(); },
