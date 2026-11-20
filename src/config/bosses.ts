@@ -113,8 +113,8 @@ export const ABBE = {
 
 /**
  * La Porte du patron (GDD section 12) : posée loin du départ, toujours sur la mini-carte (flèche au bord quand elle
- * est loin, demande de l'utilisateur le 2026-11-12) et signalée par un faisceau rouge. À la touche d'action, elle s'ouvre et l'Abbé en sort. Une seule fois, et pas
- * pendant qu'un autre boss est debout.
+ * est loin, demande de l'utilisateur le 2026-11-12) et signalée par un faisceau rouge. À la touche d'action, elle s'ouvre et l'Abbé en sort. Une seule fois, même
+ * si d'autres boss sont debout.
  */
 export const PATRON_DOOR = {
   minFromSpawn: 140,
@@ -131,7 +131,6 @@ export const PATRON_DOOR = {
   /** L'Abbé sort à `spawnAhead` m devant la porte. */
   spawnAhead: 13,
   prompt: 'Appeler le patron',
-  busy: 'Un boss est déjà là',
 } as const;
 
 /** Apparence de la porte (world/doorView.ts) : pièces du Castle Kit Kenney, faisceau rouge. */
@@ -155,7 +154,7 @@ export const WINE_LOOK = {
 /**
  * Les boss optionnels (issue #19) : chacun attend devant le portail d'un cimetière, loin du départ, sous une colonne
  * de lumière. Le joueur va le voir et le défie à la touche d'action : il est fort, mais rapporte beaucoup d'XP, un
- * coffre gratuit et des TUNAS. Un seul boss debout à la fois.
+ * coffre gratuit et des TUNAS. On peut en défier plusieurs à la fois.
  */
 export const GRAVE_BOSSES = {
   /** Les boss posés à chaque run, dans cet ordre (un cimetière chacun). */
@@ -165,7 +164,6 @@ export const GRAVE_BOSSES = {
   interactRange: 6,
   /** Point libre cherché jusqu'à `searchRadius` m du portail (un sapin peut le gêner). */
   searchRadius: 8,
-  busy: 'Un boss est déjà là',
   /** Colonne de lumière au-dessus d'un boss qui attend (rendu). */
   beamColor: 0xff2a1a,
   beamRadius: 1.4,

@@ -35,7 +35,7 @@ import { createSaiyanHud } from '../ui/saiyanHud';
 import { isTouchDevice as touchScreen } from '../core/input';
 import { VEHICLES } from '../config/vehicles';
 import { BOSS_HUD } from '../config/hud';
-import { GRAVE_BOSSES, PATRON_DOOR, VADOR } from '../config/bosses';
+import { PATRON_DOOR, VADOR } from '../config/bosses';
 import { CLOSING } from '../config/closing';
 import { createPadNav } from '../ui/padNav';
 import { createAccountPanel } from '../ui/accountPanel';
@@ -257,21 +257,19 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
     vador: { come: 'Sors de la zone rouge avant le coup', rage: ['Il est furieux !', ''], fall: 'Un coffre légendaire t\'attend' },
   } as const;
   game.events.on('bossSpawned', ({ boss }) => {
-    bossBar.show(boss.name, boss.phaseAt);
+    bossBar.show(boss, boss.name, boss.phaseAt);
     banner.show(`${boss.name} !`, BOSS_TEXT[boss.kind].come);
     banner.pulse();
     banner.hideAfter(3);
   });
   game.events.on('bossPhase', ({ boss }) => { const [t, sub] = BOSS_TEXT[boss.kind].rage; banner.show(t, sub); banner.pulse(); banner.hideAfter(2.5); });
   game.events.on('bossKilled', ({ boss }) => {
-    bossBar.hide();
+    bossBar.hide(boss);
     banner.show(`${boss.name} est tombé !`, BOSS_TEXT[boss.kind].fall);
     banner.pulse();
     banner.hideAfter(3);
   });
   game.events.on('closingStarted', () => { banner.show(CLOSING.banner.title, CLOSING.banner.sub); banner.pulse(); banner.hideAfter(4); });
-  game.events.on('doorBusy', () => { banner.show('Pas maintenant', PATRON_DOOR.busy); banner.hideAfter(1.8); });
-  game.events.on('graveBossBusy', () => { banner.show('Pas maintenant', GRAVE_BOSSES.busy); banner.hideAfter(1.8); });
   game.events.on('doorOpened', () => { banner.show('Le patron arrive...', 'La porte s\'ouvre'); banner.pulse(); banner.hideAfter(2); });
   game.events.on('vehicleEntered', ({ kind }) => vehicleHud.show(VEHICLES[kind].name));
   game.events.on('allyJoined', ({ kind }) => { banner.show(`${ALLIES[kind].name} te rejoint !`, 'Il te suit une minute'); banner.pulse(); banner.hideAfter(2.2); });
@@ -375,9 +373,8 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
       saiyanHud.update(game.phase === 'run' && sj.enabled, sj.points, sj.reached, sj.tier, sj.left, sj.duration);
       const car = game.vehicles.driving;
       if (car) vehicleHud.update(car.hp / car.maxHp, car.left / car.duration, car.left);
-      const boss = game.boss;
-      if (boss) bossBar.update(boss.zombie.hp / boss.zombie.maxHp, boss.phase);
-      tourneeHud.setOffset(boss ? BOSS_HUD.pushDown : 0);
+      for (const boss of game.bosses) bossBar.update(boss, boss.zombie.hp / boss.zombie.maxHp, boss.phase);
+      tourneeHud.setOffset(bossBar.count * BOSS_HUD.pushDown);
       if (game.phase === 'dead') deathBanner.update(game.deadTime, game.runTime, game.kills, lastRun.tunas, lastRun.tunasBonus, lastRun.achievements);
       // Espace ou bouton A : Continuer sur le bilan de mort (l'accueil passe par la navigation des menus)
       if (input.jumpPressed && !usedA) {

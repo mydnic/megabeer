@@ -128,7 +128,7 @@ export async function wireDevTools(game: Game, d: {
       runLog.event('dev', 'ally', id);
     },
     placeVador() {
-      if (!inRun() || game.boss) return;
+      if (!inRun() || game.bossUp('vador')) return;
       const p = game.player, up = p.pos.clone().normalize();
       const b = game.graveBosses.placeAt('vador', up.multiplyScalar(p.pos.length()).addScaledVector(p.facing, 7));
       b.facing.copy(p.facing).negate();

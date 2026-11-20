@@ -72,20 +72,19 @@ describe('La Porte du patron', () => {
     press(t);
     expect(t.game.door.open).toBe(true);
     expect(t.events('doorOpened')).toHaveLength(1);
-    expect(t.game.boss?.kind).toBe('abbe');
+    expect(t.game.bosses.map((b) => b.kind)).toEqual(['abbe']);
     press(t);
     expect(t.events('bossSpawned')).toHaveLength(1);
   });
 
-  it('pas d\'appel tant qu\'un autre boss est debout', () => {
+  it('elle s\'ouvre même si un autre boss est debout : les deux se battent ensemble', () => {
     const t = arena();
     t.game.cheats.god = true;
     t.game.spawnBoss();
     atDoor(t);
     press(t);
-    expect(t.game.door.open).toBe(false);
-    expect(t.events('doorBusy')).toHaveLength(1);
-    expect(t.game.boss?.kind).toBe('sonneur');
+    expect(t.game.door.open).toBe(true);
+    expect(t.game.bosses.map((b) => b.kind).sort()).toEqual(['abbe', 'sonneur']);
   });
 });
 
@@ -140,7 +139,7 @@ describe("L'Abbé", () => {
     expect(killed.chest).not.toBeNull();
     expect(killed.chest!.rarity).toBe(A.chestRarity);
     expect(killed.chest!.free).toBe(true);
-    expect(t.game.boss).toBeNull();
+    expect(t.game.bosses).toHaveLength(0);
     expect(t.game.frozen).toBe(false);
     expect(t.game.abbeKilled).toBe(true);
     t.play(2);

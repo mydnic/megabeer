@@ -77,7 +77,6 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
   // L'Abbé répand son vin ; la porte du patron s'ouvre ; l'Abbé tombe (carillon)
   game.events.on('winePoured', () => audio.play(BS.pour, BS.pourVolume, BS.pourRate * jitter(0.06)));
   game.events.on('doorOpened', () => { audio.play(BS.door, BS.doorVolume, BS.doorRate); audio.play(BS.bell, BS.bellVolume, BS.bellRate * 0.8); });
-  game.events.on('doorBusy', () => audio.play(AUDIO.chest.deny, AUDIO.chest.denyVolume, AUDIO.chest.denyRate, 0, 'ui'));
   game.events.on('bossKilled', ({ boss }) => { if (boss.kind === 'abbe') for (let i = 0; i < 4; i++) setTimeout(() => audio.play(BS.bell, BS.bellVolume, 0.8 + i * 0.15, 0, 'ui'), i * 260); });
   // Élites
   // Fermeture : le glas, puis chaque Mort qui sort de terre et chaque coup de faux
@@ -200,7 +199,6 @@ export function wireSounds(game: Game, audio: AudioEngine, buveur: BuveurVisual)
   game.events.on('allyPower', ({ kind }) => { const S = I.allyPower[kind]; audio.play(S.sample, S.volume, S.rate * jitter(0.06)); });
   game.events.on('tntExploded', () => audio.play(I.tntBoom.sample, I.tntBoom.volume, I.tntBoom.rate * jitter(0.08)));
   game.events.on('saberStrike', ({ hit }) => audio.play(I.saberStrike.sample, hit ? I.saberStrike.hitVolume : I.saberStrike.volume, I.saberStrike.rate * jitter(0.05)));
-  game.events.on('graveBossBusy', () => audio.play(AUDIO.chest.deny, AUDIO.chest.denyVolume, AUDIO.chest.denyRate, 0, 'ui'));
   game.events.on('senzuEaten', () => audio.play(I.senzu.sample, I.senzu.volume, I.senzu.rate, 0, 'ui'));
   game.events.on('saiyanTierReached', () => audio.play(I.saiyanReady.sample, I.saiyanReady.volume, I.saiyanReady.rate));
   // Aura du Super Saiyan : le son tourne en boucle jusqu'à la fin de la transformation (ou de la run)
@@ -313,7 +311,8 @@ export function wireMusic(game: Game, audio: AudioEngine, music: ReturnType<type
   game.events.on('died', () => volume(DEATH_BANNER.musicDuck, 0.6));
   game.events.on('home', () => { volume(1, 0.4); music.endRun(); });
   // Boss : sa musique tant qu'il est debout
-  game.events.on('bossSpawned', ({ boss }) => music.startBoss(boss.music));
-  game.events.on('bossKilled', () => music.endBoss());
+  // Plusieurs boss debout : la musique du premier arrivé, jusqu'à la chute du dernier
+  game.events.on('bossSpawned', ({ boss }) => { if (!music.boss) music.startBoss(boss.music); });
+  game.events.on('bossKilled', () => { if (!game.bosses.length) music.endBoss(); });
   game.events.on('died', () => { if (music.boss) music.endBoss(); });
 }

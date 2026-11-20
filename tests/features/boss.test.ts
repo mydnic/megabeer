@@ -38,7 +38,7 @@ describe('Le Frère Sonneur', () => {
     t.game.runTime = F.arriveAt - 1;
     t.play(1.5);
     expect(t.events('bossSpawned')).toHaveLength(1);
-    const boss = t.game.boss!;
+    const boss = t.game.bosses[0];
     expect(boss.zombie.hp).toBe(Math.round(F.hp * t.game.mods.hp));
     expect(dist(boss.zombie, t.game.player.pos)).toBeGreaterThan(F.spawnDist - 3);
     t.play(5);
@@ -103,7 +103,7 @@ describe('Le Frère Sonneur', () => {
     const chest = e[0].chest!;
     expect(chest.free).toBe(true);
     expect(chest.rarity).toBe(F.chestRarity);
-    expect(t.game.boss).toBeNull();
+    expect(t.game.bosses).toHaveLength(0);
     // Ouvert, il propose des objets de cette rareté
     t.game.coins = 0;
     const up = chest.pos.clone().normalize();

@@ -35,7 +35,7 @@ function withVador(d = 4) {
 function fight(d = 4) {
   const { t, b } = withVador(d);
   press(t);
-  return { t, b, boss: t.game.boss as Vador };
+  return { t, b, boss: t.game.bosses.find((x) => x.kind === 'vador') as Vador };
 }
 
 /** Un point au sol à `d` m d'un point, sur un grand cercle tiré d'une direction tangente. */
@@ -71,7 +71,7 @@ describe('Dark Vador, boss optionnel d un cimetière', () => {
   it('tant qu il attend, il ne se bat pas et les armes ne le visent pas', () => {
     const { t } = withVador();
     t.play(3);
-    expect(t.game.boss).toBeNull();
+    expect(t.game.bosses).toHaveLength(0);
     expect(t.game.horde.zombies.some((z) => z.def.name === V.name)).toBe(false);
   });
 
@@ -79,7 +79,7 @@ describe('Dark Vador, boss optionnel d un cimetière', () => {
     const { t, b } = withVador();
     expect(t.game.graveBosses.focus).toBe(b);
     press(t);
-    expect(t.game.boss?.kind).toBe('vador');
+    expect(t.game.bosses.map((x) => x.kind)).toEqual(['vador']);
     expect(b.waiting).toBe(false);
     expect(t.events('graveBossChallenged')).toHaveLength(1);
     expect(t.events('bossSpawned')).toHaveLength(1);
@@ -87,13 +87,25 @@ describe('Dark Vador, boss optionnel d un cimetière', () => {
     expect(t.events('bossSpawned')).toHaveLength(1);
   });
 
-  it('pas de défi tant qu un autre boss est debout', () => {
+  it('on le défie même si un autre boss est debout ; chacun tombe de son côté', () => {
     const { t, b } = withVador();
     t.game.cheats.god = true;
     t.game.spawnBoss();
     press(t);
-    expect(t.events('graveBossBusy')).toHaveLength(1);
-    expect(b.waiting).toBe(true);
+    expect(b.waiting).toBe(false);
+    expect(t.game.bosses.map((x) => x.kind).sort()).toEqual(['sonneur', 'vador']);
+    // Le Sonneur tombe : Vador reste debout, seul
+    const s = t.game.bosses.find((x) => x.kind === 'sonneur')!;
+    t.game.hitZombie(s.zombie, 1e6, false, s.zombie.pos, t.game.player.facing);
+    expect(t.game.bosses.map((x) => x.kind)).toEqual(['vador']);
+  });
+
+  it('défié avant 5:00, il n empêche pas le Sonneur de venir à son heure', () => {
+    const { t } = fight();
+    t.game.cheats.god = true;
+    t.game.runTime = 299;
+    t.play(1.5);
+    expect(t.game.bosses.map((x) => x.kind).sort()).toEqual(['sonneur', 'vador']);
   });
 
   it('son coup de sabre est marqué au sol avant de partir : rester dedans fait mal', () => {
@@ -139,6 +151,6 @@ describe('Dark Vador, boss optionnel d un cimetière', () => {
     expect(e[0].chest?.free).toBe(true);
     expect(t.game.tunaDrops.drops.reduce((n, d) => n + d.value, 0)).toBeGreaterThanOrEqual(TUNAS.boss.vador);
     expect(V.xp).toBeGreaterThan(100);
-    expect(t.game.boss).toBeNull();
+    expect(t.game.bosses).toHaveLength(0);
   });
 });

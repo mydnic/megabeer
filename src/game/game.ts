@@ -156,13 +156,10 @@ export type GameEvents = {
   winePoured: { boss: Abbe; puddles: readonly WinePuddle[] };
   /** La Porte du patron s'ouvre : le boss final en sort. */
   doorOpened: { at: THREE.Vector3 };
-  /** Touche d'action devant la porte alors qu'un boss est déjà là. */
-  doorBusy: Record<string, never>;
   /** Vador frappe de son sabre la zone `at` (rayon `radius`) ; `hit` : le joueur y était. */
   saberStrike: { boss: Vador; at: THREE.Vector3; radius: number; hit: boolean };
-  /** Un boss optionnel est défié ; défi refusé parce qu'un autre boss est debout. */
+  /** Un boss optionnel est défié. */
   graveBossChallenged: { boss: Boss };
-  graveBossBusy: Record<string, never>;
   /** 10:00 : la fermeture du bar, la Mort arrive. */
   closingStarted: Record<string, never>;
   /** Une Mort sort de terre ; une Mort lève sa faux. */
@@ -325,8 +322,11 @@ export class Game {
   readonly lastCall: LastCall;
   readonly bellDrops: ReturnType<typeof createXpDrops>;
   private rollBell: () => boolean;
-  /** Boss en cours (null : aucun) ; `bossDone` : le boss de mi-run est déjà venu. */
-  boss: Boss | null = null;
+  /**
+   * Les boss debout (plusieurs à la fois : on défie autant de boss optionnels qu'on veut, et le Sonneur comme l'Abbé
+   * viennent quand même) ; un seul de chaque sorte. `bossDone` : le boss de mi-run est déjà venu.
+   */
+  readonly bosses: Boss[] = [];
   /** La Porte du patron de la run. */
   readonly door: PatronDoor;
   /** Les boss optionnels qui attendent devant les cimetières. */
@@ -693,7 +693,7 @@ export class Game {
         this.director.update(dt, this.runTime, this.mods.count);
         // Boss de mi-run : il arrive tout seul à son heure
         if (!this.bossDone && this.runTime >= FRERE_SONNEUR.arriveAt) this.spawnBoss();
-        this.boss?.update(dt);
+        for (const b of this.bosses) b.update(dt);
         // Succès qui dépendent du temps, des kills, de l'arsenal ou des TUNAS
         this.achievements.check();
         // Fermeture du bar : à 10:00, la Mort vient chercher le Buveur
@@ -975,11 +975,11 @@ export class Game {
   }
 
   /**
-   * Fait venir le Frère Sonneur : il sort de terre à `at` (par défaut, à sa distance d'arrivée devant le joueur).
-   * Un seul boss à la fois.
+   * Fait venir le Frère Sonneur : il sort de terre à `at` (par défaut, à sa distance d'arrivée devant le joueur),
+   * même si d'autres boss sont debout.
    */
   spawnBoss(at?: THREE.Vector3) {
-    if (this.boss || this.phase !== 'run' || this.arriving) return null;
+    if (this.bossUp('sonneur') || this.phase !== 'run' || this.arriving) return null;
     this.bossDone = true;
     const p = this.player;
     const up = p.pos.clone().normalize();
@@ -994,16 +994,18 @@ export class Game {
       onWave: (wat) => this.events.emit('bossWave', { boss, at: wat.clone() }),
       onPhase: (phase) => this.events.emit('bossPhase', { boss, phase }),
     });
-    this.boss = boss;
+    this.bosses.push(boss);
     this.events.emit('bossSpawned', { boss });
     return boss;
   }
 
-  /** Porte du patron : elle s'ouvre et l'Abbé en sort (pas pendant qu'un autre boss est debout). */
+  /** Un boss de la sorte `kind` est-il debout ? */
+  bossUp(kind: BossKind) { return this.bosses.some((b) => b.kind === kind); }
+
+  /** Porte du patron : elle s'ouvre et l'Abbé en sort (même si d'autres boss sont debout). */
   openDoor() {
     const at = this.door.pos;
     if (!at || this.door.open || this.phase !== 'run') return null;
-    if (this.boss) { this.events.emit('doorBusy', {}); return null; }
     this.door.open = true;
     this.events.emit('doorOpened', { at: at.clone() });
     return this.spawnAbbe(at.clone().addScaledVector(this.door.facing, PATRON_DOOR.spawnAhead), this.door.facing.clone());
@@ -1011,7 +1013,7 @@ export class Game {
 
   /** Fait venir l'Abbé à `at`, tourné vers `facing` (porte du patron, outils de dev). */
   spawnAbbe(at: THREE.Vector3, facing: THREE.Vector3) {
-    if (this.boss || this.phase !== 'run' || this.arriving) return null;
+    if (this.bossUp('abbe') || this.phase !== 'run' || this.arriving) return null;
     const z = this.spawnZombie('abbe', at, facing);
     if (!z) return null;
     z.emerge();
@@ -1024,15 +1026,14 @@ export class Game {
       onPour: (puddles) => this.events.emit('winePoured', { boss, puddles }),
       onPhase: (phase) => this.events.emit('bossPhase', { boss, phase }),
     });
-    this.boss = boss;
+    this.bosses.push(boss);
     this.events.emit('bossSpawned', { boss });
     return boss;
   }
 
-  /** Défie un boss optionnel qui attend : il entre en combat là où il est (pas pendant qu'un autre boss est debout). */
+  /** Défie un boss optionnel qui attend : il entre en combat là où il est (même si d'autres boss sont debout). */
   challenge(b: GraveBoss) {
     if (!b.waiting || this.phase !== 'run') return null;
-    if (this.boss) { this.events.emit('graveBossBusy', {}); return null; }
     const boss = this.spawnGraveBoss(b.kind, b.pos, b.facing);
     if (!boss) return null;
     b.waiting = false;
@@ -1042,7 +1043,7 @@ export class Game {
 
   /** Fait entrer en combat le boss optionnel `kind` à `at`, tourné vers `facing`. */
   private spawnGraveBoss(kind: BossKind, at: THREE.Vector3, facing: THREE.Vector3) {
-    if (this.boss || this.arriving || kind !== 'vador') return null;
+    if (this.bossUp(kind) || this.arriving || kind !== 'vador') return null;
     const z = this.spawnZombie('vador', at, facing);
     if (!z) return null;
     const boss: Vador = new Vador(z, {
@@ -1050,7 +1051,7 @@ export class Game {
       hurtPlayer: (dir, damage) => this.hurtPlayer(z, dir, damage),
       onStrike: (sat, radius, hit) => this.events.emit('saberStrike', { boss, at: sat, radius, hit }),
     });
-    this.boss = boss;
+    this.bosses.push(boss);
     this.events.emit('bossSpawned', { boss });
     return boss;
   }
@@ -1117,9 +1118,9 @@ export class Game {
     if (weapon) this.afterWeaponHit(z, Math.min(damage, hpBefore), killed);
     this.events.emit('zombieHit', { weapon, zombie: z, damage, crit, killed, hpAfter: z.hp, impact: impact.clone(), dir, shielded: shield > 0, combo });
     // Le boss tué laisse un coffre gratuit de haute rareté, et la run continue (l'Abbé aussi : seule la Mort l'arrête)
-    if (killed && z.def.boss && this.boss?.zombie === z) {
-      const boss = this.boss;
-      this.boss = null;
+    const bi = killed && z.def.boss ? this.bosses.findIndex((b) => b.zombie === z) : -1;
+    if (bi >= 0) {
+      const boss = this.bosses.splice(bi, 1)[0];
       const chest = this.chests.addFreeAt(z.pos);
       if (chest) chest.rarity = boss.kind === 'abbe' ? ABBE.chestRarity : boss.kind === 'vador' ? VADOR.chestRarity : FRERE_SONNEUR.chestRarity;
       if (boss.kind === 'abbe') this.abbeKilled = true;
@@ -1789,7 +1790,7 @@ export class Game {
     this.lastCall.clear();
     this.bellDrops.clear();
     this.tournees.clear();
-    this.boss = null;
+    this.bosses.length = 0;
     this.bossDone = false;
     this.abbeKilled = false;
     this.achievements.reset();
