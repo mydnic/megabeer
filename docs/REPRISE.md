@@ -47,7 +47,7 @@ tag git `avant-refonte-visuelle`. Réglages des effets : `VFX` dans `config/fx.t
 pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en jeu : temps par partie de l'image.
 
 **Prochaine étape :**
-0. **En cours (2026-11-21) : issue #22, Naruto, checkpoint 1 fait, à valider en jeu.** Idée de l'utilisateur : Naruto
+0. **Issue #22, Naruto, faite et validée le 2026-11-21, issue fermée.** Plus aucune issue ouverte : demander à l'utilisateur la suite. Idée de l'utilisateur : Naruto
    court sur la planète au hasard, en Naruto run, bien plus vite que le joueur ; le toucher le fait partir en fumée et
    laisse un coffre légendaire. Fait : modèle `naruto.glb` fourni (pose en A, sans poids) monté sur la Universal
    Animation Library par `tools/blender/allies.py --variant naruto`, course faite main à partir du sprint (`NARUTO_RUN` :
