@@ -5,7 +5,7 @@ face en double), monté sur le squelette de la Universal Animation Library (Quat
 1. débris lointain retiré, mise à l'échelle (le corps, couronne comprise, sans la masse, à `HEIGHT`) ; la matière de la
    masse habille aussi des pièces de l'armure : seules les pièces à sa droite (`MACE_X`) forment la masse ;
 2. squelette provisoire sur ses articulations (`JOINTS`, relevées sur des vues quadrillées ; le bras droit, qui tient la
-   masse, a les siennes : `JOINTS_R`), poids presque rigides ; la cape est retirée (rigide, ses jambes la traversaient) ;
+   masse, a les siennes : `JOINTS_R`), chaque pièce rigide sur l'os le plus proche ; la nappe de la cape est retirée ;
 3. membres tournés en pose en T, articulations du mannequin replacées sur les siennes, clips du mannequin (`CLIPS`) ;
 4. la masse remise dans la main droite, tête dans `MACE_DIR`, rigide sur l'os de la main ;
 5. deux gestes faits ici à partir de la garde : le balayage (`sweep` : la masse passe à l'horizontale sur tout l'avant)
@@ -45,11 +45,9 @@ CLIPS = {'Sword_Idle': 'idle', 'Walk_Formal_Loop': 'walk', 'Sword_Attack': 'slam
          'Death01': 'death'}
 # Pièces de la matière de la masse à droite de ce x : la masse (les autres habillent l'armure)
 MACE_X = -0.25
-# Une pièce dont le centre est à plus de LOOSE m de tout os pend du dos (bords de cape)
+# Au-dessus de HIPS_Z m, une pièce dont le centre est à plus de LOOSE m de tout os suit le buste
 LOOSE = 0.11
-# Sous LEGS_Z m, une pièce loin des os reste aux jambes ; sous BOOT_Z m près des pieds, c'est une botte (jamais la cape)
-LEGS_Z = 0.4
-BOOT_Z = 0.14
+HIPS_Z = 0.95
 # Une pièce plus grande que CAPE_SIZE m (diagonale) est la nappe de la cape
 CAPE_SIZE = 1.0
 # Direction de la tête de la masse en pose en T, dans le repère du squelette (comme l'épée de Guts : vers le haut)
@@ -165,20 +163,6 @@ for name in TEMP:
 bpy.ops.object.mode_set(mode='OBJECT')
 
 
-def is_boot(p):
-    # Les bottes : au ras du sol, près des pieds (la cape, elle, s'évasait plus loin)
-    return p.z < BOOT_Z and abs(p.x) < 0.3
-
-
-def is_cape(p):
-    # Derrière le dos (sauf le casque et la couronne), ou sur les côtés sous les mains ; jamais les bottes
-    if is_boot(p):
-        return False
-    if p.y > 0.07 and p.z < 1.42:
-        return True
-    return p.z < 0.72 and abs(p.x) > 0.21
-
-
 segs = {n: (joint(a), joint(b)) for n, (a, b) in TEMP.items()}
 groups = {n: body.vertex_groups.new(name=n) for n in TEMP}
 # Un export SketchUp : des centaines de petites pièces d'armure. Chacune suit un seul os, celui le plus proche de son
@@ -205,19 +189,17 @@ for start in range(len(body.data.vertices)):
     # La grande nappe de la cape : une seule pièce, plus grande que toutes les plaques d'armure
     if (hi_ - lo_).length > CAPE_SIZE:
         cape.extend(island)
-    if is_cape(c):
-        bone = 'spine_03'
-    elif abs(c.x) < 0.09 and 0.35 < c.z < 0.95:
+    if abs(c.x) < 0.09 and 0.35 < c.z < 0.95:
         bone = 'pelvis'
     else:
         bone = min(segs, key=lambda n: seg_dist(c, *segs[n]))
-        # Loin de tout os (un bord de cape près d'une main) : il pend du dos ; pas aux jambes (jambières, bottes)
-        if seg_dist(c, *segs[bone]) > LOOSE and LEGS_Z < c.z < 1.42:
+        # Au-dessus des hanches, loin de tout os (épaulières, pointes du dos) : il suit le buste
+        if seg_dist(c, *segs[bone]) > LOOSE and HIPS_Z < c.z < 1.42:
             bone = 'spine_03'
     groups[bone].add(island, 1.0, 'REPLACE')
 
-# La nappe de la cape est retirée (demande de l'utilisateur) : rigide, ses jambes la traversaient en marchant. Le reste
-# (armure du dos, pans) reste : le retirer emportait la moitié arrière du corps
+# La nappe de la cape est retirée (demande de l'utilisateur) : rigide, ses jambes la traversaient en marchant. Les
+# jambières suivent leurs jambes en entier (fixées au dos, leur moitié arrière restait plantée : une troisième jambe)
 bm = bmesh.new()
 bm.from_mesh(body.data)
 bm.verts.ensure_lookup_table()
