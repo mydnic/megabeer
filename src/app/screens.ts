@@ -291,6 +291,7 @@ export function wireScreens(game: Game, d: { planet: Planet; canvas: HTMLCanvasE
     banner.show(ALLIES[kind].shout, ''); banner.pulse(); banner.hideAfter(1.8);
   });
   game.events.on('radioOn', () => { banner.show('Radio mydnic !', 'Toute la horde rapplique sur la radio'); banner.pulse(); banner.hideAfter(2.5); });
+  game.events.on('narutoCaught', ({ chest }) => { banner.show('Naruto attrapé !', chest ? 'Il te laisse un coffre légendaire' : 'Pouf, plus personne'); banner.pulse(); banner.hideAfter(2.5); });
   game.events.on('radioBroken', () => { banner.show('La radio est cassée', 'La horde revient vers toi'); banner.hideAfter(2); });
   game.events.on('saiyanTierReached', ({ name }) => { banner.show(`${name} prêt !`, touchScreen() ? 'Bouton Saiyan pour te transformer' : 'F (Y à la manette) pour te transformer'); banner.hideAfter(2.2); });
   game.events.on('saiyanTransformed', ({ name }) => { banner.show(`${name} !`, ''); banner.pulse(); banner.hideAfter(1.8); });

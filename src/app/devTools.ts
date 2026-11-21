@@ -149,6 +149,11 @@ export async function wireDevTools(game: Game, d: {
       b.facing.copy(p.facing).negate();
       runLog.event('dev', 'graveBoss', k);
     },
+    placeNaruto() {
+      if (!inRun()) return;
+      const p = game.player, up = p.pos.clone().normalize(), right = new THREE.Vector3().crossVectors(p.facing, up).normalize();
+      for (const d of [8, 10, 12, 14]) if (game.naruto.placeAt(up.clone().multiplyScalar(p.pos.length()).addScaledVector(p.facing, d).addScaledVector(right, 2))) { runLog.event('dev', 'naruto'); return; }
+    },
     placeRadio() {
       if (!inRun()) return;
       const p = game.player, up = p.pos.clone().normalize(), right = new THREE.Vector3().crossVectors(p.facing, up).normalize();

@@ -138,6 +138,22 @@ export function createVfx(scene: THREE.Scene, sprites: Sprites) {
       }
     },
 
+    /**
+     * Nuage de fumée de ninja (Naruto qui disparaît) : un éclair, puis de grosses bouffées claires qui jaillissent en
+     * boule et roulent lentement vers le ciel.
+     */
+    poof(pos: THREE.Vector3, L: { puffs: number; color: number; dark: number; size: number; life: readonly [number, number]; height: number; spread: number; flash: number }) {
+      up.copy(pos).normalize();
+      at.copy(pos).addScaledVector(up, L.height);
+      sprites.emit(at, { kind: 'star', color: L.flash, size: L.size * 1.6, endSize: L.size * 2.4, life: 0.18, intensity: 1.4, rot: Math.random() * Math.PI });
+      for (let i = budget(L.puffs, true); i > 0; i--) {
+        sprites.emit(at, {
+          kind: 'smoke', color: i % 4 === 0 ? L.dark : L.color, size: L.size * rand(0.7, 1.1), endSize: L.size * rand(1.8, 2.6), life: rand(L.life[0], L.life[1]),
+          vel: vel.copy(scatter(0.25)).multiplyScalar(L.spread * rand(0.6, 1.4)), drag: 3, gravity: -0.15, rot: Math.random() * 6.28, spin: rand(-1.5, 1.5),
+        });
+      }
+    },
+
     /** Étincelles en étoile qui s'élèvent autour de `pos` (dans un rayon `spread`, jusqu'à `rise` m/s). */
     sparkle(pos: THREE.Vector3, color: number, count: number, spread = 0.6, rise = 2) {
       up.copy(pos).normalize();

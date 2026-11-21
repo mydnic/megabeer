@@ -18,6 +18,7 @@ import { createVehiclesView } from './world/vehiclesView';
 import { createAuraView } from './fx/auraView';
 import { createRadioView } from './world/radioView';
 import { createAlliesView } from './world/alliesView';
+import { createNarutoView } from './world/narutoView';
 import { createHairView } from './fx/hairView';
 import { createAfterimageView } from './fx/afterimageView';
 import { createEnemyShotsView } from './enemies/enemyShotsView';
@@ -154,6 +155,7 @@ const loading = {
   vehiclesView: boot(createVehiclesView(scene, (p, feetR) => game.player.supportAt(p, feetR))),
   hairView: boot(createHairView(scene)),
   alliesView: boot(createAlliesView(scene)),
+  narutoView: boot(createNarutoView(scene)),
   lastCallView: boot(createLastCallView(scene)),
   sonneurView: boot(createBossView(scene, { kind: 'sonneur', url: sonneurUrl, height: FRERE_SONNEUR.height, walkSpeed: FRERE_SONNEUR.speed })),
   abbeView: boot(createBossView(scene, { kind: 'abbe', url: abbeUrl, height: ABBE.height, walkSpeed: ABBE.speed })),
@@ -218,6 +220,7 @@ const enemyShotsView = await loading.enemyShotsView;
 const vehiclesView = await loading.vehiclesView;
 const hairView = await loading.hairView;
 const alliesView = await loading.alliesView;
+const narutoView = await loading.narutoView;
 game.events.on('allyPower', ({ kind }) => alliesView.power(kind));
 const groundAt = (p: THREE.Vector3) => game.player.supportAt(p, p.length());
 const shards = createShards(scene, groundAt);
@@ -349,6 +352,7 @@ function frame(now: number) {
   vehiclesView.sync(game.vehicles, player, dt, game.phase === 'run');
   radioView.sync(game.radio, game.phase === 'run', dt);
   alliesView.sync(game.allies, game.phase === 'run', dt);
+  narutoView.sync(game.naruto, game.phase === 'run', dt);
   auraView.sync(game.phase === 'run' ? game.saiyan.current?.aura ?? null : null, player.renderPos, camera, dt);
   hairView.sync(game.phase === 'run' ? game.saiyan.current : null, buveur.head, buveur.root.visible, dt);
   afterimages.update(dt, player.renderPos, player.renderFacing);

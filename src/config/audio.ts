@@ -113,6 +113,8 @@ export const AUDIO = {
     radioHit: { sample: 'impactPlate_light', volume: 0.35, rate: 1.2 },
     radioBroken: { sample: 'impactGlass_heavy', volume: 0.7, rate: 0.8 },
     allyJoin: { sample: 'impactBell_heavy', volume: 0.5, rate: 1.3 },
+    /** Naruto attrapé : il part en fumée (pouf étouffé, petit tintement). */
+    narutoPoof: [{ sample: 'impactSoft_heavy', volume: 0.8, rate: 1.5 }, { sample: 'impactBell_heavy', volume: 0.35, rate: 2 }],
     // Pouvoirs des alliés : bâton de Gandalf, Kienzan de Krilin, poussée de Yoda, bloc posé par Steve, son explosion
     allyPower: {
       gandalf: { sample: 'impactMining', volume: 0.7, rate: 0.6 },

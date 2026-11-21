@@ -47,6 +47,15 @@ tag git `avant-refonte-visuelle`. Réglages des effets : `VFX` dans `config/fx.t
 pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en jeu : temps par partie de l'image.
 
 **Prochaine étape :**
+0. **En cours (2026-11-21) : issue #22, Naruto, checkpoint 1 fait, à valider en jeu.** Idée de l'utilisateur : Naruto
+   court sur la planète au hasard, en Naruto run, bien plus vite que le joueur ; le toucher le fait partir en fumée et
+   laisse un coffre légendaire. Fait : modèle `naruto.glb` fourni (pose en A, sans poids) monté sur la Universal
+   Animation Library par `tools/blender/allies.py --variant naruto`, course faite main à partir du sprint (`NARUTO_RUN` :
+   buste penché, tête relevée, bras tendus en arrière) ; `game/naruto.ts` (un par run, loin de l'arrivée, son propre
+   hasard tiré de l'arrivée ; caps au hasard, pauses où on peut l'attraper, il contourne le décor), `config/naruto.ts`,
+   événement `narutoCaught` (coffre gratuit `chestRarity`), rendu `world/narutoView.ts`, fumée `vfx.poof`, son
+   `narutoPoof`, bandeau, DEV « Naruto devant ». Tests `tests/features/naruto.test.ts`. À régler avec l'utilisateur :
+   vitesse, pauses, portée, mini-carte (pas affiché pour l'instant).
 1. **La Stout est terminée et validée** (2026-11-09) : l'arme, la carte « nouvelle arme » au level-up et
    la synergie Black and Tan avec son affichage partout. Son évolution (Imperial Stout) attend l'objet
    « Bière plus forte » (feature objets). **Choisir avec l'utilisateur l'arme suivante** (roster GDD

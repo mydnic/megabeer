@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { ALLY_FX } from '../config/allies';
+import { NARUTO_LOOK } from '../config/naruto';
 import { SAIYAN, SAIYAN_LOOK } from '../config/saiyan';
 import { BELLS } from '../config/abbey';
 import { ARRIVAL, DEATH_BANNER } from '../config/player';
@@ -243,6 +244,11 @@ export function wireEffects(game: Game, d: Deps) {
     d.rings.spawn(boss.zombie.pos, 8, ELITES.color);
     vfx.pop(numPos.copy(boss.zombie.pos).setLength(boss.zombie.pos.length() + 4), ELITES.color, 6);
     rig.shake(HIT_FEEDBACK.shake * 2, HIT_FEEDBACK.shakeAmplitude * 2, HIT_FEEDBACK.shakeDecay);
+  });
+  // Naruto attrapé : il part en fumée, le coffre légendaire apparaît sous sa colonne de lumière
+  game.events.on('narutoCaught', ({ at, chest: c }) => {
+    vfx.poof(at, NARUTO_LOOK.smoke);
+    if (c) vfx.beam(c.pos, new THREE.Color(RARITIES[c.rarity ?? 0].color).getHex(), 1.4, 14, 1.6);
   });
   game.events.on('bossKilled', ({ boss, chest: c }) => {
     const at = boss.zombie.pos;

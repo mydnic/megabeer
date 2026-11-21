@@ -65,6 +65,8 @@ import { SpawnDirector, spawnCurveAt } from './spawnDirector';
 import { Vehicles, type ParkedVehicle } from './vehicles';
 import { Saiyan } from './saiyan';
 import { Radio } from './radio';
+import { Naruto } from './naruto';
+import { NARUTO } from '../config/naruto';
 import { Allies, type Ally } from './allies';
 import { ALLIES, ALLY_FX, type AllyId, type AllyPower } from '../config/allies';
 import { RADIO } from '../config/radio';
@@ -243,6 +245,8 @@ export type GameEvents = {
   radioHit: { hp: number; maxHp: number };
   /** La radio est détruite : la horde revient vers le joueur. */
   radioBroken: { pos: THREE.Vector3 };
+  /** Le joueur attrape Naruto : il part en fumée à `at` et laisse un coffre gratuit (null : plus de place). */
+  narutoCaught: { at: THREE.Vector3; chest: Chest | null };
   /** Senzu : le joueur en mange une (sous le seuil de PV), il retrouve tous ses PV ; `left` : celles qui restent. */
   senzuEaten: { left: number };
   /** Jauge de colère : un nouveau palier de transformation est atteint (le joueur peut s'y transformer). */
@@ -342,6 +346,8 @@ export class Game {
   readonly allies: Allies;
   /** La radio planquée (issue #16). */
   readonly radio: Radio;
+  /** Naruto, qui court sur la planète : on l'attrape pour un coffre légendaire. */
+  readonly naruto: Naruto;
   /** Jauge de colère et transformation Super Saiyan (objet Sang Saiyan). */
   readonly saiyan = new Saiyan();
   /** Véhicules écrase-zombies (un garé à la fois, ou celui qu'on conduit). */
@@ -482,6 +488,7 @@ export class Game {
     this.vehicles = new Vehicles(deps.collider, () => this.random());
     this.radio = new Radio(deps.collider, () => this.random());
     this.allies = new Allies(deps.collider);
+    this.naruto = new Naruto(deps.collider);
     this.door = new PatronDoor(deps.collider);
     this.graveBosses = new GraveBosses(deps.collider, () => this.random());
     this.closing = new Closing({
@@ -612,6 +619,8 @@ export class Game {
     this.radio.place(spawn.dir, [...this.chests.list.map((c) => c.pos), ...this.pumps.list.map((q) => q.pos), ...this.lastCall.list.map((b) => b.pos), ...(parked ? [parked.pos] : [])]);
     // Les alliés : un par abbaye ; les boss optionnels : chacun devant un cimetière
     this.allies.place();
+    // Naruto : il court déjà quelque part, loin de l'arrivée
+    this.naruto.place(spawn.dir);
     this.graveBosses.place(spawn.dir, spawn.graveyards, this.doom.dir);
     this.bins.place(spawn.dir, [...this.chests.list.map((c) => c.pos), ...this.lastCall.list.map((b) => b.pos)], this.pumps.list.map((p) => p.pos), this.binCount);
     const landing = this.player.pos.clone();
@@ -766,6 +775,8 @@ export class Game {
           leave: (a) => this.events.emit('allyLeft', { kind: a.kind }),
         });
         this.updateAllyThings(dt);
+        // Naruto : touché, il part en fumée et laisse un coffre légendaire
+        if (this.naruto.update(dt, p.pos)) this.catchNaruto();
         // Radio planquée : à portée, la touche d'action l'allume
         this.radio.update(p.pos);
         if (input.actionPressed && this.radio.focus && !this.chests.focus && !this.offer) this.turnRadioOn();
@@ -1704,6 +1715,15 @@ export class Game {
 
   /** Atterrissage : la première horde sort de terre autour du joueur. */
 
+  /** Naruto attrapé : il laisse un coffre gratuit de haute rareté là où il était. */
+  private catchNaruto() {
+    const at = this.naruto.pos!.clone();
+    const chest = this.chests.addFreeAt(at);
+    if (chest) chest.rarity = NARUTO.chestRarity;
+    this.naruto.clear();
+    this.events.emit('narutoCaught', { at, chest });
+  }
+
   /** La radio s'allume : elle devient le leurre de la horde. */
   private turnRadioOn() {
     if (!this.radio.turnOn() || !this.radio.pos) return;
@@ -1893,6 +1913,7 @@ export class Game {
     this.exitVehicle('end');
     this.radio.clear();
     this.allies.clear();
+    this.naruto.clear();
     this.horde.setDecoy(null);
     this.saiyan.reset();
     this.vehicles.clear();
