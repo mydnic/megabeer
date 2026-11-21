@@ -5,7 +5,7 @@ face en double), monté sur le squelette de la Universal Animation Library (Quat
 1. débris lointain retiré, mise à l'échelle (le corps, couronne comprise, sans la masse, à `HEIGHT`) ; la matière de la
    masse habille aussi des pièces de l'armure : seules les pièces à sa droite (`MACE_X`) forment la masse ;
 2. squelette provisoire sur ses articulations (`JOINTS`, relevées sur des vues quadrillées ; le bras droit, qui tient la
-   masse, a les siennes : `JOINTS_R`), poids presque rigides ; la cape suit le dos d'un bloc ;
+   masse, a les siennes : `JOINTS_R`), poids presque rigides ; la cape est retirée (rigide, ses jambes la traversaient) ;
 3. membres tournés en pose en T, articulations du mannequin replacées sur les siennes, clips du mannequin (`CLIPS`) ;
 4. la masse remise dans la main droite, tête dans `MACE_DIR`, rigide sur l'os de la main ;
 5. deux gestes faits ici à partir de la garde : le balayage (`sweep` : la masse passe à l'horizontale sur tout l'avant)
@@ -21,6 +21,7 @@ import math
 import os
 import sys
 
+import bmesh
 import bpy
 from mathutils import Matrix, Vector
 
@@ -44,14 +45,13 @@ CLIPS = {'Sword_Idle': 'idle', 'Walk_Formal_Loop': 'walk', 'Sword_Attack': 'slam
          'Death01': 'death'}
 # Pièces de la matière de la masse à droite de ce x : la masse (les autres habillent l'armure)
 MACE_X = -0.25
-# Une pièce dont le centre est à plus de LOOSE m de tout os pend du dos (bords de cape)
+# Une pièce dont le centre est à plus de LOOSE m de tout os est un bord de cape (retiré avec elle)
 LOOSE = 0.11
 # Sous LEGS_Z m, une pièce loin des os reste aux jambes ; sous BOOT_Z m près des pieds, c'est une botte (jamais la cape)
 LEGS_Z = 0.4
 BOOT_Z = 0.14
-# La cape en jupe : sous `top` m, elle suit de plus en plus les cuisses, jusqu'à `legs` (part) dès `full` m ; de part et
-# d'autre du milieu du dos sur `seam` m, elle passe d'une cuisse à l'autre
-CAPE_SKIRT = {'top': 0.95, 'full': 0.3, 'legs': 0.85, 'seam': 0.12}
+# Une pièce plus grande que CAPE_SIZE m (diagonale) est la nappe de la cape
+CAPE_SIZE = 1.0
 # Direction de la tête de la masse en pose en T, dans le repère du squelette (comme l'épée de Guts : vers le haut)
 MACE_DIR = Vector((0, 0, 1))
 SWEEP = 1.1  # durée du balayage (s)
@@ -166,7 +166,7 @@ bpy.ops.object.mode_set(mode='OBJECT')
 
 
 def is_boot(p):
-    # Les bottes : au ras du sol, près des pieds (la cape, elle, s'évase plus loin)
+    # Les bottes : au ras du sol, près des pieds (la cape, elle, s'évasait plus loin)
     return p.z < BOOT_Z and abs(p.x) < 0.3
 
 
@@ -182,7 +182,7 @@ def is_cape(p):
 segs = {n: (joint(a), joint(b)) for n, (a, b) in TEMP.items()}
 groups = {n: body.vertex_groups.new(name=n) for n in TEMP}
 # Un export SketchUp : des centaines de petites pièces d'armure. Chacune suit un seul os, celui le plus proche de son
-# centre (rigide : une plaque tirée par deux os s'étirait en dalle) ; la cape suit le dos, la jupe d'armure le bassin.
+# centre (rigide : une plaque tirée par deux os s'étirait en dalle) ; la jupe d'armure suit le bassin ; la cape est retirée.
 links = [[] for _ in body.data.vertices]
 for e in body.data.edges:
     a, b = e.vertices
@@ -200,6 +200,11 @@ for start in range(len(body.data.vertices)):
             if not seen[j]:
                 seen[j] = True; stack.append(j)
     c = sum((body.data.vertices[i].co for i in island), Vector()) / len(island)
+    lo_ = Vector(map(min, *(body.data.vertices[i].co for i in island)))
+    hi_ = Vector(map(max, *(body.data.vertices[i].co for i in island)))
+    # La grande nappe de la cape : une seule pièce, plus grande que toutes les plaques d'armure
+    if (hi_ - lo_).length > CAPE_SIZE:
+        cape.extend(island)
     if is_cape(c):
         bone = 'spine_03'
         cape.extend(island)
@@ -207,31 +212,19 @@ for start in range(len(body.data.vertices)):
         bone = 'pelvis'
     else:
         bone = min(segs, key=lambda n: seg_dist(c, *segs[n]))
-        # Loin de tout os (un bord de cape près d'une main) : il pend du dos avec la cape ; pas aux jambes (jambières, bottes)
+        # Loin de tout os (un bord de cape près d'une main) : retiré avec la cape ; pas aux jambes (jambières, bottes)
         if seg_dist(c, *segs[bone]) > LOOSE and LEGS_Z < c.z < 1.42:
             bone = 'spine_03'
             cape.extend(island)
     groups[bone].add(island, 1.0, 'REPLACE')
 
-# La cape montée comme une jupe : le haut tient au dos, le bas suit de plus en plus la cuisse de son côté (les jambes ne
-# la traversent plus en marchant) ; au milieu du dos, la moyenne des deux cuisses (elle ne se déchire pas)
-def smooth(e):
-    e = max(0.0, min(1.0, e))
-    return e * e * (3 - 2 * e)
-
-
-S_ = CAPE_SKIRT
-for i in cape:
-    v = body.data.vertices[i].co
-    w = S_['legs'] * smooth((S_['top'] - v.z) / (S_['top'] - S_['full']))
-    if w <= 0:
-        continue
-    left = smooth((v.x + S_['seam']) / (2 * S_['seam']))
-    groups['spine_03'].add([i], 1.0 - w, 'REPLACE')
-    if w * left > 0:
-        groups['thigh_l'].add([i], w * left, 'REPLACE')
-    if w * (1 - left) > 0:
-        groups['thigh_r'].add([i], w * (1 - left), 'REPLACE')
+# La cape est retirée (demande de l'utilisateur) : rigide, ses jambes la traversaient en marchant
+bm = bmesh.new()
+bm.from_mesh(body.data)
+bm.verts.ensure_lookup_table()
+bmesh.ops.delete(bm, geom=[bm.verts[i] for i in set(cape)], context='VERTS')
+bm.to_mesh(body.data)
+bm.free()
 mod = body.modifiers.new('tmp', 'ARMATURE'); mod.object = tmp
 body.parent = tmp
 
@@ -357,6 +350,11 @@ def rot(name, axis, deg):
     h = pb.head.copy()
     pb.matrix = Matrix.Translation(h) @ Matrix.Rotation(math.radians(deg), 4, axis) @ Matrix.Translation(-h) @ pb.matrix
     bpy.context.view_layer.update()
+
+
+def smooth(e):
+    e = max(0.0, min(1.0, e))
+    return e * e * (3 - 2 * e)
 
 
 def sweep_pose(u):
