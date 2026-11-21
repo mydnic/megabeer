@@ -31,6 +31,8 @@ export async function createNarutoView(scene: THREE.Scene) {
       m.layers.set(LAYER_CHARACTER);
       m.frustumCulled = false;
     });
+    // Mis à sa taille de jeu (le modèle sort de Blender à taille humaine)
+    model.scale.setScalar(NARUTO.height / new THREE.Box3().setFromObject(model).getSize(new THREE.Vector3()).y);
     root.add(model);
     mixer = new THREE.AnimationMixer(model);
     const clip = (name: string) => gltf.animations.find((a) => a.name === name);

@@ -3,8 +3,9 @@
 // un coffre légendaire gratuit. Un seul par run, présent dès le début, loin du point d'arrivée.
 
 export const NARUTO = {
-  /** Taille (m) et modèle (src/assets/models/<file>, fait par `tools/blender/allies.py --variant naruto`). */
-  height: 1.65, file: 'naruto.glb',
+  /** Taille à l'écran (m ; le modèle est mis à cette taille) et modèle (src/assets/models/<file>, fait par
+   * `tools/blender/allies.py --variant naruto`). */
+  height: 3.3, file: 'naruto.glb',
   /** Placement : à plus de `minFromSpawn` m de l'arrivée ; essais. */
   minFromSpawn: 40, tries: 200,
   /** Vitesse de course (m/s ; le joueur court à BASE_SPEED, 9 m/s). */
@@ -16,7 +17,7 @@ export const NARUTO = {
   /** Il regarde `lookAhead` m devant lui : un mur ou un arbre, et il repart ailleurs. */
   lookAhead: 2.5,
   /** On l'attrape en arrivant à moins de `catchRange` m de lui (à pied ou en véhicule). */
-  catchRange: 1.6,
+  catchRange: 2.2,
   /** Coffre gratuit laissé à sa place (rang dans RARITIES, 4 : Légendaire). */
   chestRarity: 4,
 } as const;
