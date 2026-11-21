@@ -45,7 +45,7 @@ CLIPS = {'Sword_Idle': 'idle', 'Walk_Formal_Loop': 'walk', 'Sword_Attack': 'slam
          'Death01': 'death'}
 # Pièces de la matière de la masse à droite de ce x : la masse (les autres habillent l'armure)
 MACE_X = -0.25
-# Une pièce dont le centre est à plus de LOOSE m de tout os est un bord de cape (retiré avec elle)
+# Une pièce dont le centre est à plus de LOOSE m de tout os pend du dos (bords de cape)
 LOOSE = 0.11
 # Sous LEGS_Z m, une pièce loin des os reste aux jambes ; sous BOOT_Z m près des pieds, c'est une botte (jamais la cape)
 LEGS_Z = 0.4
@@ -207,18 +207,17 @@ for start in range(len(body.data.vertices)):
         cape.extend(island)
     if is_cape(c):
         bone = 'spine_03'
-        cape.extend(island)
     elif abs(c.x) < 0.09 and 0.35 < c.z < 0.95:
         bone = 'pelvis'
     else:
         bone = min(segs, key=lambda n: seg_dist(c, *segs[n]))
-        # Loin de tout os (un bord de cape près d'une main) : retiré avec la cape ; pas aux jambes (jambières, bottes)
+        # Loin de tout os (un bord de cape près d'une main) : il pend du dos ; pas aux jambes (jambières, bottes)
         if seg_dist(c, *segs[bone]) > LOOSE and LEGS_Z < c.z < 1.42:
             bone = 'spine_03'
-            cape.extend(island)
     groups[bone].add(island, 1.0, 'REPLACE')
 
-# La cape est retirée (demande de l'utilisateur) : rigide, ses jambes la traversaient en marchant
+# La nappe de la cape est retirée (demande de l'utilisateur) : rigide, ses jambes la traversaient en marchant. Le reste
+# (armure du dos, pans) reste : le retirer emportait la moitié arrière du corps
 bm = bmesh.new()
 bm.from_mesh(body.data)
 bm.verts.ensure_lookup_table()
