@@ -442,12 +442,21 @@ def naruto_run():
         pb.matrix = Matrix.Translation(h) @ q.to_matrix().to_4x4() @ Matrix.Translation(-h) @ pb.matrix
         bpy.context.view_layer.update()
 
+    # Les courbes du sprint lues à la main à chaque image (frame_set ne réévaluait plus le clip après la première
+    # image retouchée : les jambes restaient figées)
+    curves = []
+    for fc in curves_of(sprint):
+        bone, _, prop = fc.data_path.partition('"].')
+        if bone.startswith('pose.bones["') and bone[len('pose.bones["'):] in rig.pose.bones:
+            curves.append((rig.pose.bones[bone[len('pose.bones["'):]], prop, fc.array_index, fc))
+    rig.animation_data.action = None
     frames = {}
     for f in range(f0, f1 + 1):
-        rig.animation_data.action = sprint
-        if hasattr(rig.animation_data, 'action_slot') and sprint.slots:
-            rig.animation_data.action_slot = sprint.slots[0]
-        bpy.context.scene.frame_set(f)
+        for pb in rig.pose.bones:
+            pb.matrix_basis = Matrix()
+        for pb, prop, i, fc in curves:
+            getattr(pb, prop)[i] = fc.evaluate(f)
+        bpy.context.view_layer.update()
         for n, deg in NARUTO_RUN['lean'].items():
             rot(n, X, deg)
         rot('neck_01', X, NARUTO_RUN['head'] * 0.5)
@@ -461,9 +470,9 @@ def naruto_run():
     act = bpy.data.actions.new('run')
     rig.animation_data.action = act
     for f, mats in frames.items():
+        # Pas de mise à jour de la scène ici : elle rejouerait le clip en cours d'écriture par-dessus la pose
         for pb in rig.pose.bones:
             pb.matrix_basis = mats[pb.name]
-        bpy.context.view_layer.update()
         if hasattr(rig.animation_data, 'action_slot') and act.slots:
             rig.animation_data.action_slot = act.slots[0]
         for pb in rig.pose.bones:

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ACHIEVEMENTS } from '../../src/config/achievements';
 import { NARUTO } from '../../src/config/naruto';
 import { BASE_SPEED, PLANET_RADIUS } from '../../src/config/world';
 import { createTestGame } from '../support/testGame';
@@ -85,6 +86,15 @@ describe('Naruto', () => {
     t.play(3);
     expect(t.events('narutoCaught')).toHaveLength(1);
     expect(n.state).toBe('gone');
+  });
+
+  it('l attraper débloque le succès Dattebayo !', () => {
+    const { t } = calm();
+    const id = ACHIEVEMENTS.find((a) => a.rule.kind === 'naruto')!.id;
+    expect(t.events('achievementUnlocked').some((e) => e.id === id)).toBe(false);
+    expect(t.game.naruto.placeAt(t.inFront(1))).toBe(true);
+    t.play(0.05);
+    expect(t.events('achievementUnlocked').some((e) => e.id === id)).toBe(true);
   });
 
   it('une nouvelle run remet un Naruto en course', () => {

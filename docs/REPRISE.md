@@ -54,7 +54,9 @@ pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en
    buste penché, tête relevée, bras tendus en arrière) ; `game/naruto.ts` (un par run, loin de l'arrivée, son propre
    hasard tiré de l'arrivée ; caps au hasard, pauses où on peut l'attraper, il contourne le décor), `config/naruto.ts`,
    événement `narutoCaught` (coffre gratuit `chestRarity`), rendu `world/narutoView.ts`, fumée `vfx.poof`, son
-   `narutoPoof`, bandeau, DEV « Naruto devant ». Tests `tests/features/naruto.test.ts`. À régler avec l'utilisateur :
+   `narutoPoof`, bandeau, DEV « Naruto devant », succès « Dattebayo ! » (40 TUNAS). Taille 3,3 m (demande de
+   l'utilisateur). Piège Blender : en cuisant un clip, ne pas faire `view_layer.update()` entre `matrix_basis` et
+   `keyframe_insert` (le clip en cours d'écriture rejoue sa première clé : jambes figées). Tests `tests/features/naruto.test.ts`. À régler avec l'utilisateur :
    vitesse, pauses, portée, mini-carte (pas affiché pour l'instant).
 1. **La Stout est terminée et validée** (2026-11-09) : l'arme, la carte « nouvelle arme » au level-up et
    la synergie Black and Tan avec son affichage partout. Son évolution (Imperial Stout) attend l'objet
