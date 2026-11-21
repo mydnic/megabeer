@@ -1,28 +1,30 @@
 """
-Sauron (boss de la Montagne du Destin, issue #20) : le modèle `sauron.glb` fourni par l'utilisateur (Sketchfab, export
-SketchUp texturé, sans squelette, en armure et couronne, cape, la masse tenue en diagonale dans la main droite, chaque
-face en double), monté sur le squelette de la Universal Animation Library (Quaternius, CC0) comme `guts.py` :
-1. débris lointain retiré, mise à l'échelle (le corps, couronne comprise, sans la masse, à `HEIGHT`) ; la matière de la
-   masse habille aussi des pièces de l'armure : seules les pièces à sa droite (`MACE_X`) forment la masse ;
-2. squelette provisoire sur ses articulations (`JOINTS`, relevées sur des vues quadrillées ; le bras droit, qui tient la
-   masse, a les siennes : `JOINTS_R`), chaque pièce rigide sur l'os le plus proche ; la nappe de la cape est retirée ;
+Sauron (boss de la Montagne du Destin, issue #20) : le modèle « Sauron Game-ready character » fourni par l'utilisateur
+(`Desktop/MODELS/a83576be813442a280c1ab52ad9fecdb.glb`, Sketchfab : armure texturée, déjà montée sur un squelette Rigify,
+posée sur un socle en rocher, cape et masse à part), remonté sur le squelette de la Universal Animation Library
+(Quaternius, CC0) comme `guts.py` :
+1. socle, cape (retirée à la demande de l'utilisateur : rigide, ses jambes la traversaient) et aide retirés ; matières
+   réduites à leur couleur de base ; mise à l'échelle (le corps, couronne comprise, à `HEIGHT`) ;
+2. ses poids d'origine gardés : chaque os de déformation Rigify (`DEF-...`) versé dans l'os du mannequin qui lui
+   correspond (`DEF_TO`), le squelette provisoire posé sur ses articulations ;
 3. membres tournés en pose en T, articulations du mannequin replacées sur les siennes, clips du mannequin (`CLIPS`) ;
 4. la masse remise dans la main droite, tête dans `MACE_DIR`, rigide sur l'os de la main ;
 5. deux gestes faits ici à partir de la garde : le balayage (`sweep` : la masse passe à l'horizontale sur tout l'avant)
    et l'appel de l'Oeil (`roar` : le bras gauche se lève vers le ciel, le buste se cambre).
 
 Usage (Blender 5.2) :
-  blender -b --factory-startup -P tools/blender/sauron.py -- --src "C:/Users/mydnic/Desktop/MODELS/sauron.glb"
+  blender -b --factory-startup -P tools/blender/sauron.py -- --src "C:/Users/mydnic/Desktop/MODELS/a83576be813442a280c1ab52ad9fecdb.glb"
       --ual "C:/Users/mydnic/Desktop/MODELS/animations/quaternius_universal_animation_library/UAL1_Standard.glb"
       --out src/assets/models/sauron.glb [--render DOSSIER]
 """
 import argparse
 import math
 import os
+import re
 import sys
 
-import bmesh
 import bpy
+import numpy as np
 from mathutils import Matrix, Vector
 
 ap = argparse.ArgumentParser()
@@ -33,23 +35,21 @@ ap.add_argument('--render', default='')
 args = ap.parse_args(sys.argv[sys.argv.index('--') + 1:])
 
 HEIGHT = 1.9  # taille du corps dans le fichier, couronne comprise (le jeu le met à la taille du boss)
-# Articulations (m, après mise à l'échelle : face vers -Y, gauche du perso = +X ; le côté droit en miroir, sauf JOINTS_R)
-JOINTS = {'pelvis': (0, -0.04, 0.93), 'chest': (0, -0.04, 1.2), 'neck': (0, -0.05, 1.45), 'top': (0, -0.06, 1.7),
-          'shoulder': (0.24, -0.05, 1.36), 'elbow': (0.37, -0.07, 1.12), 'wrist': (0.39, -0.06, 0.89),
-          'fingers': (0.38, -0.07, 0.79), 'hip': (0.11, -0.03, 0.9), 'knee': (0.12, -0.06, 0.5),
-          'ankle': (0.13, -0.03, 0.1), 'toe': (0.13, -0.24, 0.02)}
-# Le bras droit, plus replié sur la masse
-JOINTS_R = {'elbow': (-0.3, -0.08, 1.11), 'wrist': (-0.38, -0.05, 0.9), 'fingers': (-0.41, -0.05, 0.82)}
+# Les pièces à part, par leur matière : le socle en rocher, la cape (retirés), la masse, la petite pièce de la main droite
+BASE, CAPE, MACE, RING = 'Material_6', 'Material_8', 'Material_7', 'Material_5'
+# Teinte de l'armure (part de la couleur de ses textures)
+ARMOR_DARK = 0.3
+# Os de déformation Rigify (nom sans le suffixe numérique) -> os du squelette provisoire (noms du mannequin)
+DEF_TO = {'spine': 'pelvis', 'pelvis.L': 'pelvis', 'pelvis.R': 'pelvis', 'spine.001': 'pelvis',
+          'spine.002': 'spine_03', 'spine.003': 'spine_03', 'spine.004': 'Head', 'spine.005': 'Head', 'spine.006': 'Head'}
+for S, s in (('L', 'l'), ('R', 'r')):
+    DEF_TO.update({f'shoulder.{S}': 'spine_03', f'upper_arm.{S}': f'upperarm_{s}', f'upper_arm.{S}.001': f'upperarm_{s}',
+                   f'forearm.{S}': f'lowerarm_{s}', f'forearm.{S}.001': f'lowerarm_{s}', f'hand.{S}': f'hand_{s}',
+                   f'thigh.{S}': f'thigh_{s}', f'thigh.{S}.001': f'thigh_{s}', f'shin.{S}': f'calf_{s}',
+                   f'shin.{S}.001': f'calf_{s}', f'foot.{S}': f'foot_{s}', f'toe.{S}': f'foot_{s}'})
 # Garde, marche solennelle, coup abattu, touché, mort
 CLIPS = {'Sword_Idle': 'idle', 'Walk_Formal_Loop': 'walk', 'Sword_Attack': 'slam', 'Hit_Chest': 'hit',
          'Death01': 'death'}
-# Pièces de la matière de la masse à droite de ce x : la masse (les autres habillent l'armure)
-MACE_X = -0.25
-# Au-dessus de HIPS_Z m, une pièce dont le centre est à plus de LOOSE m de tout os suit le buste
-LOOSE = 0.11
-HIPS_Z = 0.95
-# Une pièce plus grande que CAPE_SIZE m (diagonale) est la nappe de la cape
-CAPE_SIZE = 1.0
 # Direction de la tête de la masse en pose en T, dans le repère du squelette (comme l'épée de Guts : vers le haut)
 MACE_DIR = Vector((0, 0, 1))
 SWEEP = 1.1  # durée du balayage (s)
@@ -70,18 +70,23 @@ def curves_of(action):
         return action.layers[0].strips[0].channelbags[0].fcurves
 
 
-def seg_dist(p, a, b):
-    ab = b - a
-    t = max(0.0, min(1.0, (p - a).dot(ab) / max(ab.length_squared, 1e-9)))
-    return (a + ab * t - p).length
+def base_name(bone):
+    """`DEF-thigh.L.001_140` -> `thigh.L.001` (os de déformation sans préfixe ni numéro d'import)."""
+    return re.sub(r'_\d+$', '', bone)[len('DEF-'):] if bone.startswith('DEF-') else None
 
 
-def joint(name):
-    base, _, side = name.partition('.')
-    if side == 'r' and base in JOINTS_R:
-        return Vector(JOINTS_R[base])
-    x, y, z = JOINTS[base]
-    return Vector((-x if side == 'r' else x, y, z))
+def base_color_image(mat):
+    """L'image qui donne la couleur de base (directement ou à travers des mélanges avec les couleurs de sommets)."""
+    bsdf = next((n for n in mat.node_tree.nodes if n.type == 'BSDF_PRINCIPLED'), None)
+    stack = [bsdf.inputs['Base Color']] if bsdf else []
+    while stack:
+        sock = stack.pop()
+        for link in sock.links:
+            n = link.from_node
+            if n.type == 'TEX_IMAGE':
+                return n
+            stack.extend(i for i in n.inputs if i.is_linked)
+    return None
 
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -100,52 +105,110 @@ if rig.animation_data:
     rig.animation_data.action = None
 ual = {b.name: (rig.matrix_world @ b.head_local, rig.matrix_world @ b.tail_local) for b in rig.data.bones}
 
-# --- 1. Le modèle : débris lointain (`Material_Boots`, loin du corps) retiré, à l'échelle
+# --- 1. Le modèle : socle, cape et aide retirés, matières à leur couleur de base, à l'échelle
 before = set(bpy.context.scene.objects)
 bpy.ops.import_scene.gltf(filepath=args.src)
 new = [o for o in bpy.context.scene.objects if o not in before]
-parts = [o for o in new if o.type == 'MESH' and o.data.materials[0].name != 'Material_Boots']
-for o in parts:
+# Son animation à lui (une pose figée) ne sert pas : il prend les clips du mannequin
+for a in list(bpy.data.actions):
+    if a.name not in CLIPS.values():
+        bpy.data.actions.remove(a)
+src_rig = next(o for o in new if o.type == 'ARMATURE')
+# Ses articulations, lues sur ses os de déformation (dans la pose du fichier)
+dbone = {base_name(b.name): (src_rig.matrix_world @ b.head_local, src_rig.matrix_world @ b.tail_local)
+         for b in src_rig.data.bones if base_name(b.name)}
+meshes = [o for o in new if o.type == 'MESH' and o.data.materials and o.data.materials[0].name not in (BASE, CAPE)]
+for o in meshes:
+    # La pose de repos du fichier devient la forme (ses poids restent)
+    for m in list(o.modifiers):
+        o.modifiers.remove(m)
     o.data.transform(o.matrix_world)
     o.parent = None
     o.matrix_world = Matrix()
 for o in new:
-    if o not in parts:
+    if o not in meshes and o.name in bpy.data.objects:
         bpy.data.objects.remove(o)
-mace_all = next(o for o in parts if 'mace' in o.data.materials[0].name)
-vs = [v.co for o in parts if o is not mace_all for v in o.data.vertices]
+darkened = set()
+for mat in {o.data.materials[0] for o in meshes}:
+    img = base_color_image(mat)
+    nt = mat.node_tree
+    bsdf = next(n for n in nt.nodes if n.type == 'BSDF_PRINCIPLED')
+    for n in list(nt.nodes):
+        if n not in (bsdf, img) and n.type != 'OUTPUT_MATERIAL':
+            nt.nodes.remove(n)
+    if img:
+        nt.links.new(img.outputs['Color'], bsdf.inputs['Base Color'])
+        # Son armure est un métal gris, noir seulement par ses reflets : sans métal (cel-shading), on l'assombrit
+        if mat.name != MACE and img.image and img.image.name not in darkened:
+            darkened.add(img.image.name)
+            img.image.scale(*[min(1024, s) for s in img.image.size])
+            px = np.empty(len(img.image.pixels), dtype=np.float32)
+            img.image.pixels.foreach_get(px)
+            px.reshape(-1, 4)[:, :3] *= ARMOR_DARK
+            img.image.pixels.foreach_set(px)
+            img.image.update()
+    bsdf.inputs['Metallic'].default_value = 0
+mace = next(o for o in meshes if o.data.materials[0].name == MACE)
+meshes.remove(mace)
+sword = mace
+sword.name = 'masse'
+vs = [v.co for o in meshes for v in o.data.vertices]
 lo = Vector(map(min, *vs)); hi = Vector(map(max, *vs))
 S0 = Matrix.Scale(HEIGHT / (hi.z - lo.z), 4) @ Matrix.Translation(Vector((-(lo.x + hi.x) / 2, -(lo.y + hi.y) / 2, -lo.z)))
-for o in parts:
+for o in meshes + [sword]:
     o.data.transform(S0)
-# La matière de la masse habille aussi l'armure : seules les pièces à sa droite forment la masse
+dbone = {k: (S0 @ h, S0 @ t) for k, (h, t) in dbone.items()}
+
+# --- 2. Ses poids d'origine versés dans les os du mannequin
+for o in meshes:
+    out = {n: o.vertex_groups.new(name=n) for n in TEMP}
+    if o.data.materials[0].name == RING:
+        # La petite pièce de la main droite n'a pas de poids : elle suit la main
+        out['hand_r'].add(list(range(len(o.data.vertices))), 1.0, 'REPLACE')
+    else:
+        for v in o.data.vertices:
+            acc = {}
+            for g in v.groups:
+                name = o.vertex_groups[g.group].name
+                key = base_name(name)
+                if key is None:
+                    continue
+                # Doigts, paumes, pouces (`f_index.01.L`...) : la main
+                target = DEF_TO.get(key)
+                if target is None and re.match(r'(f_|thumb|palm)', key) and key[-1] in 'LR':
+                    target = f'hand_{key[-1].lower()}'
+                if target:
+                    acc[target] = acc.get(target, 0) + g.weight
+            total = sum(acc.values())
+            if total <= 0:
+                acc, total = {'spine_03': 1.0}, 1.0
+            for n, w in acc.items():
+                out[n].add([v.index], w / total, 'REPLACE')
+    for g in list(o.vertex_groups):
+        if g.name not in TEMP:
+            o.vertex_groups.remove(g)
 bpy.ops.object.select_all(action='DESELECT')
-bpy.context.view_layer.objects.active = mace_all
-mace_all.select_set(True)
-bpy.ops.object.mode_set(mode='EDIT')
-bpy.ops.mesh.select_all(action='SELECT')
-bpy.ops.mesh.separate(type='LOOSE')
-bpy.ops.object.mode_set(mode='OBJECT')
-loose = [o for o in bpy.context.scene.objects if o.type == 'MESH' and 'mace' in o.data.materials[0].name]
-mace_bits = [o for o in loose if sum((v.co for v in o.data.vertices), Vector()).x / len(o.data.vertices) < MACE_X]
-armor_bits = [o for o in loose if o not in mace_bits]
-bpy.ops.object.select_all(action='DESELECT')
-for o in mace_bits:
+for o in meshes:
     o.select_set(True)
-bpy.context.view_layer.objects.active = mace_bits[0]
-bpy.ops.object.join()
-sword = bpy.context.view_layer.objects.active
-sword.name = 'masse'
-parts = [o for o in parts if o is not mace_all and o.name in bpy.data.objects] + armor_bits
-bpy.ops.object.select_all(action='DESELECT')
-for o in parts:
-    o.select_set(True)
-bpy.context.view_layer.objects.active = parts[0]
+bpy.context.view_layer.objects.active = meshes[0]
 bpy.ops.object.join()
 body = bpy.context.view_layer.objects.active
 body.name = 'sauron'
 
-# --- 2. Squelette provisoire, poids presque rigides
+# Ses articulations
+J = {'pelvis': dbone['spine'][0], 'chest': dbone['spine.002'][0], 'neck': dbone['spine.004'][0],
+     'top': dbone['spine.006'][1] + Vector((0, 0, 0.08))}
+for S, s in (('L', 'l'), ('R', 'r')):
+    J.update({f'shoulder.{s}': dbone[f'upper_arm.{S}'][0], f'elbow.{s}': dbone[f'forearm.{S}'][0],
+              f'wrist.{s}': dbone[f'hand.{S}'][0], f'fingers.{s}': dbone[f'f_middle.03.{S}'][1],
+              f'hip.{s}': dbone[f'thigh.{S}'][0], f'knee.{s}': dbone[f'shin.{S}'][0],
+              f'ankle.{s}': dbone[f'foot.{S}'][0], f'toe.{s}': dbone[f'toe.{S}'][1]})
+
+
+def joint(name):
+    return J[name].copy()
+
+
 tmp_data = bpy.data.armatures.new('tmp')
 tmp = bpy.data.objects.new('tmp', tmp_data)
 bpy.context.scene.collection.objects.link(tmp)
@@ -161,51 +224,6 @@ for name in TEMP:
     if parent:
         tmp_data.edit_bones[name].parent = tmp_data.edit_bones[parent]
 bpy.ops.object.mode_set(mode='OBJECT')
-
-
-segs = {n: (joint(a), joint(b)) for n, (a, b) in TEMP.items()}
-groups = {n: body.vertex_groups.new(name=n) for n in TEMP}
-# Un export SketchUp : des centaines de petites pièces d'armure. Chacune suit un seul os, celui le plus proche de son
-# centre (rigide : une plaque tirée par deux os s'étirait en dalle) ; la jupe d'armure suit le bassin ; la cape est retirée.
-links = [[] for _ in body.data.vertices]
-for e in body.data.edges:
-    a, b = e.vertices
-    links[a].append(b); links[b].append(a)
-seen = [False] * len(body.data.vertices)
-cape = []
-for start in range(len(body.data.vertices)):
-    if seen[start]:
-        continue
-    island, stack = [], [start]
-    seen[start] = True
-    while stack:
-        i = stack.pop(); island.append(i)
-        for j in links[i]:
-            if not seen[j]:
-                seen[j] = True; stack.append(j)
-    c = sum((body.data.vertices[i].co for i in island), Vector()) / len(island)
-    lo_ = Vector(map(min, *(body.data.vertices[i].co for i in island)))
-    hi_ = Vector(map(max, *(body.data.vertices[i].co for i in island)))
-    # La grande nappe de la cape : une seule pièce, plus grande que toutes les plaques d'armure
-    if (hi_ - lo_).length > CAPE_SIZE:
-        cape.extend(island)
-    if abs(c.x) < 0.09 and 0.35 < c.z < 0.95:
-        bone = 'pelvis'
-    else:
-        bone = min(segs, key=lambda n: seg_dist(c, *segs[n]))
-        # Au-dessus des hanches, loin de tout os (épaulières, pointes du dos) : il suit le buste
-        if seg_dist(c, *segs[bone]) > LOOSE and HIPS_Z < c.z < 1.42:
-            bone = 'spine_03'
-    groups[bone].add(island, 1.0, 'REPLACE')
-
-# La nappe de la cape est retirée (demande de l'utilisateur) : rigide, ses jambes la traversaient en marchant. Les
-# jambières suivent leurs jambes en entier (fixées au dos, leur moitié arrière restait plantée : une troisième jambe)
-bm = bmesh.new()
-bm.from_mesh(body.data)
-bm.verts.ensure_lookup_table()
-bmesh.ops.delete(bm, geom=[bm.verts[i] for i in set(cape)], context='VERTS')
-bm.to_mesh(body.data)
-bm.free()
 mod = body.modifiers.new('tmp', 'ARMATURE'); mod.object = tmp
 body.parent = tmp
 

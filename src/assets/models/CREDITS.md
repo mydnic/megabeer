@@ -57,9 +57,9 @@
 - `tnt.glb` : minecraft_block_tnt.glb fourni par l'utilisateur (auteur à confirmer), préparé par `tools/blender/allies.py`.
 - `guts.glb` : modèle de Guts fourni par l'utilisateur (`Desktop/MODELS/guts.glb`, export Sketchfab, auteur et licence à
   confirmer), monté sur le squelette de la Universal Animation Library (Quaternius, CC0) par `tools/blender/guts.py`.
-- `sauron.glb` : modèle de Sauron fourni par l'utilisateur (`Desktop/MODELS/sauron.glb`, export Sketchfab d'un modèle
-  SketchUp, auteur et licence à confirmer), monté sur le squelette de la Universal Animation Library (Quaternius, CC0) par
-  `tools/blender/sauron.py`.
+- `sauron.glb` : « Sauron Game-ready character » fourni par l'utilisateur
+  (`Desktop/MODELS/a83576be813442a280c1ab52ad9fecdb.glb`, Sketchfab, auteur et licence à confirmer), sans son socle ni sa
+  cape, ses poids remontés sur le squelette de la Universal Animation Library (Quaternius, CC0) par `tools/blender/sauron.py`.
 - `xeno.glb` : « Xenomorph » de Slaan (https://poly.pizza/m/0Dia0TyI_Uh), CC BY 3.0, monté sur un squelette de
   quadrupède, recoloré et animé par `tools/blender/xeno.py`.
 - `vador.glb` : modèle OBJ de Dark Vador fourni par l'utilisateur (archive `dark-vador-model20191006-8718-1p8srkq.zip`,
