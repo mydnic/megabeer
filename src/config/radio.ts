@@ -4,7 +4,7 @@
 
 export const RADIO = {
   /** Flux joué quand elle est allumée. */
-  stream: 'https://radio.mydnic.be/radio.ogg',
+  stream: 'https://radio.mydnic.be/radio.mp3',
   /** PV de la radio (les coups des ennemis, comme sur le joueur). */
   hp: 400,
   /** Placement : à plus de `minFromSpawn` m de l'arrivée et `minFromOthers` m des coffres, pompes, cloches, véhicule ; sol plat. */
