@@ -24,8 +24,6 @@ export type SkillLine = {
   id: string; name: string; color: string; tiers: readonly SkillTier[];
   /** Prix propres à la ligne (sinon `SKILL_PRICES`). */
   prices?: readonly number[];
-  /** Fermée tant que toutes les autres lignes ne sont pas complètes. */
-  requiresAll?: boolean;
 };
 
 /** Prix de chaque palier d'une ligne, dans l'ordre (le 1er palier coûte `SKILL_PRICES[0]`). */
@@ -71,10 +69,10 @@ export const SKILL_LINES: readonly SkillLine[] = [
     ],
   },
   {
-    // Ligne TUNAS (demande de l'utilisateur le 2026-11-27) : pour garder un usage aux TUNAS une fois tout débloqué. Ouverte
-    // quand toutes les autres lignes sont complètes, très chère. Le dernier palier n'a volontairement pas de plafond : le
+    // Ligne TUNAS (demande de l'utilisateur le 2026-11-27) : pour garder un usage aux TUNAS une fois tout débloqué. Elle
+    // s'achète comme les autres, mais très chère. Le dernier palier n'a volontairement pas de plafond : le
     // joueur a fini le jeu et s'amuse à le casser.
-    id: 'tunas', name: 'TUNAS', color: '#3fbf55', requiresAll: true, prices: [500, 800, 1200, 1800, 2500, 5000], tiers: [
+    id: 'tunas', name: 'TUNAS', color: '#3fbf55', prices: [500, 800, 1200, 1800, 2500, 5000], tiers: [
       ...Array.from({ length: 5 }, () => ({ text: '+2 % de TUNAS gagnés', effect: { perk: 'tunaGain', value: 0.02 } as SkillEffect })),
       { text: 'Chaque TUNAS en poche : +0,01 % à toutes les stats', effect: { wallet: 0.0001 } },
     ],

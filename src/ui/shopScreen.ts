@@ -5,7 +5,7 @@ import { itemCardText } from '../game/levelUpCards';
 import type { Profile } from '../meta/profile';
 import { achievementFor, catalog, owned, type ShopEntry } from '../meta/shop';
 import { SKILL_LINES } from '../config/skills';
-import { lineOpen, skillBonuses, tierPrice, tiersOf } from '../meta/skills';
+import { skillBonuses, tierPrice, tiersOf } from '../meta/skills';
 import { ACHIEVEMENTS } from '../config/achievements';
 import { weaponIcon, tunasIcon } from './icons';
 import { pint, svg64 } from './iconKit';
@@ -66,8 +66,6 @@ const CSS = `
 .sk-tier .shop-buy { align-self: stretch; }
 .sk-price { display: inline-flex; align-items: center; gap: 4px; font-size: 15px; opacity: .8; }
 .sk-price svg { width: 18px; height: 18px; }
-.sk-name small { display: block; font-size: 12px; color: #f1dcae; text-shadow: none; opacity: .85; }
-.sk-name span { display: block; }
 .sk-now { font-size: 12px; font-weight: bold; color: #1d5e2a; }
 .sk-tier .shop-lock { position: static; width: 18px !important; height: 18px !important; }
 .ach-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; margin-top: 8px; }
@@ -154,17 +152,15 @@ export function createShopScreen(cb: { buy: (key: string) => boolean; buySkill: 
     const cols = Math.max(...SKILL_LINES.map((l) => l.tiers.length));
     body.innerHTML = SKILL_LINES.map((line) => {
       const done = tiersOf(p, line.id);
-      const open = lineOpen(p, line);
       const cells = line.tiers.map((tier, i) => {
         const price = tierPrice(line, i);
         // Bonus du portefeuille : ce qu'il vaut en ce moment (figé au départ de chaque run)
         const now = i < done && 'wallet' in tier.effect ? `<span class="sk-now">En ce moment : +${(wallet * 100).toLocaleString('fr', { maximumFractionDigits: 2 })} %</span>` : '';
         if (i < done) return `<div class="sk-tier"><span>${esc(tier.text)}</span>${now}<span class="shop-own">${CHECK}</span></div>`;
-        if (i === done && open) return `<div class="sk-tier next"><span>${esc(tier.text)}</span><button class="shop-buy${p.tunas < price ? ' poor' : ''}" data-s="${line.id}">${TUNAS}${price}</button></div>`;
+        if (i === done) return `<div class="sk-tier next"><span>${esc(tier.text)}</span><button class="shop-buy${p.tunas < price ? ' poor' : ''}" data-s="${line.id}">${TUNAS}${price}</button></div>`;
         return `<div class="sk-tier locked"><span>${esc(tier.text)}</span><span class="sk-price">${LOCK}${price}</span></div>`;
       }).join('');
-      const hint = open ? '' : '<small>Finir toutes les autres lignes</small>';
-      return `<div class="sk-line" style="--c:${line.color};--n:${cols}"><div class="sk-name"><span>${esc(line.name)}${hint}</span></div>${cells}</div>`;
+      return `<div class="sk-line" style="--c:${line.color};--n:${cols}"><div class="sk-name">${esc(line.name)}</div>${cells}</div>`;
     }).join('');
     for (const b of body.querySelectorAll<HTMLButtonElement>('.shop-buy[data-s]')) {
       b.addEventListener('click', (ev) => {

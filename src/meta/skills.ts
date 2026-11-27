@@ -14,21 +14,16 @@ export function tierPrice(line: SkillLine, i: number) {
   return prices[Math.min(i, prices.length - 1)];
 }
 
-/** Une ligne s'achète-t-elle ? Celles marquées `requiresAll` attendent que toutes les autres soient complètes. */
-export function lineOpen(p: Profile, line: SkillLine) {
-  return !line.requiresAll || SKILL_LINES.every((l) => l.requiresAll || tiersOf(p, l.id) >= l.tiers.length);
-}
-
 /** Prix du prochain palier d'une ligne, ou null si la ligne est complète. */
 export function nextPrice(p: Profile, line: SkillLine) {
   const n = tiersOf(p, line.id);
   return n < line.tiers.length ? tierPrice(line, n) : null;
 }
 
-/** Achète le palier suivant d'une ligne (jamais un palier plus loin). Null si la ligne est complète, fermée, inconnue, ou trop chère. */
+/** Achète le palier suivant d'une ligne (jamais un palier plus loin). Null si la ligne est complète, inconnue, ou trop chère. */
 export function buySkill(p: Profile, lineId: string, now: number): Profile | null {
   const line = SKILL_LINES.find((l) => l.id === lineId);
-  if (!line || !lineOpen(p, line)) return null;
+  if (!line) return null;
   const price = nextPrice(p, line);
   if (price === null || p.tunas < price) return null;
   return { ...p, tunas: p.tunas - price, skills: { ...p.skills, [lineId]: tiersOf(p, lineId) + 1 }, updatedAt: now };

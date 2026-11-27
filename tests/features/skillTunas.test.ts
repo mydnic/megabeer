@@ -3,7 +3,7 @@ import { ITEM_STAT_CAPS } from '../../src/config/items';
 import { SKILL_LINES, WALLET_BONUS } from '../../src/config/skills';
 import { emptyProfile, type Profile } from '../../src/meta/profile';
 import { runUnlocks } from '../../src/meta/shop';
-import { buySkill, lineOpen, skillBonuses, tierPrice, tiersOf } from '../../src/meta/skills';
+import { buySkill, skillBonuses, tierPrice, tiersOf } from '../../src/meta/skills';
 import { createTestGame } from '../support/testGame';
 
 function seeded(seed: number) {
@@ -14,7 +14,7 @@ beforeEach(() => { vi.spyOn(Math, 'random').mockImplementation(seeded(4)); });
 afterEach(() => { vi.restoreAllMocks(); });
 
 const line = SKILL_LINES.find((l) => l.id === 'tunas')!;
-const others = SKILL_LINES.filter((l) => !l.requiresAll);
+const others = SKILL_LINES.filter((l) => l !== line);
 const walletTier = line.tiers.findIndex((t) => 'wallet' in t.effect);
 const perTuna = (line.tiers[walletTier].effect as { wallet: number }).wallet;
 
@@ -36,15 +36,11 @@ function run(p: Profile) {
 }
 
 describe('Skill tree : la ligne TUNAS', () => {
-  it('fermée tant que toutes les autres lignes ne sont pas complètes', () => {
-    const rich = { ...emptyProfile(), tunas: 10_000_000 };
-    expect(lineOpen(rich, line)).toBe(false);
-    expect(buySkill(rich, line.id, 1)).toBeNull();
-    const ready = profile(0, 10_000_000);
-    expect(lineOpen(ready, line)).toBe(true);
-    const p = buySkill(ready, line.id, 1)!;
+  it('s achète comme les autres lignes, dès le départ, à ses propres prix', () => {
+    const p = buySkill({ ...emptyProfile(), tunas: 10_000_000 }, line.id, 1)!;
     expect(tiersOf(p, line.id)).toBe(1);
     expect(p.tunas).toBe(10_000_000 - tierPrice(line, 0));
+    expect(buySkill({ ...emptyProfile(), tunas: tierPrice(line, 0) - 1 }, line.id, 1)).toBeNull();
   });
 
   it('chaque palier de gain fait gagner plus de TUNAS en jeu', () => {
