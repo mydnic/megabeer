@@ -1,12 +1,14 @@
 // Succès (GDD section 14) : liste validée par l'utilisateur le 2026-11-13. Chaque succès se gagne une seule fois et
 // rapporte des TUNAS. Conditions lues par game/achievements.ts ; « run » : dans une même run, « total » : depuis le début.
 
+import type { AllyId } from './allies';
 import { CLOSING } from './closing';
 
 export type AchievementRule =
   | { kind: 'runEnded' }
   | { kind: 'survive'; seconds: number }
-  | { kind: 'boss'; boss: 'sonneur' | 'abbe'; difficulty?: 'pompette' | 'bourre' }
+  /** `ally` : cet allié doit suivre le joueur au moment où le boss tombe. */
+  | { kind: 'boss'; boss: 'sonneur' | 'abbe' | 'sauron'; difficulty?: 'pompette' | 'bourre'; ally?: AllyId }
   | { kind: 'runKills'; n: number }
   | { kind: 'totalKills'; n: number }
   | { kind: 'weapons'; n: number }
@@ -30,6 +32,7 @@ export const ACHIEVEMENTS: readonly AchievementDef[] = [
   { id: 'derniereMesse', name: 'Dernière messe', text: "Tuer l'Abbé", tunas: 60, rule: { kind: 'boss', boss: 'abbe' }, unlocks: ['item:secondeTournee'] },
   { id: 'pompetteConfirme', name: 'Pompette confirmé', text: "Tuer l'Abbé en Pompette", tunas: 100, rule: { kind: 'boss', boss: 'abbe', difficulty: 'pompette' } },
   { id: 'bourreConfirme', name: 'Bourré confirmé', text: "Tuer l'Abbé en Bourré", tunas: 150, rule: { kind: 'boss', boss: 'abbe', difficulty: 'bourre' } },
+  { id: 'communaute', name: 'La Communauté de la Pinte', text: 'Tuer Sauron avec Gandalf à ses côtés', tunas: 80, rule: { kind: 'boss', boss: 'sauron', ally: 'gandalf' } },
   { id: 'tourneeGenerale', name: 'Tournée générale', text: '1 000 zombies dans une run', tunas: 50, rule: { kind: 'runKills', n: 1000 } },
   { id: 'boucher', name: 'Boucher', text: '10 000 zombies au total', tunas: 100, rule: { kind: 'totalKills', n: 10000 } },
   { id: 'arsenal', name: 'Arsenal complet', text: '4 armes équipées en même temps', tunas: 20, rule: { kind: 'weapons', n: 4 } },

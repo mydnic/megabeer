@@ -529,6 +529,7 @@ export class Game {
       weapons: () => this.loadout.weapons.length,
       tunas: () => this.tunas,
       difficulty: () => this.difficulty,
+      allies: () => this.allies.list.filter((x) => x.state === 'following').map((x) => x.kind),
     }, (a) => this.events.emit('achievementUnlocked', { id: a.id, name: a.name, tunas: a.tunas }));
     this.events.on('eliteKilled', () => this.achievements.elite());
     this.events.on('itemGained', () => this.achievements.item());

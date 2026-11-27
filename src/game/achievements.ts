@@ -8,6 +8,8 @@ export type AchievementSource = {
   weapons: () => number;
   tunas: () => number;
   difficulty: () => DifficultyId;
+  /** Les alliés qui suivent le joueur en ce moment. */
+  allies: () => readonly string[];
 };
 
 /**
@@ -23,7 +25,7 @@ export class AchievementTracker {
   /** Gagnés pendant cette run, dans l'ordre. */
   readonly gained: string[] = [];
   private counts = { elites: 0, items: 0, bins: 0, synergy: 0, crushes: 0, naruto: 0 };
-  private bosses: { kind: string; difficulty: DifficultyId }[] = [];
+  private bosses: { kind: string; difficulty: DifficultyId; allies: readonly string[] }[] = [];
 
   constructor(private src: AchievementSource, private onUnlock: (a: AchievementDef) => void) {}
 
@@ -41,7 +43,7 @@ export class AchievementTracker {
   /** Naruto attrapé. */
   naruto() { this.counts.naruto++; this.check(); }
   synergy() { this.counts.synergy++; this.check(); }
-  boss(kind: string) { this.bosses.push({ kind, difficulty: this.src.difficulty() }); this.check(); }
+  boss(kind: string) { this.bosses.push({ kind, difficulty: this.src.difficulty(), allies: this.src.allies() }); this.check(); }
 
   /** Chaque image de la run, et à sa fin (`ended` : la run vient de se terminer). */
   check(ended = false) {
@@ -57,7 +59,7 @@ export class AchievementTracker {
     switch (r.kind) {
       case 'runEnded': return ended;
       case 'survive': return s.runTime() >= r.seconds;
-      case 'boss': return this.bosses.some((b) => b.kind === r.boss && (!r.difficulty || b.difficulty === r.difficulty));
+      case 'boss': return this.bosses.some((b) => b.kind === r.boss && (!r.difficulty || b.difficulty === r.difficulty) && (!r.ally || b.allies.includes(r.ally)));
       case 'runKills': return s.kills() >= r.n;
       case 'totalKills': return this.lifetimeKills + s.kills() >= r.n;
       case 'weapons': return s.weapons() >= r.n;

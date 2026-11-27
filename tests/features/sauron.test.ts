@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ACHIEVEMENTS } from '../../src/config/achievements';
 import { SAURON as S } from '../../src/config/bosses';
 import { DOOM_MOUNTAIN as DM } from '../../src/config/doom';
 import { TUNAS } from '../../src/config/tunas';
@@ -160,5 +161,29 @@ describe('Sauron, au fond du cratère de la Montagne du Destin', () => {
     expect(e[0].chest?.rarity).toBe(S.chestRarity);
     expect(t.game.tunaDrops.drops.reduce((n, d) => n + d.value, 0)).toBeGreaterThanOrEqual(TUNAS.boss.sauron);
     expect(t.game.bosses).toHaveLength(0);
+  });
+
+  const fellowship = ACHIEVEMENTS.find((a) => a.rule.kind === 'boss' && a.rule.boss === 'sauron' && a.rule.ally === 'gandalf')!.id;
+  const kill = (t: T, boss: Sauron) => {
+    t.game.cheats.god = true;
+    t.game.hitZombie(boss.zombie, 1e6, false, boss.zombie.pos, t.game.player.facing);
+    t.play(0.1);
+  };
+
+  it('le tuer avec Gandalf qui suit le joueur débloque La Communauté de la Pinte', () => {
+    const { t, boss } = fight();
+    t.game.allies.placeAt('gandalf', t.inFront(1));
+    t.play(0.1);
+    expect(t.game.allies.list.find((a) => a.kind === 'gandalf')?.state).toBe('following');
+    kill(t, boss);
+    expect(t.events('achievementUnlocked').some((e) => e.id === fellowship)).toBe(true);
+  });
+
+  it('le tuer sans Gandalf ne le débloque pas', () => {
+    const { t, boss } = fight();
+    t.game.allies.clear();
+    kill(t, boss);
+    expect(t.events('bossKilled')).toHaveLength(1);
+    expect(t.events('achievementUnlocked').some((e) => e.id === fellowship)).toBe(false);
   });
 });
