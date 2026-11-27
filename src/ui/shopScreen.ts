@@ -4,8 +4,8 @@ import { WEAPON_INFO } from '../config/weapons';
 import { itemCardText } from '../game/levelUpCards';
 import type { Profile } from '../meta/profile';
 import { achievementFor, catalog, owned, type ShopEntry } from '../meta/shop';
-import { SKILL_LINES, SKILL_PRICES } from '../config/skills';
-import { tiersOf } from '../meta/skills';
+import { SKILL_LINES } from '../config/skills';
+import { lineOpen, skillBonuses, tierPrice, tiersOf } from '../meta/skills';
 import { ACHIEVEMENTS } from '../config/achievements';
 import { weaponIcon, tunasIcon } from './icons';
 import { pint, svg64 } from './iconKit';
@@ -56,7 +56,7 @@ const CSS = `
 .shop-via { grid-column: 1 / 3; justify-self: start; padding: 2px 10px 4px; border: 2px solid #1a120c; border-radius: 12px; background: #ff9f6a; color: #1a120c; font-size: 14px; }
 .shop-msg { min-height: 22px; margin-top: 6px; font-size: 16px; color: #ffb4a0; }
 /* Skill tree : une ligne par catégorie, ses paliers de gauche à droite (chacun demande le précédent) */
-.sk-line { display: grid; grid-template-columns: 130px repeat(5, 1fr); gap: 8px; align-items: stretch; margin: 10px 0; }
+.sk-line { display: grid; grid-template-columns: 130px repeat(var(--n, 5), 1fr); gap: 8px; align-items: stretch; margin: 10px 0; }
 .sk-name { display: flex; align-items: center; font-size: 22px; color: var(--c); text-shadow: -2px 0 #1a120c, 2px 0 #1a120c, 0 -2px #1a120c, 0 2px #1a120c; }
 .sk-tier { position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: 6px; padding: 8px 8px 8px; border: 3px solid #1a120c;
   border-radius: 12px; background: linear-gradient(#fff8e2, #f1dcae); color: #2a1608; box-shadow: 0 4px 0 #1a120c, inset 0 0 0 3px var(--c); font-size: 13px; line-height: 1.2; }
@@ -66,6 +66,9 @@ const CSS = `
 .sk-tier .shop-buy { align-self: stretch; }
 .sk-price { display: inline-flex; align-items: center; gap: 4px; font-size: 15px; opacity: .8; }
 .sk-price svg { width: 18px; height: 18px; }
+.sk-name small { display: block; font-size: 12px; color: #f1dcae; text-shadow: none; opacity: .85; }
+.sk-name span { display: block; }
+.sk-now { font-size: 12px; font-weight: bold; color: #1d5e2a; }
 .sk-tier .shop-lock { position: static; width: 18px !important; height: 18px !important; }
 .ach-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; margin-top: 8px; }
 .ach { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: center; padding: 10px 12px; border: 3px solid #1a120c; border-radius: 14px;
@@ -77,7 +80,7 @@ const CSS = `
 .ach-count { font-size: 18px; opacity: .8; }
 .ach .ach-gift { color: #b8401a; }
 .ach .sk-price, .ach .shop-own { grid-row: 1 / 4; }
-@media (max-width: 900px) { .sk-line { grid-template-columns: repeat(5, 1fr); } .sk-name { grid-column: 1 / -1; } }
+@media (max-width: 900px) { .sk-line { grid-template-columns: repeat(var(--n, 5), 1fr); } .sk-name { grid-column: 1 / -1; } }
 @media (max-width: 540px) { .shop-head { flex-wrap: wrap; } .shop-grid { grid-template-columns: 1fr; } .sk-line { grid-template-columns: 1fr 1fr; } }
 `;
 
@@ -146,15 +149,22 @@ export function createShopScreen(cb: { buy: (key: string) => boolean; buySkill: 
 
   /** Le skill tree : une ligne par catégorie ; acheté, prochain palier (à acheter), ou fermé (il faut le précédent). */
   function renderSkills(p: Profile) {
+    const wallet = skillBonuses(p).wallet;
+    // Même nombre de colonnes pour toutes les lignes : les paliers restent alignés (la ligne TUNAS en a 6)
+    const cols = Math.max(...SKILL_LINES.map((l) => l.tiers.length));
     body.innerHTML = SKILL_LINES.map((line) => {
       const done = tiersOf(p, line.id);
+      const open = lineOpen(p, line);
       const cells = line.tiers.map((tier, i) => {
-        const price = SKILL_PRICES[Math.min(i, SKILL_PRICES.length - 1)];
-        if (i < done) return `<div class="sk-tier"><span>${esc(tier.text)}</span><span class="shop-own">${CHECK}</span></div>`;
-        if (i === done) return `<div class="sk-tier next"><span>${esc(tier.text)}</span><button class="shop-buy${p.tunas < price ? ' poor' : ''}" data-s="${line.id}">${TUNAS}${price}</button></div>`;
+        const price = tierPrice(line, i);
+        // Bonus du portefeuille : ce qu'il vaut en ce moment (figé au départ de chaque run)
+        const now = i < done && 'wallet' in tier.effect ? `<span class="sk-now">En ce moment : +${(wallet * 100).toLocaleString('fr', { maximumFractionDigits: 2 })} %</span>` : '';
+        if (i < done) return `<div class="sk-tier"><span>${esc(tier.text)}</span>${now}<span class="shop-own">${CHECK}</span></div>`;
+        if (i === done && open) return `<div class="sk-tier next"><span>${esc(tier.text)}</span><button class="shop-buy${p.tunas < price ? ' poor' : ''}" data-s="${line.id}">${TUNAS}${price}</button></div>`;
         return `<div class="sk-tier locked"><span>${esc(tier.text)}</span><span class="sk-price">${LOCK}${price}</span></div>`;
       }).join('');
-      return `<div class="sk-line" style="--c:${line.color}"><div class="sk-name">${esc(line.name)}</div>${cells}</div>`;
+      const hint = open ? '' : '<small>Finir toutes les autres lignes</small>';
+      return `<div class="sk-line" style="--c:${line.color};--n:${cols}"><div class="sk-name"><span>${esc(line.name)}${hint}</span></div>${cells}</div>`;
     }).join('');
     for (const b of body.querySelectorAll<HTMLButtonElement>('.shop-buy[data-s]')) {
       b.addEventListener('click', (ev) => {

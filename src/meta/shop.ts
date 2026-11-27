@@ -64,7 +64,9 @@ export function buy(p: Profile, key: string, now: number): Profile | null {
  */
 export type RunUnlocks = { weapons: ReadonlySet<WeaponId>; items: ReadonlySet<ItemId>; options: Record<CardOptionId, number>; bonuses: readonly { stat: ItemStatId; value: number }[];
   /** Bonus de mécanique du skill tree (radio, Super Saiyan, véhicules). */
-  perks?: Partial<Record<PerkId, number>> };
+  perks?: Partial<Record<PerkId, number>>;
+  /** Bonus de toutes les stats tiré du portefeuille (0,25 = +25 %), figé au départ de la run (ligne TUNAS). */
+  wallet?: number };
 
 export function runUnlocks(p: Profile): RunUnlocks {
   const weapons = new Set((Object.keys(WEAPON_FACTORIES) as WeaponId[]).filter((id) => owned(p, weaponKey(id))));
@@ -72,5 +74,5 @@ export function runUnlocks(p: Profile): RunUnlocks {
   const skills = skillBonuses(p);
   const options = {} as Record<CardOptionId, number>;
   for (const o of Object.keys(CARD_OPTIONS) as CardOptionId[]) options[o] = skills.options[o];
-  return { weapons, items, options, bonuses: skills.stats, perks: skills.perks };
+  return { weapons, items, options, bonuses: skills.stats, perks: skills.perks, wallet: skills.wallet };
 }

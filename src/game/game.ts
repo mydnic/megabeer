@@ -70,7 +70,7 @@ import { NARUTO } from '../config/naruto';
 import { Allies, type Ally } from './allies';
 import { ALLIES, ALLY_FX, type AllyId, type AllyPower } from '../config/allies';
 import { RADIO } from '../config/radio';
-import type { PerkId } from '../config/skills';
+import { WALLET_BONUS, type PerkId, type WalletRule } from '../config/skills';
 import { SAIYAN } from '../config/saiyan';
 import { VEHICLE_SPAWN, VEHICLES, type VehicleId } from '../config/vehicles';
 import { MAP_MECHANICS, type MapId, type MapMechanic } from './mechanics/mechanic';
@@ -606,6 +606,8 @@ export class Game {
     for (const b of C.stats) this.applyStatBonus(b.stat, b.value, true);
     // Skill tree : ses bonus de stat valent dès le début de la run, comme ceux de la radio, du Super Saiyan et des véhicules
     for (const b of this.unlocks?.bonuses ?? []) this.applyStatBonus(b.stat, b.value, true);
+    // Ligne TUNAS : le portefeuille au départ donne un bonus de toutes les stats, après tous les autres bonus
+    this.applyWalletBonus(this.unlocks?.wallet ?? 0);
     this.radio.maxHp = RADIO.hp * (1 + this.perk('radioHp'));
     this.saiyan.extraTime = this.perk('saiyanTime');
     this.vehicles.timeMul = 1 + this.perk('vehicleTime');
@@ -840,7 +842,7 @@ export class Game {
       this.events.emit('coinsCollected', { amount: v + extra, total: this.coins });
     });
     this.tunaDrops.update(dt, this.chest, this.phase === 'run' ? this.stats.pickupRange : 0, (v) => {
-      const amount = v * this.mods.tunas;
+      const amount = v * this.tunaMul;
       this.tunas += amount;
       this.events.emit('tunasCollected', { amount, total: this.tunas });
     });
@@ -858,6 +860,9 @@ export class Game {
 
   /** Multiplicateurs de la difficulté choisie. */
   get mods() { return DIFFICULTIES[this.difficulty]; }
+
+  /** TUNAS gagnés en jeu : difficulté et ligne TUNAS du skill tree. */
+  get tunaMul() { return this.mods.tunas * (1 + this.perk('tunaGain')); }
 
   /**
    * Fait apparaître un zombie au sol à la direction `at`, tourné vers `facing`. Plus la run avance,
@@ -878,6 +883,20 @@ export class Game {
       if (stat === 'chestDiscount') this.chests.discount = this.stats.discount;
     }
     if (!silent) this.events.emit('statGained', { stat, value });
+  }
+
+  /**
+   * Bonus du portefeuille (ligne TUNAS) : une part (0,25 = +25 %) de toutes les stats, appliquée stat par stat selon
+   * `WALLET_BONUS` (en proportion de la valeur atteinte, ou une valeur par +100 % pour celles qui partent de 0).
+   */
+  private applyWalletBonus(part: number) {
+    if (!(part > 0)) return;
+    const stats = this.stats as unknown as Record<ItemStatId, number>;
+    for (const [stat, rule] of Object.entries(WALLET_BONUS) as [ItemStatId, WalletRule][]) {
+      const raw = 'per' in rule ? part * rule.per : (stat === 'maxHp' ? this.health.max : stats[stat]) * part;
+      const add = rule.whole ? Math.floor(raw) : raw;
+      if (add > 0) this.applyStatBonus(stat, add, true);
+    }
   }
 
   /**
@@ -1898,7 +1917,7 @@ export class Game {
     this.horde.setPassive(true);
     this.events.emit('died', {});
     // Bonus de fin : le temps survécu rapporte des TUNAS (à la mort seulement : abandonner n'est pas une astuce)
-    const tunasBonus = Math.floor((this.runTime / 60) * TUNAS.endBonusPerMinute * this.mods.tunas + 1e-9);
+    const tunasBonus = Math.floor((this.runTime / 60) * TUNAS.endBonusPerMinute * this.tunaMul + 1e-9);
     this.achievements.check(true);
     this.events.emit('runEnded', { reason: 'mort', survived: this.runTime, kills: this.kills, tunas: Math.floor(this.tunas + 1e-9) + tunasBonus, tunasBonus, difficulty: this.difficulty, abbe: this.abbeKilled, achievements: [...this.achievements.gained], character: this.character });
   }

@@ -47,6 +47,7 @@ tag git `avant-refonte-visuelle`. Réglages des effets : `VFX` dans `config/fx.t
 pour 800 ennemis ; si ça remonte nettement, une régression est entrée). F3 en jeu : temps par partie de l'image.
 
 **Prochaine étape :**
+0. **Ligne TUNAS du skill tree, faite le 2026-11-27, à valider en jeu par l'utilisateur** (détail : journal du GDD, ligne "Skill tree : ligne TUNAS"). Prix et règles par stat à régler avec lui (`config/skills.ts`). Tests `tests/features/skillTunas.test.ts`.
 0. **Issue #22, Naruto, faite et validée le 2026-11-21, issue fermée.** Plus aucune issue ouverte : demander à l'utilisateur la suite. Idée de l'utilisateur : Naruto
    court sur la planète au hasard, en Naruto run, bien plus vite que le joueur ; le toucher le fait partir en fumée et
    laisse un coffre légendaire. Fait : modèle `naruto.glb` fourni (pose en A, sans poids) monté sur la Universal

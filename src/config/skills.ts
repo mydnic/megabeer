@@ -10,14 +10,23 @@ import type { CardOptionId } from './shop';
  * Bonus des lignes de la radio, du Super Saiyan et des véhicules (demande de l'utilisateur le 2026-11-19), en part du
  * réglage de base (0,4 = +40 %) sauf `saiyanTime` (s en plus).
  */
-export type PerkId = 'radioHp' | 'saiyanGain' | 'saiyanTime' | 'vehicleTime' | 'vehicleHp' | 'vehicleCrush';
-export const PERK_IDS: readonly PerkId[] = ['radioHp', 'saiyanGain', 'saiyanTime', 'vehicleTime', 'vehicleHp', 'vehicleCrush'];
+export type PerkId = 'radioHp' | 'saiyanGain' | 'saiyanTime' | 'vehicleTime' | 'vehicleHp' | 'vehicleCrush' | 'tunaGain';
+export const PERK_IDS: readonly PerkId[] = ['radioHp', 'saiyanGain', 'saiyanTime', 'vehicleTime', 'vehicleHp', 'vehicleCrush', 'tunaGain'];
 
-/** Ce que donne un palier : un bonus de stat au début de chaque run, des utilisations d'une option de cartes, ou un bonus de mécanique. */
-export type SkillEffect = { stat: ItemStatId; value: number } | { option: CardOptionId; uses: number } | { perk: PerkId; value: number };
+/**
+ * Ce que donne un palier : un bonus de stat au début de chaque run, des utilisations d'une option de cartes, un bonus de
+ * mécanique, ou un bonus de toutes les stats par TUNAS du portefeuille (`wallet` : 0,0001 = +0,01 % par TUNAS).
+ */
+export type SkillEffect = { stat: ItemStatId; value: number } | { option: CardOptionId; uses: number } | { perk: PerkId; value: number } | { wallet: number };
 
 export type SkillTier = { text: string; effect: SkillEffect };
-export type SkillLine = { id: string; name: string; color: string; tiers: readonly SkillTier[] };
+export type SkillLine = {
+  id: string; name: string; color: string; tiers: readonly SkillTier[];
+  /** Prix propres à la ligne (sinon `SKILL_PRICES`). */
+  prices?: readonly number[];
+  /** Fermée tant que toutes les autres lignes ne sont pas complètes. */
+  requiresAll?: boolean;
+};
 
 /** Prix de chaque palier d'une ligne, dans l'ordre (le 1er palier coûte `SKILL_PRICES[0]`). */
 export const SKILL_PRICES = [40, 80, 130, 200, 300] as const;
@@ -61,4 +70,45 @@ export const SKILL_LINES: readonly SkillLine[] = [
       { text: 'Véhicules : +40 % PV', effect: { perk: 'vehicleHp', value: 0.4 } },
     ],
   },
+  {
+    // Ligne TUNAS (demande de l'utilisateur le 2026-11-27) : pour garder un usage aux TUNAS une fois tout débloqué. Ouverte
+    // quand toutes les autres lignes sont complètes, très chère. Le dernier palier n'a volontairement pas de plafond : le
+    // joueur a fini le jeu et s'amuse à le casser.
+    id: 'tunas', name: 'TUNAS', color: '#3fbf55', requiresAll: true, prices: [500, 800, 1200, 1800, 2500, 5000], tiers: [
+      ...Array.from({ length: 5 }, () => ({ text: '+2 % de TUNAS gagnés', effect: { perk: 'tunaGain', value: 0.02 } as SkillEffect })),
+      { text: 'Chaque TUNAS en poche : +0,01 % à toutes les stats', effect: { wallet: 0.0001 } },
+    ],
+  },
 ];
+
+/**
+ * Comment le bonus du portefeuille (une part, 0,25 = +25 %, figée au départ de la run) s'applique à chaque stat :
+ * - `mul` : la stat grandit de cette part (dégâts x1,5 deviennent x1,875 à +25 %) ;
+ * - `per` : stats qui partent de 0, où un pourcentage ne donnerait rien : on ajoute `per` pour chaque +100 % ;
+ * - `whole` : arrondi à l'entier inférieur (projectiles, PV).
+ * Les plafonds d'esquive, de réduction des coffres et de vol de vie (`ITEM_STAT_CAPS`) s'appliquent toujours.
+ */
+export type WalletRule = { mul: true; whole?: boolean } | { per: number; whole?: boolean };
+export const WALLET_BONUS: Record<ItemStatId, WalletRule> = {
+  damage: { mul: true },
+  attackSpeed: { mul: true },
+  maxHp: { mul: true, whole: true },
+  moveSpeed: { mul: true },
+  pickupRange: { mul: true },
+  xpGain: { mul: true },
+  size: { mul: true },
+  duration: { mul: true },
+  knockback: { mul: true },
+  coinGain: { mul: true },
+  pumpSpeed: { mul: true },
+  luck: { per: 20 },
+  extraProjectiles: { per: 2, whole: true },
+  critChance: { per: 0.2 },
+  critDamage: { per: 0.5 },
+  regen: { per: 2 },
+  armor: { per: 5 },
+  dodge: { per: 0.2 },
+  lifeSteal: { per: 0.06 },
+  chestDiscount: { per: 0.3 },
+  jumpHeight: { per: 0.3 },
+};
