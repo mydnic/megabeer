@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ACHIEVEMENTS } from '../../src/config/achievements';
 import { GRAVE_BOSSES as G, VADOR as V } from '../../src/config/bosses';
 import { TUNAS } from '../../src/config/tunas';
 import { PLANET_RADIUS } from '../../src/config/world';
@@ -299,5 +300,29 @@ describe('Dark Vador, phase 2 : le sabre lancé', () => {
     let struckInFlight = false;
     t.playUntil(() => { if (boss.thrown && boss.mark) struckInFlight = true; return !boss.thrown; }, 6);
     expect(struckInFlight).toBe(false);
+  });
+
+  const force = ACHIEVEMENTS.find((a) => a.rule.kind === 'boss' && a.rule.boss === 'vador' && a.rule.ally === 'yoda')!.id;
+  const kill = (t: T, boss: Vador) => {
+    t.game.cheats.god = true;
+    t.game.hitZombie(boss.zombie, 1e6, false, boss.zombie.pos, t.game.player.facing);
+    t.play(0.1);
+  };
+
+  it('le tuer avec Yoda qui suit le joueur débloque Que la mousse soit avec toi', () => {
+    const { t, boss } = fight();
+    t.game.allies.placeAt('yoda', t.inFront(1));
+    t.play(0.1);
+    expect(t.game.allies.list.find((a) => a.kind === 'yoda')?.state).toBe('following');
+    kill(t, boss);
+    expect(t.events('achievementUnlocked').some((e) => e.id === force)).toBe(true);
+  });
+
+  it('le tuer sans Yoda ne le débloque pas', () => {
+    const { t, boss } = fight();
+    t.game.allies.clear();
+    kill(t, boss);
+    expect(t.events('bossKilled')).toHaveLength(1);
+    expect(t.events('achievementUnlocked').some((e) => e.id === force)).toBe(false);
   });
 });
